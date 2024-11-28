@@ -12,13 +12,25 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "spinasm.helloWorld",
-        "title": "Hello World"
-      }
-    ]
-  },
+  "commands": [
+    {
+      "command": "spinasm.createProject",
+      "title": "SpinASM: Create Project"
+    },
+    {
+      "command": "spinasm.checkCompiler",
+      "title": "SpinASM: Check Compiler"
+    },
+    {
+      "command": "spinasm.compileProgram",
+      "title": "SpinASM: Compile Program"
+    },
+    {
+      "command": "spinasm.showSerialConfig",
+      "title": "SpinASM: Show Serial Configuration"
+    }
+  ]
+},
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
