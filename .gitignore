@@ -1,0 +1,23 @@
+# Node modules and build outputs
+software/spinasm/node_modules/
+software/spinasm/out/
+
+# VSCode workspace settings
+software/spinasm/.vscode/
+firmware/vscode-spinasm-firmware/.vscode/
+firmware/vscode-spinasm-firmware/.gitignore
+
+# Packaging artifacts
+software/spinasm/*.vsix
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# OS-specific and temporary files
+Thumbs.db
+desktop.ini
+*.tmp
+*.log
+
+# Test project
+software/spinasm/test
