@@ -16,3 +16,6 @@ Thumbs.db
 desktop.ini
 *.tmp
 *.log
+
+# Test project
+software/spinasm/test
