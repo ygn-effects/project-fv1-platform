@@ -37,8 +37,9 @@ void Hardware::transitionToState(SystemState t_state) {
 }
 
 void Hardware::processReceivingMessage() {
-  uint8_t message[1] = {0};
-  if (programmer.getMessage(message, 1)) {
+  uint8_t message[MessageLength::c_orderMessageLength] = {0};
+
+  if (programmer.getMessage(message, MessageLength::c_orderMessageLength)) {
     m_currentMessage = validateMessage(message[0]);
     transitionToState(SystemState::kProcessingMessage);
   }
@@ -73,22 +74,22 @@ void Hardware::processProcessingMessage() {
 }
 
 void Hardware::processRuThereMessage() {
-  uint8_t message[1] = {static_cast<uint8_t>(Message::kOk)};
-  programmer.sendMessage(message, 1);
+  uint8_t message[MessageLength::c_orderMessageLength] = {static_cast<uint8_t>(Message::kOk)};
+  programmer.sendMessage(message, MessageLength::c_orderMessageLength);
 
   transitionToState(kReceivingMessage);
 }
 
 void Hardware::processRuReadyMessage() {
-  uint8_t message[1] = {0};
+  uint8_t message[MessageLength::c_orderMessageLength] = {0};
 
   if (eeprom.isReady()) {
     message[0] = static_cast<uint8_t>(Message::kOk);
-    programmer.sendMessage(message, 1);
+    programmer.sendMessage(message, MessageLength::c_orderMessageLength);
   }
   else {
     message[0] = static_cast<uint8_t>(Message::kNok);
-    programmer.sendMessage(message, 1);
+    programmer.sendMessage(message, MessageLength::c_orderMessageLength);
   }
 
   transitionToState(kReceivingMessage);
@@ -103,8 +104,8 @@ void Hardware::processWriteMessage() {
 }
 
 void Hardware::processEndMessage() {
-  uint8_t message[1] = {static_cast<uint8_t>(Message::kOk)};
-  programmer.sendMessage(message, 1);
+  uint8_t message[MessageLength::c_orderMessageLength] = {static_cast<uint8_t>(Message::kOk)};
+  programmer.sendMessage(message, MessageLength::c_orderMessageLength);
 
   transitionToState(kReceivingMessage);
 }
