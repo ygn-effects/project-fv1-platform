@@ -4,6 +4,12 @@
 #include "programmer.h"
 #include "eeprom.h"
 
+namespace MessageLength {
+  constexpr uint8_t c_orderMessageLength = 1;
+  constexpr uint8_t c_addressMessageLength = 2;
+  constexpr uint8_t c_dataMessageLength = 32;
+}
+
 enum SystemState {
   kReceivingMessage,
   kProcessingMessage,
