@@ -30,8 +30,17 @@ enum class Message : uint8_t {
 
 struct OperationContext {
   uint16_t address = 0;
-  uint8_t buffer[64] = {0};
+  uint8_t buffer[MessageLength::c_dataMessageLength] = {0};
   size_t bufferLength = 0;
+
+  void reset() {
+    address = 0;
+
+    for (uint8_t i = 0; i < bufferLength; i++) {
+      buffer[i] = 0;
+    }
+    bufferLength = 0;
+  }
 };
 
 class Hardware {
@@ -41,6 +50,10 @@ class Hardware {
     OperationContext m_context;
 
     Message validateMessage(uint8_t t_value);
+    void sendOrder(Message t_order);
+    void sendOk();
+    void sendNok();
+
     void transitionToState(SystemState t_state);
     void processReceivingMessage();
     void processProcessingMessage();
