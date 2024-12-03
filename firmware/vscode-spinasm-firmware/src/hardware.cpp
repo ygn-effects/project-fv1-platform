@@ -21,6 +21,19 @@ Message Hardware::validateMessage(uint8_t t_value) {
   }
 }
 
+void Hardware::sendOrder(Message t_order) {
+  uint8_t order[MessageLength::c_orderMessageLength] = {static_cast<uint8_t>(t_order)};
+  programmer.sendMessage(order, MessageLength::c_orderMessageLength);
+}
+
+void Hardware::sendOk() {
+  sendOrder(Message::kOk);
+}
+
+void Hardware::sendNok() {
+  sendOrder(Message::kNok);
+}
+
 void Hardware::transitionToState(SystemState t_state) {
   switch (t_state) {
     case SystemState::kReceivingMessage:
@@ -29,6 +42,14 @@ void Hardware::transitionToState(SystemState t_state) {
 
     case SystemState::kProcessingMessage:
       m_systemState = kProcessingMessage;
+      break;
+
+    case SystemState::kProcessingReadMessage:
+      m_systemState = kProcessingReadMessage;
+      break;
+
+    case SystemState::kProcessingWriteMessage:
+      m_systemState = kProcessingWriteMessage;
       break;
 
     default:
@@ -56,7 +77,7 @@ void Hardware::processProcessingMessage() {
       break;
 
     case Message::kRead:
-      processReadMessage();
+      transitionToState(SystemState::kProcessingReadMessage);
       break;
 
     case Message::kWrite:
@@ -64,7 +85,7 @@ void Hardware::processProcessingMessage() {
       break;
 
     case Message::kEnd:
-      transitionToState(SystemState::kProcessingReadMessage);
+      processEndMessage();
       break;
 
     default:
@@ -74,33 +95,92 @@ void Hardware::processProcessingMessage() {
 }
 
 void Hardware::processRuThereMessage() {
-  uint8_t message[MessageLength::c_orderMessageLength] = {static_cast<uint8_t>(Message::kOk)};
-  programmer.sendMessage(message, MessageLength::c_orderMessageLength);
+  sendOk();
 
   transitionToState(kReceivingMessage);
 }
 
 void Hardware::processRuReadyMessage() {
-  uint8_t message[MessageLength::c_orderMessageLength] = {0};
-
   if (eeprom.isReady()) {
-    message[0] = static_cast<uint8_t>(Message::kOk);
-    programmer.sendMessage(message, MessageLength::c_orderMessageLength);
+    sendOk();
   }
   else {
-    message[0] = static_cast<uint8_t>(Message::kNok);
-    programmer.sendMessage(message, MessageLength::c_orderMessageLength);
+    sendNok();
   }
 
   transitionToState(kReceivingMessage);
 }
 
 void Hardware::processReadMessage() {
-  
+  if (!m_context.address) {
+    uint8_t address[MessageLength::c_addressMessageLength];
+
+    if (programmer.getMessage(address, MessageLength::c_addressMessageLength)) {
+      m_context.address = (address[0] << 8) | address[1];
+
+      sendOk();
+    }
+    else {
+      sendNok();
+      m_context.reset();
+
+      transitionToState(kReceivingMessage);
+    }
+  }
+  else {
+    m_context.bufferLength = MessageLength::c_dataMessageLength;
+    eeprom.readPage(m_context.address, m_context.buffer, m_context.bufferLength);
+    programmer.sendMessage(m_context.buffer, m_context.bufferLength);
+    sendOk();
+    m_context.reset();
+
+    transitionToState(kReceivingMessage);
+  }
 }
 
 void Hardware::processWriteMessage() {
-  
+  if (!m_context.address) {
+    uint8_t address[MessageLength::c_addressMessageLength];
+
+    if (programmer.getMessage(address, MessageLength::c_addressMessageLength)) {
+      m_context.address = (address[0] << 8) | address[1];
+
+      sendOk();
+    }
+    else {
+      sendNok();
+      m_context.reset();
+
+      transitionToState(kReceivingMessage);
+    }
+  }
+  else if (m_context.bufferLength == 0) {
+    m_context.bufferLength = MessageLength::c_dataMessageLength;
+
+    if (programmer.getMessage(m_context.buffer, m_context.bufferLength)) {
+      sendOk();
+    }
+    else {
+      sendNok();
+      m_context.reset();
+
+      transitionToState(kReceivingMessage);
+    }
+  }
+  else {
+    if (eeprom.writePage(m_context.address, m_context.buffer, m_context.bufferLength) == 0) {
+      sendOk();
+      m_context.reset();
+
+      transitionToState(kReceivingMessage);
+    }
+    else {
+      sendNok();
+      m_context.reset();
+
+      transitionToState(kReceivingMessage);
+    }
+  }
 }
 
 void Hardware::processEndMessage() {
@@ -119,6 +199,8 @@ void Hardware::poll() {
   switch (m_systemState) {
     case SystemState::kReceivingMessage:
     case SystemState::kProcessingMessage:
+    case SystemState::kProcessingReadMessage:
+    case SystemState::kProcessingWriteMessage:
       programmer.receiveData();
       break;
 
