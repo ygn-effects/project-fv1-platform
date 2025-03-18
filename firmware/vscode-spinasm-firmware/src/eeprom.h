@@ -3,22 +3,30 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+enum class EEPROMResult {
+  Success,
+  Timeout,
+  WriteError,
+  ReadError,
+  CommunicationError
+};
+
 class EEPROM {
-  private:
-    uint8_t i2cAddress;
+private:
+  uint8_t m_i2cAddress;
 
-  public:
-    EEPROM(uint8_t address) : i2cAddress(address) { }
+  bool waitForReady(uint16_t timeout = 10);
 
-    void setup();
+public:
+  EEPROM(uint8_t address) : m_i2cAddress(address) {}
 
-    bool isReady();
+  void setup();
 
-    uint8_t writeByte(uint16_t address, uint8_t data);
+  bool isReady();
 
-    uint8_t readByte(uint16_t address);
+  EEPROMResult writeByte(uint16_t address, uint8_t data, uint8_t maxRetries = 3);
+  EEPROMResult readByte(uint16_t address, uint8_t &data, uint8_t maxRetries = 3);
 
-    uint8_t writePage(uint16_t address, const uint8_t *data, size_t length);
-
-    void readPage(uint16_t address, uint8_t *data, size_t length);
+  EEPROMResult writePage(uint16_t address, const uint8_t *data, size_t length, uint8_t maxRetries = 3);
+  EEPROMResult readPage(uint16_t address, uint8_t *data, size_t length, uint8_t maxRetries = 3);
 };
