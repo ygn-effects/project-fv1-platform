@@ -25,7 +25,12 @@ enum class Message : uint8_t {
   kWrite,
   kEnd,
   kNok,
-  kOk
+  kOk,
+  kTimeout,
+  kWriteError,
+  kReadError,
+  kCommunicationError,
+  kFramingError
 };
 
 struct OperationContext {
@@ -35,37 +40,36 @@ struct OperationContext {
 
   void reset() {
     address = 0;
-
-    for (uint8_t i = 0; i < bufferLength; i++) {
-      buffer[i] = 0;
-    }
     bufferLength = 0;
+    memset(buffer, 0, sizeof(buffer));
   }
 };
 
 class Hardware {
-  private:
-    SystemState m_systemState = SystemState::kReceivingMessage;
-    Message m_currentMessage = Message::kNone;
-    OperationContext m_context;
+private:
+  SystemState m_systemState = SystemState::kReceivingMessage;
+  Message m_currentMessage = Message::kNone;
+  OperationContext m_context;
 
-    Message validateMessage(uint8_t t_value);
-    void sendOrder(Message t_order);
-    void sendOk();
-    void sendNok();
+  ProgrammerStatus getProgrammerMessage(uint8_t* t_data, uint8_t t_count);
+  EEPROMResult readEpromPage(uint16_t t_address, uint8_t* t_buffer, size_t t_length);
+  EEPROMResult WriteEpromPage(uint16_t t_address, uint8_t* t_buffer, size_t t_length);
 
-    void transitionToState(SystemState t_state);
-    void processReceivingMessage();
-    void processProcessingMessage();
+  Message validateMessage(uint8_t t_value);
+  void sendOrder(Message t_order);
 
-    void processRuThereMessage();
-    void processRuReadyMessage();
-    void processReadMessage();
-    void processWriteMessage();
-    void processEndMessage();
+  void transitionToState(SystemState t_state);
+  void processReceivingMessage();
+  void processProcessingMessage();
 
-  public:
-    void setup();
-    void poll();
-    void process();
+  void processRuThereMessage();
+  void processRuReadyMessage();
+  void processReadMessage();
+  void processWriteMessage();
+  void processEndMessage();
+
+public:
+  void setup();
+  void poll();
+  void process();
 };
