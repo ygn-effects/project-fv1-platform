@@ -3,6 +3,78 @@
 EEPROM eeprom(0x50);
 Programmer programmer(9);
 
+ProgrammerStatus Hardware::getProgrammerMessage(uint8_t* t_data, uint8_t t_count) {
+  ProgrammerStatus status = programmer.getMessage(t_data, t_count);
+
+  switch (status) {
+    case ProgrammerStatus::Success:
+      return status;
+      break;
+
+    case ProgrammerStatus::FramingError:
+      sendOrder(Message::kFramingError);
+      break;
+
+    case ProgrammerStatus::Timeout:
+      sendOrder(Message::kTimeout);
+      break;
+
+    default:
+      sendOrder(Message::kCommunicationError);
+      break;
+  }
+
+  return status;
+}
+
+EEPROMResult Hardware::readEepromPage(uint16_t t_address, uint8_t* t_buffer, size_t t_length) {
+  EEPROMResult result = eeprom.readPage(t_address, t_buffer, t_length);
+
+  switch (result) {
+    case EEPROMResult::Success:
+      return result;
+      break;
+
+    case EEPROMResult::Timeout:
+      sendOrder(Message::kTimeout);
+      break;
+
+    case EEPROMResult::ReadError:
+      sendOrder(Message::kReadError);
+      break;
+
+    default:
+      sendOrder(Message::kCommunicationError);
+      break;
+  }
+
+  return result;
+}
+
+EEPROMResult Hardware::WriteEepromPage(uint16_t t_address, uint8_t* t_buffer, size_t t_length) {
+  EEPROMResult result = eeprom.writePage(t_address, t_buffer, t_length);
+
+  switch (result) {
+    case EEPROMResult::Success:
+      return result;
+      break;
+
+    case EEPROMResult::Timeout:
+      sendOrder(Message::kTimeout);
+      break;
+
+    case EEPROMResult::WriteError:
+      sendOrder(Message::kWriteError);
+      break;
+
+    default:
+      sendOrder(Message::kCommunicationError);
+      break;
+  }
+
+  return result;
+}
+
 Message Hardware::validateMessage(uint8_t t_value) {
   switch (static_cast<Message>(t_value)) {
     case Message::kRuThere:
@@ -24,14 +96,6 @@ Message Hardware::validateMessage(uint8_t t_value) {
 void Hardware::sendOrder(Message t_order) {
   uint8_t order[MessageLength::c_orderMessageLength] = {static_cast<uint8_t>(t_order)};
   programmer.sendMessage(order, MessageLength::c_orderMessageLength);
-}
-
-void Hardware::sendOk() {
-  sendOrder(Message::kOk);
-}
-
-void Hardware::sendNok() {
-  sendOrder(Message::kNok);
 }
 
 void Hardware::transitionToState(SystemState t_state) {
@@ -59,8 +123,9 @@ void Hardware::transitionToState(SystemState t_state) {
 
 void Hardware::processReceivingMessage() {
   uint8_t message[MessageLength::c_orderMessageLength] = {0};
+  ProgrammerStatus status = getProgrammerMessage(message, MessageLength::c_orderMessageLength);
 
-  if (programmer.getMessage(message, MessageLength::c_orderMessageLength)) {
+  if (status == ProgrammerStatus::Success) {
     m_currentMessage = validateMessage(message[0]);
     transitionToState(SystemState::kProcessingMessage);
   }
@@ -95,17 +160,17 @@ void Hardware::processProcessingMessage() {
 }
 
 void Hardware::processRuThereMessage() {
-  sendOk();
+  sendOrder(Message::kOk);
 
   transitionToState(kReceivingMessage);
 }
 
 void Hardware::processRuReadyMessage() {
   if (eeprom.isReady()) {
-    sendOk();
+    sendOrder(Message::kOk);
   }
   else {
-    sendNok();
+    sendOrder(Message::kNok);
   }
 
   transitionToState(kReceivingMessage);
@@ -114,33 +179,44 @@ void Hardware::processRuReadyMessage() {
 void Hardware::processReadMessage() {
   if (!m_context.address) {
     uint8_t address[MessageLength::c_addressMessageLength];
+    ProgrammerStatus status = getProgrammerMessage(address, MessageLength::c_addressMessageLength);
 
-    if (programmer.getMessage(address, MessageLength::c_addressMessageLength)) {
+    if (status == ProgrammerStatus::Success) {
       m_context.address = (address[0] << 8) | address[1];
 
-      sendOk();
+      sendOrder(Message::kOk);
     }
     else {
-      sendNok();
-      m_context.reset();
+      sendOrder(Message::kNok);
 
+      m_context.reset();
       transitionToState(kReceivingMessage);
     }
   }
   else {
     m_context.bufferLength = MessageLength::c_dataMessageLength;
-    eeprom.readPage(m_context.address, m_context.buffer, m_context.bufferLength);
-    programmer.sendMessage(m_context.buffer, m_context.bufferLength);
-    sendOk();
-    m_context.reset();
+    EEPROMResult result = readEepromPage(m_context.address, m_context.buffer, m_context.bufferLength);
 
-    transitionToState(kReceivingMessage);
+    if (result == EEPROMResult::Success) {
+      programmer.sendMessage(m_context.buffer, m_context.bufferLength);
+
+      sendOrder(Message::kOk);
+      m_context.reset();
+      transitionToState(kReceivingMessage);
+    }
+    else {
+      sendOrder(Message::kNok);
+
+      m_context.reset();
+      transitionToState(kReceivingMessage);
+    }
   }
 }
 
 void Hardware::processWriteMessage() {
   if (!m_context.address) {
     uint8_t address[MessageLength::c_addressMessageLength];
+    ProgrammerStatus status = getProgrammerMessage(address, MessageLength::c_addressMessageLength);
 
     if (programmer.getMessage(address, MessageLength::c_addressMessageLength)) {
       m_context.address = (address[0] << 8) | address[1];
