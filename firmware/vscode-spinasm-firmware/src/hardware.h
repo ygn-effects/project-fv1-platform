@@ -52,8 +52,8 @@ private:
   OperationContext m_context;
 
   ProgrammerStatus getProgrammerMessage(uint8_t* t_data, uint8_t t_count);
-  EEPROMResult readEpromPage(uint16_t t_address, uint8_t* t_buffer, size_t t_length);
-  EEPROMResult WriteEpromPage(uint16_t t_address, uint8_t* t_buffer, size_t t_length);
+  EEPROMResult readEepromPage(uint16_t t_address, uint8_t* t_buffer, size_t t_length);
+  EEPROMResult writeEepromPage(uint16_t t_address, uint8_t* t_buffer, size_t t_length);
 
   Message validateMessage(uint8_t t_value);
   void sendOrder(Message t_order);
