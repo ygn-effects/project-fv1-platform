@@ -7,7 +7,7 @@ ProgrammerStatus Hardware::getProgrammerMessage(uint8_t* t_data, uint8_t t_count
   ProgrammerStatus status = programmer.getMessage(t_data, t_count);
 
   // Handle communication errors explicitly
-  if (status != ProgrammerStatus::Success) {
+  if (status != ProgrammerStatus::Success && status != ProgrammerStatus::NoMessage) {
     switch (status) {
       case ProgrammerStatus::FramingError:
         sendOrder(Message::kFramingError);
@@ -173,9 +173,6 @@ void Hardware::processRuThereMessage() {
   transitionToState(kReceivingMessage);
 }
 
-/**
- * @brief Handles the "Are you ready?" message (checks EEPROM readiness).
- */
 void Hardware::processRuReadyMessage() {
   sendOrder(eeprom.isReady() ? Message::kOk : Message::kNok);
   transitionToState(kReceivingMessage);
@@ -246,20 +243,6 @@ void Hardware::processEndMessage() {
 void Hardware::setup() {
   eeprom.setup();
   programmer.setup();
-}
-
-void Hardware::poll() {
-  switch (m_systemState) {
-    case SystemState::kReceivingMessage:
-    case SystemState::kProcessingMessage:
-    case SystemState::kProcessingReadMessage:
-    case SystemState::kProcessingWriteMessage:
-      programmer.receiveData();
-      break;
-
-    default:
-      break;
-  }
 }
 
 void Hardware::process() {

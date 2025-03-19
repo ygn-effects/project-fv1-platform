@@ -165,11 +165,6 @@ class Hardware {
     void setup();
 
     /**
-     * @brief Polls and processes incoming serial data.
-     */
-    void poll();
-
-    /**
      * @brief Processes the current operation based on internal state.
      */
     void process();
