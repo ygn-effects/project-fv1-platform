@@ -16,6 +16,7 @@ namespace ProgrammerConstants {
  */
 enum class ProgrammerStatus {
   Success,         ///< Message received successfully
+  NoMessage,       ///< Message received successfully
   Timeout,         ///< Timeout occurred waiting for message
   FramingError,    ///< Message framing error detected
   BufferOverflow   ///< Buffer overflow occurred during reception
