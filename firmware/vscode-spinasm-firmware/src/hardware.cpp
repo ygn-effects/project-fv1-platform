@@ -6,6 +6,7 @@ Programmer programmer(9);
 ProgrammerStatus Hardware::getProgrammerMessage(uint8_t* t_data, uint8_t t_count) {
   ProgrammerStatus status = programmer.getMessage(t_data, t_count);
 
+  // Handle communication errors explicitly
   if (status != ProgrammerStatus::Success) {
     switch (status) {
       case ProgrammerStatus::FramingError:
@@ -21,6 +22,7 @@ ProgrammerStatus Hardware::getProgrammerMessage(uint8_t* t_data, uint8_t t_count
         break;
     }
 
+    // Reset state after error
     m_context.reset();
     transitionToState(kReceivingMessage);
   }
@@ -31,6 +33,7 @@ ProgrammerStatus Hardware::getProgrammerMessage(uint8_t* t_data, uint8_t t_count
 EEPROMResult Hardware::readEepromPage(uint16_t t_address, uint8_t* t_buffer, size_t t_length) {
   EEPROMResult result = eeprom.readPage(t_address, t_buffer, t_length);
 
+  // Handle EEPROM read errors explicitly
   if (result != EEPROMResult::Success) {
     switch (result) {
       case EEPROMResult::Timeout:
@@ -46,6 +49,7 @@ EEPROMResult Hardware::readEepromPage(uint16_t t_address, uint8_t* t_buffer, siz
         break;
     }
 
+    // Reset state after error
     m_context.reset();
     transitionToState(kReceivingMessage);
   }
@@ -56,6 +60,7 @@ EEPROMResult Hardware::readEepromPage(uint16_t t_address, uint8_t* t_buffer, siz
 EEPROMResult Hardware::writeEepromPage(uint16_t t_address, uint8_t* t_buffer, size_t t_length) {
   EEPROMResult result = eeprom.writePage(t_address, t_buffer, t_length);
 
+  // Handle EEPROM write errors explicitly
   if (result != EEPROMResult::Success) {
     switch (result) {
       case EEPROMResult::Timeout:
@@ -71,6 +76,7 @@ EEPROMResult Hardware::writeEepromPage(uint16_t t_address, uint8_t* t_buffer, si
         break;
     }
 
+    // Reset state after error
     m_context.reset();
     transitionToState(kReceivingMessage);
   }
@@ -88,11 +94,9 @@ Message Hardware::validateMessage(uint8_t t_value) {
     case Message::kNok:
     case Message::kOk:
       return static_cast<Message>(t_value);
-      break;
 
     default:
       return Message::kNone;
-      break;
   }
 }
 
@@ -120,14 +124,16 @@ void Hardware::transitionToState(SystemState t_state) {
       break;
 
     default:
+      m_systemState = kReceivingMessage;
       break;
   }
 }
 
 void Hardware::processReceivingMessage() {
   uint8_t message[MessageLength::c_orderMessageLength] = {0};
-  ProgrammerStatus status = getProgrammerMessage(message, MessageLength::c_orderMessageLength);
 
+  // Receive and validate incoming message
+  ProgrammerStatus status = getProgrammerMessage(message, MessageLength::c_orderMessageLength);
   if (status == ProgrammerStatus::Success) {
     m_currentMessage = validateMessage(message[0]);
     transitionToState(SystemState::kProcessingMessage);
@@ -164,39 +170,35 @@ void Hardware::processProcessingMessage() {
 
 void Hardware::processRuThereMessage() {
   sendOrder(Message::kOk);
-
   transitionToState(kReceivingMessage);
 }
 
+/**
+ * @brief Handles the "Are you ready?" message (checks EEPROM readiness).
+ */
 void Hardware::processRuReadyMessage() {
-  if (eeprom.isReady()) {
-    sendOrder(Message::kOk);
-  }
-  else {
-    sendOrder(Message::kNok);
-  }
-
+  sendOrder(eeprom.isReady() ? Message::kOk : Message::kNok);
   transitionToState(kReceivingMessage);
 }
 
 void Hardware::processReadMessage() {
   if (!m_context.address) {
+    // Get EEPROM address to read from
     uint8_t address[MessageLength::c_addressMessageLength];
     ProgrammerStatus status = getProgrammerMessage(address, MessageLength::c_addressMessageLength);
 
     if (status == ProgrammerStatus::Success) {
       m_context.address = (address[0] << 8) | address[1];
-
       sendOrder(Message::kOk);
     }
   }
   else {
+    // Perform EEPROM read and send data back
     m_context.bufferLength = MessageLength::c_dataMessageLength;
     EEPROMResult result = readEepromPage(m_context.address, m_context.buffer, m_context.bufferLength);
 
     if (result == EEPROMResult::Success) {
       programmer.sendMessage(m_context.buffer, m_context.bufferLength);
-
       sendOrder(Message::kOk);
       m_context.reset();
       transitionToState(kReceivingMessage);
@@ -206,16 +208,17 @@ void Hardware::processReadMessage() {
 
 void Hardware::processWriteMessage() {
   if (!m_context.address) {
+    // Get EEPROM address to write to
     uint8_t address[MessageLength::c_addressMessageLength];
     ProgrammerStatus status = getProgrammerMessage(address, MessageLength::c_addressMessageLength);
 
     if (status == ProgrammerStatus::Success) {
       m_context.address = (address[0] << 8) | address[1];
-
       sendOrder(Message::kOk);
     }
   }
   else if (m_context.bufferLength == 0) {
+    // Get data to write to EEPROM
     m_context.bufferLength = MessageLength::c_dataMessageLength;
     ProgrammerStatus status = getProgrammerMessage(m_context.buffer, m_context.bufferLength);
 
@@ -224,11 +227,11 @@ void Hardware::processWriteMessage() {
     }
   }
   else {
+    // Perform EEPROM write operation
     EEPROMResult result = writeEepromPage(m_context.address, m_context.buffer, m_context.bufferLength);
 
     if (result == EEPROMResult::Success) {
       sendOrder(Message::kOk);
-
       m_context.reset();
       transitionToState(kReceivingMessage);
     }
@@ -236,9 +239,7 @@ void Hardware::processWriteMessage() {
 }
 
 void Hardware::processEndMessage() {
-  uint8_t message[MessageLength::c_orderMessageLength] = {static_cast<uint8_t>(Message::kOk)};
-  programmer.sendMessage(message, MessageLength::c_orderMessageLength);
-
+  sendOrder(Message::kOk);
   transitionToState(kReceivingMessage);
 }
 
