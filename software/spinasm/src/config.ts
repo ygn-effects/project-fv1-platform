@@ -3,29 +3,70 @@ import * as ini from "ini";
 import Utils from "./utils";
 
 /**
+ * @interface ConfigObject
+ * @brief Represents the structure of the parsed ini file.
+ */
+interface ConfigObject {
+  asfv1: {
+    path: string;      ///< Path to the compiler executable.
+    options: string;   ///< Compiler command-line options.
+  };
+  serial: {
+    port: string;      ///< Serial port for communication.
+    baudrate: string;  ///< Baud rate for serial communication.
+  };
+}
+
+/**
  * @class Config
- * @brief Handles reading and parsing the settings.ini file.
+ * @brief Manages reading and validation of configuration settings from an ini file.
+ *
+ * Responsible for parsing the project's configuration (`settings.ini`) and providing
+ * access to compiler and serial port configurations in a type-safe manner.
  */
 export default class Config {
-  private iniFile: string;
-  private config: ConfigObject | null = null;
+  private iniFile: string;           ///< Path to the ini configuration file.
+  private config: ConfigObject;      ///< Parsed configuration object.
 
+  /**
+   * @brief Constructs a new Config instance.
+   * @param file - Path to the ini file to be loaded.
+   * @throws Error if the ini file doesn't exist or contains invalid configurations.
+   */
   constructor(file: string) {
     this.iniFile = file;
+    this.config = this.readAndValidateConfig();
   }
 
   /**
-   * @brief Reads the ini file and parses its contents into a ConfigObject.
-   * @throws If the file doesn't exist or cannot be read.
+   * @brief Reads, parses, and validates the configuration file.
+   * @returns A validated ConfigObject.
+   * @throws Error if the ini file is missing, unreadable, or contains invalid settings.
    */
-  public readConfigFile(): void {
+  private readAndValidateConfig(): ConfigObject {
+    if (!fs.existsSync(this.iniFile)) {
+      throw new Error(`Ini file not found: ${this.iniFile}. Please recreate the project.`);
+    }
+
     try {
-      if (fs.existsSync(this.iniFile)) {
-        this.config = ini.parse(fs.readFileSync(this.iniFile, "utf-8")) as ConfigObject;
+      const config = ini.parse(fs.readFileSync(this.iniFile, "utf-8")) as ConfigObject;
+
+      if (!fs.existsSync(config.asfv1.path)) {
+        throw new Error(`Invalid compiler path in ini file: ${config.asfv1.path}`);
       }
-      else {
-        throw new Error(`Ini file not found: ${this.iniFile}. Please recreate the project.`);
+
+      const allowedOptions = ['-q', '-c', '-s'];
+      const options = config.asfv1.options.trim().split(" ");
+
+      if (!options.every(opt => allowedOptions.includes(opt))) {
+        throw new Error(`Invalid compiler options: ${config.asfv1.options}`);
       }
+
+      if (!config.serial.port || !config.serial.baudrate) {
+        throw new Error(`Incomplete serial settings in ini file.`);
+      }
+
+      return config;
     }
     catch (error) {
       throw new Error(`Failed to read ini file: ${(error as Error).message}`);
@@ -33,91 +74,34 @@ export default class Config {
   }
 
   /**
-   * @brief Returns the sanitized compiler path from the ini file.
-   * @returns The sanitized compiler path.
-   * @throws If the compiler path is invalid or the ini file is missing.
+   * @brief Gets the compiler command from the configuration, sanitizing the path if necessary.
+   * @returns A sanitized path to the compiler executable.
    */
   public readCompilerCommand(): string {
-    this.ensureConfigLoaded();
-
-    const strComp = this.config?.asfv1?.path?.trim();
-    if (!strComp || !fs.existsSync(strComp)) {
-      throw new Error(`Invalid compiler path: ${strComp}`);
-    }
-
-    return Utils.sanitizePath(strComp);
+    return Utils.sanitizePath(this.config.asfv1.path);
   }
 
   /**
-   * @brief Returns the compiler options as an array of arguments.
-   * @returns The compiler arguments as a string array.
-   * @throws If the compiler options are invalid or the ini file is missing.
+   * @brief Retrieves the compiler command-line arguments.
+   * @returns An array of compiler options.
    */
   public readCompilerArgs(): string[] {
-    this.ensureConfigLoaded();
-
-    const strCompOpt = this.config?.asfv1?.options?.trim();
-    if (!strCompOpt || !strCompOpt.match(/(\ ?(-q|-c|-s))*/)) {
-      throw new Error("Invalid compiler options");
-    }
-
-    return strCompOpt.split(" ");
+    return this.config.asfv1.options.trim().split(" ");
   }
 
   /**
-   * @brief Returns the serial port value from the ini file.
-   * @returns The serial port as a string.
-   * @throws If the serial port is not set or the ini file is missing.
+   * @brief Retrieves the serial port from the configuration.
+   * @returns The serial port identifier as a string.
    */
   public readSerialPort(): string {
-    this.ensureConfigLoaded();
-
-    const port = this.config?.serial?.port?.trim();
-    if (!port) {
-      throw new Error("No serial port set in the config file.");
-    }
-
-    return port;
+    return this.config.serial.port.trim();
   }
 
   /**
-   * @brief Returns the baud rate value from the ini file.
-   * @returns The baud rate as a number.
-   * @throws If the baud rate is not set or the ini file is missing.
+   * @brief Retrieves the baud rate for serial communication from the configuration.
+   * @returns The baud rate as a numeric value.
    */
   public readBaudRate(): number {
-    this.ensureConfigLoaded();
-
-    const rate = this.config?.serial?.baudrate?.trim();
-    if (!rate) {
-      throw new Error("No baud rate set in the config file.");
-    }
-
-    return parseInt(rate, 10);
+    return parseInt(this.config.serial.baudrate.trim(), 10);
   }
-
-  /**
-   * @brief Ensures the ini file has been read and the config object is loaded.
-   * @throws If the config object is null.
-   */
-  private ensureConfigLoaded(): void {
-    if (!this.config) {
-      this.readConfigFile();
-    }
-  }
-}
-
-/**
- * @interface ConfigObject
- * @brief Represents the structure of the parsed ini file.
- */
-interface ConfigObject {
-  asfv1?: {
-    path: string;
-    options: string;
-  };
-  serial?: {
-    port: string;
-    baudrate: string;
-  };
 }
