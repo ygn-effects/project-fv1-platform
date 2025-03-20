@@ -3,6 +3,7 @@ import * as path from "path";
 import Project from "./project";
 import Config from "./config";
 import Logs, { LogType } from "./logs";
+import Programmer from "./programmer";
 
 /**
  * @brief Activates the SpinASM VSCode extension.
@@ -17,7 +18,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("spinasm.createProject", createProject),
-    vscode.commands.registerCommand("spinasm.checkCompiler", checkCompiler),
+    vscode.commands.registerCommand("spinasm.checkProjectSettings", checkProjectSettings),
     vscode.commands.registerCommand("spinasm.compileProgram", compileProgram),
     vscode.commands.registerCommand("spinasm.showSerialConfig", showSerialConfig)
   );
@@ -56,9 +57,9 @@ async function createProject(): Promise<void> {
 }
 
 /**
- * @brief Validates the SpinASM compiler setup.
+ * @brief Validates the project compiler and programmer settings
  */
-async function checkCompiler(): Promise<void> {
+async function checkProjectSettings(): Promise<void> {
   const folder = await getWorkspaceFolder();
 
   if (!folder) {
@@ -66,16 +67,19 @@ async function checkCompiler(): Promise<void> {
   }
 
   try {
-    const { compilerPath, compilerArgs } = loadCompilerSettings(folder);
+    const { compilerPath, compilerArgs, serialPort, baudRate } = loadProjectSettings(folder);
     const project = new Project(folder);
     project.buildSetup(compilerPath, compilerArgs);
     project.checkCompiler();
 
-    Logs.log(LogType.INFO, "Compiler validation succeeded");
-    vscode.window.showInformationMessage("Compiler is working correctly!");
+    const programmer = new Programmer(serialPort, baudRate);
+    // programmer.checkProgrammer();
+
+    Logs.log(LogType.INFO, "Compiler and programmer validation succeeded");
+    vscode.window.showInformationMessage("Compiler and programmer are working correctly!");
   }
   catch (error) {
-    handleError(error, "Failed to validate the compiler");
+    handleError(error, "Failed to validate the compiler and programmer");
   }
 }
 
@@ -90,7 +94,7 @@ async function compileProgram(): Promise<void> {
   }
 
   try {
-    const { compilerPath, compilerArgs } = loadCompilerSettings(folder);
+    const { compilerPath, compilerArgs } = loadProjectSettings(folder);
     const project = new Project(folder);
     project.buildSetup(compilerPath, compilerArgs);
     project.compileProgramToHex(0);
@@ -130,17 +134,19 @@ async function showSerialConfig(): Promise<void> {
 }
 
 /**
- * @brief Retrieves compiler path and arguments from project settings.
+ * @brief Retrieves the project settings from the project .ini file
  *
  * @param folder - The workspace folder path.
- * @returns Object containing compiler path and arguments.
+ * @returns Object containing the project settings.
  */
-function loadCompilerSettings(folder: string): { compilerPath: string; compilerArgs: string[] } {
+function loadProjectSettings(folder: string): { compilerPath: string; compilerArgs: string[]; serialPort: string; baudRate: number } {
   const config = new Config(path.join(folder, "settings.ini"));
 
   return {
     compilerPath: config.readCompilerCommand(),
     compilerArgs: config.readCompilerArgs(),
+    serialPort: config.readSerialPort(),
+    baudRate: config.readBaudRate(),
   };
 }
 
