@@ -2,14 +2,29 @@ import * as vscode from "vscode";
 import Utils from "./utils";
 
 /**
+ * @enum LogType
+ * @brief Enumerates the supported types of log messages.
+ */
+export enum LogType {
+  INFO = 0,   ///< Informational log messages.
+  ERROR = 1,  ///< Error log messages.
+}
+
+/**
  * @class Logs
- * @brief Handles logging for the SpinASM extension, with support for info and error messages.
+ * @brief Provides centralized logging for the SpinASM VSCode extension.
+ *
+ * Handles the creation and management of a dedicated VSCode output channel
+ * for logging informational and error messages with timestamps.
  */
 export default class Logs {
-  private static logChannel: vscode.OutputChannel;
+  private static logChannel: vscode.OutputChannel | null = null; ///< VSCode Output Channel for logging.
 
   /**
-   * @brief Creates the output channel for logging.
+   * @brief Initializes the logging output channel.
+   *
+   * Creates a dedicated VSCode output channel named "SpinASM" if not already created.
+   * Should be called once during the extension activation phase.
    */
   public static createChannel(): void {
     if (!this.logChannel) {
@@ -18,38 +33,50 @@ export default class Logs {
   }
 
   /**
-   * @brief Logs a message to the output channel.
-   * @param type - The type of log message. 0 = INFO, 1 = ERROR.
-   * @param message - The message to log.
+   * @brief Writes a log message to the output channel with timestamp and severity.
+   *
+   * Sanitizes error messages to remove redundant "Error:" prefixes, enhancing readability.
+   * Ensures the output channel exists before attempting to log.
+   *
+   * @param type - Severity level of the log entry (`INFO` or `ERROR`).
+   * @param message - Message content to log.
+   *
+   * @throws Error if the logging channel has not been created yet.
    */
   public static log(type: LogType, message: string): void {
     if (!this.logChannel) {
-      throw new Error("Log channel is not created. Call createChannel() first.");
+      throw new Error("Log channel is not created. Ensure Logs.createChannel() is called first.");
     }
 
     const timestamp = Utils.getFormattedDate();
+
     switch (type) {
       case LogType.INFO:
         this.logChannel.appendLine(`${timestamp} | INFO  | ${message}`);
         break;
 
       case LogType.ERROR:
-        const sanitizedMessage = message.replace(/Error: /g, "");
+        // Remove redundant "Error: " prefix to keep logs clean.
+        const sanitizedMessage = message.replace(/^Error:\s*/, "");
         this.logChannel.appendLine(`${timestamp} | ERROR | ${sanitizedMessage}`);
         break;
 
       default:
+        // Fallback for unrecognized log types.
         this.logChannel.appendLine(`${timestamp} | UNKNOWN | ${message}`);
         break;
     }
   }
-}
 
-/**
- * @enum LogType
- * @brief Enum for log message types.
- */
-export enum LogType {
-  INFO = 0,
-  ERROR = 1,
+  /**
+   * @brief Disposes the logging channel resources.
+   *
+   * Should be called during the extension deactivation phase to free resources.
+   */
+  public static disposeChannel(): void {
+    if (this.logChannel) {
+      this.logChannel.dispose();
+      this.logChannel = null;
+    }
+  }
 }
