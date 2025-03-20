@@ -10,7 +10,7 @@
 namespace MessageLength {
   constexpr uint8_t c_orderMessageLength = 1;   ///< Length of command/order messages
   constexpr uint8_t c_addressMessageLength = 2; ///< Length of address field messages
-  constexpr uint8_t c_dataMessageLength = 32;   ///< Length of data payload in messages
+  constexpr uint8_t c_dataMessageLength = 8;   ///< Length of data payload in messages
 }
 
 /**
@@ -46,7 +46,7 @@ enum class Message : uint8_t {
  * @brief Maintains context information during EEPROM operations.
  */
 struct OperationContext {
-  uint16_t address = 0; ///< Current EEPROM address for operation
+  uint16_t address = 0x1000; ///< Current EEPROM address for operation, defaults to an invalid address (0x1000, the max adressable memory in a 24LC32A is 0xFFF)
   uint8_t buffer[MessageLength::c_dataMessageLength] = {0}; ///< Data buffer for EEPROM operations
   size_t bufferLength = 0; ///< Actual length of data in buffer
 
@@ -54,7 +54,7 @@ struct OperationContext {
    * @brief Resets the operation context to default state.
    */
   void reset() {
-    address = 0;
+    address = 0x1000;
     bufferLength = 0;
     memset(buffer, 0, sizeof(buffer));
   }
