@@ -5,21 +5,24 @@ import Logs, { LogType } from "./logs";
 
 /**
  * @class Project
- * @brief Manages project files, folders, compilation, and output handling for the SpinASM extension.
+ * @brief Manages project files, directories, compilation workflow, and output handling for SpinASM.
+ *
+ * Encapsulates operations related to creating project structure, compiling SpinASM code,
+ * and handling compiler outputs within a VSCode workspace.
  */
 export default class Project {
-  private rootFolder: string;
-  private outputFolder: string;
-  private iniFilePath: string;
-  private outputBinFile: string;
-  private compiler: string;
-  private compilerArguments: string[];
-  private programs: (string | null)[];
-  private outputs: string[];
+  private rootFolder: string;              ///< Root project directory.
+  private outputFolder: string;            ///< Directory to store compilation outputs.
+  private iniFilePath: string;             ///< Path to project settings (`settings.ini`).
+  private outputBinFile: string;           ///< Path for compiled binary file.
+  private compiler: string;                ///< Path to compiler executable.
+  private compilerArguments: string[];     ///< Arguments passed to the compiler.
+  private programs: (string | null)[];     ///< Paths of available program files.
+  private outputs: string[];               ///< Output file paths for compiled programs.
 
   /**
-   * @brief Constructor to initialize the project.
-   * @param folder Path to the root folder of the project.
+   * @brief Constructs a new Project instance.
+   * @param folder Path to the project's root directory.
    */
   constructor(folder: string) {
     this.rootFolder = folder;
@@ -33,42 +36,39 @@ export default class Project {
   }
 
   /**
-   * @brief Checks if the project is empty.
-   * @returns True if the `settings.ini` file does not exist.
+   * @brief Checks whether the project structure exists.
+   * @returns True if the project is empty (no settings.ini).
    */
   public emptyProject(): boolean {
     return !fs.existsSync(this.iniFilePath);
   }
 
   /**
-   * @brief Verifies that the compiler is valid and functional.
-   * @throws Error if the compiler path is invalid or the compiler fails.
+   * @brief Validates the compiler's availability and functionality.
+   * @throws Error if the compiler path is invalid or the compiler fails execution.
    */
   public checkCompiler(): void {
-    if (fs.existsSync(this.compiler)) {
-      Logs.log(LogType.INFO, "Compiler path valid");
-      try {
-        this.compilerArguments = ["-v"];
-        const result = this.runCompiler();
-        if (result === 0) {
-          Logs.log(LogType.INFO, "Compiler working successfully");
-        }
-      }
-      catch (error) {
-        throw new Error((error as Error).message);
-      }
+    if (!fs.existsSync(this.compiler)) {
+      throw new Error(`Compiler path invalid: ${this.compiler}`);
     }
-    else {
-      throw new Error("Compiler path invalid");
+
+    Logs.log(LogType.INFO, "Compiler path valid");
+    this.compilerArguments = ["-v"];
+    const result = this.runCompiler();
+
+    if (result !== 0) {
+      throw new Error(`Compiler check failed with return code: ${result}`);
     }
+
+    Logs.log(LogType.INFO, "Compiler working successfully");
   }
 
   /**
-   * @brief Creates the project folder structure, including program folders, output folder, and `settings.ini`.
-   * @throws Error if any folder or file creation fails.
+   * @brief Creates project directories, placeholder program files, and a default settings.ini.
+   * @throws Error if directory or file creation fails.
    */
   public createProjectStructure(): void {
-    const programContent = ";Blank program";
+    const programContent = "; Blank SpinASM program";
 
     const iniFileContent = `
 ;Project config file
@@ -77,152 +77,114 @@ export default class Project {
 ;Path of the executable
 path = C:\\path\\to\\asfv1.exe
 
-;Compiler options separated by a space:
-; -c clamp out-of-range values without error
-; -s read literals 2,1 as float (SpinASM compatibility)
+;Compiler options:
+; -c clamp out-of-range values
+; -s SpinASM compatibility
 ; -q suppress warnings
 options = -s
 
 [serial]
-;Serial port for the programmer
 port = COM6
 baudrate = 57600
 `;
 
+    // Create bank folders and default programs
     for (let i = 0; i < 8; i++) {
       const folder = path.join(this.rootFolder, `bank_${i}`);
       const file = path.join(folder, `${i}_programName.spn`);
 
-      if (!fs.existsSync(folder)) {
-        try {
+      try {
+        if (!fs.existsSync(folder)) {
           Logs.log(LogType.INFO, `Creating folder: ${folder}`);
-          fs.mkdirSync(folder);
-        }
-        catch (error) {
-          throw new Error(`Could not create ${folder}: ${(error as Error).message}`);
+          fs.mkdirSync(folder, { recursive: true });
         }
 
-        try {
+        if (!fs.existsSync(file)) {
           Logs.log(LogType.INFO, `Creating file: ${file}`);
           fs.writeFileSync(file, programContent);
         }
-        catch (error) {
-          throw new Error(`Could not create ${file}: ${(error as Error).message}`);
-        }
-      }
-      else {
-        Logs.log(LogType.INFO, `Folder ${folder} already exists`);
-        const programFile = fs
-          .readdirSync(folder)
-          .find((str) => str.match("^[0-7].*\\.spn"));
-        if (!programFile) {
-          try {
-            fs.writeFileSync(file, programContent);
-          }
-          catch (error) {
-            throw new Error(`Could not create ${file}: ${(error as Error).message}`);
-          }
-        }
         else {
-          Logs.log(LogType.INFO, `Program already exists in folder ${folder}: ${programFile}`);
+          Logs.log(LogType.INFO, `Program file already exists: ${file}`);
         }
-      }
-    }
-
-    if (!fs.existsSync(this.outputFolder)) {
-      try {
-        Logs.log(LogType.INFO, `Creating output folder: ${this.outputFolder}`);
-        fs.mkdirSync(this.outputFolder);
       }
       catch (error) {
-        throw new Error(`Could not create ${this.outputFolder}: ${(error as Error).message}`);
+        throw new Error(`Error setting up bank ${i}: ${(error as Error).message}`);
       }
     }
-    else {
-      Logs.log(LogType.INFO, `Output folder ${this.outputFolder} already exists`);
-    }
 
-    if (!fs.existsSync(this.iniFilePath)) {
-      try {
-        Logs.log(LogType.INFO, `Creating ini file: ${this.iniFilePath}`);
-        fs.writeFileSync(this.iniFilePath, iniFileContent);
-      } catch (error) {
-        throw new Error(`Could not create ${this.iniFilePath}: ${(error as Error).message}`);
-      }
-    }
-    else {
-      Logs.log(LogType.INFO, `Ini file ${this.iniFilePath} already exists`);
-    }
-  }
-
-  /**
-   * @brief Runs the compiler with the specified arguments.
-   * @returns The compiler's return code.
-   * @throws Error if the compiler fails to execute.
-   */
-  private runCompiler(): number {
+    // Create output directory
     try {
-      const output = cp.spawnSync(this.compiler, this.compilerArguments, { encoding: "utf8" });
-      Logs.log(LogType.INFO, `asfv1 return code: ${output.status}`);
-
-      if (output.stdout) {
-        Logs.log(LogType.INFO, `asfv1 stdout: ${output.stdout}`);
+      if (!fs.existsSync(this.outputFolder)) {
+        Logs.log(LogType.INFO, `Creating output folder: ${this.outputFolder}`);
+        fs.mkdirSync(this.outputFolder, { recursive: true });
       }
-      if (output.stderr) {
-        Logs.log(LogType.ERROR, `asfv1 stderr: ${output.stderr}`);
-      }
-
-      return output.status || 1; // Default to non-zero if undefined
     }
     catch (error) {
-      throw new Error((error as Error).message);
+      throw new Error(`Could not create output folder: ${(error as Error).message}`);
+    }
+
+    // Create settings.ini if it doesn't exist
+    try {
+      if (!fs.existsSync(this.iniFilePath)) {
+        Logs.log(LogType.INFO, `Creating ini file: ${this.iniFilePath}`);
+        fs.writeFileSync(this.iniFilePath, iniFileContent.trim());
+      }
+    }
+    catch (error) {
+      throw new Error(`Could not create ini file: ${(error as Error).message}`);
     }
   }
 
   /**
-   * @brief Sets up the compiler for a build.
+   * @brief Runs the compiler process synchronously.
+   * @returns The compiler's exit code.
+   * @throws Error if the compiler fails execution.
+   */
+  private runCompiler(): number {
+    const output = cp.spawnSync(this.compiler, this.compilerArguments, { encoding: "utf8" });
+    Logs.log(LogType.INFO, `Compiler return code: ${output.status}`);
+
+    if (output.stdout) {
+      Logs.log(LogType.INFO, `Compiler stdout: ${output.stdout}`);
+    }
+
+    if (output.stderr) {
+      Logs.log(LogType.ERROR, `Compiler stderr: ${output.stderr}`);
+    }
+
+    return output.status ?? 1; // Defaults to 1 if undefined
+  }
+
+  /**
+   * @brief Configures the compiler settings for building.
    * @param compiler Path to the compiler executable.
-   * @param compilerArgs Array of compiler arguments.
+   * @param compilerArgs Arguments for the compiler.
    */
   public buildSetup(compiler: string, compilerArgs: string[]): void {
     this.compiler = compiler;
     this.compilerArguments = [...compilerArgs];
 
-    Logs.log(LogType.INFO, `Compiler: ${compiler}`);
+    Logs.log(LogType.INFO, `Compiler set to: ${compiler}`);
     Logs.log(LogType.INFO, `Compiler args: ${compilerArgs.join(" ")}`);
 
     this.getAvailablePrograms();
-
-    Logs.log(LogType.INFO, "Available programs:");
-    this.programs.forEach((program, index) => {
-      Logs.log(LogType.INFO, `Program ${index}: ${program}`);
-    });
-    this.outputs.forEach((output, index) => {
-      Logs.log(LogType.INFO, `Output ${index}: ${output}`);
-    });
-
-    Logs.log(LogType.INFO, "Compiler ready");
+    Logs.log(LogType.INFO, "Available programs identified.");
   }
 
   /**
-   * @brief Identifies available programs and their outputs in the project structure.
+   * @brief Populates the internal arrays with available programs and corresponding outputs.
    */
   private getAvailablePrograms(): void {
     this.programs = [];
     this.outputs = [];
 
     for (let i = 0; i < 8; i++) {
-      const currentProgramFolder = path.join(this.rootFolder, `bank_${i}`);
-      const programFile = fs
-        .readdirSync(currentProgramFolder)
-        .find((str) => str.match("^[0-7].*\\.spn"));
+      const currentFolder = path.join(this.rootFolder, `bank_${i}`);
+      const programFile = fs.readdirSync(currentFolder).find(file => /^[0-7].*\.spn$/.test(file));
 
       if (programFile) {
-        const programPath = path.join(currentProgramFolder, programFile);
-        const outputPath = path.join(this.outputFolder, `${path.parse(programFile).name}.hex`);
-
-        this.programs[i] = programPath;
-        this.outputs[i] = outputPath;
+        this.programs[i] = path.join(currentFolder, programFile);
+        this.outputs[i] = path.join(this.outputFolder, `${path.parse(programFile).name}.hex`);
       }
       else {
         this.programs[i] = null;
@@ -232,11 +194,11 @@ baudrate = 57600
   }
 
   /**
-   * @brief Removes all `.hex` program files from the output folder.
+   * @brief Removes all compiled `.hex` files.
    */
   public removeHexPrograms(): void {
-    this.outputs.forEach((output) => {
-      if (fs.existsSync(output)) {
+    for (const output of this.outputs) {
+      if (output && fs.existsSync(output)) {
         try {
           Logs.log(LogType.INFO, `Removing file: ${output}`);
           fs.unlinkSync(output);
@@ -245,14 +207,11 @@ baudrate = 57600
           throw new Error(`Could not remove ${output}: ${(error as Error).message}`);
         }
       }
-      else {
-        Logs.log(LogType.INFO, `File: ${output} does not exist`);
-      }
-    });
+    }
   }
 
   /**
-   * @brief Removes the `.bin` output file from the output folder.
+   * @brief Removes the compiled `.bin` file.
    */
   public removeBinPrograms(): void {
     if (fs.existsSync(this.outputBinFile)) {
@@ -264,31 +223,27 @@ baudrate = 57600
         throw new Error(`Could not remove ${this.outputBinFile}: ${(error as Error).message}`);
       }
     }
-    else {
-      Logs.log(LogType.INFO, `File: ${this.outputBinFile} does not exist`);
-    }
   }
 
   /**
-   * @brief Compiles a specified program to `.hex` format.
+   * @brief Compiles the specified program index into a `.hex` file.
    * @param program Index of the program to compile.
-   * @throws Error if the compilation fails.
+   * @throws Error if compilation fails.
    */
   public compileProgramToHex(program: number): void {
-    try {
-      this.removeHexPrograms();
-      if (this.programs[program]) {
-        this.compilerArguments.push("-p", program.toString(), this.programs[program]!, this.outputs[program]);
-        const result = this.runCompiler();
+    this.removeHexPrograms();
 
-        if (result !== 0) {
-          throw new Error(`Compile failed with return code: ${result}`);
-        }
-        Logs.log(LogType.INFO, "Compile succeeded");
-      }
+    if (!this.programs[program]) {
+      throw new Error(`Program at index ${program} does not exist.`);
     }
-    catch (error) {
-      throw new Error((error as Error).message);
+
+    this.compilerArguments.push("-p", program.toString(), this.programs[program]!, this.outputs[program]);
+
+    const result = this.runCompiler();
+    if (result !== 0) {
+      throw new Error(`Compilation failed for program ${program} with return code: ${result}`);
     }
+
+    Logs.log(LogType.INFO, "Compilation succeeded.");
   }
 }
