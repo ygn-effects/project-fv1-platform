@@ -19,3 +19,9 @@ desktop.ini
 
 # Test project
 software/spinasm/test
+
+firmware/vscode-spinasm-firmware/.pio/build/ATmega328P/
+
+firmware/vscode-spinasm-firmware/.vscode/
+
+firmware/vscode-spinasm-firmware/.pio/build/
