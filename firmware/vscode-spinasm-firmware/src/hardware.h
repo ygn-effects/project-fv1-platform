@@ -10,7 +10,7 @@
 namespace MessageLength {
   constexpr uint8_t c_orderMessageLength = 1;   ///< Length of command/order messages
   constexpr uint8_t c_addressMessageLength = 2; ///< Length of address field messages
-  constexpr uint8_t c_dataMessageLength = 8;   ///< Length of data payload in messages
+  constexpr uint8_t c_dataMessageLength = 32;   ///< Length of data payload in messages
 }
 
 /**
