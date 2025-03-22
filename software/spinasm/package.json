@@ -18,8 +18,8 @@
       "title": "SpinASM: Create Project"
     },
     {
-      "command": "spinasm.checkCompiler",
-      "title": "SpinASM: Check Compiler"
+      "command": "spinasm.checkProjectSettings",
+      "title": "SpinASM: Check Project Settings"
     },
     {
       "command": "spinasm.compileProgram",
