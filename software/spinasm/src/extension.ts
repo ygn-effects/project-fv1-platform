@@ -80,8 +80,6 @@ async function checkProjectSettings(): Promise<void> {
     try {
       await programmer.connect();
 
-      await delay(1000);
-
       const isConnected = await programmer.isProgrammerConnected();
 
       if (!isConnected) return;
@@ -94,6 +92,7 @@ async function checkProjectSettings(): Promise<void> {
     }
     catch (error) {
       Logs.log(LogType.ERROR, (error as Error).message);
+      throw error;
     }
     finally {
       await programmer.disconnect();

@@ -60,8 +60,8 @@ export default class Programmer {
 
         Logs.log(LogType.INFO, `Serial port ${this.serialPort.path} opened successfully.`);
 
-        // Allow 500 ms to discard initial noise from the serial buffer
-        const discardDuration = 500; // ms
+        // Allow 100 ms to discard initial noise from the serial buffer
+        const discardDuration = 100; // ms
         const startTime = Date.now();
 
         const discardData = (data: Buffer) => {
@@ -140,7 +140,7 @@ export default class Programmer {
   private async sendCommand(order: OrderCode): Promise<number> {
     const now = Date.now();
     const elapsed = now - this.lastCommandTimestamp;
-    const requiredDelay = 500; // Adjust as needed
+    const requiredDelay = 100; // Adjust as needed
 
     if (elapsed < requiredDelay) {
       await new Promise(resolve => setTimeout(resolve, requiredDelay - elapsed));
@@ -156,7 +156,7 @@ export default class Programmer {
         this.parser.removeAllListeners("data");
         Logs.log(LogType.ERROR, "Timeout waiting for programmer response.");
         reject(new Error("Timeout waiting for programmer response."));
-      }, 2000);
+      }, 100);
 
       this.parser.once("data", (data: Buffer) => {
         clearTimeout(timeout);
