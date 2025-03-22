@@ -5,6 +5,10 @@ import Config from "./config";
 import Logs, { LogType } from "./logs";
 import Programmer from "./programmer";
 
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 /**
  * @brief Activates the SpinASM VSCode extension.
  *
@@ -73,7 +77,27 @@ async function checkProjectSettings(): Promise<void> {
     project.checkCompiler();
 
     const programmer = new Programmer(serialPort, baudRate);
-    // programmer.checkProgrammer();
+    try {
+      await programmer.connect();
+
+      await delay(1000);
+
+      const isConnected = await programmer.isProgrammerConnected();
+
+      if (!isConnected) return;
+
+      const eepromReady = await programmer.isEepromReady();
+
+      if (!eepromReady) return;
+
+      Logs.log(LogType.INFO, "Programmer and EEPROM ready for operations.");
+    }
+    catch (error) {
+      Logs.log(LogType.ERROR, (error as Error).message);
+    }
+    finally {
+      await programmer.disconnect();
+    }
 
     Logs.log(LogType.INFO, "Compiler and programmer validation succeeded");
     vscode.window.showInformationMessage("Compiler and programmer are working correctly!");

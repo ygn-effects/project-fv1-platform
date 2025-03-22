@@ -1,5 +1,4 @@
-import { SerialPort } from "serialport";
-import { DelimiterParser } from "@serialport/parser-delimiter";
+import { ByteLengthParser, SerialPort } from "serialport";
 import Logs, { LogType } from "./logs";
 
 /**
@@ -19,8 +18,8 @@ enum OrderCode {
  * @brief Codes representing possible programmer responses.
  */
 enum ResponseCode {
-  Ok           = 0x06, ///< Operation successful
-  Nok          = 0x07, ///< Operation failed
+  Nok          = 0x06, ///< Operation successful
+  Ok           = 0x07, ///< Operation failed
   Timeout      = 0x08, ///< Operation timed out
   WriteError   = 0x09, ///< Write error
   ReadError    = 0x0A, ///< Read error
@@ -34,9 +33,10 @@ enum ResponseCode {
  */
 export default class Programmer {
   private serialPort: SerialPort;
-  private parser: DelimiterParser;
+  private parser: ByteLengthParser;
   private readonly startMarker = 0x1e;
   private readonly endMarker = 0x1f;
+  private lastCommandTimestamp = 0;
 
   /**
    * @brief Constructs a Programmer instance.
@@ -45,8 +45,7 @@ export default class Programmer {
    */
   constructor(port: string, baudRate: number) {
     this.serialPort = new SerialPort({ path: port, baudRate, autoOpen: false });
-    this.parser = this.serialPort.pipe(new DelimiterParser({ delimiter: Buffer.from([this.endMarker]) }));
-  }
+    this.parser = this.serialPort.pipe(new ByteLengthParser({ length: 3 }));  }
 
   /**
    * @brief Opens the serial port connection to the programmer.
@@ -58,8 +57,26 @@ export default class Programmer {
           Logs.log(LogType.ERROR, `Failed to open serial port: ${err.message}`);
           return reject(err);
         }
+
         Logs.log(LogType.INFO, `Serial port ${this.serialPort.path} opened successfully.`);
-        resolve();
+
+        // Allow 500 ms to discard initial noise from the serial buffer
+        const discardDuration = 500; // ms
+        const startTime = Date.now();
+
+        const discardData = (data: Buffer) => {
+          Logs.log(LogType.INFO, `Discarding junk data during init: ${data.toString('hex')}`);
+        };
+
+        // Attach temporary listener to discard incoming junk data
+        this.serialPort.on("data", discardData);
+
+        // After discard duration, remove the listener and proceed
+        setTimeout(() => {
+          this.serialPort.removeListener("data", discardData);
+          Logs.log(LogType.INFO, `Initial junk data discard completed (${Date.now() - startTime} ms).`);
+          resolve();
+        }, discardDuration);
       });
     });
   }
@@ -121,6 +138,17 @@ export default class Programmer {
    * @returns The response code received from the programmer.
    */
   private async sendCommand(order: OrderCode): Promise<number> {
+    const now = Date.now();
+    const elapsed = now - this.lastCommandTimestamp;
+    const requiredDelay = 500; // Adjust as needed
+
+    if (elapsed < requiredDelay) {
+      await new Promise(resolve => setTimeout(resolve, requiredDelay - elapsed));
+    }
+
+    this.lastCommandTimestamp = Date.now();
+
+    // Your existing sendCommand logic here...
     return new Promise((resolve, reject) => {
       const message = Buffer.from([this.startMarker, order, this.endMarker]);
 
@@ -128,29 +156,28 @@ export default class Programmer {
         this.parser.removeAllListeners("data");
         Logs.log(LogType.ERROR, "Timeout waiting for programmer response.");
         reject(new Error("Timeout waiting for programmer response."));
-      }, 500);
+      }, 2000);
 
       this.parser.once("data", (data: Buffer) => {
         clearTimeout(timeout);
 
-        // Verify the incoming message format: [startMarker, responseCode]
-        if (data.length !== 2 || data[0] !== this.startMarker) {
+        if (data.length !== 3 || data[0] !== this.startMarker || data[2] !== this.endMarker) {
           Logs.log(LogType.ERROR, `Invalid response format: ${data.toString('hex')}`);
           return reject(new Error("Invalid response format from programmer."));
         }
 
-        resolve(data[1]); // Return response code directly
+        resolve(data[1]);
       });
 
-      // Send the command
       this.serialPort.write(message, (err) => {
         if (err) {
           clearTimeout(timeout);
           this.parser.removeAllListeners("data");
           Logs.log(LogType.ERROR, `Failed to write command: ${err.message}`);
-          return reject(err);
+          reject(err);
+        } else {
+          Logs.log(LogType.INFO, `Command sent: 0x${order.toString(16)}`);
         }
-        Logs.log(LogType.INFO, `Command sent: 0x${order.toString(16)}`);
       });
     });
   }
