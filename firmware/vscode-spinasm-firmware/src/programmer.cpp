@@ -72,7 +72,7 @@ ProgrammerStatus Programmer::getMessage(uint8_t* t_data, uint8_t t_count, uint16
 }
 
 void Programmer::sendMessage(const uint8_t* t_data, uint8_t t_count) {
-  delay(100);
+  delay(20);
   // Send data with framing markers for reliable parsing
   Serial.write(ProgrammerConstants::c_startMarker);
   Serial.write(t_data, t_count);
