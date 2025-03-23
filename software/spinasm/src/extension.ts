@@ -24,7 +24,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("spinasm.createProject", createProject),
     vscode.commands.registerCommand("spinasm.checkProjectSettings", checkProjectSettings),
     vscode.commands.registerCommand("spinasm.compileProgram", compileProgram),
-    vscode.commands.registerCommand("spinasm.showSerialConfig", showSerialConfig)
+    vscode.commands.registerCommand("spinasm.showSerialConfig", showSerialConfig),
+    vscode.commands.registerCommand("spinasm.test", test)
   );
 
   Logs.log(LogType.INFO, "Commands registered successfully");
@@ -38,6 +39,42 @@ export function activate(context: vscode.ExtensionContext): void {
 export function deactivate(): void {
   Logs.log(LogType.INFO, "Extension deactivated");
   Logs.disposeChannel();
+}
+
+async function test(): Promise<void> {
+  const folder = await getWorkspaceFolder();
+
+  if (!folder) {
+    return;
+  }
+
+  const { compilerPath, compilerArgs, serialPort, baudRate } = loadProjectSettings(folder);
+
+  try {
+    const project = new Project(folder);
+    project.buildSetup(compilerPath, compilerArgs);
+    project.checkCompiler();
+
+    const programmer = new Programmer(serialPort, baudRate);
+    await programmer.connect();
+
+    const isConnected = await programmer.isProgrammerConnected();
+
+    if (!isConnected) {
+      throw new Error("Programmer did not respond correctly.");
+    }
+
+    await programmer.test();
+    await programmer.disconnect();
+  }
+  catch (error) {
+    handleError(error, "Failed to validate the compiler and programmer");
+  }
+  finally {
+    const programmer = new Programmer(serialPort, baudRate);
+    // await programmer.sendEndOrder();
+    await programmer.disconnect();
+  }
 }
 
 /**
