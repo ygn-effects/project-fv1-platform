@@ -24,7 +24,7 @@ enum ResponseCode {
   WriteError   = 0x09, ///< Write error
   ReadError    = 0x0A, ///< Read error
   ComError     = 0x0B, ///< Communication error
-  BracingError = 0x0C, ///< Bracing error
+  FramingError = 0x0C, ///< Framing error
 }
 
 /**
@@ -104,13 +104,19 @@ export default class Programmer {
    * @returns True if programmer responds with OK.
    */
   public async isProgrammerConnected(): Promise<boolean> {
-    const response = await this.sendCommand(OrderCode.RuThere);
-    if (response === ResponseCode.Ok) {
+    const message = Buffer.from([OrderCode.RuThere])
+    const response = await this.sendMessage(message, 1);
+
+    if (response[0] === ResponseCode.Ok) {
       Logs.log(LogType.INFO, "Programmer is connected.");
       return true;
     }
+    else if (response[0] === ResponseCode.Nok) {
+      Logs.log(LogType.ERROR, "Programmer connected but not ready.")
+      return false;
+    }
 
-    Logs.log(LogType.ERROR, "Programmer not responding correctly.");
+    Logs.log(LogType.ERROR, `Programmer not responding correctly : ${response}`);
     return false;
   }
 
@@ -119,11 +125,13 @@ export default class Programmer {
    * @returns True if EEPROM responds with OK (ready).
    */
   public async isEepromReady(): Promise<boolean> {
-    const response = await this.sendCommand(OrderCode.RuReady);
-    if (response === ResponseCode.Ok) {
+    const message = Buffer.from([OrderCode.RuReady])
+    const response = await this.sendMessage(message, 1);
+
+    if (response[0] === ResponseCode.Ok) {
       Logs.log(LogType.INFO, "EEPROM is ready.");
       return true;
-    } else if (response === ResponseCode.Nok) {
+    } else if (response[0] === ResponseCode.Nok) {
       Logs.log(LogType.ERROR, "EEPROM is not ready.");
       return false;
     }
@@ -132,53 +140,92 @@ export default class Programmer {
     return false;
   }
 
+  public async sendEndOrder(): Promise<boolean> {
+    const message = Buffer.from([OrderCode.End])
+    const response = await this.sendMessage(message, 1);
+
+    if (response[0] === ResponseCode.Ok) {
+      return true;
+    }
+    else if (response[0] === ResponseCode.Nok) {
+      return false;
+    }
+
+    return false;
+  }
+
   /**
-   * @brief Sends a command to the programmer and awaits response.
-   * @param order - Order code to send.
-   * @returns The response code received from the programmer.
-   */
-  private async sendCommand(order: OrderCode): Promise<number> {
+ * @brief Sends an arbitrary message to the programmer and awaits the response.
+ * @param payload - Message payload without framing markers.
+ * @param expectedResponseSize - Expected size of the response payload (excluding framing markers).
+ * @param timeoutMs - Timeout in milliseconds for the response (default: 500ms).
+ * @returns A Buffer containing the response payload.
+ */
+  private async sendMessage(payload: Buffer, expectedResponseSize: number, timeoutMs = 500): Promise<Buffer> {
+    // Ensure proper timing between commands
     const now = Date.now();
     const elapsed = now - this.lastCommandTimestamp;
-    const requiredDelay = 100; // Adjust as needed
+    const requiredDelay = 100;
 
     if (elapsed < requiredDelay) {
-      await new Promise(resolve => setTimeout(resolve, requiredDelay - elapsed));
+      await new Promise((resolve) => setTimeout(resolve, requiredDelay - elapsed));
     }
 
     this.lastCommandTimestamp = Date.now();
 
-    // Your existing sendCommand logic here...
-    return new Promise((resolve, reject) => {
-      const message = Buffer.from([this.startMarker, order, this.endMarker]);
+    // Prepare the complete message with start/end markers
+    const message = Buffer.concat([
+      Buffer.from([this.startMarker]),
+      payload,
+      Buffer.from([this.endMarker]),
+    ]);
 
+    return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.parser.removeAllListeners("data");
         Logs.log(LogType.ERROR, "Timeout waiting for programmer response.");
         reject(new Error("Timeout waiting for programmer response."));
-      }, 100);
+      }, timeoutMs);
 
       this.parser.once("data", (data: Buffer) => {
         clearTimeout(timeout);
 
-        if (data.length !== 3 || data[0] !== this.startMarker || data[2] !== this.endMarker) {
-          Logs.log(LogType.ERROR, `Invalid response format: ${data.toString('hex')}`);
+        // Validate framing markers
+        if (data.length !== expectedResponseSize + 2 || data[0] !== this.startMarker || data[expectedResponseSize + 1] !== this.endMarker) {
+          Logs.log(LogType.ERROR,`Invalid response format: ${data.toString("hex")}`);
+
           return reject(new Error("Invalid response format from programmer."));
         }
+        else if (data.length === 3 && data[1] === ResponseCode.Timeout) {
+          Logs.log(LogType.ERROR, "Programmer timed out during operation.")
+          return reject(new Error("Programmer timed out during operation."));
+        }
+        else if (data.length === 3 && data[1] === ResponseCode.FramingError) {
+          Logs.log(LogType.ERROR, "Programmer reported a framing error on received message.")
+          return reject(new Error("Programmer reported a framing error on received message."));
+        }
+        else if (data.length === 3 && data[1] === ResponseCode.ComError) {
+          Logs.log(LogType.ERROR, "Programmer reported a communication error.")
+          return reject(new Error("Programmer reported a communication error."));
+        }
 
-        resolve(data[1]);
+        // Extract the response payload (excluding markers)
+        const responsePayload = data.slice(1, data.length - 1);
+        resolve(responsePayload);
       });
 
+      // Send message
       this.serialPort.write(message, (err) => {
         if (err) {
           clearTimeout(timeout);
           this.parser.removeAllListeners("data");
-          Logs.log(LogType.ERROR, `Failed to write command: ${err.message}`);
+          Logs.log(LogType.ERROR, `Failed to write message: ${err.message}`);
           reject(err);
         } else {
-          Logs.log(LogType.INFO, `Command sent: 0x${order.toString(16)}`);
+          Logs.log(LogType.INFO, `Message sent: ${message.toString("hex")}`);
         }
       });
     });
   }
+
 }
