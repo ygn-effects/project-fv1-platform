@@ -26,6 +26,10 @@
       "title": "SpinASM: Compile Program"
     },
     {
+      "command": "spinasm.test",
+      "title": "SpinASM: Test"
+    },
+    {
       "command": "spinasm.showSerialConfig",
       "title": "SpinASM: Show Serial Configuration"
     }
