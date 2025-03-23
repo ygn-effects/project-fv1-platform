@@ -70,33 +70,31 @@ async function checkProjectSettings(): Promise<void> {
     return;
   }
 
+  const { compilerPath, compilerArgs, serialPort, baudRate } = loadProjectSettings(folder);
+
   try {
-    const { compilerPath, compilerArgs, serialPort, baudRate } = loadProjectSettings(folder);
     const project = new Project(folder);
     project.buildSetup(compilerPath, compilerArgs);
     project.checkCompiler();
 
     const programmer = new Programmer(serialPort, baudRate);
-    try {
-      await programmer.connect();
+    await programmer.connect();
 
-      const isConnected = await programmer.isProgrammerConnected();
+    const isConnected = await programmer.isProgrammerConnected();
 
-      if (!isConnected) return;
-
-      const eepromReady = await programmer.isEepromReady();
-
-      if (!eepromReady) return;
-
-      Logs.log(LogType.INFO, "Programmer and EEPROM ready for operations.");
+    if (!isConnected) {
+      throw new Error("Programmer did not respond correctly.");
     }
-    catch (error) {
-      Logs.log(LogType.ERROR, (error as Error).message);
-      throw error;
+
+    const eepromReady = await programmer.isEepromReady();
+
+    if (!eepromReady) {
+      throw new Error("EEPROM is not ready.");
     }
-    finally {
-      await programmer.disconnect();
-    }
+
+    await programmer.disconnect();
+
+    Logs.log(LogType.INFO, "Programmer and EEPROM ready for operations.");
 
     Logs.log(LogType.INFO, "Compiler and programmer validation succeeded");
     vscode.window.showInformationMessage("Compiler and programmer are working correctly!");
@@ -104,7 +102,13 @@ async function checkProjectSettings(): Promise<void> {
   catch (error) {
     handleError(error, "Failed to validate the compiler and programmer");
   }
+  finally {
+    const programmer = new Programmer(serialPort, baudRate);
+    // await programmer.sendEndOrder();
+    await programmer.disconnect();
+  }
 }
+
 
 /**
  * @brief Compiles the first SpinASM program (bank 0) to HEX format.
