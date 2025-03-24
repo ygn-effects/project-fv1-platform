@@ -1,7 +1,6 @@
 import { DelimiterParser, SerialPort } from "serialport";
 import Logs, { LogType } from "./logs";
 import { randomBytes } from "crypto";
-import { off } from "process";
 
 /**
  * @enum OrderCode
@@ -89,7 +88,9 @@ export default class Programmer {
    */
   public async disconnect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (!this.serialPort.isOpen) return resolve();
+      if (!this.serialPort.isOpen) {
+        return resolve();
+      }
 
       this.serialPort.close((err) => {
         if (err) {
@@ -142,9 +143,15 @@ export default class Programmer {
     }
   }
 
+  /**
+   * @brief Reads a 512 bytes program at the given address
+   * @param address Program address
+   * @returns A 512 bytes buffer containing the program
+   */
   public async readProgram(address: number): Promise<Buffer> {
     let program = Buffer.alloc(512);
 
+    // Process the read by 32 bytes pages increment.
     for (let offset = 0; offset < 512; offset += 32) {
       const currentAddress = address + offset;
 
@@ -164,9 +171,15 @@ export default class Programmer {
     return program;
   }
 
+  /**
+   * @brief Writes a 512 bytes program at the given address
+   * @param address Program address
+   * @param program A 512 bytes buffer containing the program to write
+   */
   public async writeProgram(address: number, program: Buffer): Promise<void> {
+    // Process the write by 32 bytes pages increment.
     for (let offset = 0; offset < 512; offset += 32) {
-      const currentAddress = address + offset
+      const currentAddress = address + offset;
 
       let data = Buffer.alloc(32);
       program.copy(data, 0, offset, offset + 32);
@@ -193,6 +206,10 @@ export default class Programmer {
     }
   }
 
+  /**
+   * @brief Sends a "Write" command to initiate a write operation.
+   * @returns True if the order is accepted.
+   */
   private async sendWriteOrder(): Promise<boolean> {
     const response = await this.sendMessage(Buffer.from([OrderCode.Write]), 1);
 
@@ -209,6 +226,10 @@ export default class Programmer {
     }
   }
 
+  /**
+   * @brief Sends a "Read" command to initiate a read operation.
+   * @returns True if the order is accepted.
+   */
   private async sendReadOrder(): Promise<boolean> {
     const response = await this.sendMessage(Buffer.from([OrderCode.Read]), 1);
 
@@ -225,6 +246,10 @@ export default class Programmer {
     }
   }
 
+  /**
+   * @brief Sends the address to write to or read from.
+   * @returns True if the address is accepted.
+   */
   private async sendAddress(address: number): Promise<boolean> {
     const response = await this.sendMessage(Buffer.from([(address >> 8) & 0xFF, address & 0xFF]), 1);
 
@@ -241,10 +266,18 @@ export default class Programmer {
     }
   }
 
+  /**
+   * @brief Triggers a 32 bytes page read.
+   * @returns A 32 bytes buffer containing the data read.
+   */
   private async readData(): Promise<Buffer> {
     return await this.sendMessage(Buffer.from([OrderCode.Read]), 32);
   }
 
+  /**
+   * @brief Sends the data to write, typically a 32 bytes buffer
+   * @returns True if the write suceeded.
+   */
   private async sendData(data: Buffer): Promise<boolean> {
     const response = await this.sendMessage(data, 1);
 
@@ -262,7 +295,7 @@ export default class Programmer {
   }
 
   private async sendEndOrder(): Promise<boolean> {
-    const message = Buffer.from([OrderCode.End])
+    const message = Buffer.from([OrderCode.End]);
     const response = await this.sendMessage(message, 1);
 
     if (response[0] === ResponseCode.Ok) {
@@ -319,15 +352,15 @@ export default class Programmer {
           return reject(new Error("Invalid response format from programmer."));
         }
         else if (data.length === 2 && data[1] === ResponseCode.Timeout) {
-          Logs.log(LogType.ERROR, "Programmer timed out during operation.")
+          Logs.log(LogType.ERROR, "Programmer timed out during operation.");
           return reject(new Error("Programmer timed out during operation."));
         }
         else if (data.length === 2 && data[1] === ResponseCode.FramingError) {
-          Logs.log(LogType.ERROR, "Programmer reported a framing error on received message.")
+          Logs.log(LogType.ERROR, "Programmer reported a framing error on received message.");
           return reject(new Error("Programmer reported a framing error on received message."));
         }
         else if (data.length === 2 && data[1] === ResponseCode.ComError) {
-          Logs.log(LogType.ERROR, "Programmer reported a communication error.")
+          Logs.log(LogType.ERROR, "Programmer reported a communication error.");
           return reject(new Error("Programmer reported a communication error."));
         }
 
@@ -350,19 +383,26 @@ export default class Programmer {
     });
   }
 
+  /**
+   * @brief Generates a 512 bytes array with random bytes for testing purpose.
+   * @returns A 512 bytes array containing a random program.
+   */
   private generateRandomProgram(): Buffer {
       const buffer = randomBytes(512);
 
       // Iterate through the buffer and replace unwanted values
       for (let i = 0; i < buffer.length; i++) {
           while (buffer[i] === 30 || buffer[i] === 31) {
-              buffer[i] = randomBytes(1)[0]; // Replace with a new random byte
+              buffer[i] = randomBytes(1)[0];
           }
       }
 
       return buffer;
   }
 
+  /**
+   * @brief Test method.
+   */
   async test(): Promise<void> {
     const programWrite = this.generateRandomProgram();
     Logs.log(LogType.INFO, `Program to write : ${programWrite.toString("hex")}`);
@@ -374,49 +414,5 @@ export default class Programmer {
 
     const result = Buffer.compare(programWrite, programRead);
     Logs.log(LogType.INFO, `Comparison result : ${result}`);
-
-    /**
-    const writeData = Buffer.from(randomBytes(32));
-    Logs.log(LogType.INFO, `Data to write : ${writeData.toString("hex")}`);
-
-    if (!(await this.isEepromReady())) {
-      throw new Error("Write test : EEPROM is not ready for read operation.");
-    }
-
-    if (!(await this.sendWriteOrder())) {
-      throw new Error("write test : Failed to send WRITE order to programmer.");
-    }
-
-    if (!(await this.sendAddress(0))) {
-      throw new Error("Write test : Failed to send address 0 to programmer.");
-    }
-
-    if (!(await this.sendWriteOrder())) {
-      throw new Error("write test : Failed to send WRITE order to programmer.");
-    }
-
-    if (!(await this.sendData(writeData))) {
-      throw new Error("write test : Failed to send data.");
-    }
-
-    if (!(await this.sendWriteOrder())) {
-      throw new Error("write test : Failed to send WRITE order to programmer.");
-    }
-
-    if (!(await this.isEepromReady())) {
-      throw new Error("Read test : EEPROM is not ready for read operation.");
-    }
-
-    if (!(await this.sendReadOrder())) {
-      throw new Error("Read test : Failed to send READ order to programmer.");
-    }
-
-    if (!(await this.sendAddress(0))) {
-      throw new Error("Read test : Failed to send address 0 to programmer.");
-    }
-
-    const data = await this.readData();
-    Logs.log(LogType.INFO, `Data: ${data.toString("hex")}`);
-  */
   }
 }
