@@ -286,7 +286,7 @@ export default class Programmer {
     // Ensure proper timing between commands
     const now = Date.now();
     const elapsed = now - this.lastCommandTimestamp;
-    const requiredDelay = 100;
+    const requiredDelay = 20;
 
     if (elapsed < requiredDelay) {
       await new Promise((resolve) => setTimeout(resolve, requiredDelay - elapsed));
