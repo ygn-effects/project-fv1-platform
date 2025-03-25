@@ -28,6 +28,118 @@
     {
       "command": "spinasm.showSerialConfig",
       "title": "SpinASM: Show Serial Configuration"
+    },
+    {
+      "command": "spinasm.compileprogram1",
+      "title": "SpinASM: Compile program 1"
+    },
+    {
+      "command": "spinasm.compileprogram2",
+      "title": "SpinASM: Compile program 2"
+    },
+    {
+      "command": "spinasm.compileprogram3",
+      "title": "SpinASM: Compile program 3"
+    },
+    {
+      "command": "spinasm.compileprogram4",
+      "title": "SpinASM: Compile program 4"
+    },
+    {
+      "command": "spinasm.compileprogram5",
+      "title": "SpinASM: Compile program 5"
+    },
+    {
+      "command": "spinasm.compileprogram6",
+      "title": "SpinASM: Compile program 6"
+    },
+    {
+      "command": "spinasm.compileprogram7",
+      "title": "SpinASM: Compile program 7"
+    },
+    {
+      "command": "spinasm.compilecurrentprogram",
+      "title": "SpinASM: Compile current program"
+    },
+    {
+      "command": "spinasm.compileallprograms",
+      "title": "SpinASM: Compile all programs"
+    },
+    {
+      "command": "spinasm.compileallprogramstobin",
+      "title": "SpinASM: Compile all programs to .bin"
+    },
+    {
+      "command": "spinasm.uploadprogram0",
+      "title": "SpinASM: Upload program 0"
+    },
+    {
+      "command": "spinasm.uploadprogram1",
+      "title": "SpinASM: Upload program 1"
+    },
+    {
+      "command": "spinasm.uploadprogram2",
+      "title": "SpinASM: Upload program 2"
+    },
+    {
+      "command": "spinasm.uploadprogram3",
+      "title": "SpinASM: Upload program 3"
+    },
+    {
+      "command": "spinasm.uploadprogram4",
+      "title": "SpinASM: Upload program 4"
+    },
+    {
+      "command": "spinasm.uploadprogram5",
+      "title": "SpinASM: Upload program 5"
+    },
+    {
+      "command": "spinasm.uploadprogram6",
+      "title": "SpinASM: Upload program 6"
+    },
+    {
+      "command": "spinasm.uploadprogram7",
+      "title": "SpinASM: Upload program 7"
+    },
+    {
+      "command": "spinasm.uploadcurrentprogram",
+      "title": "SpinASM: Upload current program"
+    },
+    {
+      "command": "spinasm.compileanduploadprogram0",
+      "title": "SpinASM: Compile & Upload program 0"
+    },
+    {
+      "command": "spinasm.compileanduploadprogram1",
+      "title": "SpinASM: Compile & Upload program 1"
+    },
+    {
+      "command": "spinasm.compileanduploadprogram2",
+      "title": "SpinASM: Compile & Upload program 2"
+    },
+    {
+      "command": "spinasm.compileanduploadprogram3",
+      "title": "SpinASM: Compile & Upload program 3"
+    },
+    {
+      "command": "spinasm.compileanduploadprogram4",
+      "title": "SpinASM: Compile & Upload program 4"
+    },
+    {
+      "command": "spinasm.compileanduploadprogram5",
+      "title": "SpinASM: Compile & Upload program 5"
+    },
+    {
+      "command": "spinasm.compileanduploadprogram6",
+      "title": "SpinASM: Compile & Upload program 6"
+    },
+    {
+      "command": "spinasm.compileanduploadprogram7",
+      "title": "SpinASM: Compile & Upload program 7"
+    },
+    {
+      "command": "spinasm.compileanduploadcurrentprogram",
+      "title": "SpinASM: Compile & Upload current program"
     }
   ],
   "languages": [
