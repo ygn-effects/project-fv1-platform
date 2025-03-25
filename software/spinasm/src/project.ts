@@ -211,6 +211,21 @@ baudrate = 57600
   }
 
   /**
+   * @brief Removes a compiled `.hex` file.
+   */
+  public removeHexProgram(path: any): void {
+    if (fs.existsSync(path)) {
+      try {
+        Logs.log(LogType.INFO, `Removing file: ${path}`);
+        fs.unlinkSync(path);
+      }
+      catch (error) {
+        throw new Error(`Could not remove ${path}: ${(error as Error).message}`);
+      }
+    }
+  }
+
+  /**
    * @brief Removes the compiled `.bin` file.
    */
   public removeBinPrograms(): void {
@@ -231,7 +246,7 @@ baudrate = 57600
    * @throws Error if compilation fails.
    */
   public compileProgramToHex(program: number): void {
-    this.removeHexPrograms();
+    this.removeHexProgram(this.outputs[program]);
 
     if (!this.programs[program]) {
       throw new Error(`Program at index ${program} does not exist.`);
@@ -245,5 +260,37 @@ baudrate = 57600
     }
 
     Logs.log(LogType.INFO, "Compilation succeeded.");
+  }
+
+  /**
+   * @brief Compiles the specified program index into a `.bin` file.
+   * @param program Index of the program to compile.
+   * @throws Error if compilation fails.
+   */
+  public compileProgramToBin(program: number): void {
+    if (!this.programs[program]) {
+      throw new Error(`Program at index ${program} does not exist.`);
+    }
+
+    this.compilerArguments.push("-p", program.toString(), this.programs[program]!, this.outputBinFile);
+
+    const result = this.runCompiler();
+    if (result !== 0) {
+      throw new Error(`Compilation failed for program ${program} with return code: ${result}`);
+    }
+
+    Logs.log(LogType.INFO, "Compilation succeeded.");
+  }
+
+  public getProgramBankByPath(path: string | undefined | null): number {
+    if (typeof path === 'undefined') {
+      throw new Error("Path cannot be undefined");
+    }
+
+    return this.programs.indexOf(path);
+  }
+
+  public getAllPrograms(): (string | null)[] {
+    return this.programs;
   }
 }
