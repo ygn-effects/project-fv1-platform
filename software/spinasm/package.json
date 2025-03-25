@@ -22,12 +22,8 @@
       "title": "SpinASM: Check Project Settings"
     },
     {
-      "command": "spinasm.compileProgram",
-      "title": "SpinASM: Compile Program"
-    },
-    {
-      "command": "spinasm.test",
-      "title": "SpinASM: Test"
+      "command": "spinasm.compileProgram0",
+      "title": "SpinASM: Compile Program 0"
     },
     {
       "command": "spinasm.showSerialConfig",
