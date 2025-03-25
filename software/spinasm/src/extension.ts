@@ -23,9 +23,8 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand("spinasm.createProject", createProject),
     vscode.commands.registerCommand("spinasm.checkProjectSettings", checkProjectSettings),
-    vscode.commands.registerCommand("spinasm.compileProgram", compileProgram),
     vscode.commands.registerCommand("spinasm.showSerialConfig", showSerialConfig),
-    vscode.commands.registerCommand("spinasm.test", test)
+    vscode.commands.registerCommand("spinasm.compileProgram0", compileProgram0),
   );
 
   Logs.log(LogType.INFO, "Commands registered successfully");
@@ -146,31 +145,6 @@ async function checkProjectSettings(): Promise<void> {
   }
 }
 
-
-/**
- * @brief Compiles the first SpinASM program (bank 0) to HEX format.
- */
-async function compileProgram(): Promise<void> {
-  const folder = await getWorkspaceFolder();
-
-  if (!folder) {
-    return;
-  }
-
-  try {
-    const { compilerPath, compilerArgs } = loadProjectSettings(folder);
-    const project = new Project(folder);
-    project.buildSetup(compilerPath, compilerArgs);
-    project.compileProgramToHex(0);
-
-    Logs.log(LogType.INFO, "Program compilation successful");
-    vscode.window.showInformationMessage("Program compiled successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile program");
-  }
-}
-
 /**
  * @brief Displays the current serial configuration from project settings.
  */
@@ -194,6 +168,30 @@ async function showSerialConfig(): Promise<void> {
   }
   catch (error) {
     handleError(error, "Failed to read serial configuration");
+  }
+}
+
+/**
+ * @brief Compiles the first SpinASM program (bank 0) to HEX format.
+ */
+async function compileProgram0(): Promise<void> {
+  const folder = await getWorkspaceFolder();
+
+  if (!folder) {
+    return;
+  }
+
+  try {
+    const { compilerPath, compilerArgs } = loadProjectSettings(folder);
+    const project = new Project(folder);
+    project.buildSetup(compilerPath, compilerArgs);
+    project.compileProgramToHex(0);
+
+    Logs.log(LogType.INFO, "Program 0 compilation successful");
+    vscode.window.showInformationMessage("Program 0 compiled successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile program 0.");
   }
 }
 
