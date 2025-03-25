@@ -1,6 +1,13 @@
 import { DelimiterParser, SerialPort } from "serialport";
 import Logs, { LogType } from "./logs";
 import { randomBytes } from "crypto";
+import * as fs from 'fs';
+
+interface IntelHexData {
+  address: number;   // Start address from HEX file
+  offset: number;    // Current offset (for internal use)
+  data: Buffer;      // Data buffer (512 bytes)
+}
 
 /**
  * @enum OrderCode
@@ -203,6 +210,47 @@ export default class Programmer {
       if (! (await this.sendWriteOrder())) {
         throw new Error("Failed to send WRITE order to programmer.");
       }
+    }
+  }
+
+  /**
+   * @brief Reads a compiled Intel HEX program file and returns a 512-byte buffer to write to the EEPROM
+   * @param file Path of the HEX file to read
+   * @returns IntelHexData containing start address and data buffer
+   * @throws Error if file doesn't exist or parsing fails
+   */
+  public readIntelHexData(file: string): IntelHexData {
+    if (!fs.existsSync(file)) {
+      throw new Error(`Unable to open file: ${file}`);
+    }
+
+    try {
+      const data = fs.readFileSync(file, { encoding: 'utf8' });
+      const lines = data.split(/\r\n|\r|\n/); // Split file contents by lines
+
+      const result: IntelHexData = {
+        address: parseInt(lines[0].substr(3, 4), 16),
+        offset: 0,
+        data: Buffer.alloc(512),
+      };
+
+      lines.forEach((line: string) => {
+        const startCode = line.charAt(0);
+        const byteCount = parseInt(line.substr(1, 2), 16);
+        const recordType = parseInt(line.substr(7, 2), 16);
+
+        if (startCode === ':' && byteCount === 4 && recordType === 0) { // Data record
+          for (let i = 9; i < 9 + byteCount * 2; i += 2) {
+            result.data[result.offset] = parseInt(line.substr(i, 2), 16);
+            result.offset++;
+          }
+        }
+      });
+
+      return result;
+    }
+    catch (error) {
+      throw new Error(`Error reading Intel HEX file: ${(error as Error).message}`);
     }
   }
 
