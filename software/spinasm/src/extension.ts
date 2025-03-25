@@ -25,6 +25,16 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("spinasm.checkProjectSettings", checkProjectSettings),
     vscode.commands.registerCommand("spinasm.showSerialConfig", showSerialConfig),
     vscode.commands.registerCommand("spinasm.compileProgram0", compileProgram0),
+    vscode.commands.registerCommand("spinasm.compileProgram1", compileProgram1),
+    vscode.commands.registerCommand("spinasm.compileProgram2", compileProgram2),
+    vscode.commands.registerCommand("spinasm.compileProgram3", compileProgram3),
+    vscode.commands.registerCommand("spinasm.compileProgram4", compileProgram4),
+    vscode.commands.registerCommand("spinasm.compileProgram5", compileProgram5),
+    vscode.commands.registerCommand("spinasm.compileProgram6", compileProgram6),
+    vscode.commands.registerCommand("spinasm.compileProgram7", compileProgram7),
+    vscode.commands.registerCommand("spinasm.compilecurrentprogram", compileCurrentProgram),
+    vscode.commands.registerCommand("spinasm.compileallprograms", compileAllPrograms),
+    vscode.commands.registerCommand("spinasm.compileallprogramstobin", compileAllProgramsToBin),
   );
 
   Logs.log(LogType.INFO, "Commands registered successfully");
@@ -172,11 +182,130 @@ async function showSerialConfig(): Promise<void> {
 }
 
 /**
- * @brief Compiles the first SpinASM program (bank 0) to HEX format.
+ * @brief Compiles bank 0 program to HEX format.
  */
 async function compileProgram0(): Promise<void> {
-  const folder = await getWorkspaceFolder();
+  try {
+    compileProgramToHex(0);
 
+    Logs.log(LogType.INFO, "Program 0 compilation successful");
+    vscode.window.showInformationMessage("Program 0 compiled successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile program 0.");
+  }
+}
+
+/**
+ * @brief Compiles bank 1 program to HEX format.
+ */
+async function compileProgram1(): Promise<void> {
+  try {
+    compileProgramToHex(1);
+
+    Logs.log(LogType.INFO, "Program 1 compilation successful");
+    vscode.window.showInformationMessage("Program 1 compiled successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile program 1.");
+  }
+}
+
+/**
+ * @brief Compiles bank 2 program to HEX format.
+ */
+async function compileProgram2(): Promise<void> {
+  try {
+    compileProgramToHex(2);
+
+    Logs.log(LogType.INFO, "Program 2 compilation successful");
+    vscode.window.showInformationMessage("Program 2 compiled successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile program 3.");
+  }
+}
+
+/**
+ * @brief Compiles bank 3 program to HEX format.
+ */
+async function compileProgram3(): Promise<void> {
+  try {
+    compileProgramToHex(3);
+
+    Logs.log(LogType.INFO, "Program 3 compilation successful");
+    vscode.window.showInformationMessage("Program 3 compiled successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile program 3.");
+  }
+}
+
+/**
+ * @brief Compiles bank 4 program to HEX format.
+ */
+async function compileProgram4(): Promise<void> {
+  try {
+    compileProgramToHex(4);
+
+    Logs.log(LogType.INFO, "Program 4 compilation successful");
+    vscode.window.showInformationMessage("Program 4 compiled successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile program 4.");
+  }
+}
+
+/**
+ * @brief Compiles bank 5 program to HEX format.
+ */
+async function compileProgram5(): Promise<void> {
+  try {
+    compileProgramToHex(5);
+
+    Logs.log(LogType.INFO, "Program 5 compilation successful");
+    vscode.window.showInformationMessage("Program 5 compiled successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile program 5.");
+  }
+}
+
+/**
+ * @brief Compiles bank 6 program to HEX format.
+ */
+async function compileProgram6(): Promise<void> {
+  try {
+    compileProgramToHex(6);
+
+    Logs.log(LogType.INFO, "Program 6 compilation successful");
+    vscode.window.showInformationMessage("Program 6 compiled successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile program 6.");
+  }
+}
+
+/**
+ * @brief Compiles bank 6 program to HEX format.
+ */
+async function compileProgram7(): Promise<void> {
+  try {
+    compileProgramToHex(7);
+
+    Logs.log(LogType.INFO, "Program 7 compilation successful");
+    vscode.window.showInformationMessage("Program 7 compiled successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile program 7.");
+  }
+}
+
+/**
+ * @brief Compiles the current program to HEX.
+ */
+async function compileCurrentProgram(): Promise<void> {
+  const folder = await getWorkspaceFolder();
   if (!folder) {
     return;
   }
@@ -185,13 +314,80 @@ async function compileProgram0(): Promise<void> {
     const { compilerPath, compilerArgs } = loadProjectSettings(folder);
     const project = new Project(folder);
     project.buildSetup(compilerPath, compilerArgs);
-    project.compileProgramToHex(0);
 
-    Logs.log(LogType.INFO, "Program 0 compilation successful");
-    vscode.window.showInformationMessage("Program 0 compiled successfully!");
+    const currentProgram = project.getProgramBankByPath(vscode.window.activeTextEditor?.document.uri.fsPath);
+    project.compileProgramToHex(currentProgram);
+
+    Logs.log(LogType.INFO, `Program ${currentProgram} compilation successful`);
+    vscode.window.showInformationMessage(`Program ${currentProgram} compiled successfully!`);
   }
   catch (error) {
-    handleError(error, "Failed to compile program 0.");
+    handleError(error, "Failed to compile current program.");
+  }
+}
+
+/**
+ * @brief Compiles all the available programs to HEX.
+ */
+async function compileAllPrograms(): Promise<void> {
+  const folder = await getWorkspaceFolder();
+  if (!folder) {
+    return;
+  }
+
+  try {
+    const { compilerPath, compilerArgs } = loadProjectSettings(folder);
+    const project = new Project(folder);
+    project.buildSetup(compilerPath, compilerArgs);
+
+    const programs = project.getAllPrograms();
+
+    for (const programPath of programs) {
+      const currentProgram = project.getProgramBankByPath(programPath);
+      project.buildSetup(compilerPath, compilerArgs);
+
+      project.compileProgramToHex(currentProgram);
+
+      Logs.log(LogType.INFO, `Program ${currentProgram} compilation successful`);
+    }
+
+    vscode.window.showInformationMessage("All programs compiled successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile all programs.");
+  }
+}
+
+
+/**
+ * @brief Compiles all the available programs to BIN.
+ */
+async function compileAllProgramsToBin(): Promise<void> {
+  const folder = await getWorkspaceFolder();
+  if (!folder) {
+    return;
+  }
+
+  try {
+    const { compilerPath, compilerArgs } = loadProjectSettings(folder);
+    const project = new Project(folder);
+    project.buildSetup(compilerPath, compilerArgs);
+
+    const programs = project.getAllPrograms();
+
+    for (const programPath of programs) {
+      const currentProgram = project.getProgramBankByPath(programPath);
+      project.buildSetup(compilerPath, compilerArgs);
+
+      project.compileProgramToBin(currentProgram);
+
+      Logs.log(LogType.INFO, `Program ${currentProgram} compilation successful`);
+    }
+
+    vscode.window.showInformationMessage("All programs compiled successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile all programs.");
   }
 }
 
@@ -247,4 +443,22 @@ async function getWorkspaceFolder(): Promise<string | null> {
   );
 
   return selectedFolder || null;
+}
+
+async function compileProgramToHex(bank: number): Promise<void> {
+  const folder = await getWorkspaceFolder();
+
+  if (!folder) {
+    return;
+  }
+
+  try {
+    const { compilerPath, compilerArgs } = loadProjectSettings(folder);
+    const project = new Project(folder);
+    project.buildSetup(compilerPath, compilerArgs);
+    project.compileProgramToHex(0);
+  }
+  catch (error) {
+    handleError(error, "Failed to compile program 0.");
+  }
 }
