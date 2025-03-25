@@ -29,6 +29,27 @@
       "command": "spinasm.showSerialConfig",
       "title": "SpinASM: Show Serial Configuration"
     }
+  ],
+  "languages": [
+    {
+      "id": "spinasm",
+      "aliases": ["SpinASM", "spinasm"],
+      "extensions": [".spn"],
+      "configuration": "./language-configuration.json"
+    }
+  ],
+  "grammars": [
+    {
+      "language": "spinasm",
+      "scopeName": "source.spinasm",
+      "path": "./syntaxes/spinasm.tmLanguage.json"
+    }
+  ],
+  "snippets": [
+    {
+      "language": "spinasm",
+      "path": "./snippets/spinasm.json"
+    }
   ]
 },
   "scripts": {

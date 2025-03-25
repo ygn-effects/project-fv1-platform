@@ -1,0 +1,30 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "SpinASM",
+    "patterns": [
+      {
+        "name": "comment.line.semicolon.spinasm",
+        "match": ";.*$"
+      },
+      {
+        "name": "constant.numeric.spinasm",
+        "match": "\\b\\$[0-9a-fA-F]+\\b"
+      },
+      {
+        "name": "keyword.control.spinasm",
+        "match": "\\b(?:equ|mem|wra|rda|rdax|wrax|sof|and|or|xor|skp|ldax|log|exp|mulx|rdfx|wrlx|wrhx|wrap|cho|wlds|wldr|jam|not|clr|absa)\\b",
+        "captures": {
+          "1": { "name": "keyword.control.spinasm" }
+        }
+      },
+      {
+        "name": "entity.name.label.spinasm",
+        "match": "^\\s*[a-zA-Z_][a-zA-Z0-9_]*:"
+      },
+      {
+        "name": "variable.other.register.spinasm",
+        "match": "\\b(?:ADCL|ADCR|DACL|DACR|POT[0-2]|REG[0-9]{1,2}|ADDR_PTR)\\b"
+      }
+    ],
+    "scopeName": "source.spinasm"
+  }
