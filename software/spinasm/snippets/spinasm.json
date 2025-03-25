@@ -1,0 +1,96 @@
+{
+    "RDAX Instruction": {
+      "prefix": "rdax",
+      "body": "rdax ${1:REG}, ${2:COEFF}",
+      "description": "Read ACCumulate and multiply by COEFF"
+    },
+
+    "WRAX Instruction": {
+      "prefix": "wrax",
+      "body": "wrax ${1:REG}, ${2:COEFF}",
+      "description": "Write ACCumulator to REG with COEFF"
+    },
+
+    "MULX Instruction": {
+      "prefix": "mulx",
+      "body": "mulx ${1:REG}",
+      "description": "Multiply ACCumulator by REG"
+    },
+
+    "RDFX Instruction": {
+      "prefix": "rdfx",
+      "body": "rdfx ${1:REG}, ${2:COEFF}",
+      "description": "Read Filter and multiply by COEFF"
+    },
+
+    "SOF Instruction": {
+      "prefix": "sof",
+      "body": "sof ${1:COEFF}, ${2:OFFSET}",
+      "description": "Scale and Offset ACCumulator"
+    },
+
+    "SKP Instruction": {
+      "prefix": "skp",
+      "body": "skp ${1:Condition}",
+      "description": "Skip instruction based on Condition"
+    },
+
+    "JAM Instruction": {
+      "prefix": "jam",
+      "body": "jam ${1:ADDRESS}",
+      "description": "Jump to ADDRESS"
+    },
+
+    "Basic Effect Skeleton": {
+      "prefix": "fxstart",
+      "body": [
+        "; ${1:Effect Name}",
+        "${2:init:}",
+        "  ${3:}",
+        "",
+        "${4:process:}",
+        "  ${5:}"
+      ],
+      "description": "Basic SpinASM effect structure"
+    },
+
+    "Input ADC Setup": {
+      "prefix": "adcsetup",
+      "body": [
+        "rdax adcl, 1.0",
+        "rdax adcr, 1.0"
+      ],
+      "description": "Initialize accumulators with ADC inputs"
+    },
+
+    "Output DAC Write": {
+      "prefix": "dacwrite",
+      "body": [
+        "wrax dacl, 0",
+        "wrax dacr, 0"
+      ],
+      "description": "Write accumulator to DAC outputs"
+    },
+
+    "EQU Directive": {
+      "prefix": "equ",
+      "body": "${1:LABEL} equ ${2:VALUE}",
+      "description": "Define a constant value"
+    },
+
+    "MEM Directive": {
+      "prefix": "mem",
+      "body": "${1:LABEL} mem ${2:SIZE}",
+      "description": "Allocate memory"
+    },
+
+    "Infinite Loop": {
+      "prefix": "loop",
+      "body": [
+        "${1:loop_label}:",
+        "  ${2:}",
+        "  jam ${1:loop_label}"
+      ],
+      "description": "Infinite loop"
+    }
+  }
