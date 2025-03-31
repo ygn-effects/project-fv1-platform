@@ -1,0 +1,76 @@
+{
+    "MPN": [
+        false,
+        "S8B-XH-A"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER XH MALE 1X8 PINS 2.5MM PITCH ANGLED"
+    ],
+    "entity": "78a1af44-52b0-4372-b88a-b567727e8f60",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "KNOCKOFF"
+    ],
+    "model": "99c856e9-fff9-4bf3-af41-7c4ccec88b9d",
+    "package": "578b384e-b8ee-4afa-9412-3cbad90be5a3",
+    "pad_map": {
+        "01a295f2-b6c3-426b-a7e6-b08005a229c3": {
+            "gate": "bf838752-8763-4f26-b873-6f4f2e6b50be",
+            "pin": "c2bea679-4226-4dd6-b690-ca50d671b4fb"
+        },
+        "4771e115-a201-47c3-a4bd-05d1fb0b3be1": {
+            "gate": "bf838752-8763-4f26-b873-6f4f2e6b50be",
+            "pin": "139580f6-31c0-4d75-8427-cfc1b742beac"
+        },
+        "58094f62-391f-4aac-b1ac-a29951edb129": {
+            "gate": "bf838752-8763-4f26-b873-6f4f2e6b50be",
+            "pin": "d962c205-4829-4120-b15c-1c5104eb0c5a"
+        },
+        "9e5f5089-9e60-4a8b-8883-e5eebaa6256c": {
+            "gate": "bf838752-8763-4f26-b873-6f4f2e6b50be",
+            "pin": "480520ff-3594-4b72-9857-e517206b59fd"
+        },
+        "af922a24-00d5-4b59-8ec6-cff377bfbc13": {
+            "gate": "bf838752-8763-4f26-b873-6f4f2e6b50be",
+            "pin": "42f52ee0-d906-4ec9-b85e-91a2eff5b7ad"
+        },
+        "e1c1f8f1-9313-44a7-a9c3-805311a084f4": {
+            "gate": "bf838752-8763-4f26-b873-6f4f2e6b50be",
+            "pin": "583b7833-11a6-4783-b7d9-2fd1f56a8a4c"
+        },
+        "f1f81a99-b23c-4aa3-bc9e-f09dd8cbf897": {
+            "gate": "bf838752-8763-4f26-b873-6f4f2e6b50be",
+            "pin": "11afc6e0-a972-42dc-8cd7-ab2bc97d4496"
+        },
+        "f3ae9fd3-adb2-477d-b07c-e5432feadc4c": {
+            "gate": "bf838752-8763-4f26-b873-6f4f2e6b50be",
+            "pin": "0659e4da-e63f-4dd8-bf52-3e727c91eee7"
+        }
+    },
+    "parametric": {
+        "contact_material": "Tin",
+        "current_rating": "3",
+        "mounting_angle": "Right Angle",
+        "mounting_style": "Through Hole",
+        "pitch": "2.5",
+        "positions": "8",
+        "price": "0.008",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "250"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "016fef40-54d6-4b2b-b936-89a92b50d7fe",
+    "value": [
+        false,
+        ""
+    ]
+}
