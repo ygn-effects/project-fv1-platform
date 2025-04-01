@@ -627,7 +627,7 @@
             "is_port": false,
             "is_power": false,
             "name": "",
-            "net_class": "8efad6f7-b857-415b-95e8-ec2af845e48d",
+            "net_class": "2514d8d9-1d34-457f-b814-4e7d0190604e",
             "port_direction": "bidirectional",
             "power_symbol_name_visible": true,
             "power_symbol_style": "gnd"
@@ -645,7 +645,7 @@
             "is_port": false,
             "is_power": true,
             "name": "GND",
-            "net_class": "8efad6f7-b857-415b-95e8-ec2af845e48d",
+            "net_class": "7096784f-23a4-4fcf-bcb9-6deceb8cbd75",
             "port_direction": "bidirectional",
             "power_symbol_name_visible": true,
             "power_symbol_style": "gnd"
@@ -708,7 +708,7 @@
             "is_port": false,
             "is_power": false,
             "name": "",
-            "net_class": "8efad6f7-b857-415b-95e8-ec2af845e48d",
+            "net_class": "2514d8d9-1d34-457f-b814-4e7d0190604e",
             "port_direction": "bidirectional",
             "power_symbol_name_visible": true,
             "power_symbol_style": "gnd"
@@ -771,7 +771,7 @@
             "is_port": false,
             "is_power": false,
             "name": "",
-            "net_class": "8efad6f7-b857-415b-95e8-ec2af845e48d",
+            "net_class": "2514d8d9-1d34-457f-b814-4e7d0190604e",
             "port_direction": "bidirectional",
             "power_symbol_name_visible": true,
             "power_symbol_style": "gnd"

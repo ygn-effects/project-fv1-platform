@@ -102,104 +102,7 @@
         "grids": {}
     },
     "holes": {},
-    "junctions": {
-        "268b31cc-a371-4200-bbda-6cda5ae7078e": {
-            "position": [
-                44770000,
-                19300000
-            ]
-        },
-        "27884a7d-737e-4050-97a6-c090093a0c7e": {
-            "position": [
-                15000000,
-                19300000
-            ]
-        },
-        "2b0f149f-3fa3-4fdd-bf90-b1d1f6df43e4": {
-            "position": [
-                40400000,
-                19300000
-            ]
-        },
-        "32b49021-2661-47fd-a781-d59d7adcfb74": {
-            "position": [
-                33270000,
-                19300000
-            ]
-        },
-        "34409235-41bb-4cd2-9af7-f4249173829e": {
-            "position": [
-                8700000,
-                600000
-            ]
-        },
-        "3e5663da-bb70-46a1-b05e-e4e906492858": {
-            "position": [
-                27600000,
-                19300000
-            ]
-        },
-        "4616844d-d3c8-44be-9cb1-04e2833619ad": {
-            "position": [
-                2400000,
-                19300000
-            ]
-        },
-        "5f40dab6-c6b8-46e4-bd2c-66eb836ead82": {
-            "position": [
-                8700000,
-                19300000
-            ]
-        },
-        "61485da4-6179-48ee-be4a-ef4f077acc5e": {
-            "position": [
-                21300000,
-                600000
-            ]
-        },
-        "664c435e-9cac-44ca-83a5-11e6df2a4e80": {
-            "position": [
-                33270000,
-                600000
-            ]
-        },
-        "985eb1ef-56d3-4bc6-813b-786375cfaa8e": {
-            "position": [
-                2400000,
-                600000
-            ]
-        },
-        "a6eaccc4-bc6c-495e-9b0d-7d89fead51c6": {
-            "position": [
-                15000000,
-                600000
-            ]
-        },
-        "ad9b5f84-8939-4a06-83b7-72abd4f3cfe3": {
-            "position": [
-                21300000,
-                19300000
-            ]
-        },
-        "af245a34-a864-4b49-b081-39c5b5784507": {
-            "position": [
-                40400000,
-                600000
-            ]
-        },
-        "b4ecef57-8bab-4483-b092-5e7149194650": {
-            "position": [
-                27600000,
-                600000
-            ]
-        },
-        "d1c365dd-2565-4dfd-8758-70738a514707": {
-            "position": [
-                44770000,
-                600000
-            ]
-        }
-    },
+    "junctions": {},
     "keepouts": {},
     "lines": {},
     "n_inner_layers": 2,
@@ -221,8 +124,8 @@
                 "angle": 49152,
                 "mirror": false,
                 "shift": [
-                    9478000,
-                    15230000
+                    9928000,
+                    15510000
                 ]
             },
             "smashed": true,
@@ -239,8 +142,8 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    20705000,
-                    4270000
+                    21655000,
+                    3980000
                 ]
             },
             "smashed": true,
@@ -257,8 +160,8 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    16705000,
-                    4270000
+                    17655000,
+                    3980000
                 ]
             },
             "smashed": true,
@@ -275,8 +178,8 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    32624708,
-                    2460000
+                    32164708,
+                    2060000
                 ]
             },
             "smashed": true,
@@ -293,7 +196,7 @@
                 "angle": 49152,
                 "mirror": false,
                 "shift": [
-                    20705000,
+                    21655000,
                     7450000
                 ]
             },
@@ -311,7 +214,7 @@
                 "angle": 49152,
                 "mirror": false,
                 "shift": [
-                    16705000,
+                    17655000,
                     7450000
                 ]
             },
@@ -329,8 +232,8 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    8315000,
-                    12540000
+                    8765000,
+                    12840000
                 ]
             },
             "smashed": true,
@@ -347,7 +250,7 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    38868737,
+                    38568737,
                     8447083
                 ]
             },
@@ -365,8 +268,8 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    11108000,
-                    15230000
+                    11858000,
+                    15510000
                 ]
             },
             "smashed": true,
@@ -383,8 +286,8 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    28700000,
-                    11580000
+                    28240000,
+                    11780000
                 ]
             },
             "smashed": true,
@@ -401,8 +304,8 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    22490334,
-                    12180000
+                    21730334,
+                    12380000
                 ]
             },
             "smashed": true,
@@ -419,8 +322,8 @@
                 "angle": 49152,
                 "mirror": false,
                 "shift": [
-                    35265292,
-                    4560000
+                    35105292,
+                    4450000
                 ]
             },
             "smashed": true,
@@ -437,7 +340,7 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    8315000,
+                    8765000,
                     10950000
                 ]
             },
@@ -455,8 +358,8 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    18705000,
-                    4270000
+                    19655000,
+                    3980000
                 ]
             },
             "smashed": true,
@@ -473,8 +376,8 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    13243000,
-                    3380000
+                    13993000,
+                    2780000
                 ]
             },
             "smashed": true,
@@ -491,7 +394,7 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    8315000,
+                    8765000,
                     8950000
                 ]
             },
@@ -543,8 +446,8 @@
                 "angle": 32768,
                 "mirror": false,
                 "shift": [
-                    32700000,
-                    4710000
+                    32240000,
+                    4600000
                 ]
             },
             "smashed": false,
@@ -559,7 +462,7 @@
                 "angle": 49152,
                 "mirror": false,
                 "shift": [
-                    12695000,
+                    13445000,
                     9950000
                 ]
             },
@@ -575,8 +478,8 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    12543000,
-                    5460000
+                    13293000,
+                    5160000
                 ]
             },
             "smashed": true,
@@ -593,7 +496,7 @@
                 "angle": 49152,
                 "mirror": false,
                 "shift": [
-                    2675000,
+                    2805000,
                     9950000
                 ]
             },
@@ -609,8 +512,8 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    8315000,
-                    7370000
+                    8765000,
+                    7070000
                 ]
             },
             "smashed": true,
@@ -627,7 +530,7 @@
                 "angle": 32768,
                 "mirror": false,
                 "shift": [
-                    37500000,
+                    37300000,
                     18100000
                 ]
             },
@@ -643,8 +546,8 @@
                 "angle": 32768,
                 "mirror": false,
                 "shift": [
-                    29900000,
-                    17759666
+                    29440000,
+                    18259666
                 ]
             },
             "smashed": true,
@@ -661,7 +564,7 @@
                 "angle": 49152,
                 "mirror": false,
                 "shift": [
-                    18705000,
+                    19655000,
                     7450000
                 ]
             },
@@ -679,8 +582,8 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    28910000,
-                    5400334
+                    28450000,
+                    5300334
                 ]
             },
             "smashed": true,
@@ -870,7 +773,7 @@
                 "n_spokes": 4,
                 "style": "miter",
                 "text_style": "expand",
-                "thermal_gap_width": 190000,
+                "thermal_gap_width": 175000,
                 "thermal_spoke_width": 300000
             }
         },
@@ -891,7 +794,7 @@
                 "n_spokes": 4,
                 "style": "miter",
                 "text_style": "expand",
-                "thermal_gap_width": 190000,
+                "thermal_gap_width": 175000,
                 "thermal_spoke_width": 300000
             }
         }
@@ -2126,7 +2029,7 @@
                         ]
                     },
                     {
-                        "clearance": 190000,
+                        "clearance": 170000,
                         "types": [
                             "pad",
                             "plane"
@@ -2541,7 +2444,7 @@
                         ]
                     },
                     {
-                        "clearance": 350000,
+                        "clearance": 300000,
                         "types": [
                             "plane",
                             "board_edge"
@@ -2618,7 +2521,7 @@
                     "n_spokes": 4,
                     "style": "miter",
                     "text_style": "expand",
-                    "thermal_gap_width": 190000,
+                    "thermal_gap_width": 175000,
                     "thermal_spoke_width": 300000
                 }
             },
@@ -2734,7 +2637,7 @@
                     "-100": {
                         "def": 800000,
                         "max": 1800000,
-                        "min": 400000
+                        "min": 200000
                     },
                     "-2": {
                         "def": 200000,
@@ -2744,7 +2647,7 @@
                     "0": {
                         "def": 800000,
                         "max": 1800000,
-                        "min": 400000
+                        "min": 200000
                     }
                 }
             },
@@ -2764,7 +2667,7 @@
                         "min": 100000
                     },
                     "-100": {
-                        "def": 300000,
+                        "def": 400000,
                         "max": 500000,
                         "min": 200000
                     },
@@ -2774,7 +2677,7 @@
                         "min": 100000
                     },
                     "0": {
-                        "def": 300000,
+                        "def": 400000,
                         "max": 500000,
                         "min": 200000
                     }
@@ -2882,7 +2785,7 @@
                 "angle": 49152,
                 "mirror": false,
                 "shift": [
-                    20700000,
+                    21650000,
                     5850000
                 ]
             },
@@ -2899,8 +2802,8 @@
                 "angle": 32768,
                 "mirror": false,
                 "shift": [
-                    30900000,
-                    19059666
+                    30440000,
+                    19559666
                 ]
             },
             "size": 1000000,
@@ -2916,7 +2819,7 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    7865000,
+                    8315000,
                     6125000
                 ]
             },
@@ -2933,7 +2836,7 @@
                 "angle": 49152,
                 "mirror": false,
                 "shift": [
-                    16700000,
+                    17650000,
                     5850000
                 ]
             },
@@ -2950,8 +2853,8 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    14043000,
-                    5460000
+                    14793000,
+                    5160000
                 ]
             },
             "size": 1000000,
@@ -2967,8 +2870,8 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    11108000,
-                    16370000
+                    11858000,
+                    16650000
                 ]
             },
             "size": 1000000,
@@ -2984,8 +2887,8 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    20705000,
-                    1070000
+                    21655000,
+                    780000
                 ]
             },
             "size": 1000000,
@@ -3018,8 +2921,8 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    7935000,
-                    4465000
+                    8385000,
+                    4165000
                 ]
             },
             "size": 1000000,
@@ -3035,8 +2938,8 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    25510000,
-                    5400334
+                    25050000,
+                    5300334
                 ]
             },
             "size": 1000000,
@@ -3086,8 +2989,8 @@
                 "angle": 49152,
                 "mirror": false,
                 "shift": [
-                    36655292,
-                    5480000
+                    36495292,
+                    5370000
                 ]
             },
             "size": 1000000,
@@ -3103,8 +3006,8 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    16705000,
-                    1070000
+                    17655000,
+                    780000
                 ]
             },
             "size": 1000000,
@@ -3137,8 +3040,8 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    21190334,
-                    11230000
+                    20430334,
+                    11430000
                 ]
             },
             "size": 1000000,
@@ -3154,8 +3057,8 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    9665000,
-                    12545000
+                    10115000,
+                    12845000
                 ]
             },
             "size": 1000000,
@@ -3171,8 +3074,8 @@
                 "angle": 49152,
                 "mirror": false,
                 "shift": [
-                    9478000,
-                    18320000
+                    9928000,
+                    18600000
                 ]
             },
             "size": 1000000,
@@ -3205,7 +3108,7 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    38868737,
+                    38568737,
                     10747083
                 ]
             },
@@ -3239,7 +3142,7 @@
                 "angle": 49152,
                 "mirror": false,
                 "shift": [
-                    18710000,
+                    19660000,
                     5700000
                 ]
             },
@@ -3256,7 +3159,7 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    9715000,
+                    10165000,
                     10945000
                 ]
             },
@@ -3273,8 +3176,8 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    18705000,
-                    1070000
+                    19655000,
+                    780000
                 ]
             },
             "size": 1000000,
@@ -3290,8 +3193,8 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    15643000,
-                    3380000
+                    16393000,
+                    2780000
                 ]
             },
             "size": 1000000,
@@ -3307,8 +3210,8 @@
                 "angle": 16384,
                 "mirror": false,
                 "shift": [
-                    28700000,
-                    10180000
+                    28240000,
+                    10380000
                 ]
             },
             "size": 1000000,
@@ -3324,8 +3227,8 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    29224708,
-                    2460000
+                    28764708,
+                    2060000
                 ]
             },
             "size": 1000000,
@@ -3337,198 +3240,5 @@
     "type": "board",
     "uuid": "dee38897-7b37-4ab2-a39e-e15b881671de",
     "version": 21,
-    "vias": {
-        "0bfe2b6f-cce4-4383-9147-b7c87df7f1c8": {
-            "from_rules": true,
-            "junction": "985eb1ef-56d3-4bc6-813b-786375cfaa8e",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "11ef0e19-ea44-4eee-814d-c08fcd3a4d47": {
-            "from_rules": true,
-            "junction": "268b31cc-a371-4200-bbda-6cda5ae7078e",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "21ba384e-c66e-46d7-8319-6fb872f880f1": {
-            "from_rules": true,
-            "junction": "32b49021-2661-47fd-a781-d59d7adcfb74",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "25081715-26dd-4a53-84fd-a8d3b5a47691": {
-            "from_rules": true,
-            "junction": "d1c365dd-2565-4dfd-8758-70738a514707",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "3266494c-a4f1-4f48-aba7-427c8adc07ab": {
-            "from_rules": true,
-            "junction": "664c435e-9cac-44ca-83a5-11e6df2a4e80",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "5aad4c2f-1a1d-4c78-8304-c76742007898": {
-            "from_rules": true,
-            "junction": "5f40dab6-c6b8-46e4-bd2c-66eb836ead82",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "5f69ed59-08d7-483f-865f-bf957870050b": {
-            "from_rules": true,
-            "junction": "2b0f149f-3fa3-4fdd-bf90-b1d1f6df43e4",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "916cf3f6-fb42-4132-9457-af5dbd1e9ab6": {
-            "from_rules": true,
-            "junction": "4616844d-d3c8-44be-9cb1-04e2833619ad",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "aeac4a53-2a2d-40eb-a722-3a0af6f275a8": {
-            "from_rules": true,
-            "junction": "b4ecef57-8bab-4483-b092-5e7149194650",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "b56dbeb7-5682-48eb-852e-43169627ae7a": {
-            "from_rules": true,
-            "junction": "a6eaccc4-bc6c-495e-9b0d-7d89fead51c6",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "b8f75fa9-d1ba-4170-bb5a-9c6f6eb784f9": {
-            "from_rules": true,
-            "junction": "34409235-41bb-4cd2-9af7-f4249173829e",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "c02b438a-5bc7-41a4-9500-e10c53db32a0": {
-            "from_rules": true,
-            "junction": "ad9b5f84-8939-4a06-83b7-72abd4f3cfe3",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "c576e759-32e9-40d5-9336-e901a311695a": {
-            "from_rules": true,
-            "junction": "27884a7d-737e-4050-97a6-c090093a0c7e",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "c74ea24a-161a-469e-b458-7608b854e0f3": {
-            "from_rules": true,
-            "junction": "61485da4-6179-48ee-be4a-ef4f077acc5e",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "cb32ec91-555d-43f9-96b5-1a07095cba20": {
-            "from_rules": true,
-            "junction": "3e5663da-bb70-46a1-b05e-e4e906492858",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        },
-        "da2f74e1-6ff5-457b-be31-cfef6cd01f0f": {
-            "from_rules": true,
-            "junction": "af245a34-a864-4b49-b081-39c5b5784507",
-            "locked": false,
-            "net_set": "2765605b-fbee-4934-adb8-88fc891e390a",
-            "padstack": "3c4a52fe-3ae0-4c3e-a108-824b53d6d6da",
-            "parameter_set": {
-                "hole_diameter": 350000,
-                "via_diameter": 700000
-            },
-            "source": "rules"
-        }
-    }
+    "vias": {}
 }
