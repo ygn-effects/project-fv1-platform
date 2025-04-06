@@ -456,9 +456,9 @@ async function compileProgramToHex(bank: number): Promise<void> {
     const { compilerPath, compilerArgs } = loadProjectSettings(folder);
     const project = new Project(folder);
     project.buildSetup(compilerPath, compilerArgs);
-    project.compileProgramToHex(0);
+    project.compileProgramToHex(bank);
   }
   catch (error) {
-    handleError(error, "Failed to compile program 0.");
+    handleError(error, `Failed to compile program ${bank}.`);
   }
 }
