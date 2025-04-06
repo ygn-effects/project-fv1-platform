@@ -32,9 +32,9 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("spinasm.compileProgram5", compileProgram5),
     vscode.commands.registerCommand("spinasm.compileProgram6", compileProgram6),
     vscode.commands.registerCommand("spinasm.compileProgram7", compileProgram7),
-    vscode.commands.registerCommand("spinasm.compilecurrentprogram", compileCurrentProgram),
-    vscode.commands.registerCommand("spinasm.compileallprograms", compileAllPrograms),
-    vscode.commands.registerCommand("spinasm.compileallprogramstobin", compileAllProgramsToBin),
+    vscode.commands.registerCommand("spinasm.compileCurrentProgram", compileCurrentProgram),
+    vscode.commands.registerCommand("spinasm.compileAllPrograms", compileAllPrograms),
+    vscode.commands.registerCommand("spinasm.compileAllProgramsToBin", compileAllProgramsToBin),
   );
 
   Logs.log(LogType.INFO, "Commands registered successfully");
