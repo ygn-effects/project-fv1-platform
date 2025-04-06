@@ -219,12 +219,14 @@ export default class Programmer {
    * @returns IntelHexData containing start address and data buffer
    * @throws Error if file doesn't exist or parsing fails
    */
-  public readIntelHexData(file: string): IntelHexData {
+  public readIntelHexData(file: any): IntelHexData {
     if (!fs.existsSync(file)) {
       throw new Error(`Unable to open file: ${file}`);
     }
 
     try {
+      Logs.log(LogType.INFO, `Reading HEX file : ${file}.`);
+
       const data = fs.readFileSync(file, { encoding: 'utf8' });
       const lines = data.split(/\r\n|\r|\n/); // Split file contents by lines
 
