@@ -35,6 +35,15 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("spinasm.compileCurrentProgram", compileCurrentProgram),
     vscode.commands.registerCommand("spinasm.compileAllPrograms", compileAllPrograms),
     vscode.commands.registerCommand("spinasm.compileAllProgramsToBin", compileAllProgramsToBin),
+    vscode.commands.registerCommand("spinasm.uploadProgram0", uploadProgram0),
+    vscode.commands.registerCommand("spinasm.uploadProgram1", uploadProgram1),
+    vscode.commands.registerCommand("spinasm.uploadProgram2", uploadProgram2),
+    vscode.commands.registerCommand("spinasm.uploadProgram3", uploadProgram3),
+    vscode.commands.registerCommand("spinasm.uploadProgram4", uploadProgram4),
+    vscode.commands.registerCommand("spinasm.uploadProgram5", uploadProgram5),
+    vscode.commands.registerCommand("spinasm.uploadProgram6", uploadProgram6),
+    vscode.commands.registerCommand("spinasm.uploadProgram7", uploadProgram7),
+    vscode.commands.registerCommand("spinasm.uploadCurrentProgram", uploadCurrentProgram)
   );
 
   Logs.log(LogType.INFO, "Commands registered successfully");
@@ -392,6 +401,152 @@ async function compileAllProgramsToBin(): Promise<void> {
 }
 
 /**
+ * @brief Upload bank 0 program.
+ */
+async function uploadProgram0(): Promise<void> {
+  try {
+    await uploadProgram(0);
+
+    Logs.log(LogType.INFO, "Program 0 upload successful");
+    vscode.window.showInformationMessage("Program 0 uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to upload program 0.");
+  }
+}
+
+/**
+ * @brief Upload bank 1 program.
+ */
+async function uploadProgram1(): Promise<void> {
+  try {
+    await uploadProgram(1);
+
+    Logs.log(LogType.INFO, "Program 1 upload successful");
+    vscode.window.showInformationMessage("Program 1 uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to upload program 1.");
+  }
+}
+
+/**
+ * @brief Upload bank 2 program.
+ */
+async function uploadProgram2(): Promise<void> {
+  try {
+    await uploadProgram(2);
+
+    Logs.log(LogType.INFO, "Program 2 upload successful");
+    vscode.window.showInformationMessage("Program 2 uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to upload program 2.");
+  }
+}
+
+/**
+ * @brief Upload bank 3 program.
+ */
+async function uploadProgram3(): Promise<void> {
+  try {
+    await uploadProgram(3);
+
+    Logs.log(LogType.INFO, "Program 3 upload successful");
+    vscode.window.showInformationMessage("Program 3 uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to upload program 3.");
+  }
+}
+
+/**
+ * @brief Upload bank 4 program.
+ */
+async function uploadProgram4(): Promise<void> {
+  try {
+    await uploadProgram(4);
+
+    Logs.log(LogType.INFO, "Program 4 upload successful");
+    vscode.window.showInformationMessage("Program 4 uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to upload program 4.");
+  }
+}
+
+/**
+ * @brief Upload bank 5 program.
+ */
+async function uploadProgram5(): Promise<void> {
+  try {
+    await uploadProgram(5);
+
+    Logs.log(LogType.INFO, "Program 5 upload successful");
+    vscode.window.showInformationMessage("Program 5 uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to upload program 5.");
+  }
+}
+
+/**
+ * @brief Upload bank 6 program.
+ */
+async function uploadProgram6(): Promise<void> {
+  try {
+    await uploadProgram(6);
+
+    Logs.log(LogType.INFO, "Program 6 upload successful");
+    vscode.window.showInformationMessage("Program 6 uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to upload program 6.");
+  }
+}
+
+/**
+ * @brief Upload bank 7 program.
+ */
+async function uploadProgram7(): Promise<void> {
+  try {
+    await uploadProgram(7);
+
+    Logs.log(LogType.INFO, "Program 7 upload successful");
+    vscode.window.showInformationMessage("Program 7 uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to upload program 7.");
+  }
+}
+
+/**
+ * @brief Upload current program.
+ */
+async function uploadCurrentProgram(): Promise<void> {
+  const folder = await getWorkspaceFolder();
+  if (!folder) {
+    return;
+  }
+
+  try {
+    const { compilerPath, compilerArgs } = loadProjectSettings(folder);
+
+    const project = new Project(folder);
+    project.buildSetup(compilerPath, compilerArgs);
+
+    const currentProgram = project.getProgramBankByPath(vscode.window.activeTextEditor?.document.uri.fsPath);
+    await uploadProgram(currentProgram);
+
+    Logs.log(LogType.INFO, "Program 7 upload successful");
+    vscode.window.showInformationMessage("Program 7 uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to upload program 7.");
+  }
+}
+
+/**
  * @brief Retrieves the project settings from the project .ini file
  *
  * @param folder - The workspace folder path.
@@ -460,5 +615,46 @@ async function compileProgramToHex(bank: number): Promise<void> {
   }
   catch (error) {
     handleError(error, `Failed to compile program ${bank}.`);
+  }
+}
+
+async function uploadProgram(bank: number): Promise<void> {
+  const folder = await getWorkspaceFolder();
+
+  if (!folder) {
+    return;
+  }
+
+  const { compilerPath, compilerArgs, serialPort, baudRate } = loadProjectSettings(folder);
+
+  try {
+    const project = new Project(folder);
+    project.buildSetup(compilerPath, compilerArgs);
+
+    const programmer = new Programmer(serialPort, baudRate);
+    await programmer.connect();
+
+    const isConnected = await programmer.isProgrammerConnected();
+
+    if (!isConnected) {
+      throw new Error("Programmer did not respond correctly.");
+    }
+
+    const program = programmer.readIntelHexData(project.getOutput(bank));
+
+    await programmer.writeProgram(program.address, program.data);
+    const programRead = await programmer.readProgram(program.address);
+    await programmer.disconnect();
+
+    if (Buffer.compare(program.data, programRead) != 0) {
+      throw new Error("Data verification failed.");
+    }
+  }
+  catch (error) {
+    handleError(error, `Failed to upload program ${bank}.`);
+  }
+  finally {
+    const programmer = new Programmer(serialPort, baudRate);
+    await programmer.disconnect();
   }
 }
