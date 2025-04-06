@@ -293,4 +293,8 @@ baudrate = 57600
   public getAllPrograms(): (string | null)[] {
     return this.programs;
   }
+
+  public getOutput(bank: number): (string | null) {
+    return this.outputs[bank];
+  }
 }
