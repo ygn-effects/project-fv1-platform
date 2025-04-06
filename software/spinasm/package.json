@@ -30,43 +30,43 @@
       "title": "SpinASM: Show Serial Configuration"
     },
     {
-      "command": "spinasm.compileprogram1",
+      "command": "spinasm.compileProgram1",
       "title": "SpinASM: Compile program 1"
     },
     {
-      "command": "spinasm.compileprogram2",
+      "command": "spinasm.compileProgram2",
       "title": "SpinASM: Compile program 2"
     },
     {
-      "command": "spinasm.compileprogram3",
+      "command": "spinasm.compileProgram3",
       "title": "SpinASM: Compile program 3"
     },
     {
-      "command": "spinasm.compileprogram4",
+      "command": "spinasm.compileProgram4",
       "title": "SpinASM: Compile program 4"
     },
     {
-      "command": "spinasm.compileprogram5",
+      "command": "spinasm.compileProgram5",
       "title": "SpinASM: Compile program 5"
     },
     {
-      "command": "spinasm.compileprogram6",
+      "command": "spinasm.compileProgram6",
       "title": "SpinASM: Compile program 6"
     },
     {
-      "command": "spinasm.compileprogram7",
+      "command": "spinasm.compileProgram7",
       "title": "SpinASM: Compile program 7"
     },
     {
-      "command": "spinasm.compilecurrentprogram",
+      "command": "spinasm.compileCurrentProgram",
       "title": "SpinASM: Compile current program"
     },
     {
-      "command": "spinasm.compileallprograms",
+      "command": "spinasm.compileAllPrograms",
       "title": "SpinASM: Compile all programs"
     },
     {
-      "command": "spinasm.compileallprogramstobin",
+      "command": "spinasm.compileAllProgramsToBin",
       "title": "SpinASM: Compile all programs to .bin"
     },
     {

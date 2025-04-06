@@ -436,16 +436,16 @@ export default class Programmer {
    * @returns A 512 bytes array containing a random program.
    */
   private generateRandomProgram(): Buffer {
-      const buffer = randomBytes(512);
+    const buffer = randomBytes(512);
 
-      // Iterate through the buffer and replace unwanted values
-      for (let i = 0; i < buffer.length; i++) {
-          while (buffer[i] === 30 || buffer[i] === 31) {
-              buffer[i] = randomBytes(1)[0];
-          }
+    // Iterate through the buffer and replace unwanted values
+    for (let i = 0; i < buffer.length; i++) {
+      while (buffer[i] === 30 || buffer[i] === 31) {
+        buffer[i] = randomBytes(1)[0];
       }
+    }
 
-      return buffer;
+    return buffer;
   }
 
   /**
