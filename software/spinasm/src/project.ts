@@ -149,7 +149,12 @@ baudrate = 57600
     }
 
     if (output.stderr) {
-      Logs.log(LogType.ERROR, `Compiler stderr: ${output.stderr}`);
+      if (output.status === 0) {
+        Logs.log(LogType.INFO, `Compiler stderr (info/warning): ${output.stderr}`);
+      }
+      else {
+        Logs.log(LogType.ERROR, `Compiler stderr: ${output.stderr}`);
+      }
     }
 
     return output.status ?? 1; // Defaults to 1 if undefined
