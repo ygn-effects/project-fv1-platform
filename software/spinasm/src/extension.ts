@@ -203,7 +203,7 @@ async function showSerialConfig(): Promise<void> {
  */
 async function compileProgram0(): Promise<void> {
   try {
-    compileProgramToHex(0);
+    await compileProgramToHex(0);
 
     Logs.log(LogType.INFO, "Program 0 compilation successful");
     vscode.window.showInformationMessage("Program 0 compiled successfully!");
@@ -218,7 +218,7 @@ async function compileProgram0(): Promise<void> {
  */
 async function compileProgram1(): Promise<void> {
   try {
-    compileProgramToHex(1);
+    await compileProgramToHex(1);
 
     Logs.log(LogType.INFO, "Program 1 compilation successful");
     vscode.window.showInformationMessage("Program 1 compiled successfully!");
@@ -233,7 +233,7 @@ async function compileProgram1(): Promise<void> {
  */
 async function compileProgram2(): Promise<void> {
   try {
-    compileProgramToHex(2);
+    await compileProgramToHex(2);
 
     Logs.log(LogType.INFO, "Program 2 compilation successful");
     vscode.window.showInformationMessage("Program 2 compiled successfully!");
@@ -248,7 +248,7 @@ async function compileProgram2(): Promise<void> {
  */
 async function compileProgram3(): Promise<void> {
   try {
-    compileProgramToHex(3);
+    await compileProgramToHex(3);
 
     Logs.log(LogType.INFO, "Program 3 compilation successful");
     vscode.window.showInformationMessage("Program 3 compiled successfully!");
@@ -263,7 +263,7 @@ async function compileProgram3(): Promise<void> {
  */
 async function compileProgram4(): Promise<void> {
   try {
-    compileProgramToHex(4);
+    await compileProgramToHex(4);
 
     Logs.log(LogType.INFO, "Program 4 compilation successful");
     vscode.window.showInformationMessage("Program 4 compiled successfully!");
@@ -278,7 +278,7 @@ async function compileProgram4(): Promise<void> {
  */
 async function compileProgram5(): Promise<void> {
   try {
-    compileProgramToHex(5);
+    await compileProgramToHex(5);
 
     Logs.log(LogType.INFO, "Program 5 compilation successful");
     vscode.window.showInformationMessage("Program 5 compiled successfully!");
@@ -293,7 +293,7 @@ async function compileProgram5(): Promise<void> {
  */
 async function compileProgram6(): Promise<void> {
   try {
-    compileProgramToHex(6);
+    await compileProgramToHex(6);
 
     Logs.log(LogType.INFO, "Program 6 compilation successful");
     vscode.window.showInformationMessage("Program 6 compiled successfully!");
@@ -308,7 +308,7 @@ async function compileProgram6(): Promise<void> {
  */
 async function compileProgram7(): Promise<void> {
   try {
-    compileProgramToHex(7);
+    await compileProgramToHex(7);
 
     Logs.log(LogType.INFO, "Program 7 compilation successful");
     vscode.window.showInformationMessage("Program 7 compiled successfully!");
