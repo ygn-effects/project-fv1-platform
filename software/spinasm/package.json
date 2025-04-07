@@ -138,7 +138,7 @@
       "title": "SpinASM: Compile & Upload program 7"
     },
     {
-      "command": "spinasm.compileAndUploadProgramCurrentProgram",
+      "command": "spinasm.compileAndUploadCurrentProgram",
       "title": "SpinASM: Compile & Upload current program"
     }
   ],

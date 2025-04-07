@@ -51,7 +51,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("spinasm.compileAndUploadProgram4", compileAndUploadProgram4),
     vscode.commands.registerCommand("spinasm.compileAndUploadProgram5", compileAndUploadProgram5),
     vscode.commands.registerCommand("spinasm.compileAndUploadProgram6", compileAndUploadProgram6),
-    vscode.commands.registerCommand("spinasm.compileAndUploadProgram7", compileAndUploadProgram7)
+    vscode.commands.registerCommand("spinasm.compileAndUploadProgram7", compileAndUploadProgram7),
+    vscode.commands.registerCommand("spinasm.compileAndUploadCurrentProgram", compileAndUploadCurrentProgram),
   );
 
   Logs.log(LogType.INFO, "Commands registered successfully");
@@ -679,6 +680,50 @@ async function compileAndUploadProgram7(): Promise<void> {
   }
   catch (error) {
     handleError(error, "Failed to compile and upload program 7.");
+  }
+}
+
+/**
+ * @brief Compiles the current program to HEX and uploads it.
+ */
+async function compileAndUploadCurrentProgram(): Promise<void> {
+  const folder = await getWorkspaceFolder();
+  if (!folder) {
+    return;
+  }
+
+  try {
+    const { compilerPath, compilerArgs, serialPort, baudRate } = loadProjectSettings(folder);
+    const project = new Project(folder);
+    project.buildSetup(compilerPath, compilerArgs);
+
+    const currentProgram = project.getProgramBankByPath(vscode.window.activeTextEditor?.document.uri.fsPath);
+    project.compileProgramToHex(currentProgram);
+
+    const programmer = new Programmer(serialPort, baudRate);
+    await programmer.connect();
+
+    const isConnected = await programmer.isProgrammerConnected();
+
+    if (!isConnected) {
+      throw new Error("Programmer did not respond correctly.");
+    }
+
+    const program = programmer.readIntelHexData(project.getOutput(currentProgram));
+
+    await programmer.writeProgram(program.address, program.data);
+    const programRead = await programmer.readProgram(program.address);
+    await programmer.disconnect();
+
+    if (Buffer.compare(program.data, programRead) !== 0) {
+      throw new Error("Data verification failed.");
+    }
+
+    Logs.log(LogType.INFO, `Program ${currentProgram} compilation and upload successful`);
+    vscode.window.showInformationMessage(`Program ${currentProgram} compiled and uploaded successfully!`);
+  }
+  catch (error) {
+    handleError(error, "Failed to compile and upload current program.");
   }
 }
 
