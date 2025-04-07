@@ -43,7 +43,15 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("spinasm.uploadProgram5", uploadProgram5),
     vscode.commands.registerCommand("spinasm.uploadProgram6", uploadProgram6),
     vscode.commands.registerCommand("spinasm.uploadProgram7", uploadProgram7),
-    vscode.commands.registerCommand("spinasm.uploadCurrentProgram", uploadCurrentProgram)
+    vscode.commands.registerCommand("spinasm.uploadCurrentProgram", uploadCurrentProgram),
+    vscode.commands.registerCommand("spinasm.compileAndUploadProgram0", compileAndUploadProgram0),
+    vscode.commands.registerCommand("spinasm.compileAndUploadProgram1", compileAndUploadProgram1),
+    vscode.commands.registerCommand("spinasm.compileAndUploadProgram2", compileAndUploadProgram2),
+    vscode.commands.registerCommand("spinasm.compileAndUploadProgram3", compileAndUploadProgram3),
+    vscode.commands.registerCommand("spinasm.compileAndUploadProgram4", compileAndUploadProgram4),
+    vscode.commands.registerCommand("spinasm.compileAndUploadProgram5", compileAndUploadProgram5),
+    vscode.commands.registerCommand("spinasm.compileAndUploadProgram6", compileAndUploadProgram6),
+    vscode.commands.registerCommand("spinasm.compileAndUploadProgram7", compileAndUploadProgram7)
   );
 
   Logs.log(LogType.INFO, "Commands registered successfully");
@@ -547,6 +555,134 @@ async function uploadCurrentProgram(): Promise<void> {
 }
 
 /**
+ * @brief Compiles bank 0 program to HEX format and uploads it.
+ */
+async function compileAndUploadProgram0(): Promise<void> {
+  try {
+    compileProgramToHex(0);
+    uploadProgram(0);
+
+    Logs.log(LogType.INFO, "Program 0 compilation and upload successful");
+    vscode.window.showInformationMessage("Program 0 compiled and uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile and upload program 0.");
+  }
+}
+
+/**
+ * @brief Compiles bank 1 program to HEX format and uploads it.
+ */
+async function compileAndUploadProgram1(): Promise<void> {
+  try {
+    compileProgramToHex(1);
+    uploadProgram(1);
+
+    Logs.log(LogType.INFO, "Program 1 compilation and upload successful");
+    vscode.window.showInformationMessage("Program 1 compiled and uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile and upload program 1.");
+  }
+}
+
+/**
+ * @brief Compiles bank 2 program to HEX format and uploads it.
+ */
+async function compileAndUploadProgram2(): Promise<void> {
+  try {
+    compileProgramToHex(2);
+    uploadProgram(2);
+
+    Logs.log(LogType.INFO, "Program 2 compilation and upload successful");
+    vscode.window.showInformationMessage("Program 2 compiled and uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile and upload program 2.");
+  }
+}
+
+/**
+ * @brief Compiles bank 3 program to HEX format and uploads it.
+ */
+async function compileAndUploadProgram3(): Promise<void> {
+  try {
+    compileProgramToHex(3);
+    uploadProgram(3);
+
+    Logs.log(LogType.INFO, "Program 3 compilation and upload successful");
+    vscode.window.showInformationMessage("Program 3 compiled and uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile and upload program 3.");
+  }
+}
+
+/**
+ * @brief Compiles bank 4 program to HEX format and uploads it.
+ */
+async function compileAndUploadProgram4(): Promise<void> {
+  try {
+    compileProgramToHex(4);
+    uploadProgram(4);
+
+    Logs.log(LogType.INFO, "Program 4 compilation and upload successful");
+    vscode.window.showInformationMessage("Program 4 compiled and uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile and upload program 4.");
+  }
+}
+
+/**
+ * @brief Compiles bank 5 program to HEX format and uploads it.
+ */
+async function compileAndUploadProgram5(): Promise<void> {
+  try {
+    compileProgramToHex(5);
+    uploadProgram(5);
+
+    Logs.log(LogType.INFO, "Program 5 compilation and upload successful");
+    vscode.window.showInformationMessage("Program 5 compiled and uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile and upload program 5.");
+  }
+}
+
+/**
+ * @brief Compiles bank 6 program to HEX format and uploads it.
+ */
+async function compileAndUploadProgram6(): Promise<void> {
+  try {
+    compileProgramToHex(6);
+    uploadProgram(6);
+
+    Logs.log(LogType.INFO, "Program 6 compilation and upload successful");
+    vscode.window.showInformationMessage("Program 6 compiled and uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile and upload program 6.");
+  }
+}
+
+/**
+ * @brief Compiles bank 7 program to HEX format and uploads it.
+ */
+async function compileAndUploadProgram7(): Promise<void> {
+  try {
+    compileProgramToHex(7);
+    uploadProgram(7);
+
+    Logs.log(LogType.INFO, "Program 7 compilation and upload successful");
+    vscode.window.showInformationMessage("Program 7 compiled and uploaded successfully!");
+  }
+  catch (error) {
+    handleError(error, "Failed to compile and upload program 7.");
+  }
+}
+
+/**
  * @brief Retrieves the project settings from the project .ini file
  *
  * @param folder - The workspace folder path.
@@ -646,7 +782,7 @@ async function uploadProgram(bank: number): Promise<void> {
     const programRead = await programmer.readProgram(program.address);
     await programmer.disconnect();
 
-    if (Buffer.compare(program.data, programRead) != 0) {
+    if (Buffer.compare(program.data, programRead) !== 0) {
       throw new Error("Data verification failed.");
     }
   }
