@@ -4,6 +4,8 @@ software/spinasm/out/
 
 # VSCode workspace settings
 software/spinasm/.vscode/
+firmware/vscode-spinasm-firmware/.vscode/
+firmware/vscode-spinasm-firmware/.gitignore
 
 # PIO files
 firmware/vscode-spinasm-firmware/.pio/build/ATmega328P/
