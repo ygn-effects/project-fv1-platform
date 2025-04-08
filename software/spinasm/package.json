@@ -1,0 +1,194 @@
+{
+  "name": "spinasm",
+  "displayName": "spinasm",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+  "commands": [
+    {
+      "command": "spinasm.createProject",
+      "title": "SpinASM: Create Project"
+    },
+    {
+      "command": "spinasm.checkProjectSettings",
+      "title": "SpinASM: Check Project Settings"
+    },
+    {
+      "command": "spinasm.compileProgram0",
+      "title": "SpinASM: Compile Program 0"
+    },
+    {
+      "command": "spinasm.showSerialConfig",
+      "title": "SpinASM: Show Serial Configuration"
+    },
+    {
+      "command": "spinasm.compileProgram1",
+      "title": "SpinASM: Compile program 1"
+    },
+    {
+      "command": "spinasm.compileProgram2",
+      "title": "SpinASM: Compile program 2"
+    },
+    {
+      "command": "spinasm.compileProgram3",
+      "title": "SpinASM: Compile program 3"
+    },
+    {
+      "command": "spinasm.compileProgram4",
+      "title": "SpinASM: Compile program 4"
+    },
+    {
+      "command": "spinasm.compileProgram5",
+      "title": "SpinASM: Compile program 5"
+    },
+    {
+      "command": "spinasm.compileProgram6",
+      "title": "SpinASM: Compile program 6"
+    },
+    {
+      "command": "spinasm.compileProgram7",
+      "title": "SpinASM: Compile program 7"
+    },
+    {
+      "command": "spinasm.compileCurrentProgram",
+      "title": "SpinASM: Compile current program"
+    },
+    {
+      "command": "spinasm.compileAllPrograms",
+      "title": "SpinASM: Compile all programs"
+    },
+    {
+      "command": "spinasm.compileAllProgramsToBin",
+      "title": "SpinASM: Compile all programs to .bin"
+    },
+    {
+      "command": "spinasm.uploadProgram0",
+      "title": "SpinASM: Upload program 0"
+    },
+    {
+      "command": "spinasm.uploadProgram1",
+      "title": "SpinASM: Upload program 1"
+    },
+    {
+      "command": "spinasm.uploadProgram2",
+      "title": "SpinASM: Upload program 2"
+    },
+    {
+      "command": "spinasm.uploadProgram3",
+      "title": "SpinASM: Upload program 3"
+    },
+    {
+      "command": "spinasm.uploadProgram4",
+      "title": "SpinASM: Upload program 4"
+    },
+    {
+      "command": "spinasm.uploadProgram5",
+      "title": "SpinASM: Upload program 5"
+    },
+    {
+      "command": "spinasm.uploadProgram6",
+      "title": "SpinASM: Upload program 6"
+    },
+    {
+      "command": "spinasm.uploadProgram7",
+      "title": "SpinASM: Upload program 7"
+    },
+    {
+      "command": "spinasm.uploadCurrentProgram",
+      "title": "SpinASM: Upload current program"
+    },
+    {
+      "command": "spinasm.compileAndUploadProgram0",
+      "title": "SpinASM: Compile & Upload program 0"
+    },
+    {
+      "command": "spinasm.compileAndUploadProgram1",
+      "title": "SpinASM: Compile & Upload program 1"
+    },
+    {
+      "command": "spinasm.compileAndUploadProgram2",
+      "title": "SpinASM: Compile & Upload program 2"
+    },
+    {
+      "command": "spinasm.compileAndUploadProgram3",
+      "title": "SpinASM: Compile & Upload program 3"
+    },
+    {
+      "command": "spinasm.compileAndUploadProgram4",
+      "title": "SpinASM: Compile & Upload program 4"
+    },
+    {
+      "command": "spinasm.compileAndUploadProgram5",
+      "title": "SpinASM: Compile & Upload program 5"
+    },
+    {
+      "command": "spinasm.compileAndUploadProgram6",
+      "title": "SpinASM: Compile & Upload program 6"
+    },
+    {
+      "command": "spinasm.compileAndUploadProgram7",
+      "title": "SpinASM: Compile & Upload program 7"
+    },
+    {
+      "command": "spinasm.compileAndUploadCurrentProgram",
+      "title": "SpinASM: Compile & Upload current program"
+    }
+  ],
+  "languages": [
+    {
+      "id": "spinasm",
+      "aliases": ["SpinASM", "spinasm"],
+      "extensions": [".spn"],
+      "configuration": "./language-configuration.json"
+    }
+  ],
+  "grammars": [
+    {
+      "language": "spinasm",
+      "scopeName": "source.spinasm",
+      "path": "./syntaxes/spinasm.tmLanguage.json"
+    }
+  ],
+  "snippets": [
+    {
+      "language": "spinasm",
+      "path": "./snippets/spinasm.json"
+    }
+  ]
+},
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/ini": "^4.1.1",
+    "@types/mocha": "^10.0.9",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^8.10.0",
+    "@typescript-eslint/parser": "^8.7.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.15.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.4.1",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "ini": "^5.0.0",
+    "serialport": "^12.0.0"
+  }
+}

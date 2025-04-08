@@ -1,0 +1,19 @@
+{
+    "gates": {
+        "d66d769b-28e6-4f15-a257-e17f90609942": {
+            "name": "Main",
+            "suffix": "",
+            "swap_group": 0,
+            "unit": "e81a113c-e0ca-4f7c-9e09-14e465f8bddd"
+        }
+    },
+    "manufacturer": "",
+    "name": "Crystal oscillators",
+    "prefix": "X",
+    "tags": [
+        "crystal",
+        "oscillator"
+    ],
+    "type": "entity",
+    "uuid": "8c1bc342-9e46-4296-a524-6063dbb84ae6"
+}
