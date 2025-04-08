@@ -1,0 +1,38 @@
+# Node modules and build outputs
+software/spinasm/node_modules/
+software/spinasm/out/
+
+# VSCode workspace settings
+software/spinasm/.vscode/
+
+# PIO files
+firmware/vscode-spinasm-firmware/.pio/build/ATmega328P/
+firmware/vscode-spinasm-firmware/.vscode/
+firmware/vscode-spinasm-firmware/.pio/build/
+
+# Packaging artifacts
+software/spinasm/*.vsix
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# OS-specific and temporary files
+Thumbs.db
+desktop.ini
+*.tmp
+*.log
+
+# Test project
+software/spinasm/test
+
+
+# Horizon files
+*.db
+*.db-shm
+*.db-wal
+.gdb_history
+tmp/*.json
+3d_models/local
+**/__pycache__
+*.imp_meta
+*.autosave

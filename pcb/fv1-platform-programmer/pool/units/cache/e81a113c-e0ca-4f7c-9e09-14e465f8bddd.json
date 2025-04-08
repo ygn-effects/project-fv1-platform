@@ -1,0 +1,20 @@
+{
+    "manufacturer": "",
+    "name": "Crystal oscillator",
+    "pins": {
+        "063f28ea-5bf0-4203-b5f2-18ce2790a092": {
+            "direction": "passive",
+            "names": [],
+            "primary_name": "A",
+            "swap_group": 0
+        },
+        "fac19994-30e6-4ecd-8125-96fdfa03622a": {
+            "direction": "passive",
+            "names": [],
+            "primary_name": "B",
+            "swap_group": 0
+        }
+    },
+    "type": "unit",
+    "uuid": "e81a113c-e0ca-4f7c-9e09-14e465f8bddd"
+}
