@@ -1,0 +1,50 @@
+{
+    "MPN": [
+        false,
+        "APT1608SGC"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "LED GREEN CLEAR CHIP SMD 0603"
+    ],
+    "entity": "57b3b8de-1335-4ddf-8edd-8130574b2c97",
+    "inherit_model": false,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Kingbright"
+    ],
+    "model": "929ea2be-bc23-4d8f-81a7-e0d0fd3abcdc",
+    "package": "b3e8c4c6-59b0-4b47-930b-4a8818254dbc",
+    "pad_map": {
+        "9446aeaf-23b9-43a9-a1f3-d0e5de6a2184": {
+            "gate": "ddca9e35-cd2a-4594-b14a-842ce655b7e3",
+            "pin": "da62449c-1c9b-4d92-b968-41d17eb71605"
+        },
+        "bcb94158-5b64-4d66-bba1-0f46e710ce8b": {
+            "gate": "ddca9e35-cd2a-4594-b14a-842ce655b7e3",
+            "pin": "09552127-78eb-44b7-b6eb-38cc164badb5"
+        }
+    },
+    "parametric": {
+        "color": "Green",
+        "forward_current": "0.14",
+        "forward_voltage": "2.2",
+        "luminous_intensity": "0.012",
+        "package": "0603",
+        "price": "0.09",
+        "table": "diodes_leds",
+        "wavelength": "5.65e-07"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "f5015dfb-27da-4779-a5d7-0433cfbabb8a",
+    "value": [
+        false,
+        ""
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "gates": {
+        "7e216459-ad85-4d9b-98b7-a46e9d9b5438": {
+            "name": "Main",
+            "suffix": "",
+            "swap_group": 0,
+            "unit": "a00bf6e7-8faa-4528-91a8-f128d8943723"
+        }
+    },
+    "manufacturer": "",
+    "name": "Connector 6 pins",
+    "prefix": "J",
+    "tags": [
+        "connector"
+    ],
+    "type": "entity",
+    "uuid": "4969fd95-015a-41c7-b6e7-941856f99f5e"
+}

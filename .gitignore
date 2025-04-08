@@ -5,6 +5,11 @@ software/spinasm/out/
 # VSCode workspace settings
 software/spinasm/.vscode/
 
+# PIO files
+firmware/vscode-spinasm-firmware/.pio/build/ATmega328P/
+firmware/vscode-spinasm-firmware/.vscode/
+firmware/vscode-spinasm-firmware/.pio/build/
+
 # Packaging artifacts
 software/spinasm/*.vsix
 
@@ -21,7 +26,16 @@ desktop.ini
 software/spinasm/test
 
 firmware/vscode-spinasm-firmware/.pio/build/ATmega328P/
-
 firmware/vscode-spinasm-firmware/.vscode/
-
 firmware/vscode-spinasm-firmware/.pio/build/
+
+# Horizon files
+*.db
+*.db-shm
+*.db-wal
+.gdb_history
+tmp/*.json
+3d_models/local
+**/__pycache__
+*.imp_meta
+*.autosave

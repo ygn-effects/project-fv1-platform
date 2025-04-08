@@ -1,0 +1,49 @@
+{
+    "MPN": [
+        false,
+        "TMK316B7106KL-TD"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "CAPACITOR MLCC X7R 10u 1206 25V ±10%"
+    ],
+    "entity": "ca83a84f-6183-4088-84b6-5d79b2a119d4",
+    "inherit_model": false,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Taiyo Yuden"
+    ],
+    "model": "a12c1037-60d5-4372-a269-443514f69259",
+    "package": "7eda235b-0669-4a40-b4a4-e16dd9c1dd55",
+    "pad_map": {
+        "5b49be53-b457-4e8c-8b58-4de7b60fc30d": {
+            "gate": "9bfcf213-2a7e-444e-8312-ce57209fc9ec",
+            "pin": "29995253-b4b1-4c7c-a049-b6db2713ca7c"
+        },
+        "c0de382c-4127-4ed9-b1d2-0827fcf28a0c": {
+            "gate": "9bfcf213-2a7e-444e-8312-ce57209fc9ec",
+            "pin": "852f1fe6-06dc-4661-8a14-61a9a6ebb26a"
+        }
+    },
+    "parametric": {
+        "dielectric": "X7R",
+        "package": "1206",
+        "price": "0.078",
+        "table": "capacitors_mlcc",
+        "tolerance": "10",
+        "value": "1e-05",
+        "wvdc": "25"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "685b19f5-acb2-4323-90cf-8c0d2e699a7a",
+    "value": [
+        false,
+        "10u"
+    ]
+}
