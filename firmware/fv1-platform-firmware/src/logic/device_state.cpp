@@ -25,7 +25,7 @@ TapHandler* DeviceState::getTapHandler() const {
 }
 
 ExprHandler* DeviceState::getExprHandler(uint8_t t_index) const {
-  if (t_index < c_maxPrograms) {
+  if (t_index < ProgramConstants::c_maxPrograms) {
     return m_exprHandler[t_index];
   }
 
@@ -57,7 +57,7 @@ void DeviceState::setTapHandler(TapHandler* t_handler) {
 }
 
 void DeviceState::setExprHandler(uint8_t t_index, ExprHandler* t_handler) {
-  if (t_index < c_maxPrograms) {
+  if (t_index < ProgramConstants::c_maxPrograms) {
     m_exprHandler[t_index] = t_handler;
   }
 }

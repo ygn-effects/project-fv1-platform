@@ -26,14 +26,14 @@ enum class ProgramMode : uint8_t {
  */
 class DeviceState {
   private:
-    BypassState m_bypassState{BypassState::kActive};    // Whether the device was bypassed or not
-    ProgramMode m_programMode{ProgramMode::kProgram};   // Whether the device was on program or preset mode
-    uint8_t m_currentProgram{0};                        // The current program the deviced was on
-    uint8_t m_currentPreset{0};                         // The current preset the device was on
-    uint8_t m_midiChannel{0};                           // MIDI channel of the device
+    BypassState m_bypassState{BypassState::kActive};                      // Whether the device was bypassed or not
+    ProgramMode m_programMode{ProgramMode::kProgram};                     // Whether the device was on program or preset mode
+    uint8_t m_currentProgram{0};                                          // The current program the deviced was on
+    uint8_t m_currentPreset{0};                                           // The current preset the device was on
+    uint8_t m_midiChannel{0};                                             // MIDI channel of the device
 
-    TapHandler* m_tapHandler{nullptr};                  // Object handling the tap state
-    ExprHandler* m_exprHandler[c_maxPrograms]{nullptr}; // Array of ExprHandlers, one for each program
+    TapHandler* m_tapHandler{nullptr};                                    // Object handling the tap state
+    ExprHandler* m_exprHandler[ProgramConstants::c_maxPrograms]{nullptr}; // Array of ExprHandlers, one for each program
 
   public:
     /**
