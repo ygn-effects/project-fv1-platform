@@ -20,16 +20,48 @@ uint8_t DeviceState::getMidiChannel() const {
   return m_midiChannel;
 }
 
-TapHandler* DeviceState::getTapHandler() const {
+TapHandler& DeviceState::getTapHandler() {
   return m_tapHandler;
 }
 
-ExprHandler* DeviceState::getExprHandler(uint8_t t_index) const {
+ExprHandler& DeviceState::getExprHandler(uint8_t t_index) {
   if (t_index < ProgramConstants::c_maxPrograms) {
     return m_exprHandler[t_index];
   }
 
-  return nullptr;
+  return m_exprHandler[ProgramConstants::c_maxPrograms];
+}
+
+Potentiometer& DeviceState::getPot0() {
+  return m_fv1Pot0;
+}
+
+Potentiometer& DeviceState::getPot1() {
+  return m_fv1Pot1;
+}
+
+Potentiometer& DeviceState::getPot2() {
+  return m_fv1Pot2;
+}
+
+Potentiometer& DeviceState::getMixPot() {
+  return m_mixPot;
+}
+
+MomentarySwitch& DeviceState::getBypassSwitch() {
+  return m_bypassSwitch;
+}
+
+MomentarySwitch& DeviceState::getTapSwitch() {
+  return m_tapSwitch;
+}
+
+Led& DeviceState::getBypassLed() {
+  return m_bypassLed;
+}
+
+PwmLed& DeviceState::getTapLed() {
+  return m_tapLed;
 }
 
 void DeviceState::setBypassState(BypassState t_state) {
@@ -50,14 +82,4 @@ void DeviceState::setCurrentPreset(uint8_t t_preset) {
 
 void DeviceState::setMidiChannel(uint8_t t_channel) {
   m_midiChannel = t_channel;
-}
-
-void DeviceState::setTapHandler(TapHandler* t_handler) {
-  m_tapHandler = t_handler;
-}
-
-void DeviceState::setExprHandler(uint8_t t_index, ExprHandler* t_handler) {
-  if (t_index < ProgramConstants::c_maxPrograms) {
-    m_exprHandler[t_index] = t_handler;
-  }
 }
