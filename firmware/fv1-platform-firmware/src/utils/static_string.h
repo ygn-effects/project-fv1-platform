@@ -18,11 +18,18 @@ class StaticString {
       append(t_value);
     }
 
+    StaticString(const char* str) : m_length(0) {
+      clear();
+      append(str);
+    }
+
     void clear();
 
     bool append(char c);
 
     bool append(uint8_t value);
+
+    bool append(const char* str);
 
     const char* c_str() const;
 };

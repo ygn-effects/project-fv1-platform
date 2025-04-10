@@ -40,6 +40,17 @@ bool StaticString::append(uint8_t t_value) {
   return false;
 }
 
+bool StaticString::append(const char* str) {
+  if (!str) return false;
+
+  while (*str) {
+    if (!append(*str++)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 const char* StaticString::c_str() const {
   return m_buffer;
 }
