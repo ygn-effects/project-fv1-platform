@@ -9,8 +9,10 @@ bool StaticString::append(char t_char) {
   if (m_length < c_maxSize - 1) {
     m_buffer[m_length++] = t_char;
     m_buffer[m_length] = '\0';
+
     return true;
   }
+
   return false;
 }
 
@@ -23,10 +25,12 @@ bool StaticString::append(uint8_t t_value) {
       temp[len++] = '0' + (t_value / 100);
       t_value %= 100;
     }
+
     if (t_value >= 10 || len > 0) {
       temp[len++] = '0' + (t_value / 10);
       t_value %= 10;
     }
+
     temp[len++] = '0' + t_value;
     temp[len] = '\0';
 
@@ -35,8 +39,10 @@ bool StaticString::append(uint8_t t_value) {
         return false;
       }
     }
+
     return true;
   }
+
   return false;
 }
 
@@ -48,6 +54,7 @@ bool StaticString::append(const char* str) {
       return false;
     }
   }
+
   return true;
 }
 

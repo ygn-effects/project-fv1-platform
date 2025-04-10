@@ -4,7 +4,7 @@
 
 class StaticString {
   private:
-    static constexpr uint8_t c_maxSize = 5;
+    static constexpr uint8_t c_maxSize = 32;
     char m_buffer[c_maxSize];
     uint8_t m_length;
 
