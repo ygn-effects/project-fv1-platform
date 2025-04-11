@@ -36,10 +36,10 @@ class TapHandler {
   public:
     void registerTap(uint32_t t_currentTime);
 
-    DivState getDivState();
-    uint16_t getInterval();
-    uint16_t getDivInterval();
-    bool getIsNewIntervalSet();
+    DivState getDivState() const;
+    uint16_t getInterval() const;
+    uint16_t getDivInterval() const;
+    bool getIsNewIntervalSet() const;
 
     void setDivState(DivState t_state);
     void setNextDivValue();
