@@ -20,11 +20,19 @@ uint8_t DeviceState::getMidiChannel() const {
   return m_midiChannel;
 }
 
-TapHandler& DeviceState::getTapHandler() {
+const TapHandler& DeviceState::getTapHandler() const {
   return m_tapHandler;
 }
 
 ExprHandler& DeviceState::getExprHandler(uint8_t t_index) {
+  if (t_index < ProgramConstants::c_maxPrograms) {
+    return m_exprHandler[t_index];
+  }
+
+  return m_exprHandler[ProgramConstants::c_maxPrograms];
+}
+
+const ExprHandler& DeviceState::getExprHandler(uint8_t t_index) const {
   if (t_index < ProgramConstants::c_maxPrograms) {
     return m_exprHandler[t_index];
   }

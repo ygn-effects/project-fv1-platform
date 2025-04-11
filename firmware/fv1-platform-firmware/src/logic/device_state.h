@@ -66,7 +66,9 @@ class DeviceState {
       m_tapLed(t_tapLPin) {}
 
     TapHandler& getTapHandler();
+    const TapHandler& getTapHandler() const;
     ExprHandler& getExprHandler(uint8_t t_index);
+    const ExprHandler& getExprHandler(uint8_t t_index) const;
     Potentiometer& getPot0();
     Potentiometer& getPot1();
     Potentiometer& getPot2();
