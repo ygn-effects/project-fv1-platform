@@ -19,4 +19,13 @@ namespace Utils {
 
     return buffer;
   }
+
+  void pack16(uint16_t value, uint8_t& lowByte, uint8_t& highByte) {
+    lowByte = value & 0xFF;
+    highByte = (value >> 8) & 0xFF;
+  }
+
+  void unpack16(const uint8_t lowByte, const uint8_t highByte, uint16_t& value) {
+    value = static_cast<uint16_t>(lowByte) | (static_cast<uint16_t>(highByte) << 8);
+  }
 }
