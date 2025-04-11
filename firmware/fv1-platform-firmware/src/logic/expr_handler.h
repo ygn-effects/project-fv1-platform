@@ -36,22 +36,22 @@ class ExprHandler {
     ExprState m_state{ExprState::kInactive};
     MappedPot m_mappedPot{MappedPot::kPot0};
     Direction m_direction{Direction::kNormal};
-    uint8_t m_heelValue{0};
-    uint8_t m_toeValue{255};
+    uint16_t m_heelValue{0};
+    uint16_t m_toeValue{1023};
 
   public:
     ExprHandler();
 
     void setMappedPot(MappedPot pot);
     void setDirection(Direction direction);
-    void setHeelToeValues(uint8_t heel, uint8_t toe);
+    void setHeelToeValues(uint16_t heel, uint16_t toe);
     void setState(ExprState state);
 
-    uint8_t mapAdcValue(uint16_t adcValue) const;
+    uint16_t mapAdcValue(uint16_t adcValue) const;
 
     ExprState getState() const { return m_state; }
     MappedPot getMappedPot() const { return m_mappedPot; }
     Direction getDirection() const { return m_direction; }
-    uint8_t getHeelValue() const { return m_heelValue; }
-    uint8_t getToeValue() const { return m_toeValue; }
+    uint16_t getHeelValue() const { return m_heelValue; }
+    uint16_t getToeValue() const { return m_toeValue; }
 };

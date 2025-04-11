@@ -9,7 +9,7 @@ void ExprHandler::setDirection(Direction direction) {
   m_direction = direction;
 }
 
-void ExprHandler::setHeelToeValues(uint8_t heel, uint8_t toe) {
+void ExprHandler::setHeelToeValues(uint16_t heel, uint16_t toe) {
   m_heelValue = heel;
   m_toeValue = toe;
 }
@@ -18,8 +18,7 @@ void ExprHandler::setState(ExprState state) {
   m_state = state;
 }
 
-// Main ADC mapping logic
-uint8_t ExprHandler::mapAdcValue(uint16_t adcValue) const {
+uint16_t ExprHandler::mapAdcValue(uint16_t adcValue) const {
   // Ensure ADC input is constrained to expected range
   adcValue = constrain(adcValue, 0, 1023);
 
@@ -32,5 +31,5 @@ uint8_t ExprHandler::mapAdcValue(uint16_t adcValue) const {
   }
 
   // Scale normalized value between heel and toe values
-  return static_cast<uint8_t>(m_heelValue + normalized * (m_toeValue - m_heelValue));
+  return (m_heelValue + normalized * (m_toeValue - m_heelValue));
 }
