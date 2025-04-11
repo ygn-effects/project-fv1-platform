@@ -63,6 +63,10 @@ DivState TapHandler::getDivState() const {
   return m_divState;
 }
 
+DivValue TapHandler::getDivValue() const {
+  return m_divValue;
+}
+
 uint16_t TapHandler::getInterval() const {
   return m_interval;
 }
@@ -77,6 +81,18 @@ bool TapHandler::getIsNewIntervalSet() const {
 
 void TapHandler::setDivState(DivState t_state) {
   m_divState = t_state;
+}
+
+void TapHandler::setDivValue(DivValue t_value) {
+  m_divValue = t_value;
+}
+
+void TapHandler::setInterval(uint16_t t_interval) {
+  m_interval = t_interval;
+}
+
+void TapHandler::setDivInterval(uint16_t t_divInterval) {
+  m_divInterval = t_divInterval;
 }
 
 void TapHandler::setTapTimeout(uint16_t t_timeout) {
