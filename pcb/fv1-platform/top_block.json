@@ -1,0 +1,182 @@
+{
+    "block_instance_mappings": {},
+    "block_instances": {},
+    "bom_export_settings": {
+        "concrete_parts": {},
+        "csv_settings": {
+            "columns": [
+                "MPN",
+                "refdes",
+                "value",
+                "manufacturer",
+                "description",
+                "package",
+                "QTY"
+            ],
+            "order": "asc",
+            "sort_column": "refdes"
+        },
+        "orderable_MPNs": {},
+        "output_filename": "/home/yann/_ygn/effect-sexy-rodent/pcb/bom/sexy-rodent.csv"
+    },
+    "buses": {},
+    "components": {
+        "44be9b79-0c07-4fd5-b154-0586d9b238fd": {
+            "alt_pins": {},
+            "connections": {},
+            "entity": "e56d286e-744d-4059-b070-2fd855e01ff6",
+            "group": "00000000-0000-0000-0000-000000000000",
+            "part": "2568684d-e60b-4b71-a50a-6ffe7a18347f",
+            "pin_names": {},
+            "refdes": "TREBLE",
+            "tag": "31cd0814-2789-4970-b3de-2fcf218c9dbf",
+            "value": ""
+        },
+        "4854b267-fb87-4724-b5e5-d992246ce0ea": {
+            "alt_pins": {},
+            "connections": {},
+            "entity": "e56d286e-744d-4059-b070-2fd855e01ff6",
+            "group": "00000000-0000-0000-0000-000000000000",
+            "part": "e6ad9436-ceb6-4437-b66c-5fed942b534b",
+            "pin_names": {},
+            "refdes": "VOL",
+            "tag": "b3a8c130-0fe6-4c62-a9bd-a9973fecff30",
+            "value": ""
+        },
+        "64f9cff8-34f0-4fc6-b79e-ae0ceecf2d9f": {
+            "alt_pins": {},
+            "connections": {},
+            "entity": "e56d286e-744d-4059-b070-2fd855e01ff6",
+            "group": "00000000-0000-0000-0000-000000000000",
+            "part": "2568684d-e60b-4b71-a50a-6ffe7a18347f",
+            "pin_names": {},
+            "refdes": "BASS",
+            "tag": "31cd0814-2789-4970-b3de-2fcf218c9dbf",
+            "value": ""
+        },
+        "867a46a4-534c-4bde-895e-01ee0338e369": {
+            "alt_pins": {},
+            "connections": {},
+            "entity": "e56d286e-744d-4059-b070-2fd855e01ff6",
+            "group": "00000000-0000-0000-0000-000000000000",
+            "part": "0262d4ea-7f71-4cce-bc39-c08f1922bc11",
+            "pin_names": {},
+            "refdes": "MID",
+            "tag": "68f33a51-9fb5-4464-bff4-35eb79d9a40a",
+            "value": ""
+        }
+    },
+    "group_names": {},
+    "name": "Top",
+    "net_class_default": "a48123af-5897-4ccf-b2a6-126b8069075e",
+    "net_classes": {
+        "762d94af-ebf9-487f-8459-589b72cb6c3e": {
+            "name": "Digital"
+        },
+        "8876c9d4-a55d-49ea-9272-2f5228ec55f5": {
+            "name": "Analog"
+        },
+        "a48123af-5897-4ccf-b2a6-126b8069075e": {
+            "name": "default"
+        },
+        "db4ec8e0-0bcd-45cc-9312-1d188e5b815f": {
+            "name": "Power"
+        }
+    },
+    "nets": {
+        "4e2b1a8e-7822-43b9-993c-f850daedd9d9": {
+            "is_port": false,
+            "is_power": true,
+            "name": "+Rt",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "5250e92b-1451-4fde-b6d4-cb9959f3c147": {
+            "is_port": false,
+            "is_power": true,
+            "name": "GND",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "gnd"
+        },
+        "8498ea5d-f77d-4120-b7fe-462820666f58": {
+            "is_port": false,
+            "is_power": true,
+            "name": "+REG",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "86e48f21-266e-41f0-be8c-9f13912bd3e8": {
+            "is_port": false,
+            "is_power": true,
+            "name": "+",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "936f0572-b515-4dd7-9524-bc4c5b0d957c": {
+            "is_port": false,
+            "is_power": true,
+            "name": "-REG",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "953f378e-f368-4a22-9560-090233556068": {
+            "is_port": false,
+            "is_power": true,
+            "name": "+REG*2_F",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "9ce24954-fc0f-453c-a163-0114dfd8569a": {
+            "is_port": false,
+            "is_power": true,
+            "name": "-REG_F",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "b15d3b93-05de-4056-bab2-e8581e0da50c": {
+            "is_port": false,
+            "is_power": true,
+            "name": "+REG*2",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "e3d054cc-677e-4dac-8ee3-76f67b09fca2": {
+            "is_port": false,
+            "is_power": true,
+            "name": "+5V",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        }
+    },
+    "project_meta": {
+        "author": "yann-ygn",
+        "date": "2024-08-18",
+        "project_name": "fv1-platform",
+        "project_title": "fv1-platform",
+        "rev": "1"
+    },
+    "tag_names": {
+        "31cd0814-2789-4970-b3de-2fcf218c9dbf": "19",
+        "68f33a51-9fb5-4464-bff4-35eb79d9a40a": "41",
+        "b3a8c130-0fe6-4c62-a9bd-a9973fecff30": "30"
+    },
+    "uuid": "7dd99e06-2a2d-44db-b3e1-39a57ea92d62"
+}

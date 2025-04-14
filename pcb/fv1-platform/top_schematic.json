@@ -1,0 +1,128 @@
+{
+    "annotation": {
+        "fill_gaps": true,
+        "ignore_unknown": false,
+        "keep": true,
+        "mode": "sequential",
+        "order": "right_down"
+    },
+    "block": "7dd99e06-2a2d-44db-b3e1-39a57ea92d62",
+    "group_tag_visible": true,
+    "name": "",
+    "pdf_export_settings": {
+        "min_line_width": 0,
+        "output_filename": "/home/yann/Desktop/schematic.pdf"
+    },
+    "rules": {
+        "connectivity": {
+            "enabled": true,
+            "include_unnamed": true,
+            "order": -1
+        }
+    },
+    "sheets": {
+        "74521acf-5dbe-4d1c-90fc-5decad792628": {
+            "arcs": {},
+            "block_symbols": {},
+            "bus_labels": {},
+            "bus_rippers": {},
+            "index": 1,
+            "junctions": {},
+            "lines": {},
+            "name": "First sheet",
+            "net_labels": {},
+            "net_lines": {},
+            "power_symbols": {},
+            "symbols": {
+                "0bc52938-3f14-43c1-b1ab-b426c29adb8d": {
+                    "component": "4854b267-fb87-4724-b5e5-d992246ce0ea",
+                    "display_all_pads": false,
+                    "display_directions": false,
+                    "expand": 0,
+                    "gate": "8ab7464a-ee86-4b19-bbbc-e3499b3575bc",
+                    "pin_display_mode": "selected_only",
+                    "placement": {
+                        "angle": 0,
+                        "mirror": false,
+                        "shift": [
+                            182500000,
+                            -43750000
+                        ]
+                    },
+                    "smashed": false,
+                    "symbol": "f53d9985-4fbc-4745-be23-ed3404df9c77",
+                    "texts": []
+                },
+                "4bcd0cf9-f96f-4d9d-a656-9d697b6532d2": {
+                    "component": "64f9cff8-34f0-4fc6-b79e-ae0ceecf2d9f",
+                    "display_all_pads": false,
+                    "display_directions": false,
+                    "expand": 0,
+                    "gate": "8ab7464a-ee86-4b19-bbbc-e3499b3575bc",
+                    "pin_display_mode": "selected_only",
+                    "placement": {
+                        "angle": 32768,
+                        "mirror": true,
+                        "shift": [
+                            107500000,
+                            -46250000
+                        ]
+                    },
+                    "smashed": false,
+                    "symbol": "f53d9985-4fbc-4745-be23-ed3404df9c77",
+                    "texts": []
+                },
+                "b2e49512-2a0f-4ecf-b465-7c776f51d749": {
+                    "component": "44be9b79-0c07-4fd5-b154-0586d9b238fd",
+                    "display_all_pads": false,
+                    "display_directions": false,
+                    "expand": 0,
+                    "gate": "8ab7464a-ee86-4b19-bbbc-e3499b3575bc",
+                    "pin_display_mode": "selected_only",
+                    "placement": {
+                        "angle": 0,
+                        "mirror": false,
+                        "shift": [
+                            107500000,
+                            -33750000
+                        ]
+                    },
+                    "smashed": false,
+                    "symbol": "f53d9985-4fbc-4745-be23-ed3404df9c77",
+                    "texts": []
+                },
+                "b51e911f-fd62-4bc6-b836-57cd7d1fd0a0": {
+                    "component": "867a46a4-534c-4bde-895e-01ee0338e369",
+                    "display_all_pads": false,
+                    "display_directions": false,
+                    "expand": 0,
+                    "gate": "8ab7464a-ee86-4b19-bbbc-e3499b3575bc",
+                    "pin_display_mode": "selected_only",
+                    "placement": {
+                        "angle": 0,
+                        "mirror": false,
+                        "shift": [
+                            107500000,
+                            -58750000
+                        ]
+                    },
+                    "smashed": false,
+                    "symbol": "f53d9985-4fbc-4745-be23-ed3404df9c77",
+                    "texts": []
+                }
+            },
+            "texts": {},
+            "title_block_values": {}
+        }
+    },
+    "title_block_values": {
+        "author": "yann-ygn",
+        "date": "2024-08-18",
+        "project_name": "fv1-platform",
+        "project_title": "fv1-platform",
+        "rev": "1"
+    },
+    "type": "schematic_block",
+    "uuid": "3bacddb4-f603-4845-98ac-d9c82512e1d0",
+    "version": 8
+}
