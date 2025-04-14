@@ -1,0 +1,51 @@
+{
+    "MPN": [
+        false,
+        "MCVVT025M101EA6L"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "CAPACITOR ALUM 100UF 25V ±20%"
+    ],
+    "entity": "b0c2b8f8-aecf-4873-9458-c06eee2f7a00",
+    "inherit_model": false,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Multicomp"
+    ],
+    "model": "617ce3a9-1801-4b7b-8cec-c09cae32d787",
+    "package": "b1dabf1b-91ef-45b3-b686-26d62bcf4d69",
+    "pad_map": {
+        "ae525f0d-f031-4e48-b3ac-67b6adc706b5": {
+            "gate": "23766b63-6ffc-4831-baee-ba1635a735b3",
+            "pin": "bb8460b5-34e6-41b0-9a9f-10eed3a3d8d6"
+        },
+        "b2dd8257-861d-4273-84d5-d5e4d646570f": {
+            "gate": "23766b63-6ffc-4831-baee-ba1635a735b3",
+            "pin": "1e7cd34f-86db-4b34-9e0b-c276756301ab"
+        }
+    },
+    "parametric": {
+        "esr": "",
+        "lifetime": "2000",
+        "package": "SMD",
+        "price": "0.101",
+        "size": "6.3x7.7mm",
+        "table": "capacitors_electrolytic",
+        "tolerance": "20",
+        "value": "0.0001",
+        "wvdc": "25"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "a61500df-7599-4e87-8282-66a58fd98ee0",
+    "value": [
+        false,
+        "100u"
+    ]
+}

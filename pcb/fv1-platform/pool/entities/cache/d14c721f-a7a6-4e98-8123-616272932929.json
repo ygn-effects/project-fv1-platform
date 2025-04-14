@@ -1,0 +1,18 @@
+{
+    "gates": {
+        "6a809e03-3512-480b-88aa-2916faa0fdf4": {
+            "name": "Main",
+            "suffix": "",
+            "swap_group": 0,
+            "unit": "d8fead96-caea-4105-91f3-851cb5c6b79e"
+        }
+    },
+    "manufacturer": "",
+    "name": "Connector 16 pins",
+    "prefix": "J",
+    "tags": [
+        "connector"
+    ],
+    "type": "entity",
+    "uuid": "d14c721f-a7a6-4e98-8123-616272932929"
+}
