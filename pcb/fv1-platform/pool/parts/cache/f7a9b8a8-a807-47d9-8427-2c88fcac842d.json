@@ -1,0 +1,75 @@
+{
+    "MPN": [
+        false,
+        "M95256-RMN6TP"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "EEPROM 256 KBIT SPI EEPROM"
+    ],
+    "entity": "65970042-34b2-4dda-9d06-c1b29399cf02",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "ST"
+    ],
+    "model": "3d35a336-4c7c-46f3-af0d-227cc9e8e286",
+    "package": "e9e193c1-ec21-46d7-842b-02266d06f4cb",
+    "pad_map": {
+        "3a5386ab-3e3f-4016-9a85-9c9c2315c9e9": {
+            "gate": "260afc95-beaa-46ed-b3b4-51e6fa4299ba",
+            "pin": "7d3f9eeb-34a3-4076-b59f-49bd0339fdd5"
+        },
+        "413d3e7a-addb-4a0f-a94d-c98779119ec6": {
+            "gate": "260afc95-beaa-46ed-b3b4-51e6fa4299ba",
+            "pin": "5df72ff0-535b-4ad0-9105-3aed131fcd9e"
+        },
+        "48bd9388-8520-406b-9d85-090d992c5a9e": {
+            "gate": "260afc95-beaa-46ed-b3b4-51e6fa4299ba",
+            "pin": "e4b6e71c-0c06-4bdb-b6ca-2f573e0fb5a3"
+        },
+        "820f4c6b-5a44-4bec-88f5-18a275096696": {
+            "gate": "260afc95-beaa-46ed-b3b4-51e6fa4299ba",
+            "pin": "671c00c0-87f7-468a-9b45-8a3784e58a17"
+        },
+        "98100bd0-1066-4d26-9a56-75ff1afd842b": {
+            "gate": "260afc95-beaa-46ed-b3b4-51e6fa4299ba",
+            "pin": "acda1fb2-da02-4f96-847e-e3933faffeaf"
+        },
+        "a6605fe8-fe10-4168-9790-5c82df7534cd": {
+            "gate": "260afc95-beaa-46ed-b3b4-51e6fa4299ba",
+            "pin": "e925eece-2158-42ac-9e97-9c651eb33949"
+        },
+        "c7d96e1c-df84-4b5b-be8d-0144d9ba88ca": {
+            "gate": "260afc95-beaa-46ed-b3b4-51e6fa4299ba",
+            "pin": "38eb1bc0-2deb-4729-bbdb-a9435637aafc"
+        },
+        "de9159bc-124a-4dd0-8254-1c965604ff86": {
+            "gate": "260afc95-beaa-46ed-b3b4-51e6fa4299ba",
+            "pin": "d765050d-5ffa-4c15-a203-4ba11795837b"
+        }
+    },
+    "parametric": {
+        "data_retention": "200",
+        "endurance": "4e+06",
+        "interface": "SPI",
+        "memory_size": "256000",
+        "package": "SOIC-8",
+        "price": "0.543",
+        "speed": "2e+07",
+        "table": "eeproms",
+        "voltage": "5.5"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "f7a9b8a8-a807-47d9-8427-2c88fcac842d",
+    "value": [
+        false,
+        ""
+    ]
+}

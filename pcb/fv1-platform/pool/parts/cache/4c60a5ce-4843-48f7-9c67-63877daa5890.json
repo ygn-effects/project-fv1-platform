@@ -1,0 +1,108 @@
+{
+    "MPN": [
+        false,
+        "B16B-XH-A"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER XH MALE 1X16 PINS 2.5MM PITCH STRAIGHT"
+    ],
+    "entity": "d14c721f-a7a6-4e98-8123-616272932929",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "JST"
+    ],
+    "model": "4e38c3c3-0504-41e2-b2cf-580d3f8316ea",
+    "package": "9420b3cd-e2a6-48bb-881e-b59e8255a789",
+    "pad_map": {
+        "0160fc8a-8368-463a-bf2c-b4b04bb8e20c": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "d12593f5-9c17-4327-bf54-274d8eedcdc5"
+        },
+        "1ae7ea95-36c3-4c46-90a1-d8a823c1a5fb": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "a08b1fec-eb7b-4a97-b220-11d1aef2c80f"
+        },
+        "287a6972-c2d2-454d-b0d2-3bcefab8e40d": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "db467a7f-e14f-4f12-b4c0-b4285af231de"
+        },
+        "287b39a5-b1d8-4864-ad7d-3534574ffe02": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "cf62cebc-e4ee-429b-b8fe-017081c53297"
+        },
+        "2f4f36ce-2dea-4047-83da-ce461b03377a": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "24f28c72-d3a8-44c3-9d11-e050f4116f17"
+        },
+        "44bb4512-e0f3-4d2d-983b-e271aae1ced1": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "dd1bcb45-00d7-4dde-baef-9f3afec97c65"
+        },
+        "4b2182fa-b756-45ca-86db-edbe2d2972f5": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "c2976ce4-5c0f-445f-b155-f5a882bcd711"
+        },
+        "84c9ec71-3ab7-4cc1-8239-0d45570df289": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "5dd94361-d31a-4e73-87e7-35807fc47516"
+        },
+        "923787c7-606b-418a-afc7-1fb1e91ed269": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "c9bb3392-4cb6-44c9-9d95-2bf4978ff918"
+        },
+        "93acd2bf-c6ae-4b09-8c46-22020a13c756": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "6583dfa5-56df-4834-86bf-155042cd88eb"
+        },
+        "a8628eeb-f5c9-44f8-ae87-a68464233c40": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "6f7a4bac-a28b-49bf-b163-28469b9b4863"
+        },
+        "ce720a02-8f00-4c68-b443-8d7ccb69e58d": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "41ed7c59-fe7e-4475-8c79-25a86b8d415e"
+        },
+        "d8e6d996-53ba-4878-a32e-f00e99f8ae84": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "c43564be-96e7-4fae-951a-9218b67c8b1d"
+        },
+        "ee600426-3f6b-4a0a-960f-24b5234104b3": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "b8113a2c-7edf-4d5d-85d4-bbf50a22f81f"
+        },
+        "f39b9035-0533-4b48-8838-f03438070b48": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "7ba68761-b31e-4822-adca-2d5b95073a98"
+        },
+        "ff3c764b-6639-4ec7-a884-cd75fbd3ec90": {
+            "gate": "6a809e03-3512-480b-88aa-2916faa0fdf4",
+            "pin": "af4c2619-c6c5-4d24-a109-7518a9bcfb84"
+        }
+    },
+    "parametric": {
+        "contact_material": "Tin",
+        "current_rating": "3",
+        "mounting_angle": "Straight",
+        "mounting_style": "Through Hole",
+        "pitch": "2.5",
+        "positions": "16",
+        "price": "0.39",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "250"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "4c60a5ce-4843-48f7-9c67-63877daa5890",
+    "value": [
+        false,
+        ""
+    ]
+}
