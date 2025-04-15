@@ -6,6 +6,7 @@
 #include "logic/program.h"
 #include "peripherals/bypass.h"
 #include "peripherals/switch.h"
+#include "peripherals/encoder.h"
 #include "peripherals/potentiometer.h"
 #include "peripherals/led.h"
 
@@ -45,6 +46,8 @@ class DeviceState {
     Potentiometer m_fv1Pot1;
     Potentiometer m_fv1Pot2;
     Potentiometer m_mixPot;
+    Encoder m_menuEncoder;
+    MomentarySwitch m_menuEncoderSwitch;
     MomentarySwitch m_bypassSwitch;
     MomentarySwitch m_tapSwitch;
     Led m_bypassLed;
@@ -54,12 +57,14 @@ class DeviceState {
     /**
      * @brief Default constructor
      */
-    DeviceState(uint8_t t_rPin, uint8_t t_okPin, uint8_t t_pot0, uint8_t t_pot1, uint8_t t_pot2, uint8_t t_mixPot, uint8_t t_bypSPpin, uint8_t t_tapSPin, uint8_t t_bypLPin, uint8_t t_tapLPin) :
+    DeviceState(uint8_t t_rPin, uint8_t t_okPin, uint8_t t_pot0, uint8_t t_pot1, uint8_t t_pot2, uint8_t t_mixPot, uint8_t t_encPinA, uint8_t t_encPinB, uint8_t t_encSwitch, uint8_t t_bypSPpin, uint8_t t_tapSPin, uint8_t t_bypLPin, uint8_t t_tapLPin) :
       bypass(t_rPin, t_okPin),
       m_fv1Pot0(t_pot0),
       m_fv1Pot1(t_pot1),
       m_fv1Pot2(t_pot2),
       m_mixPot(t_mixPot),
+      m_menuEncoder(t_encPinA, t_encPinB),
+      m_menuEncoderSwitch(t_encSwitch),
       m_bypassSwitch(t_bypSPpin),
       m_tapSwitch(t_tapSPin),
       m_bypassLed(t_bypLPin),
@@ -73,6 +78,8 @@ class DeviceState {
     Potentiometer& getPot1();
     Potentiometer& getPot2();
     Potentiometer& getMixPot();
+    Encoder& getMenuEncoder();
+    MomentarySwitch& getMenuEncoderSwitch();
     MomentarySwitch& getBypassSwitch();
     MomentarySwitch& getTapSwitch();
     Led& getBypassLed();

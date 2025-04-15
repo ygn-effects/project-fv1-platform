@@ -56,6 +56,14 @@ Potentiometer& DeviceState::getMixPot() {
   return m_mixPot;
 }
 
+Encoder& DeviceState::getMenuEncoder() {
+  return m_menuEncoder;
+}
+
+MomentarySwitch& DeviceState::getMenuEncoderSwitch() {
+  return m_menuEncoderSwitch;
+}
+
 MomentarySwitch& DeviceState::getBypassSwitch() {
   return m_bypassSwitch;
 }
