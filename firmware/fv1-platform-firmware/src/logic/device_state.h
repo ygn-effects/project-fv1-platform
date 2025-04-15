@@ -41,7 +41,7 @@ class DeviceState {
     TapHandler m_tapHandler;                                    // Object handling the tap state
     ExprHandler m_exprHandler[ProgramConstants::c_maxPrograms]; // Array of ExprHandlers, one for each program
 
-    Bypass bypass;
+    Bypass m_bypass;
     Potentiometer m_fv1Pot0;
     Potentiometer m_fv1Pot1;
     Potentiometer m_fv1Pot2;
@@ -58,7 +58,7 @@ class DeviceState {
      * @brief Default constructor
      */
     DeviceState(uint8_t t_rPin, uint8_t t_okPin, uint8_t t_pot0, uint8_t t_pot1, uint8_t t_pot2, uint8_t t_mixPot, uint8_t t_encPinA, uint8_t t_encPinB, uint8_t t_encSwitch, uint8_t t_bypSPpin, uint8_t t_tapSPin, uint8_t t_bypLPin, uint8_t t_tapLPin) :
-      bypass(t_rPin, t_okPin),
+      m_bypass(t_rPin, t_okPin),
       m_fv1Pot0(t_pot0),
       m_fv1Pot1(t_pot1),
       m_fv1Pot2(t_pot2),
@@ -96,4 +96,6 @@ class DeviceState {
     void setCurrentProgram(uint8_t t_program);
     void setCurrentPreset(uint8_t t_preset);
     void setMidiChannel(uint8_t t_channel);
+
+    void switchBypass();
 };

@@ -99,3 +99,11 @@ void DeviceState::setCurrentPreset(uint8_t t_preset) {
 void DeviceState::setMidiChannel(uint8_t t_channel) {
   m_midiChannel = t_channel;
 }
+
+void DeviceState::switchBypass() {
+  m_bypassState = (m_bypassState == BypassState::kActive)
+                ? BypassState::kBypassed
+                : BypassState::kActive;
+
+  m_bypass.switchState();
+}
