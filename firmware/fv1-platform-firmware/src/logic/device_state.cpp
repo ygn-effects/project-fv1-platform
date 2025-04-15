@@ -80,6 +80,10 @@ PwmLed& DeviceState::getTapLed() {
   return m_tapLed;
 }
 
+const Program& DeviceState::getActiveProgram() const {
+  return m_programs[m_currentProgram];
+}
+
 void DeviceState::setBypassState(BypassState t_state) {
   m_bypassState = t_state;
 }

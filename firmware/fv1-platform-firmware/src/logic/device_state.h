@@ -85,6 +85,8 @@ class DeviceState {
     Led& getBypassLed();
     PwmLed& getTapLed();
 
+    const Program& getActiveProgram() const;
+
     BypassState getBypassState() const;
     ProgramMode getProgramMode() const;
     uint8_t getCurrentProgram() const;
