@@ -35,6 +35,51 @@ void HAL::pollMenuEncoder() {
   }
 }
 
+void HAL::handleBypass() {
+  m_deviceState.switchBypass();
+  m_memoryManager.saveDeviceState(m_deviceState);
+
+  LOG_DEBUG("Bypass switch pressed. Bypass state : %d", m_deviceState.getBypassState());
+}
+
+void HAL::handleTap() {
+  p_tapHandler.registerTap(millis());
+  LOG_DEBUG("Tap registered.");
+
+  if (p_tapHandler.getIsNewIntervalSet()) {
+    LOG_DEBUG("New interval set.");
+
+    if (p_tapHandler.getDivState() == DivState::kEnabled) {
+      m_currentInterval = p_tapHandler.getDivInterval();
+      LOG_DEBUG("Div interval : %d.", m_currentInterval);
+    }
+    else {
+      m_currentInterval = p_tapHandler.getInterval();
+      LOG_DEBUG("Interval : %d.", m_currentInterval);
+    }
+
+    m_memoryManager.saveDeviceState(m_deviceState);
+  }
+}
+
+void HAL::updateTapLed() {
+  uint8_t phase = (millis() % m_currentInterval) * 32 / m_currentInterval;
+
+  p_tapLed.setBrightness(HALConstants::sineTable[phase]);
+}
+
+void HAL::loadProgram(uint8_t t_index) {
+  if (t_index >= ProgramConstants::c_maxPrograms) {
+    LOG_ERROR("Invalid program index: %d.", t_index);
+    return;
+  }
+
+  m_deviceState.setCurrentProgram(t_index);
+  p_activeProgram = &m_deviceState.getActiveProgram();
+
+  LOG_INFO("Loading program : %s.", p_activeProgram->m_name);
+}
+
 void HAL::transitionToState(AppState t_state) {
   m_fsm.setState(t_state);
 }
@@ -59,12 +104,22 @@ void HAL::processRestoreState() {
 
 void HAL::processProgramIdleState() {
   if (m_bypassFootSwitchPress) {
-    m_deviceState.switchBypass();
-    m_memoryManager.saveDeviceState(m_deviceState);
+    handleBypass();
+  }
+
+  if (m_tapFootSwitchPress && p_activeProgram->m_supportsTap) {
+    handleTap();
+  }
+
+  if (p_activeProgram->m_isDelayEffect) {
+    updateTapLed();
   }
 }
 
 void HAL::setup() {
+  Serial.begin(57600);
+  delay(500);
+
   m_deviceState.getPot0().setup();
   m_deviceState.getPot1().setup();
   m_deviceState.getPot2().setup();
@@ -75,6 +130,8 @@ void HAL::setup() {
   m_deviceState.getTapSwitch().setup();
   m_deviceState.getBypassLed().setup();
   m_deviceState.getTapLed().setup();
+
+  m_memoryManager.setup();
 }
 
 void HAL::startup() {
@@ -86,6 +143,10 @@ void HAL::startup() {
   m_deviceState.getMenuEncoderSwitch().poll();
   m_deviceState.getBypassSwitch().poll();
   m_deviceState.getTapSwitch().poll();
+
+  if (! m_memoryManager.isMemoryInitialized()) {
+    m_memoryManager.saveDeviceState(m_deviceState);
+  }
 
   transitionToState(AppState::kRestoreState);
 }
