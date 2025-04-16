@@ -4,6 +4,7 @@
 #include "logic/tap_handler.h"
 #include "logic/expr_handler.h"
 #include "logic/program.h"
+#include "logic/programs.h"
 #include "peripherals/bypass.h"
 #include "peripherals/switch.h"
 #include "peripherals/encoder.h"
@@ -33,7 +34,7 @@ class DeviceState {
   private:
     BypassState m_bypassState{BypassState::kActive};            // Whether the device was bypassed or not
     ProgramMode m_programMode{ProgramMode::kProgram};           // Whether the device was on program or preset mode
-    Program m_programs[ProgramConstants::c_maxPrograms];
+    const Program* m_programs{ProgramsDefinitions::kPrograms};
     uint8_t m_currentProgram{0};                                // The current program the deviced was on
     uint8_t m_currentPreset{0};                                 // The current preset the device was on
     uint8_t m_midiChannel{0};                                   // MIDI channel of the device
@@ -84,6 +85,7 @@ class DeviceState {
     MomentarySwitch& getTapSwitch();
     Led& getBypassLed();
     PwmLed& getTapLed();
+    const PwmLed& getTapLed() const;
 
     const Program& getActiveProgram() const;
 
