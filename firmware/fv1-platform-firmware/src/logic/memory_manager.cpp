@@ -80,6 +80,14 @@ void MemoryManager::deserializeDeviceState(DeviceState& t_state, const uint8_t* 
   }
 }
 
+void MemoryManager::setup() {
+  eeprom.setup();
+}
+
+bool MemoryManager::isMemoryInitialized() {
+  return static_cast<bool>(eeprom.readInt8(MemoryManagerConstants::c_memoryInitializedAddress));
+}
+
 void MemoryManager::saveDeviceState(const DeviceState& t_state) {
   uint16_t address = MemoryManagerConstants::c_deviceStateStartAddress;
   uint8_t buffer[MemoryManagerConstants::c_deviceStateSize]{0};

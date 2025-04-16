@@ -33,7 +33,8 @@
  */
 
 namespace MemoryManagerConstants {
-  constexpr uint8_t c_deviceStateStartAddress = 0x0;
+  constexpr uint8_t c_memoryInitializedAddress = 0x0;
+  constexpr uint8_t c_deviceStateStartAddress = 0x1;
   constexpr uint8_t c_stateSize = 5;
   constexpr uint8_t c_tapSize = 6;
   constexpr uint8_t c_exprSize = 7;
@@ -51,6 +52,9 @@ class MemoryManager {
   public:
     MemoryManager(uint8_t t_eepromCsPin) :
       eeprom(t_eepromCsPin) {}
+
+    void setup();
+    bool isMemoryInitialized();
 
     void saveDeviceState(const DeviceState& t_state);
     void loadDeviceState(DeviceState& t_state);
