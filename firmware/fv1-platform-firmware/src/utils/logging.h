@@ -3,35 +3,34 @@
 
 #include <Arduino.h>
 
-// Define logging levels
-#define LOG_LEVEL_NONE  0  // No logs
-#define LOG_LEVEL_ERROR 1  // Only errors
-#define LOG_LEVEL_INFO  2  // Info and errors
-#define LOG_LEVEL_DEBUG 3  // Debug, info, and errors
+#define ENABLE_LOGGING 1 // Global Debug Kill Switch (0 = no logs)
 
-// Set the current log level (change this based on your needs)
-#define CURRENT_LOG_LEVEL LOG_LEVEL_DEBUG
+// Logging levels
+#define LOG_LEVEL_NONE  0
+#define LOG_LEVEL_ERROR 1
+#define LOG_LEVEL_INFO  2
+#define LOG_LEVEL_DEBUG 3
 
-// Generic log function (handles formatted strings)
-void logMessage(const char *level, const char *format, ...);
+#define CURRENT_LOG_LEVEL LOG_LEVEL_DEBUG // Adjust as needed
 
-// Logging Macros
-#if CURRENT_LOG_LEVEL >= LOG_LEVEL_DEBUG
-  #define LOG_DEBUG(format, ...) logMessage("DEBUG", format, ##__VA_ARGS__)
+#if ENABLE_LOGGING && (CURRENT_LOG_LEVEL >= LOG_LEVEL_DEBUG)
+  #define LOG_DEBUG(format, ...) logMessage("DEBUG", __FILE__, __LINE__, format, ##__VA_ARGS__)
 #else
   #define LOG_DEBUG(format, ...)
 #endif
 
-#if CURRENT_LOG_LEVEL >= LOG_LEVEL_INFO
-  #define LOG_INFO(format, ...) logMessage("INFO", format, ##__VA_ARGS__)
+#if ENABLE_LOGGING && (CURRENT_LOG_LEVEL >= LOG_LEVEL_INFO)
+  #define LOG_INFO(format, ...) logMessage("INFO", __FILE__, __LINE__, format, ##__VA_ARGS__)
 #else
   #define LOG_INFO(format, ...)
 #endif
 
-#if CURRENT_LOG_LEVEL >= LOG_LEVEL_ERROR
-  #define LOG_ERROR(format, ...) logMessage("ERROR", format, ##__VA_ARGS__)
+#if ENABLE_LOGGING && (CURRENT_LOG_LEVEL >= LOG_LEVEL_ERROR)
+  #define LOG_ERROR(format, ...) logMessage("ERROR", __FILE__, __LINE__, format, ##__VA_ARGS__)
 #else
   #define LOG_ERROR(format, ...)
 #endif
+
+void logMessage(const char *level, const char *file, int line, const char *format, ...);
 
 #endif // LOGGING_H

@@ -1,19 +1,25 @@
 #include "logging.h"
-#include <stdarg.h>  // Required for handling variable arguments (va_list)
+#include <stdarg.h>
 
-void logMessage(const char *level, const char *format, ...) {
-  // Start UART transmission with the log level
+void logMessage(const char *level, const char *file, int line, const char *format, ...) {
+  if (!Serial) return;
+
   Serial.print("[");
+  Serial.print(millis());
+  Serial.print("ms] [");
   Serial.print(level);
+  Serial.print("] [");
+  Serial.print(file);
+  Serial.print(":");
+  Serial.print(line);
   Serial.print("] ");
 
-  // Handle the variable argument list (for formatted strings)
+  char buffer[128];
   va_list args;
   va_start(args, format);
-  char buffer[128];  // Buffer for the formatted string
-  vsnprintf(buffer, sizeof(buffer), format, args);  // Format the string
+  vsnprintf(buffer, sizeof(buffer), format, args);
   va_end(args);
 
-  // Print the formatted string over UART
+  buffer[sizeof(buffer) - 1] = '\0';
   Serial.println(buffer);
 }
