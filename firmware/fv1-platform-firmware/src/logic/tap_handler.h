@@ -2,6 +2,11 @@
 
 #include <Arduino.h>
 
+enum class TapState : uint8_t {
+  kDisabled,
+  kEnabled
+};
+
 enum class DivState : uint8_t {
   kDisabled,
   kEnabled
@@ -17,6 +22,7 @@ enum class DivValue : uint8_t {
 
 class TapHandler {
   private:
+    TapState m_tapState{TapState::kDisabled};   // Tap state
     DivState m_divState{DivState::kDisabled};   // Interval divider state
     DivValue m_divValue{DivValue::kQuarter};    // Interval divider value
     uint16_t m_interval{0};                     // Interval
@@ -36,12 +42,14 @@ class TapHandler {
   public:
     void registerTap(uint32_t t_currentTime);
 
+    TapState getTapState() const;
     DivState getDivState() const;
     DivValue getDivValue() const;
     uint16_t getInterval() const;
     uint16_t getDivInterval() const;
     bool getIsNewIntervalSet() const;
 
+    void setTapState(TapState t_state);
     void setDivState(DivState t_state);
     void setDivValue(DivValue t_value);
     void setInterval(uint16_t t_interval);

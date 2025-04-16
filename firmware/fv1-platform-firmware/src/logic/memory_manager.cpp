@@ -9,20 +9,21 @@ void MemoryManager::serializeDeviceState(const DeviceState& t_state, uint8_t* t_
   t_buffer[4] = t_state.getMidiChannel();
 
   // Tap handler data
-  t_buffer[5] = static_cast<uint8_t>(t_state.getTapHandler().getDivState());
-  t_buffer[6] = static_cast<uint8_t>(t_state.getTapHandler().getDivValue());
+  t_buffer[5] = static_cast<uint8_t>(t_state.getTapHandler().getTapState());
+  t_buffer[6] = static_cast<uint8_t>(t_state.getTapHandler().getDivState());
+  t_buffer[7] = static_cast<uint8_t>(t_state.getTapHandler().getDivValue());
 
   uint16_t interval = t_state.getTapHandler().getInterval();
   uint16_t divInterval = t_state.getTapHandler().getDivInterval();
   uint8_t low = 0, high = 0;
 
   Utils::pack16(interval, low, high);
-  t_buffer[7] = low;
-  t_buffer[8] = high;
+  t_buffer[8] = low;
+  t_buffer[9] = high;
 
   Utils::pack16(divInterval, low, high);
-  t_buffer[9] = low;
-  t_buffer[10] = high;
+  t_buffer[10] = low;
+  t_buffer[11] = high;
 
   // Expr handlers data
   for (uint8_t i = 0; i < ProgramConstants::c_maxPrograms; i++) {
@@ -54,12 +55,13 @@ void MemoryManager::deserializeDeviceState(DeviceState& t_state, const uint8_t* 
   t_state.setMidiChannel(t_buffer[4]);
 
   // Tap handler data
-  t_state.getTapHandler().setDivState(static_cast<DivState>(t_buffer[5]));
-  t_state.getTapHandler().setDivValue(static_cast<DivValue>(t_buffer[6]));
+  t_state.getTapHandler().setTapState(static_cast<TapState>(t_buffer[5]));
+  t_state.getTapHandler().setDivState(static_cast<DivState>(t_buffer[6]));
+  t_state.getTapHandler().setDivValue(static_cast<DivValue>(t_buffer[7]));
 
   uint16_t interval = 0, divInterval = 0;
-  Utils::unpack16(t_buffer[7], t_buffer[8], interval);
-  Utils::unpack16(t_buffer[9], t_buffer[10], divInterval);
+  Utils::unpack16(t_buffer[8], t_buffer[9], interval);
+  Utils::unpack16(t_buffer[10], t_buffer[11], divInterval);
 
   t_state.getTapHandler().setInterval(interval);
   t_state.getTapHandler().setDivInterval(divInterval);

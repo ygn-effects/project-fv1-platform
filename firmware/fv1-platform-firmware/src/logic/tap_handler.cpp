@@ -59,6 +59,10 @@ void TapHandler::registerTap(uint32_t t_currentTime) {
   m_lastTapTime = t_currentTime;
 }
 
+TapState TapHandler::getTapState() const {
+  return m_tapState;
+}
+
 DivState TapHandler::getDivState() const {
   return m_divState;
 }
@@ -77,6 +81,10 @@ uint16_t TapHandler::getDivInterval() const {
 
 bool TapHandler::getIsNewIntervalSet() const {
   return m_isNewIntervalSet;
+}
+
+void TapHandler::setTapState(TapState t_state) {
+  m_tapState = t_state;
 }
 
 void TapHandler::setDivState(DivState t_state) {

@@ -15,14 +15,15 @@
  * 2                currentProgram     Last used program
  * 3                currentPreset      Last used preset
  * 4                midiChannel        MIDI channel of the device
- * 5-10             tapHandler         Tap handler data
+ * 5-11             tapHandler         Tap handler data
+ *                   | tapState        Tap state
  *                   | divState        Div state
  *                   | divValue        Div value
  *                   | interval        Interval low byte
  *                   | interval        Interval high byte
  *                   | divInterval     Div interval low byte
  *                   | divinterval     Div interval high byte
- * 11-66            exprHandler        Expr handler data x8
+ * 12-67            exprHandler        Expr handler data x8
  *                   | state           Expr state
  *                   | mappedPot       Expr mapped pot
  *                   | direction       Expr direction
@@ -36,7 +37,7 @@ namespace MemoryManagerConstants {
   constexpr uint8_t c_memoryInitializedAddress = 0x0;
   constexpr uint8_t c_deviceStateStartAddress = 0x1;
   constexpr uint8_t c_stateSize = 5;
-  constexpr uint8_t c_tapSize = 6;
+  constexpr uint8_t c_tapSize = 7;
   constexpr uint8_t c_exprSize = 7;
   constexpr uint8_t c_exprCount = ProgramConstants::c_maxPrograms;
   constexpr uint8_t c_deviceStateSize = MemoryManagerConstants::c_stateSize + MemoryManagerConstants::c_tapSize + (MemoryManagerConstants::c_exprSize * MemoryManagerConstants::c_exprCount);
