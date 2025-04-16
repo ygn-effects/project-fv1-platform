@@ -31,11 +31,16 @@ class HAL {
     bool m_menuEncoderMoveLeft{false};
     bool m_menuEncoderSwitchPress{false};
     bool m_menuEncoderSwitchLongPress{false};
+    bool m_pot0Move{false};
+    bool m_pot1Move{false};
+    bool m_pot2Move{false};
+    bool m_mixPotMove{false};
 
     uint32_t m_currentInterval{0};
 
     void pollSwitch(MomentarySwitch& t_switch, bool& t_pressFlag);
     void pollSwitch(MomentarySwitch& t_switch, bool& t_pressFlag, bool& t_longPressFlag);
+    void pollPot(Potentiometer& t_pot, bool& t_moveFlag);
 
     void pollFootSwitches();
     void pollMenuEncoderSwitch();

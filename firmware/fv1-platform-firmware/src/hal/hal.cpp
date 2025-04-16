@@ -13,6 +13,10 @@ void HAL::pollSwitch(MomentarySwitch& t_switch, bool& t_pressFlag, bool& t_longP
   t_longPressFlag = t_switch.isLongPress();
 }
 
+void HAL::pollPot(Potentiometer& t_pot, bool& t_moveFlag) {
+  t_moveFlag = t_pot.hasChanged();
+}
+
 void HAL::pollFootSwitches() {
   pollSwitch(m_deviceState.getBypassSwitch(), m_bypassFootSwitchPress);
   pollSwitch(m_deviceState.getTapSwitch(), m_tapFootSwitchPress, m_tapFootSwitchLongPress);
@@ -78,6 +82,33 @@ void HAL::loadProgram(uint8_t t_index) {
   p_activeProgram = &m_deviceState.getActiveProgram();
 
   LOG_INFO("Loading program : %s.", p_activeProgram->m_name);
+
+  if (p_activeProgram->m_isDelayEffect) {
+    if (p_tapHandler.getTapState() == TapState::kEnabled) {
+      if (p_tapHandler.getDivState() == DivState::kEnabled) {
+        m_currentInterval = p_tapHandler.getDivInterval();
+      }
+
+      m_currentInterval = p_tapHandler.getInterval();
+
+      if (m_currentInterval > p_activeProgram->m_maxDelayInterval) {
+        m_currentInterval = p_activeProgram->m_maxDelayInterval;
+      }
+
+      if (m_currentInterval < p_activeProgram->m_minDelayInterval) {
+        m_currentInterval = p_activeProgram->m_minDelayInterval;
+      }
+    }
+    else {
+      // Send POT0 value to FV-1
+    }
+  }
+  else {
+    m_currentInterval = 0;
+    p_tapLed.off();
+  }
+
+  m_memoryManager.saveDeviceState(m_deviceState);
 }
 
 void HAL::transitionToState(AppState t_state) {
