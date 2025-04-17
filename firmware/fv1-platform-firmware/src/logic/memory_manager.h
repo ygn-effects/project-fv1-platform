@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include "peripherals/eeprom.h"
-#include "logic/device_state.h"
+#include "logic/logical_state.h"
 #include "utils/utils.h"
 
 /*
@@ -47,8 +47,8 @@ class MemoryManager {
   private:
     Eeprom eeprom;
 
-    void serializeDeviceState(const DeviceState& t_state, uint8_t* t_buffer) const;
-    void deserializeDeviceState(DeviceState& t_state, const uint8_t* t_buffer) const;
+    void serializeDeviceState(const LogicalState& t_state, uint8_t* t_buffer) const;
+    void deserializeDeviceState(LogicalState& t_state, const uint8_t* t_buffer) const;
 
   public:
     MemoryManager(uint8_t t_eepromCsPin) :
@@ -57,6 +57,6 @@ class MemoryManager {
     void setup();
     bool isMemoryInitialized();
 
-    void saveDeviceState(const DeviceState& t_state);
-    void loadDeviceState(DeviceState& t_state);
+    void saveDeviceState(const LogicalState& t_state);
+    void loadDeviceState(LogicalState& t_state);
 };
