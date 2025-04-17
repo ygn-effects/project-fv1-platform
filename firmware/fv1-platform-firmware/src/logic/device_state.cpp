@@ -37,7 +37,7 @@ const ExprHandler& DeviceState::getExprHandler(uint8_t t_index) const {
     return m_exprHandler[t_index];
   }
 
-  return m_exprHandler[ProgramConstants::c_maxPrograms];
+  return m_exprHandler[ProgramConstants::c_maxPrograms - 1];
 }
 
 Potentiometer& DeviceState::getPot0() {
