@@ -1,7 +1,6 @@
 #pragma once
 
-#include <Arduino.h>
-#include "utils/static_string.h"
+#include <stdint.h>
 
 /**
  * @brief Constants used for programs managing.

@@ -19,17 +19,22 @@ void ExprHandler::setState(ExprState state) {
 }
 
 uint16_t ExprHandler::mapAdcValue(uint16_t adcValue) const {
-  // Ensure ADC input is constrained to expected range
-  adcValue = constrain(adcValue, 0, 1023);
+  // 1) Clamp the raw ADC to [0,1023]
+  uint16_t x = std::clamp(adcValue, uint16_t{0}, uint16_t{1023});
 
-  // Normalized value (0.0 to 1.0)
-  float normalized = adcValue / 1023.0;
+  // 2) Compute the full span between heel and toe
+  uint16_t span = m_toeValue - m_heelValue;
 
-  // Map based on direction
-  if (m_direction == Direction::kInverted) {
-    normalized = 1.0 - normalized;
-  }
+  // 3) Depending on direction, choose x or (1023-x)
+  uint16_t pos = (m_direction == Direction::kInverted)
+                  ? 1023 - x
+                  : x;
 
-  // Scale normalized value between heel and toe values
-  return (m_heelValue + normalized * (m_toeValue - m_heelValue));
+  // 4) Scale pos/1023 * span with rounding
+  //    (pos * span + 1023/2) / 1023
+  uint32_t scaled = static_cast<uint32_t>(pos) * span + 511;
+  uint16_t delta  = static_cast<uint16_t>(scaled / 1023);
+
+  // 5) Return heel + delta
+  return m_heelValue + delta;
 }

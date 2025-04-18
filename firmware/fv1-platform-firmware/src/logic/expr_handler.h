@@ -1,6 +1,7 @@
 #pragma once
 
-#include <Arduino.h>
+#include <stdint.h>
+#include <algorithm>
 
 /**
  * @brief Expression pedal state (active/inactive)

@@ -1,4 +1,4 @@
-#include <Arduino.h>
+#include <stdint.h>
 
 namespace Utils {
   const char* numberToString(uint8_t number);
