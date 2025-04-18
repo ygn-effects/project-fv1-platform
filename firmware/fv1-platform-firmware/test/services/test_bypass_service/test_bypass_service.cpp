@@ -3,7 +3,7 @@
 #include "logic/logical_state.h"
 #include "services/bypass_service.h"
 
-#include "../../src/services/bypass_service.cpp"
+#include "../src/services/bypass_service.cpp"
 
 void setUp() {
   Event event;
