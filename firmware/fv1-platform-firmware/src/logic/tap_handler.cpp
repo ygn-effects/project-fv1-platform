@@ -1,7 +1,7 @@
 #include "logic/tap_handler.h"
 
 void TapHandler::calculateInterval() {
-  m_interval = (m_lastTapTime - m_firstTapTime) / m_timesTapped;
+  m_interval = (m_lastTapTime - m_firstTapTime) / (m_timesTapped - 1);
 }
 
 void TapHandler::calculateDivInterval() {
@@ -37,13 +37,17 @@ void TapHandler::registerTap(uint32_t t_currentTime) {
   if (m_timesTapped == 0 || (t_currentTime - m_lastTapTime) > m_tapTimeout) {
     // First tap or timeout
     m_firstTapTime = t_currentTime;
+    m_lastTapTime = t_currentTime;
     m_interval = 0;
     m_divInterval = 0;
     m_timesTapped = 1;
+
+    setTapState(TapState::kDisabled);
   }
   else {
     // Subsequent taps
     m_timesTapped++;
+    m_lastTapTime = t_currentTime;
 
     if (m_timesTapped >= c_minTaps) {
       calculateInterval();
@@ -53,10 +57,9 @@ void TapHandler::registerTap(uint32_t t_currentTime) {
       }
 
       m_isNewIntervalSet = true;
+      setTapState(TapState::kEnabled);
     }
   }
-
-  m_lastTapTime = t_currentTime;
 }
 
 TapState TapHandler::getTapState() const {
@@ -101,6 +104,16 @@ void TapHandler::setInterval(uint16_t t_interval) {
 
 void TapHandler::setDivInterval(uint16_t t_divInterval) {
   m_divInterval = t_divInterval;
+}
+
+void TapHandler::setNextDivValue() {
+  uint8_t rawNextValue = (static_cast<uint8_t>(getDivValue()) + 1) % TapHandlerConstants::kDivValueCount;
+  setDivValue(static_cast<DivValue>(rawNextValue));
+  calculateDivInterval();
+
+  getDivValue() == DivValue::kQuarter
+    ? setDivState(DivState::kDisabled)
+    : setDivState(DivState::kEnabled);
 }
 
 void TapHandler::setTapTimeout(uint16_t t_timeout) {
