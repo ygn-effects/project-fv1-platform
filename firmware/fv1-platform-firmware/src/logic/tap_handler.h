@@ -20,6 +20,10 @@ enum class DivValue : uint8_t {
   kEightTriplet
 };
 
+namespace TapHandlerConstants {
+  constexpr uint8_t kDivValueCount = static_cast<uint8_t>(DivValue::kEightTriplet) + 1;
+}
+
 class TapHandler {
   private:
     TapState m_tapState{TapState::kDisabled};   // Tap state
@@ -31,7 +35,7 @@ class TapHandler {
     uint32_t m_firstTapTime{0};                 // First time tapped
     uint32_t m_lastTapTime{0};                  // Last time tapped
     uint8_t m_timesTapped{0};                   // Times tapped
-    uint16_t m_tapTimeout{0};                   // Timeout before reset
+    uint16_t m_tapTimeout{1000};                // Timeout before reset
     const uint8_t c_minTaps{2};                 // Min # of taps before triggering an interval calculation
 
     bool m_isNewIntervalSet{false};             // Callback flag to check if a new interval is set
