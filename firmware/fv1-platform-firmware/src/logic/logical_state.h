@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "logic/program.h"
+#include "logic/programs.h"
 #include "logic/tap_handler.h"
 #include "logic/expr_handler.h"
 
@@ -19,6 +20,7 @@ struct LogicalState
 {
   BypassState m_bypassState = BypassState::kActive;
   ProgramMode m_programMode = ProgramMode::kProgram;
+  const Program* m_activeProgram = &ProgramsDefinitions::kPrograms[0];
   uint8_t m_currentProgram = 0;
   uint8_t m_currentPreset = 0;
   uint8_t m_midiChannel = 0;
