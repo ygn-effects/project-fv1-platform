@@ -41,8 +41,6 @@ class ExprHandler {
     uint16_t m_toeValue{1023};
 
   public:
-    ExprHandler();
-
     void setMappedPot(MappedPot pot);
     void setDirection(Direction direction);
     void setHeelToeValues(uint16_t heel, uint16_t toe);
