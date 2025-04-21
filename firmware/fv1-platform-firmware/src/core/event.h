@@ -3,15 +3,38 @@
 #include <stdint.h>
 
 enum class EventType : uint8_t {
+  // Boot events
+  kBoot,
+  kRestoreState,
+  kBootCompleted,
+
+  // Physical state events
   kBypassPressed,
+  kRawBypassPressed,
   kTapPressed,
+  kRawTapPressed,
   kTapLongPressed,
+  kRawTapLongPressed,
   kMenuEncoderPressed,
+  kRawMenuEncoderPressed,
+  kRawMenuEncoderLongPressed,
   kMenuEncoderMoved,
+  kRawMenuEncoderMoved,
   kPot0Moved,
+  kRawPot0Moved,
   kPot1Moved,
+  kRawPot1Moved,
   kPot2Moved,
+  kRawPot2Moved,
   kMixPotMoved,
+  kRawMixPotMoved,
+  kRawExprMoved,
+  kExprMoved,
+
+  // App state events
+  kStateChanged,
+
+  // Logical state events
   kProgramChanged,
   kPresetChanged,
   kTempoChanged,
