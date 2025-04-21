@@ -26,6 +26,7 @@ struct Program {
   const bool m_isDelayEffect;
   const bool m_supportsTap;
   const bool m_supportsExpr;
+  const char* m_potLabel[4];
   const bool m_isPot0Enabled;
   const bool m_isPot1Enabled;
   const bool m_isPot2Enabled;
@@ -35,11 +36,13 @@ struct Program {
 
   constexpr Program(const char* t_name, bool t_isDelay, bool t_suppTap, bool t_suppExpr,
                     bool t_pot0En, bool t_pot1En, bool t_pot2En, bool t_mixPotEn,
-                    uint16_t t_minDelay, uint16_t t_maxDelay) :
+                    const char* t_pot0Lab, const char* t_pot1Lab, const char* t_pot2Lab,
+                    const char* t_mixPotLab, uint16_t t_minDelay, uint16_t t_maxDelay) :
     m_name(t_name),
     m_isDelayEffect(t_isDelay),
     m_supportsTap(t_suppTap),
     m_supportsExpr(t_suppExpr),
+    m_potLabel({t_pot0Lab, t_pot1Lab, t_pot2Lab, t_mixPotLab}),
     m_isPot0Enabled(t_pot0En),
     m_isPot1Enabled(t_pot1En),
     m_isPot2Enabled(t_pot2En),
