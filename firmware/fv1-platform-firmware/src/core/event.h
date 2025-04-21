@@ -48,7 +48,7 @@ struct Event {
 
   union {
     uint16_t value;
-    uint8_t delta;
+    int8_t delta;
   } m_data;
 };
 
