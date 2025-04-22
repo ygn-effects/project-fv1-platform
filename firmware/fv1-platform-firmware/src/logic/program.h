@@ -18,36 +18,24 @@ namespace ProgramConstants {
   constexpr uint8_t c_maxPrograms = 8;
 }
 
-/**
- * @brief Stores a program properties.
- */
-struct Program {
-  const char* m_name;
-  const bool m_isDelayEffect;
-  const bool m_supportsTap;
-  const bool m_supportsExpr;
-  const char* m_potLabel[4];
-  const bool m_isPot0Enabled;
-  const bool m_isPot1Enabled;
-  const bool m_isPot2Enabled;
-  const bool m_isMixPotEnabled;
-  const uint16_t m_minDelayInterval;
-  const uint16_t m_maxDelayInterval;
+enum class ParamUnit : uint8_t { Raw, Percent, Hz, dB, ms };
 
-  constexpr Program(const char* t_name, bool t_isDelay, bool t_suppTap, bool t_suppExpr,
-                    bool t_pot0En, bool t_pot1En, bool t_pot2En, bool t_mixPotEn,
-                    const char* t_pot0Lab, const char* t_pot1Lab, const char* t_pot2Lab,
-                    const char* t_mixPotLab, uint16_t t_minDelay, uint16_t t_maxDelay) :
-    m_name(t_name),
-    m_isDelayEffect(t_isDelay),
-    m_supportsTap(t_suppTap),
-    m_supportsExpr(t_suppExpr),
-    m_potLabel({t_pot0Lab, t_pot1Lab, t_pot2Lab, t_mixPotLab}),
-    m_isPot0Enabled(t_pot0En),
-    m_isPot1Enabled(t_pot1En),
-    m_isPot2Enabled(t_pot2En),
-    m_isMixPotEnabled(t_mixPotEn),
-    m_minDelayInterval(t_minDelay),
-    m_maxDelayInterval(t_maxDelay) {}
+struct ProgramParameter {
+    const char* m_label;
+    uint16_t m_min;
+    uint16_t m_max;
+    uint8_t m_fineStep;
+    uint8_t m_coarseStep;
+    ParamUnit m_unit;
+    bool m_editable;
 };
 
+struct Program {
+  const char* m_name;
+  ProgramParameter m_params[4];
+  bool m_isDelayEffect;
+  uint16_t m_minDelayMs;
+  uint16_t m_maxDelayMs;
+  bool m_supportsTap;
+  bool m_supportsExpr;
+};
