@@ -4,8 +4,17 @@
 
 enum class ItemKind : uint8_t {
   kParam,
-  kBubMenu,
+  kSubMenu,
   kAction
+};
+
+enum class  ParamKind : uint8_t {
+  kProgramName,
+  kPot0Value,
+  kPot1Value,
+  kPot2Value,
+  kMixPotValue,
+  kTempo
 };
 
 struct Menu;
