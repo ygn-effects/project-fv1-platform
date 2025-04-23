@@ -20,6 +20,11 @@ void FsmService::handleEvent(const Event& t_event) {
                       : AppState::kPresetIdle, t_event.m_timestamp);
       }
 
+      if (t_event.m_type == EventType::kMenuUnlocked) {
+        transitionTo(AppState::kProgramEdit, t_event.m_timestamp);
+        return;
+      }
+
     case AppState::kProgramIdle:
       // Bypass
       if (t_event.m_type == EventType::kRawBypassPressed) {
@@ -39,19 +44,27 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
-      // 4) Encoder‑switch press -> enter edit mode
-      if (t_event.m_type == EventType::kRawMenuEncoderPressed && m_logicalState.m_bypassState==BypassState::kActive) {
-        transitionTo(AppState::kProgramEdit, t_event.m_timestamp);
+      // 4) Encoder‑switch long press
+      if (t_event.m_type == EventType::kRawMenuEncoderLongPressed && m_logicalState.m_bypassState==BypassState::kActive) {
+        EventBus::publish({EventType::kMenuEncoderLongPressed, t_event.m_timestamp, {}});
         return;
       }
 
       break;
 
     case AppState::kProgramEdit:
-    // 4) Encoder‑switch press -> exit edit mode
-      if (t_event.m_type == EventType::kRawMenuEncoderLongPressed) {
+      if (t_event.m_type == EventType::kMenuLocked) {
         transitionTo(AppState::kProgramIdle, t_event.m_timestamp);
         return;
+      }
+
+      if (t_event.m_type == EventType::kRawMenuEncoderLongPressed) {
+        EventBus::publish({EventType::kMenuEncoderLongPressed, t_event.m_timestamp, {}});
+        return;
+      }
+
+      if (t_event.m_type == EventType::kRawMenuEncoderMoved) {
+        EventBus::publish({EventType::kMenuEncoderMoved, t_event.m_timestamp, {.delta = t_event.m_data.delta}});
       }
 
       break;

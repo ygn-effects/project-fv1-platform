@@ -4,9 +4,11 @@
 #include "services/bypass_service.h"
 #include "services/fsm_service.h"
 #include "services/bypass_service.h"
+#include "services/menu_service.h"
 
 #include "../src/services/fsm_service.cpp"
 #include "../src/services/bypass_service.cpp"
+#include "../src/services/menu_service.cpp"
 
 void setUp() {
   Event event;
@@ -67,23 +69,34 @@ void test_switch_bypass() {
 void test_menu_idle_edit_transition() {
   LogicalState logicalState;
   FsmService fsmService(logicalState);
+  MenuService menuservice(logicalState);
 
   fsmService.handleEvent({EventType::kBootCompleted, 0, {}});
   Event stateChanged;
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(stateChanged);
 
-  fsmService.handleEvent({EventType::kRawMenuEncoderPressed, 0, {}});
-  TEST_ASSERT_TRUE(EventBus::hasEvent());
-  EventBus::recall(stateChanged);
-
-  TEST_ASSERT_EQUAL(AppState::kProgramEdit, static_cast<AppState>(stateChanged.m_data.value));
-
   fsmService.handleEvent({EventType::kRawMenuEncoderLongPressed, 0, {}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(stateChanged);
 
-  TEST_ASSERT_EQUAL(AppState::kProgramIdle, static_cast<AppState>(stateChanged.m_data.value));
+  TEST_ASSERT_EQUAL(EventType::kMenuEncoderLongPressed, stateChanged.m_type);
+  menuservice.handleEvent(stateChanged);
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(stateChanged);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuUnlocked, stateChanged.m_type);
+
+  fsmService.handleEvent({EventType::kRawMenuEncoderLongPressed, 1000, {}});
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(stateChanged);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuEncoderLongPressed, stateChanged.m_type);
+  menuservice.handleEvent(stateChanged);
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(stateChanged);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuLocked, stateChanged.m_type);
 }
 
 int main() {
