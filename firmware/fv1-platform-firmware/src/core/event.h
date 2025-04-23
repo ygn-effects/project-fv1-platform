@@ -17,6 +17,7 @@ enum class EventType : uint8_t {
   kRawTapLongPressed,
   kMenuEncoderPressed,
   kRawMenuEncoderPressed,
+  kMenuEncoderLongPressed,
   kRawMenuEncoderLongPressed,
   kMenuEncoderMoved,
   kRawMenuEncoderMoved,
@@ -33,6 +34,10 @@ enum class EventType : uint8_t {
 
   // App state events
   kStateChanged,
+
+  // Menu events
+  kMenuUnlocked,
+  kMenuLocked,
 
   // Logical state events
   kProgramChanged,
