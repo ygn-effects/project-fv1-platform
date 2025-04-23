@@ -2,6 +2,12 @@
 
 namespace Utils {
   const char* numberToString(uint8_t number);
+
   void pack16(uint16_t value, uint8_t& lowByte, uint8_t& highByte);
   void unpack16(const uint8_t lowByte, const uint8_t highByte, uint16_t& value);
+
+  template<typename T>
+  static inline T clamp(T v, T lo, T hi) {
+    return (v < lo) ? lo : (v > hi) ? hi : v;
+  }
 } // namespace utils
