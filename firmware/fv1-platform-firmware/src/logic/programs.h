@@ -7,10 +7,10 @@ namespace ProgramsDefinitions {
       "Digital delay", // m_name
       {
         // m_label, m_min, m_max, m_fineStep, m_coarseStrep, m_unit, m_editable
-        { "Delay time", 20, 1000, 1, 5, ParamUnit::ms, true },
-        { "Feedback", 0, 100, 1, 5, ParamUnit::Percent, true },
-        { "Low pass", 100, 1000, 1, 5, ParamUnit::Hz, true },
-        { "Mix", 0, 100, 1, 5, ParamUnit::Percent, true }
+        { "Delay time", 20, 1000, 1, 5, ParamUnit::kMs, true },
+        { "Feedback", 0, 100, 1, 5, ParamUnit::kPercent, true },
+        { "Low pass", 100, 1000, 1, 5, ParamUnit::kHz, true },
+        { "Mix", 0, 100, 1, 5, ParamUnit::kPercent, true }
       },
       true,  // m_isDelayEffect
       20,    // m_minDelayMs
@@ -22,10 +22,10 @@ namespace ProgramsDefinitions {
       "Analog delay", // m_name
       {
         // m_label, m_min, m_max, m_fineStep, m_coarseStrep, m_unit, m_editable
-        { "Delay time", 100, 800, 1, 5, ParamUnit::ms, true },
-        { "Feedback", 0, 100, 1, 5, ParamUnit::Percent, true },
-        { "Low pass", 100, 1000, 1, 5, ParamUnit::Hz, true },
-        { "Mix", 0, 100, 1, 5, ParamUnit::Percent, true }
+        { "Delay time", 100, 800, 1, 5, ParamUnit::kMs, true },
+        { "Feedback", 0, 100, 1, 5, ParamUnit::kPercent, true },
+        { "Low pass", 100, 1000, 1, 5, ParamUnit::kHz, true },
+        { "Mix", 0, 100, 1, 5, ParamUnit::kPercent, true }
       },
       true,  // m_isDelayEffect
       100,   // m_minDelayMs

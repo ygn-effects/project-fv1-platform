@@ -19,7 +19,14 @@ namespace ProgramConstants {
   constexpr uint8_t c_maxParameters = 4;
 }
 
-enum class ParamUnit : uint8_t { Raw, Percent, Hz, dB, ms };
+enum class ParamUnit : uint8_t {
+  kNone,
+  kRaw,
+  kPercent,
+  kHz,
+  kDb,
+  kMs
+};
 
 struct ProgramParameter {
     const char* m_label;
