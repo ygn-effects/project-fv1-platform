@@ -10,7 +10,7 @@ class TapService : public Service {
     LogicalState& m_logicalState;
     TapHandler m_tapHandler;
 
-    void publishTempoEvent(const Event& t_event) const;
+    void publishTapIntervalEvent(const Event& t_event) const;
 
   public:
     TapService(LogicalState& t_lState) :

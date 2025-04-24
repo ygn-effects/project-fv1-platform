@@ -41,7 +41,7 @@ void test_tap_2_taps() {
   Event tempoChangedEvent;
   EventBus::recall(tempoChangedEvent);
 
-  TEST_ASSERT_EQUAL(EventType::kTempoChanged, tempoChangedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kTapIntervalChanged, tempoChangedEvent.m_type);
   TEST_ASSERT_EQUAL(200, logicalState.m_interval);
   TEST_ASSERT_EQUAL(200, tempoChangedEvent.m_data.value);
 }
@@ -70,7 +70,7 @@ void test_tap_4_taps() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(tempoChangedEvent);
 
-  TEST_ASSERT_EQUAL(EventType::kTempoChanged, tempoChangedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kTapIntervalChanged, tempoChangedEvent.m_type);
   TEST_ASSERT_EQUAL(200, logicalState.m_interval);
   TEST_ASSERT_EQUAL(200, tempoChangedEvent.m_data.value);
 }
@@ -102,7 +102,7 @@ void test_div() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(tempoChangedEvent);
 
-  TEST_ASSERT_EQUAL(EventType::kTempoChanged, tempoChangedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kTapIntervalChanged, tempoChangedEvent.m_type);
   TEST_ASSERT_EQUAL(200, logicalState.m_interval);
   TEST_ASSERT_EQUAL(100, logicalState.m_divInterval);
   TEST_ASSERT_EQUAL(100, tempoChangedEvent.m_data.value);
@@ -114,7 +114,7 @@ void test_div() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(tempoChangedEvent);
 
-  TEST_ASSERT_EQUAL(EventType::kTempoChanged, tempoChangedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kTapIntervalChanged, tempoChangedEvent.m_type);
   TEST_ASSERT_EQUAL(200, logicalState.m_interval);
   TEST_ASSERT_EQUAL(50, logicalState.m_divInterval);
   TEST_ASSERT_EQUAL(50, tempoChangedEvent.m_data.value);
@@ -126,7 +126,7 @@ void test_div() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(tempoChangedEvent);
 
-  TEST_ASSERT_EQUAL(EventType::kTempoChanged, tempoChangedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kTapIntervalChanged, tempoChangedEvent.m_type);
   TEST_ASSERT_EQUAL(200, logicalState.m_interval);
   TEST_ASSERT_EQUAL(150, logicalState.m_divInterval);
   TEST_ASSERT_EQUAL(150, tempoChangedEvent.m_data.value);
@@ -138,7 +138,7 @@ void test_div() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(tempoChangedEvent);
 
-  TEST_ASSERT_EQUAL(EventType::kTempoChanged, tempoChangedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kTapIntervalChanged, tempoChangedEvent.m_type);
   TEST_ASSERT_EQUAL(200, logicalState.m_interval);
   TEST_ASSERT_EQUAL(66, logicalState.m_divInterval);
   TEST_ASSERT_EQUAL(66, tempoChangedEvent.m_data.value);
@@ -150,7 +150,7 @@ void test_div() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(tempoChangedEvent);
 
-  TEST_ASSERT_EQUAL(EventType::kTempoChanged, tempoChangedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kTapIntervalChanged, tempoChangedEvent.m_type);
   TEST_ASSERT_EQUAL(200, logicalState.m_interval);
   TEST_ASSERT_EQUAL(200, logicalState.m_divInterval);
   TEST_ASSERT_EQUAL(200, tempoChangedEvent.m_data.value);
@@ -175,7 +175,7 @@ void test_event_order() {
   Event tempoChangedEvent;
   EventBus::recall(tempoChangedEvent);
 
-  TEST_ASSERT_EQUAL(EventType::kTempoChanged, tempoChangedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kTapIntervalChanged, tempoChangedEvent.m_type);
   TEST_ASSERT_EQUAL(200, logicalState.m_interval);
   TEST_ASSERT_EQUAL(200, tempoChangedEvent.m_data.value);
 
@@ -184,7 +184,7 @@ void test_event_order() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(tempoChangedEvent);
 
-  TEST_ASSERT_EQUAL(EventType::kTempoChanged, tempoChangedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kTapIntervalChanged, tempoChangedEvent.m_type);
   TEST_ASSERT_EQUAL(200, logicalState.m_interval);
   TEST_ASSERT_EQUAL(100, logicalState.m_divInterval);
   TEST_ASSERT_EQUAL(100, tempoChangedEvent.m_data.value);
