@@ -8,13 +8,18 @@ enum class ItemKind : uint8_t {
   kAction
 };
 
-enum class  ParamKind : uint8_t {
+enum class  ParamId : uint8_t {
+  kNone,
   kProgramName,
   kPot0Value,
   kPot1Value,
   kPot2Value,
   kMixPotValue,
-  kTempo
+  kTempo,
+  kExprDirection,
+  kExprMappedPot,
+  kExprHeel,
+  kExprToe
 };
 
 struct Menu;
@@ -22,7 +27,7 @@ struct Menu;
 struct MenuItem {
   const char* m_label;
   ItemKind m_kind;
-  uint8_t m_paramId;
+  ParamId m_paramId;
   const Menu* m_subMenu;
   void (*action)();
 };
