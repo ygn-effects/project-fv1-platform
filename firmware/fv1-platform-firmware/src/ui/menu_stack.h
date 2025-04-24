@@ -30,4 +30,8 @@ class MenuStack {
     uint8_t depth() const {
       return m_top;
     }
+
+    void clear() {
+      m_top = 0;
+    }
 };
