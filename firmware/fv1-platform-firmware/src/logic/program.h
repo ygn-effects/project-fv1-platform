@@ -16,6 +16,7 @@ namespace ProgramConstants {
    * - Multiple EEPROMs are connected (not supported for now)
    */
   constexpr uint8_t c_maxPrograms = 8;
+  constexpr uint8_t c_maxParameters = 4;
 }
 
 enum class ParamUnit : uint8_t { Raw, Percent, Hz, dB, ms };
@@ -32,7 +33,7 @@ struct ProgramParameter {
 
 struct Program {
   const char* m_name;
-  ProgramParameter m_params[4];
+  ProgramParameter m_params[ProgramConstants::c_maxParameters];
   bool m_isDelayEffect;
   uint16_t m_minDelayMs;
   uint16_t m_maxDelayMs;
