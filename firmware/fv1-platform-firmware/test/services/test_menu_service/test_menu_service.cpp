@@ -23,7 +23,7 @@ void test_menu_basic() {
 
   menuService.init();
 
-  TEST_ASSERT_EQUAL("Digital delay", menuService.currentMenu()->m_items[0].m_label);
+  TEST_ASSERT_EQUAL("Program", menuService.currentMenu()->m_items[0].m_label);
 
   menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
   Event e;
@@ -115,6 +115,25 @@ void test_cursor_wrap_around() {
   TEST_ASSERT_EQUAL(0, menuService.getCursor());
 }
 
+void test_menu_interactive() {
+  LogicalState logicalState;
+  MenuService menuService(logicalState);
+
+  menuService.init();
+
+  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  Event e;
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL("Program", menuService.currentMenu()->m_items[menuService.getCursor()].m_label);
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta = 1}});
+  TEST_ASSERT_EQUAL("Tempo", menuService.currentMenu()->m_items[menuService.getCursor()].m_label);
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 150, {.delta = 1}});
+  TEST_ASSERT_EQUAL("Feedback", menuService.currentMenu()->m_items[menuService.getCursor()].m_label);
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 150, {.delta = 1}});
+  TEST_ASSERT_EQUAL("Low pass", menuService.currentMenu()->m_items[menuService.getCursor()].m_label);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_menu_basic);
@@ -122,5 +141,6 @@ int main() {
   RUN_TEST(test_menu_lock_timeout);
   RUN_TEST(test_move_cursor);
   RUN_TEST(test_cursor_wrap_around);
+  RUN_TEST(test_menu_interactive);
   UNITY_END();
 }

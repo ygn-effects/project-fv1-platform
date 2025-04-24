@@ -8,25 +8,25 @@ void MenuService::rebuildRootMenu() {
   uint8_t index = 0;
   const Program* program = m_logicState.m_activeProgram;
 
-  m_rootMenubuf[index++] = {program->m_name, ItemKind::kParam, ParamId::kProgramName, nullptr, nullptr};
+  m_rootMenubuf[index++] = {"Program", ItemKind::kParam, ParamId::kProgramName, m_logicState.m_currentProgram, ParamUnit::kNone, nullptr, nullptr};
 
   if (program->m_isDelayEffect) {
-    m_rootMenubuf[index++] = {"Tempo", ItemKind::kParam, ParamId::kTempo, nullptr, nullptr};
+    m_rootMenubuf[index++] = {"Tempo", ItemKind::kParam, ParamId::kTempo, m_logicState.m_tempo, ParamUnit::kMs, nullptr, nullptr};
+
+    if (m_logicState.m_divState == DivState::kEnabled) {
+      m_rootMenubuf[index++] = {"Tempo Div", ItemKind::kParam, ParamId::kDivValue, static_cast<uint8_t>(m_logicState.m_divValue), ParamUnit::kMs, nullptr, nullptr};
+    }
   }
   else {
-    m_rootMenubuf[index++] = {program->m_params[0].m_label, ItemKind::kParam, ParamId::kPot0Value, nullptr, nullptr};
+    m_rootMenubuf[index++] = {program->m_params[0].m_label, ItemKind::kParam, ParamId::kPot0Value, 0, ParamUnit::kPercent, nullptr, nullptr};
   }
 
-  m_rootMenubuf[index++] = {program->m_params[1].m_label, ItemKind::kParam, ParamId::kPot0Value, nullptr, nullptr};
-  m_rootMenubuf[index++] = {program->m_params[2].m_label, ItemKind::kParam, ParamId::kPot0Value, nullptr, nullptr};
-  m_rootMenubuf[index++] = {program->m_params[3].m_label, ItemKind::kParam, ParamId::kPot0Value, nullptr, nullptr};
+  m_rootMenubuf[index++] = {program->m_params[1].m_label, ItemKind::kParam, ParamId::kPot0Value, 0, ParamUnit::kPercent, nullptr, nullptr};
+  m_rootMenubuf[index++] = {program->m_params[2].m_label, ItemKind::kParam, ParamId::kPot1Value, 0, ParamUnit::kPercent, nullptr, nullptr};
+  m_rootMenubuf[index++] = {program->m_params[3].m_label, ItemKind::kParam, ParamId::kPot2Value, 0, ParamUnit::kPercent, nullptr, nullptr};
 
   if (program->m_supportsExpr) {
-    const char* state = m_logicState.m_exprParams[m_logicState.m_currentProgram].m_state == ExprState::kActive
-                          ? "Expr On"
-                          : "Expr Off";
-
-    m_rootMenubuf[index++] = {state, ItemKind::kSubMenu, ParamId::kNone, nullptr, nullptr};
+    m_rootMenubuf[index++] = {"Expr state", ItemKind::kSubMenu, ParamId::kNone, static_cast<uint8_t>(m_logicState.m_exprParams[m_logicState.m_currentPreset].m_state), ParamUnit::kPercent, nullptr, nullptr};
   }
 
   m_rootMenu.m_items = m_rootMenubuf;
@@ -85,10 +85,32 @@ void MenuService::handleSelecting(const Event& t_event) {
 
     m_lastInputTime = t_event.m_timestamp;
   }
+  else if (t_event.m_type == EventType::kMenuEncoderPressed) {
+    const MenuItem& item = p_currentMenu->m_items[m_cursor];
+
+    switch (item.m_kind) {
+      case ItemKind::kParam:
+        beginEdit();
+        break;
+
+      default:
+        break;
+    }
+
+    m_lastInputTime = t_event.m_timestamp;
+  }
 }
 
 void MenuService::handleEditing(const Event& t_event) {
+  if (t_event.m_type == EventType::kMenuEncoderMoved) {
+    const ProgramParameter& param = currentParam();
 
+    int16_t value = static_cast<int16_t>(m_edit.m_currentValue) + (static_cast<int16_t>(t_event.m_data.delta) * (static_cast<int16_t>(param.m_fineStep ? param.m_fineStep : 1)));
+    m_lastInputTime = t_event.m_timestamp;
+  }
+  else if (t_event.m_type == EventType::kMenuEncoderPressed) {
+    commitEdit();
+  }
 }
 
 void MenuService::moveCursor(int8_t t_delta) {
@@ -97,6 +119,45 @@ void MenuService::moveCursor(int8_t t_delta) {
   if (cursor >= p_currentMenu->m_count) cursor = 0;
 
   m_cursor = static_cast<uint8_t>(cursor);
+}
+
+void MenuService::pushMenu(const Menu* t_menu) {
+
+}
+
+void MenuService::popMenu() {
+
+}
+
+const ProgramParameter& MenuService::currentParam() {
+  switch (p_currentMenu->m_items[m_cursor].m_paramId) {
+    case ParamId::kPot0Value:
+    case ParamId::kTempo:
+      return m_logicState.m_activeProgram->m_params[0];
+
+    case ParamId::kPot1Value:
+      return m_logicState.m_activeProgram->m_params[1];
+
+    case ParamId::kPot2Value:
+      return m_logicState.m_activeProgram->m_params[2];
+
+    case ParamId::kMixPotValue:
+      return m_logicState.m_activeProgram->m_params[3];
+
+    default:
+      return m_logicState.m_activeProgram->m_params[0];
+  }
+}
+
+void MenuService::beginEdit() {
+  m_edit.m_currentValue = p_currentMenu->m_items[m_cursor].m_value;
+  m_edit.m_paramId = p_currentMenu->m_items[m_cursor].m_paramId;
+
+  m_subState = SubState::kEditing;
+}
+
+void MenuService::commitEdit() {
+  m_subState = SubState::kSelecting;
 }
 
 MenuService::MenuService(LogicalState& t_lState)

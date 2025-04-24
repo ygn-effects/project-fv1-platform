@@ -56,9 +56,9 @@ class MenuService : public Service {
     void pushMenu(const Menu* t_menu);
     void popMenu();
 
-    const ProgramParameter& currentParam(uint8_t t_paraId);
-    void beginEdit(uint8_t t_paraId);
-    void commitEdit(uint8_t t_paraId);
+    const ProgramParameter& currentParam();
+    void beginEdit();
+    void commitEdit();
 
   public:
     MenuService(LogicalState& t_lState);
