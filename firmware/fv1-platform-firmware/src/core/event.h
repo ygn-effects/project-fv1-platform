@@ -42,6 +42,7 @@ enum class EventType : uint8_t {
   // Logical state events
   kProgramChanged,
   kPresetChanged,
+  kTapIntervalChanged,
   kTempoChanged,
   kBypassEnabled,
   kBypassDisabled
