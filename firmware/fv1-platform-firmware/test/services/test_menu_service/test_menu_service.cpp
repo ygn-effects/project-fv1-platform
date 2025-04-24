@@ -23,7 +23,14 @@ void test_menu_basic() {
 
   menuService.init();
 
-  TEST_ASSERT_EQUAL("<empty>", menuService.currentMenu()->m_items[0].m_label);
+  TEST_ASSERT_EQUAL("Digital delay", menuService.currentMenu()->m_items[0].m_label);
+
+  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  Event e;
+  EventBus::recall(e);
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta = 1}});
+  TEST_ASSERT_EQUAL(1, menuService.getCursor());
 }
 
 void test_menu_unlock_lock() {
@@ -102,7 +109,7 @@ void test_cursor_wrap_around() {
   EventBus::recall(e);
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta = -1}});
-  TEST_ASSERT_EQUAL(2, menuService.getCursor());
+  TEST_ASSERT_EQUAL(6, menuService.getCursor());
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta = 1}});
   TEST_ASSERT_EQUAL(0, menuService.getCursor());

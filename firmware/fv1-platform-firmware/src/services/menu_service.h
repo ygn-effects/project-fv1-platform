@@ -24,7 +24,7 @@ enum class SubState : uint8_t {
 };
 
 struct EditContext {
-  uint8_t m_paraId;
+  ParamId m_paramId;
   uint16_t m_currentValue;
 };
 
@@ -32,6 +32,7 @@ class MenuService : public Service {
   private:
     LogicalState& m_logicState;
     Menu m_rootMenu{};
+    MenuItem m_rootMenubuf[10];
     const Menu* p_currentMenu;
     UiMode m_mode;
     SubState m_subState;

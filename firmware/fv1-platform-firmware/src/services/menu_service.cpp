@@ -5,7 +5,35 @@ void MenuService::rebuildView() {
 }
 
 void MenuService::rebuildRootMenu() {
+  uint8_t index = 0;
+  const Program* program = m_logicState.m_activeProgram;
 
+  m_rootMenubuf[index++] = {program->m_name, ItemKind::kParam, ParamId::kProgramName, nullptr, nullptr};
+
+  if (program->m_isDelayEffect) {
+    m_rootMenubuf[index++] = {"Tempo", ItemKind::kParam, ParamId::kTempo, nullptr, nullptr};
+  }
+  else {
+    m_rootMenubuf[index++] = {program->m_params[0].m_label, ItemKind::kParam, ParamId::kPot0Value, nullptr, nullptr};
+  }
+
+  m_rootMenubuf[index++] = {program->m_params[1].m_label, ItemKind::kParam, ParamId::kPot0Value, nullptr, nullptr};
+  m_rootMenubuf[index++] = {program->m_params[2].m_label, ItemKind::kParam, ParamId::kPot0Value, nullptr, nullptr};
+  m_rootMenubuf[index++] = {program->m_params[3].m_label, ItemKind::kParam, ParamId::kPot0Value, nullptr, nullptr};
+
+  if (program->m_supportsExpr) {
+    const char* state = m_logicState.m_exprParams[m_logicState.m_currentProgram].m_state == ExprState::kActive
+                          ? "Expr On"
+                          : "Expr Off";
+
+    m_rootMenubuf[index++] = {state, ItemKind::kSubMenu, ParamId::kNone, nullptr, nullptr};
+  }
+
+  m_rootMenu.m_items = m_rootMenubuf;
+  m_rootMenu.m_count = index + 1;
+
+  m_stack.clear();
+  m_stack.push(&m_rootMenu);
 }
 
 void MenuService::lockUi(const Event& t_event) {
@@ -79,14 +107,7 @@ MenuService::MenuService(LogicalState& t_lState)
 }
 
 void MenuService::init() {
-  static const MenuItem dummyItems[] = {
-    {"<empty>", ItemKind::kAction, 0, nullptr, nullptr},
-    {"<empty1>", ItemKind::kAction, 0, nullptr, nullptr},
-    {"<empty2>", ItemKind::kAction, 0, nullptr, nullptr}
-  };
-  static const Menu dummyMenu = { dummyItems, 3 };
-  m_stack.pop();
-  m_stack.push(&dummyMenu);
+  rebuildRootMenu();
 
   p_currentMenu = m_stack.top();
 }
