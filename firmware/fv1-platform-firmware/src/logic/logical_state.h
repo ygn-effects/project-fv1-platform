@@ -16,8 +16,7 @@ enum class ProgramMode : uint8_t {
   kPreset
 };
 
-struct LogicalState
-{
+struct LogicalState {
   BypassState m_bypassState = BypassState::kActive;
   ProgramMode m_programMode = ProgramMode::kProgram;
   const Program* m_activeProgram = &ProgramsDefinitions::kPrograms[0];
@@ -30,6 +29,8 @@ struct LogicalState
   DivValue m_divValue = DivValue::kQuarter;
   uint16_t m_interval = 0;
   uint16_t m_divInterval = 0;
+
+  uint16_t m_tempo = 0;
 
   struct ExprParams {
       ExprState m_state = ExprState::kInactive;
