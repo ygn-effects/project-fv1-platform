@@ -106,6 +106,7 @@ void MenuService::handleEditing(const Event& t_event) {
     const ProgramParameter& param = currentParam();
 
     int16_t value = static_cast<int16_t>(m_edit.m_currentValue) + (static_cast<int16_t>(t_event.m_data.delta) * (static_cast<int16_t>(param.m_fineStep ? param.m_fineStep : 1)));
+    m_edit.m_currentValue = value;
     m_lastInputTime = t_event.m_timestamp;
   }
   else if (t_event.m_type == EventType::kMenuEncoderPressed) {
@@ -207,4 +208,12 @@ UiMode MenuService::getUiMode() const {
 
 uint8_t MenuService::getCursor() const {
   return m_cursor;
+}
+
+SubState MenuService::getSubState() const {
+  return m_subState;
+}
+
+EditContext MenuService::getEditContext() const {
+  return m_edit;
 }

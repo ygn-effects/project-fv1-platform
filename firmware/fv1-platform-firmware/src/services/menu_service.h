@@ -71,4 +71,6 @@ class MenuService : public Service {
     const Menu* currentMenu() const;
     UiMode getUiMode() const;
     uint8_t getCursor() const;
+    SubState getSubState() const;
+    EditContext getEditContext() const;
 };

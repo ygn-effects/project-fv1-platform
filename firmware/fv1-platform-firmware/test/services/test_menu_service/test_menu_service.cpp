@@ -128,10 +128,20 @@ void test_menu_interactive() {
   TEST_ASSERT_EQUAL("Program", menuService.currentMenu()->m_items[menuService.getCursor()].m_label);
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta = 1}});
   TEST_ASSERT_EQUAL("Tempo", menuService.currentMenu()->m_items[menuService.getCursor()].m_label);
-  menuService.handleEvent({EventType::kMenuEncoderMoved, 150, {.delta = 1}});
-  TEST_ASSERT_EQUAL("Feedback", menuService.currentMenu()->m_items[menuService.getCursor()].m_label);
-  menuService.handleEvent({EventType::kMenuEncoderMoved, 150, {.delta = 1}});
-  TEST_ASSERT_EQUAL("Low pass", menuService.currentMenu()->m_items[menuService.getCursor()].m_label);
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+  TEST_ASSERT_EQUAL(SubState::kEditing, menuService.getSubState());
+  TEST_ASSERT_EQUAL(ParamId::kTempo, menuService.getEditContext().m_paramId);
+  TEST_ASSERT_EQUAL(0, menuService.getEditContext().m_currentValue);
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 110, {.delta = 1}});
+  TEST_ASSERT_EQUAL(1, menuService.getEditContext().m_currentValue);
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 110, {.delta = 100}});
+  TEST_ASSERT_EQUAL(101, menuService.getEditContext().m_currentValue);
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+  TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getSubState());
 }
 
 int main() {
