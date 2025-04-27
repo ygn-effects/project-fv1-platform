@@ -5,6 +5,7 @@
 #include "logic/programs.h"
 #include "logic/tap_handler.h"
 #include "logic/expr_handler.h"
+#include "logic/pot_handler.h"
 
 enum class BypassState : uint8_t {
   kBypassed,
@@ -31,6 +32,15 @@ struct LogicalState {
   uint16_t m_divInterval = 0;
 
   uint16_t m_tempo = 0;
+
+  struct PotParams {
+    PotState m_state = PotState::kActive;
+    uint16_t m_value = 0;
+    uint16_t m_minValue = 0;
+    uint16_t m_maxValue = 1023;
+  };
+
+  PotParams m_potParams[PotConstants::c_potCount];
 
   struct ExprParams {
       ExprState m_state = ExprState::kInactive;
