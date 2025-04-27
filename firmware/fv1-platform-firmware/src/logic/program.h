@@ -29,13 +29,13 @@ enum class ParamUnit : uint8_t {
 };
 
 struct ProgramParameter {
-    const char* m_label;
-    uint16_t m_min;
-    uint16_t m_max;
-    uint8_t m_fineStep;
-    uint8_t m_coarseStep;
-    ParamUnit m_unit;
-    bool m_editable;
+  const char* m_label;
+  uint16_t m_min;
+  uint16_t m_max;
+  uint8_t m_fineStep;
+  uint8_t m_coarseStep;
+  ParamUnit m_unit;
+  bool m_editable;
 };
 
 struct Program {
