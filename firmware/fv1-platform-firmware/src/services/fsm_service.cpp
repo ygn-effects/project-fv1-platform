@@ -20,11 +20,6 @@ void FsmService::handleEvent(const Event& t_event) {
                       : AppState::kPresetIdle, t_event.m_timestamp);
       }
 
-      if (t_event.m_type == EventType::kMenuUnlocked) {
-        transitionTo(AppState::kProgramEdit, t_event.m_timestamp);
-        return;
-      }
-
     case AppState::kProgramIdle:
       // Bypass
       if (t_event.m_type == EventType::kRawBypassPressed) {
@@ -50,6 +45,11 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
+      if (t_event.m_type == EventType::kMenuUnlocked) {
+        transitionTo(AppState::kProgramEdit, t_event.m_timestamp);
+        return;
+      }
+
       break;
 
     case AppState::kProgramEdit:
@@ -65,6 +65,11 @@ void FsmService::handleEvent(const Event& t_event) {
 
       if (t_event.m_type == EventType::kRawMenuEncoderMoved) {
         EventBus::publish({EventType::kMenuEncoderMoved, t_event.m_timestamp, {.delta = t_event.m_data.delta}});
+      }
+
+      if (t_event.m_type == EventType::kMenuLocked) {
+        transitionTo(AppState::kProgramIdle, t_event.m_timestamp);
+        return;
       }
 
       break;
