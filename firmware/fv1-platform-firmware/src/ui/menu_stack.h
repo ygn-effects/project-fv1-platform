@@ -2,17 +2,18 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "ui/menu_model.h"
 
 template<size_t N>
 class MenuStack {
   private:
-    const Menu* m_items[N];
+    const ui::MenuPage* m_items[N];
     uint8_t m_top;
 
   public:
     MenuStack() : m_top(0) {}
 
-    bool push(const Menu* t_menu) {
+    bool push(const ui::MenuPage* t_menu) {
       if (m_top >= N) return false;
 
       m_items[m_top++] = t_menu;
@@ -23,7 +24,7 @@ class MenuStack {
       if (m_top) --m_top;
     }
 
-    const Menu* top() const {
+    const ui::MenuPage* top() const {
       return m_top ? m_items[m_top - 1] : nullptr;
     }
 
