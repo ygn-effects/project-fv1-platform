@@ -36,12 +36,26 @@ constexpr bool isAlwaysVisible(const LogicalState*) {
   return true;
 }
 
+constexpr bool visibleIfDelayEffect(const LogicalState* t_state) {
+  return t_state->m_activeProgram->m_isDelayEffect;
+}
+
+constexpr bool notvisibleIfDelayEffect(const LogicalState* t_state) {
+  return t_state->m_activeProgram->m_isDelayEffect
+    ? false
+    : true;
+}
+
 constexpr const char* labelProgram(const LogicalState*) {
   return "Program";
 }
 
 constexpr const char* valueProgram(const LogicalState* t_state) {
   return t_state->m_activeProgram->m_name;
+}
+
+void onMoveProgram(int8_t t_delta) {
+  EventBus::publish({EventType::kMenuProgramChanged, 0 /*millis()*/, {.delta=t_delta}});
 }
 
 constexpr const char* labelPot(const LogicalState* t_state, uint8_t t_potIndex) {
@@ -51,7 +65,6 @@ constexpr const char* labelPot(const LogicalState* t_state, uint8_t t_potIndex) 
 constexpr const char* labelPot0(const LogicalState* t_state) {
   return labelPot(t_state, 0);
 }
-
 constexpr const char* labelPot1(const LogicalState* t_state) {
   return labelPot(t_state, 1);
 }
@@ -119,6 +132,22 @@ const char* valueMixPot(const LogicalState* t_state) {
   return mixPotLabel;
 }
 
+void onMovePot0(int8_t t_delta) {
+  EventBus::publish({EventType::kMenuPot0Moved, 0 /*millis()*/, {.delta=t_delta}});
+}
+
+void onMovePot1(int8_t t_delta) {
+  EventBus::publish({EventType::kMenuPot1Moved, 0 /*millis()*/, {.delta=t_delta}});
+}
+
+void onMovePot2(int8_t t_delta) {
+  EventBus::publish({EventType::kMenuPot2Moved, 0 /*millis()*/, {.delta=t_delta}});
+}
+
+void onMoveMixPot(int8_t t_delta) {
+  EventBus::publish({EventType::kMenuMixPotMoved, 0 /*millis()*/, {.delta=t_delta}});
+}
+
 constexpr const char* labelTempo(const LogicalState* t_state) {
   return "Tempo";
 }
@@ -128,6 +157,10 @@ const char* valueTempo(const LogicalState* t_state) {
   snprintf(buffer, sizeof(buffer), "%u ms", t_state->m_tempo);
 
   return buffer;
+}
+
+void onMoveTempo(int8_t t_delta) {
+  EventBus::publish({EventType::kMenuTempoChanged, 0 /*millis()*/, {.delta=t_delta}});
 }
 
 constexpr MenuItem lockScreenMenuItems[] = {
@@ -141,12 +174,12 @@ constexpr MenuPage LockScreenMenu = {
 };
 
 constexpr MenuItem ProgramMenuItems[] = {
-  { labelProgram, isAlwaysVisible, valueProgram, nullptr, nullptr, nullptr },
-  { labelTempo, [](const LogicalState* t_s) { return t_s->m_activeProgram->m_isDelayEffect; }, valueTempo, nullptr, nullptr, nullptr },
-  { labelPot0, [](const LogicalState* t_s) { return ! t_s->m_activeProgram->m_isDelayEffect; }, valuePot0, nullptr, nullptr, nullptr },
-  { labelPot1, isAlwaysVisible, valuePot1, nullptr, nullptr, nullptr },
-  { labelPot2, isAlwaysVisible, valuePot2, nullptr, nullptr, nullptr },
-  { labelMixPot, isAlwaysVisible, valueMixPot, nullptr, nullptr, nullptr }
+  { labelProgram, isAlwaysVisible, valueProgram, onMoveProgram, nullptr, nullptr },
+  { labelTempo, visibleIfDelayEffect, valueTempo, onMoveTempo, nullptr, nullptr },
+  { labelPot0, notvisibleIfDelayEffect, valuePot0, onMovePot0, nullptr, nullptr },
+  { labelPot1, isAlwaysVisible, valuePot1, onMovePot1, nullptr, nullptr },
+  { labelPot2, isAlwaysVisible, valuePot2, onMovePot2, nullptr, nullptr },
+  { labelMixPot, isAlwaysVisible, valueMixPot, onMoveMixPot, nullptr, nullptr }
 };
 
 constexpr MenuPage ProgramMenuPage = {
