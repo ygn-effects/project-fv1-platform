@@ -14,11 +14,6 @@ void MenuService::handleLocked(const Event& t_event) {
 }
 
 void MenuService::handleUnlocked(const Event& t_event) {
-  if (t_event.m_type == EventType::kMenuEncoderLongPressed) {
-    lockUi(t_event);
-    return;
-  }
-
   switch (m_subState) {
     case SubState::kSelecting:
       handleSelecting(t_event);
@@ -56,15 +51,29 @@ void MenuService::unlockUi(const Event& t_event) {
 }
 
 void MenuService::handleSelecting(const Event& t_event) {
+  if (t_event.m_type == EventType::kMenuEncoderLongPressed) {
+    lockUi(t_event);
+    return;
+  }
+
   switch (t_event.m_type) {
     case EventType::kMenuEncoderMoved:
       moveCursor(t_event.m_data.delta);
+      break;
+
+    case EventType::kMenuEncoderPressed:
+      beginEditing();
       break;
   }
 }
 
 void MenuService::handleEditing(const Event& t_event) {
-
+  if (t_event.m_type == EventType::kMenuEncoderMoved) {
+    getcurrentMenuItem().m_onMove(t_event.m_data.delta);
+  }
+  else if (t_event.m_type == EventType::kMenuEncoderPressed) {
+    endEditing();
+  }
 }
 
 void MenuService::moveCursor(int8_t t_delta) {
@@ -82,6 +91,16 @@ void MenuService::moveCursor(int8_t t_delta) {
   else if (m_cursor >= m_first + MenuConstants::c_visibleItemsPerPage) {
       m_first = m_cursor - (MenuConstants::c_visibleItemsPerPage - 1);
   }
+}
+
+void MenuService::beginEditing() {
+  m_editRow = m_first + m_cursor;
+  m_subState = SubState::kEditing;
+}
+
+void MenuService::endEditing() {
+  m_editRow = 0;
+  m_subState = SubState::kSelecting;
 }
 
 void MenuService::init() {
@@ -115,4 +134,8 @@ const ui::MenuPage& MenuService::getcurrentMenuPage() const {
 
 const ui::MenuItem& MenuService::getcurrentMenuItem() const {
   return m_menuStack.top()->m_items[m_cursor];
+}
+
+const SubState MenuService::getsubState() const {
+  return m_subState;
 }

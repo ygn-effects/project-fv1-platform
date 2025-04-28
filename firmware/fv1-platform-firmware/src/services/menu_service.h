@@ -46,6 +46,9 @@ class MenuService : public Service {
 
     void moveCursor(int8_t t_delta);
 
+    void beginEditing();
+    void endEditing();
+
   public:
     MenuService(LogicalState& t_lState);
 
@@ -56,4 +59,5 @@ class MenuService : public Service {
     // Debug
     const ui::MenuPage& getcurrentMenuPage() const;
     const ui::MenuItem& getcurrentMenuItem() const;
+    const SubState getsubState() const;
 };

@@ -74,7 +74,7 @@ void test_scroll() {
   Event e;
   EventBus::recall(e);
 
-  TEST_ASSERT_EQUAL("Program", menuService.getcurrentMenuPage().m_items[0].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Program", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
   TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
@@ -92,10 +92,133 @@ void test_scroll() {
   TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
 }
 
+void test_wrap_around() {
+  LogicalState logicalState;
+  MenuService menuService(logicalState);
+
+  menuService.init();
+
+  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  Event e;
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL("Program", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
+  TEST_ASSERT_EQUAL("Mix", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_EQUAL("Program", menuService.getcurrentMenuItem().m_label(&logicalState));
+}
+
+void test_edit_begin_end() {
+  LogicalState logicalState;
+  MenuService menuService(logicalState);
+
+  menuService.init();
+
+  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  Event e;
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL("Program", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {.delta=1}});
+  TEST_ASSERT_EQUAL(SubState::kEditing, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {.delta=1}});
+  TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
+}
+
+void test_edit_begin_move_end() {
+  LogicalState logicalState;
+  MenuService menuService(logicalState);
+
+  menuService.init();
+
+  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  Event e;
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL("Program", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+  TEST_ASSERT_EQUAL(SubState::kEditing, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuProgramChanged, e.m_type);
+  TEST_ASSERT_EQUAL(1, e.m_data.delta);
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuProgramChanged, e.m_type);
+  TEST_ASSERT_EQUAL(-1, e.m_data.delta);
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+  TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+  TEST_ASSERT_EQUAL(SubState::kEditing, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuTempoChanged, e.m_type);
+  TEST_ASSERT_EQUAL(1, e.m_data.delta);
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+  TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_EQUAL("Delay time", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+  TEST_ASSERT_EQUAL(SubState::kEditing, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuPot0Moved, e.m_type);
+  TEST_ASSERT_EQUAL(1, e.m_data.delta);
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+  TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_EQUAL("Feedback", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+  TEST_ASSERT_EQUAL(SubState::kEditing, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuPot1Moved, e.m_type);
+  TEST_ASSERT_EQUAL(1, e.m_data.delta);
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+  TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_unlock_lock);
   RUN_TEST(test_menu_lock_timeout);
   RUN_TEST(test_scroll);
+  RUN_TEST(test_wrap_around);
+  RUN_TEST(test_edit_begin_end);
+  RUN_TEST(test_edit_begin_move_end);
   UNITY_END();
 }
