@@ -6,6 +6,7 @@
 #include "core/event_bus.h"
 #include "core/service.h"
 #include "logic/logical_state.h"
+#include "utils/utils.h"
 
 namespace ui {
 
@@ -163,6 +164,88 @@ void onMoveTempo(int8_t t_delta) {
   EventBus::publish({EventType::kMenuTempoChanged, 0 /*millis()*/, {.delta=t_delta}});
 }
 
+constexpr const char* labelExprSettings(const LogicalState*) {
+  return "Expression settings";
+}
+
+constexpr const char* labelExprState(const LogicalState* t_state) {
+  return "State";
+}
+
+constexpr const char* valueExprState(const LogicalState* t_state) {
+  return t_state->m_exprParams[t_state->m_currentProgram].m_state == ExprState::kActive
+    ? "ON"
+    : "OFF";
+}
+
+void onClickExprState() {
+  EventBus::publish({EventType::kMenuExprStateToggled, 0 /*millis()*/, {}});
+}
+
+constexpr const char* labelExprMappedPot(const LogicalState* t_state) {
+  return "Mapped Pot";
+}
+
+constexpr const char* valueExprMappedPot(const LogicalState* t_state) {
+  switch (t_state->m_exprParams[t_state->m_currentProgram].m_mappedPot) {
+    case MappedPot::kPot0:
+      return "Pot0";
+
+    case MappedPot::kPot1:
+      return "Pot1";
+
+    case MappedPot::kPot2:
+      return "Pot2";
+
+    case MappedPot::kMixPot:
+      return "MixPot";
+  }
+}
+
+void onMoveExprMappedPot(int8_t t_delta) {
+  EventBus::publish({EventType::kMenuExprMappedPotMoved, 0 /*millis()*/, {.delta=t_delta}});
+}
+
+constexpr const char* labelExprDirection(const LogicalState* t_state) {
+  return "Direction";
+}
+
+constexpr const char* valueExprDirection(const LogicalState* t_state) {
+  return t_state->m_exprParams[t_state->m_currentProgram].m_direction == Direction::kNormal
+    ? "Normal"
+    : "Reversed";
+}
+
+void onClickExprDirection() {
+  EventBus::publish({EventType::kMenuExprDirectionToggled, 0 /*millis()*/, {}});
+}
+
+constexpr const char* labelExprHeelValue(const LogicalState* t_state) {
+  return "Heel value";
+}
+
+constexpr const char* valueExprHeelValue(const LogicalState* t_state) {
+  return Utils::numberToString(t_state->m_exprParams[t_state->m_currentProgram].m_heelValue);
+}
+
+void onMoveExprHeelValue(int8_t t_delta) {
+  EventBus::publish({EventType::kMenuExprHeelValueMoved, 0, {.delta=t_delta}});
+}
+
+constexpr const char* labelExprToeValue(const LogicalState* t_state) {
+  return "Toe value";
+}
+
+constexpr const char* valueExprToeValue(const LogicalState* t_state) {
+  return Utils::numberToString(t_state->m_exprParams[t_state->m_currentProgram].m_toeValue);
+}
+
+void onMoveExprToeValue(int8_t t_delta) {
+  EventBus::publish({EventType::kMenuExprToeValueMoved, 0, {.delta=t_delta}});
+}
+
+extern const MenuPage ExprSettingsMenuPage;
+
 constexpr MenuItem lockScreenMenuItems[] = {
 
 };
@@ -179,7 +262,8 @@ constexpr MenuItem ProgramMenuItems[] = {
   { labelPot0, notvisibleIfDelayEffect, valuePot0, onMovePot0, nullptr, nullptr },
   { labelPot1, isAlwaysVisible, valuePot1, onMovePot1, nullptr, nullptr },
   { labelPot2, isAlwaysVisible, valuePot2, onMovePot2, nullptr, nullptr },
-  { labelMixPot, isAlwaysVisible, valueMixPot, onMoveMixPot, nullptr, nullptr }
+  { labelMixPot, isAlwaysVisible, valueMixPot, onMoveMixPot, nullptr, nullptr },
+  { labelExprSettings, isAlwaysVisible, nullptr, nullptr, nullptr, &ExprSettingsMenuPage }
 };
 
 constexpr MenuPage ProgramMenuPage = {
@@ -188,14 +272,24 @@ constexpr MenuPage ProgramMenuPage = {
   sizeof(ProgramMenuItems) / sizeof(ProgramMenuItems[0])
 };
 
-constexpr MenuItem presetMenuItems[] = {
+constexpr MenuItem PresetMenuItems[] = {
 
 };
 
 constexpr MenuPage PresetMenuPage = {
   "Preset mode",
-  presetMenuItems,
+  PresetMenuItems,
   0
+};
+
+constexpr MenuItem ExprSettingsMenuItems[] = {
+  { labelExprState, isAlwaysVisible, valueExprState, nullptr, onClickExprState, nullptr }
+};
+
+constexpr MenuPage ExprSettingsMenuPage = {
+  "Expression settings",
+  ExprSettingsMenuItems,
+  sizeof(ExprSettingsMenuItems) / sizeof(ExprSettingsMenuItems[0])
 };
 
 } // namespace ui
