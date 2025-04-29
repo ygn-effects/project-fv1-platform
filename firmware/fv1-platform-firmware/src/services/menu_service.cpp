@@ -62,7 +62,19 @@ void MenuService::handleSelecting(const Event& t_event) {
       break;
 
     case EventType::kMenuEncoderPressed:
-      beginEditing();
+      ui::MenuItem item = getcurrentMenuItem();
+
+      if (item.m_subMenu) {
+        m_cursor = 0;
+        m_first = 0;
+        m_menuStack.push(item.m_subMenu);
+      }
+      else if (item.m_onClick) {
+        item.m_onClick();
+      }
+      else if (item.m_onMove) {
+        beginEditing();
+      }
       break;
   }
 }

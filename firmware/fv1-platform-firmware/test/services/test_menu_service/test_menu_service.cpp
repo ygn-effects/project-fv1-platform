@@ -105,7 +105,7 @@ void test_wrap_around() {
   TEST_ASSERT_EQUAL("Program", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
-  TEST_ASSERT_EQUAL("Mix", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Expression settings", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
   TEST_ASSERT_EQUAL("Program", menuService.getcurrentMenuItem().m_label(&logicalState));
@@ -212,6 +212,25 @@ void test_edit_begin_move_end() {
   TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
 }
 
+void test_sub_menu() {
+  LogicalState logicalState;
+  MenuService menuService(logicalState);
+
+  menuService.init();
+
+  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  Event e;
+  EventBus::recall(e);
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
+  TEST_ASSERT_EQUAL("Expression settings", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+
+  TEST_ASSERT_EQUAL("Expression settings", menuService.getcurrentMenuPage().m_header);
+  TEST_ASSERT_EQUAL("State", menuService.getcurrentMenuItem().m_label(&logicalState));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_unlock_lock);
@@ -220,5 +239,6 @@ int main() {
   RUN_TEST(test_wrap_around);
   RUN_TEST(test_edit_begin_end);
   RUN_TEST(test_edit_begin_move_end);
+  RUN_TEST(test_sub_menu);
   UNITY_END();
 }
