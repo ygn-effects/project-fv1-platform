@@ -6,7 +6,6 @@
 #include "core/event_bus.h"
 #include "core/service.h"
 #include "logic/logical_state.h"
-#include "utils/utils.h"
 
 namespace ui {
 
@@ -16,14 +15,14 @@ using VisibleFn = bool (*)(const LogicalState*);
 using LabelFn = const char* (*)(const LogicalState*);
 using ValueFn = const char* (*)(const LogicalState*);
 using MoveFn = void (*)(int8_t);
-using clickFn = void (*)();
+using ClickFn = void (*)();
 
 struct MenuItem {
   LabelFn m_label;
   VisibleFn m_visible;
   ValueFn m_value;
   MoveFn m_onMove;
-  clickFn m_onClick;
+  ClickFn m_onClick;
   const MenuPage* m_subMenu;
 };
 
@@ -41,10 +40,12 @@ constexpr bool visibleIfDelayEffect(const LogicalState* t_state) {
   return t_state->m_activeProgram->m_isDelayEffect;
 }
 
-constexpr bool notvisibleIfDelayEffect(const LogicalState* t_state) {
-  return t_state->m_activeProgram->m_isDelayEffect
-    ? false
-    : true;
+constexpr bool notVisibleIfDelayEffect(const LogicalState* t_state) {
+  return ! t_state->m_activeProgram->m_isDelayEffect;
+}
+
+constexpr bool visibleIfExprActive(const LogicalState* t_state) {
+  return t_state->m_exprParams[t_state->m_currentProgram].m_state == ExprState::kActive;
 }
 
 constexpr const char* labelProgram(const LogicalState*) {
@@ -199,6 +200,9 @@ constexpr const char* valueExprMappedPot(const LogicalState* t_state) {
 
     case MappedPot::kMixPot:
       return "MixPot";
+
+    default:
+      return "Potx";
   }
 }
 
@@ -224,8 +228,11 @@ constexpr const char* labelExprHeelValue(const LogicalState* t_state) {
   return "Heel value";
 }
 
-constexpr const char* valueExprHeelValue(const LogicalState* t_state) {
-  return Utils::numberToString(t_state->m_exprParams[t_state->m_currentProgram].m_heelValue);
+const char* valueExprHeelValue(const LogicalState* t_state) {
+  static char buffer[6];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_exprParams[t_state->m_currentProgram].m_heelValue);
+
+  return buffer;
 }
 
 void onMoveExprHeelValue(int8_t t_delta) {
@@ -236,8 +243,11 @@ constexpr const char* labelExprToeValue(const LogicalState* t_state) {
   return "Toe value";
 }
 
-constexpr const char* valueExprToeValue(const LogicalState* t_state) {
-  return Utils::numberToString(t_state->m_exprParams[t_state->m_currentProgram].m_toeValue);
+const char* valueExprToeValue(const LogicalState* t_state) {
+  static char buffer[6];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_exprParams[t_state->m_currentProgram].m_toeValue);
+
+  return buffer;
 }
 
 void onMoveExprToeValue(int8_t t_delta) {
@@ -259,7 +269,7 @@ constexpr MenuPage LockScreenMenu = {
 constexpr MenuItem ProgramMenuItems[] = {
   { labelProgram, isAlwaysVisible, valueProgram, onMoveProgram, nullptr, nullptr },
   { labelTempo, visibleIfDelayEffect, valueTempo, onMoveTempo, nullptr, nullptr },
-  { labelPot0, notvisibleIfDelayEffect, valuePot0, onMovePot0, nullptr, nullptr },
+  { labelPot0, notVisibleIfDelayEffect, valuePot0, onMovePot0, nullptr, nullptr },
   { labelPot1, isAlwaysVisible, valuePot1, onMovePot1, nullptr, nullptr },
   { labelPot2, isAlwaysVisible, valuePot2, onMovePot2, nullptr, nullptr },
   { labelMixPot, isAlwaysVisible, valueMixPot, onMoveMixPot, nullptr, nullptr },
@@ -283,7 +293,11 @@ constexpr MenuPage PresetMenuPage = {
 };
 
 constexpr MenuItem ExprSettingsMenuItems[] = {
-  { labelExprState, isAlwaysVisible, valueExprState, nullptr, onClickExprState, nullptr }
+  { labelExprState, isAlwaysVisible, valueExprState, nullptr, onClickExprState, nullptr },
+  { labelExprMappedPot, visibleIfExprActive, valueExprMappedPot, onMoveExprMappedPot, nullptr, nullptr },
+  { labelExprDirection, visibleIfExprActive, valueExprDirection, nullptr, onClickExprDirection, nullptr },
+  { labelExprHeelValue, visibleIfExprActive, valueExprHeelValue, onMoveExprHeelValue, nullptr, nullptr },
+  { labelExprToeValue, visibleIfExprActive, valueExprToeValue, onMoveExprToeValue, nullptr, nullptr }
 };
 
 constexpr MenuPage ExprSettingsMenuPage = {
