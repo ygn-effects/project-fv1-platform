@@ -98,10 +98,10 @@ void MenuService::moveCursor(int8_t t_delta) {
   m_cursor = static_cast<uint8_t>(index);
 
   if (m_cursor < m_first) {
-      m_first = m_cursor;
+    m_first = m_cursor;
   }
   else if (m_cursor >= m_first + MenuConstants::c_visibleItemsPerPage) {
-      m_first = m_cursor - (MenuConstants::c_visibleItemsPerPage - 1);
+    m_first = m_cursor - (MenuConstants::c_visibleItemsPerPage - 1);
   }
 }
 
@@ -113,6 +113,39 @@ void MenuService::beginEditing() {
 void MenuService::endEditing() {
   m_editRow = 0;
   m_subState = SubState::kSelecting;
+}
+
+void MenuService::publishView() {
+  const ui::MenuPage& page = getcurrentMenuPage();
+
+  uint8_t visIndex = 0;
+  uint8_t sliceCount = 0;
+
+  for (uint8_t i = 0; i < page.m_count; ++i) {
+    const ui::MenuItem& item = page.m_items[i];
+
+    if (!item.m_visible(&m_logicState))
+      continue;
+
+    if (visIndex < m_first) {
+      ++visIndex;
+      continue;
+    }
+
+    if (sliceCount < MenuConstants::c_visibleItemsPerPage) {
+      m_view.m_items[sliceCount] = &item;
+
+      if (i == m_cursor) {
+          m_view.m_selected = sliceCount;
+      }
+
+      ++sliceCount;
+    }
+
+    ++visIndex;
+  }
+
+  m_view.m_count = sliceCount;
 }
 
 void MenuService::init() {
@@ -138,6 +171,9 @@ void MenuService::update() {
   if ((now - m_lastInputTime) > MenuConstants::c_menuTimeout) {
     lockUi({EventType::kMenuEncoderMoved, 500, {.delta = 1}});
   }
+
+  // For tests only
+  publishView();
 }
 
 const ui::MenuPage& MenuService::getcurrentMenuPage() const {
@@ -150,4 +186,8 @@ const ui::MenuItem& MenuService::getcurrentMenuItem() const {
 
 const SubState MenuService::getsubState() const {
   return m_subState;
+}
+
+const MenuView* MenuService::getMenuView() const {
+  return &m_view;
 }

@@ -231,6 +231,62 @@ void test_sub_menu() {
   TEST_ASSERT_EQUAL("State", menuService.getcurrentMenuItem().m_label(&logicalState));
 }
 
+void test_not_visible() {
+  LogicalState logicalState;
+  MenuService menuService(logicalState);
+
+  menuService.init();
+
+  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  Event e;
+  EventBus::recall(e);
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
+  TEST_ASSERT_EQUAL("Expression settings", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+
+  TEST_ASSERT_EQUAL("Expression settings", menuService.getcurrentMenuPage().m_header);
+  TEST_ASSERT_EQUAL("State", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_EQUAL("Mapped Pot", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  TEST_ASSERT_FALSE(menuService.getcurrentMenuItem().m_visible(&logicalState));
+  logicalState.m_exprParams[logicalState.m_currentProgram].m_state = ExprState::kActive;
+
+  TEST_ASSERT_TRUE(menuService.getcurrentMenuItem().m_visible(&logicalState));
+}
+
+void test_publish() {
+  LogicalState logicalState;
+  MenuService menuService(logicalState);
+
+  menuService.init();
+
+  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 30000, {}});
+  Event e;
+  EventBus::recall(e);
+
+  menuService.update();
+  const MenuView* view = menuService.getMenuView();
+
+  TEST_ASSERT_EQUAL("Program", view->m_items[0]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Tempo", view->m_items[1]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Feedback", view->m_items[2]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Low pass", view->m_items[3]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Mix", view->m_items[4]->m_label(&logicalState));
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 30000, {.delta=5}});
+  menuService.update();
+
+  TEST_ASSERT_EQUAL("Tempo", view->m_items[0]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Feedback", view->m_items[1]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Low pass", view->m_items[2]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Mix", view->m_items[3]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Expression settings", view->m_items[4]->m_label(&logicalState));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_unlock_lock);
@@ -240,5 +296,7 @@ int main() {
   RUN_TEST(test_edit_begin_end);
   RUN_TEST(test_edit_begin_move_end);
   RUN_TEST(test_sub_menu);
+  RUN_TEST(test_not_visible);
+  RUN_TEST(test_publish);
   UNITY_END();
 }

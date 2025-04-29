@@ -23,10 +23,17 @@ enum class SubState : uint8_t {
   kEditing
 };
 
+struct MenuView {
+  const ui::MenuItem* m_items[MenuConstants::c_visibleItemsPerPage];
+  uint8_t m_count;
+  uint8_t m_selected;
+};
+
 class MenuService : public Service {
   private:
     LogicalState& m_logicState;
     MenuStack<4> m_menuStack;
+    MenuView m_view;
     UiMode m_mode;
     uint8_t m_cursor;
     uint8_t m_first;
@@ -49,6 +56,8 @@ class MenuService : public Service {
     void beginEditing();
     void endEditing();
 
+    void publishView();
+
   public:
     MenuService(LogicalState& t_lState);
 
@@ -60,4 +69,5 @@ class MenuService : public Service {
     const ui::MenuPage& getcurrentMenuPage() const;
     const ui::MenuItem& getcurrentMenuItem() const;
     const SubState getsubState() const;
+    const MenuView* getMenuView() const;
 };
