@@ -44,6 +44,11 @@ enum class EventType : uint8_t {
   kMenuPot2Moved,
   kMenuMixPotMoved,
   kMenuTempoChanged,
+  kMenuExprStateToggled,
+  kMenuExprMappedPotMoved,
+  kMenuExprDirectionToggled,
+  kMenuExprHeelValueMoved,
+  kMenuExprToeValueMoved,
 
   // Logical state events
   kProgramChanged,
