@@ -129,6 +129,23 @@ void test_expr_clamping() {
   TEST_ASSERT_EQUAL(1023, potMovedEvent.m_data.value);
 }
 
+void test_interested_in() {
+  LogicalState logicalState;
+  ExprService bypassService(logicalState);
+
+  Event e{EventType::kExprMoved, 500, {.value=100}};
+  TEST_ASSERT_TRUE(bypassService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kProgramChanged, 500, {.delta=1}};
+  TEST_ASSERT_TRUE(bypassService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kPot0Moved, 500, {.delta=1}};
+  TEST_ASSERT_FALSE(bypassService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kMenuExprMappedPotMoved, 500, {.delta=1}};
+  TEST_ASSERT_FALSE(bypassService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_expr_inactive);
@@ -137,5 +154,6 @@ int main() {
   RUN_TEST(test_expr_direction);
   RUN_TEST(test_expr_heel_toe_value);
   RUN_TEST(test_expr_clamping);
+  RUN_TEST(test_interested_in);
   UNITY_END();
 }
