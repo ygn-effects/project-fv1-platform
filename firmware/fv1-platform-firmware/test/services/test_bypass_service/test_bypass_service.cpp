@@ -23,27 +23,40 @@ void test_bypass() {
 
   TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
 
-  Event bypassOffEvent{EventType::kBypassPressed, 500, {}};
-  bypassService.handleEvent(bypassOffEvent);
+  Event e{EventType::kBypassPressed, 500, {}};
+  bypassService.handleEvent(e);
 
   TEST_ASSERT_TRUE(EventBus::hasEvent());
-  Event BypassDisabledEvent;
-  EventBus::recall(BypassDisabledEvent);
-  TEST_ASSERT_EQUAL(EventType::kBypassDisabled, BypassDisabledEvent.m_type);
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventType::kBypassDisabled, e.m_type);
   TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
 
-  Event bypassOnEvent{EventType::kBypassPressed, 600, {}};
-  bypassService.handleEvent(bypassOnEvent);
+  e = {EventType::kBypassPressed, 600, {}};
+  bypassService.handleEvent(e);
 
   TEST_ASSERT_TRUE(EventBus::hasEvent());
-  Event BypassEnabledEvent;
-  EventBus::recall(BypassEnabledEvent);
-  TEST_ASSERT_EQUAL(EventType::kBypassEnabled, BypassEnabledEvent.m_type);
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventType::kBypassEnabled, e.m_type);
   TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
+}
+
+void test_interested_in() {
+  LogicalState logicalState;
+  BypassService bypassService(logicalState);
+
+  Event e{EventType::kBypassPressed, 500, {}};
+  TEST_ASSERT_TRUE(bypassService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kPot0Moved, 500, {.delta=1}};
+  TEST_ASSERT_FALSE(bypassService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kMenuExprMappedPotMoved, 500, {.delta=1}};
+  TEST_ASSERT_FALSE(bypassService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
 }
 
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_bypass);
+  RUN_TEST(test_interested_in);
   UNITY_END();
 }
