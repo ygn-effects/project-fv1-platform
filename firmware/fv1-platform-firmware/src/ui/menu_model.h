@@ -107,31 +107,31 @@ void valuePot(const LogicalState* t_state, uint8_t t_potIndex, char* buffer, siz
 }
 
 const char* valuePot0(const LogicalState* t_state) {
-  static char potLabel0[8];
-  valuePot(t_state, 0, potLabel0, size_t(potLabel0));
+  static char valuePot0[8];
+  valuePot(t_state, 0, valuePot0, size_t(valuePot0));
 
-  return potLabel0;
+  return valuePot0;
 }
 
 const char* valuePot1(const LogicalState* t_state) {
-  static char potLabel1[8];
-  valuePot(t_state, 1, potLabel1, size_t(potLabel1));
+  static char valuePot1[8];
+  valuePot(t_state, 1, valuePot1, size_t(valuePot1));
 
-  return potLabel1;
+  return valuePot1;
 }
 
 const char* valuePot2(const LogicalState* t_state) {
-  static char potLabel2[8];
-  valuePot(t_state, 2, potLabel2, size_t(potLabel2));
+  static char valuePot2[8];
+  valuePot(t_state, 2, valuePot2, size_t(valuePot2));
 
-  return potLabel2;
+  return valuePot2;
 }
 
 const char* valueMixPot(const LogicalState* t_state) {
-  static char mixPotLabel[8];
-  valuePot(t_state, 3, mixPotLabel, size_t(mixPotLabel));
+  static char valueMixPot[8];
+  valuePot(t_state, 3, valueMixPot, size_t(valueMixPot));
 
-  return mixPotLabel;
+  return valueMixPot;
 }
 
 void onMovePot0(int8_t t_delta) {
