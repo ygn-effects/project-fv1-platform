@@ -57,11 +57,24 @@ void test_empty_recall() {
   TEST_ASSERT_FALSE(EventBus::recall(event));
 }
 
+void test_event_category() {
+  TEST_ASSERT_EQUAL(EventCategory::kRawPhysicalEvent, eventToCategory(EventType::kRawBypassPressed));
+  TEST_ASSERT_EQUAL(EventCategory::kMenuEvent, eventToCategory(EventType::kMenuLocked));
+  TEST_ASSERT_EQUAL(EventCategory::kPhysicalEvent, eventToCategory(EventType::kTapPressed));
+}
+
+void test_event_sub_category() {
+  TEST_ASSERT_EQUAL(EventSubCategory::kBypassEvent, eventToCategory(EventType::kRawBypassPressed));
+  TEST_ASSERT_EQUAL(EventSubCategory::kMenuLockEvent, eventToCategory(EventType::kMenuLocked));
+  TEST_ASSERT_EQUAL(EventSubCategory::kTapEvent, eventToCategory(EventType::kTapPressed));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_publish_one_recall_one);
   RUN_TEST(test_clear);
   RUN_TEST(test_fifo);
   RUN_TEST(test_empty_recall);
+  RUN_TEST(test_event_category);
   UNITY_END();
 }
