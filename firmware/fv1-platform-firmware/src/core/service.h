@@ -8,4 +8,5 @@ class Service {
     virtual void init() = 0;
     virtual void handleEvent(const Event& t_event) = 0;
     virtual void update() = 0;
+    virtual bool interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const { return true; }
 };
