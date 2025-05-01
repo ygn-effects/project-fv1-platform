@@ -99,10 +99,31 @@ void test_menu_idle_edit_transition() {
   TEST_ASSERT_EQUAL(EventType::kMenuLocked, stateChanged.m_type);
 }
 
+void test_interested_in() {
+  LogicalState logicalState;
+  FsmService fsmService(logicalState);
+
+  Event e{EventType::kRawPot0Moved, 500, {.value=100}};
+  TEST_ASSERT_TRUE(fsmService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kMenuLocked, 500, {.delta=1}};
+  TEST_ASSERT_TRUE(fsmService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kBootCompleted, 500, {.delta=1}};
+  TEST_ASSERT_TRUE(fsmService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kExprMoved, 500, {.delta=1}};
+  TEST_ASSERT_FALSE(fsmService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kMenuExprMappedPotMoved, 500, {.delta=1}};
+  TEST_ASSERT_FALSE(fsmService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_boot_transition);
   RUN_TEST(test_switch_bypass);
   RUN_TEST(test_menu_idle_edit_transition);
+  RUN_TEST(test_interested_in);
   UNITY_END();
 }

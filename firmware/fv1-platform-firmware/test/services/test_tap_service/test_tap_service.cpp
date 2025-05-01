@@ -192,6 +192,32 @@ void test_event_order() {
   TEST_ASSERT_EQUAL(DivValue::kEight, logicalState.m_divValue);
 }
 
+void test_interested_in() {
+  LogicalState logicalState;
+  TapService tapService(logicalState);
+
+  Event e{EventType::kTapPressed, 500, {.value=100}};
+  TEST_ASSERT_TRUE(tapService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kTapLongPressed, 500, {.delta=1}};
+  TEST_ASSERT_TRUE(tapService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kMenuTempoChanged, 500, {.delta=1}};
+  TEST_ASSERT_TRUE(tapService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kProgramChanged, 500, {.delta=1}};
+  TEST_ASSERT_TRUE(tapService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kPot0Moved, 500, {.delta=1}};
+  TEST_ASSERT_TRUE(tapService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kExprMoved, 500, {.delta=1}};
+  TEST_ASSERT_FALSE(tapService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kMenuExprMappedPotMoved, 500, {.delta=1}};
+  TEST_ASSERT_FALSE(tapService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_random_event);
@@ -200,5 +226,6 @@ int main() {
   RUN_TEST(test_timeout);
   RUN_TEST(test_div);
   RUN_TEST(test_event_order);
+  RUN_TEST(test_interested_in);
   UNITY_END();
 }

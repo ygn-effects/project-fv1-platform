@@ -121,11 +121,35 @@ void test_program_change() {
   TEST_ASSERT_EQUAL(800, logicalState.m_tempo);
 }
 
+void test_interested_in() {
+  LogicalState logicalState;
+  TempoService tempoService(logicalState);
+
+  Event e{EventType::kTapIntervalChanged, 500, {.value=100}};
+  TEST_ASSERT_TRUE(tempoService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kProgramChanged, 500, {.delta=1}};
+  TEST_ASSERT_TRUE(tempoService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kMenuTempoChanged, 500, {.delta=1}};
+  TEST_ASSERT_TRUE(tempoService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kPot0Moved, 500, {.delta=1}};
+  TEST_ASSERT_TRUE(tempoService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kExprMoved, 500, {.delta=1}};
+  TEST_ASSERT_FALSE(tempoService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+
+  e = {EventType::kMenuExprMappedPotMoved, 500, {.delta=1}};
+  TEST_ASSERT_FALSE(tempoService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_tap_tempo);
   RUN_TEST(test_pot);
   RUN_TEST(test_pot_map);
   RUN_TEST(test_program_change);
+  RUN_TEST(test_interested_in);
   UNITY_END();
 }
