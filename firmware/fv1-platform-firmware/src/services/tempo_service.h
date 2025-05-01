@@ -8,7 +8,8 @@
 
 enum class TempoSource : uint8_t {
   kTap,
-  kPot
+  kPot,
+  kMenu
 };
 
 class TempoService : public Service {
@@ -27,4 +28,5 @@ class TempoService : public Service {
     void init() override;
     void handleEvent(const Event& t_event) override;
     void update() override;
+    bool interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const override;
 };

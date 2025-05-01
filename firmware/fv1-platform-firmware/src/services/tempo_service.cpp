@@ -15,10 +15,6 @@ void TempoService::init() {
 }
 
 void TempoService::handleEvent(const Event& t_event) {
-  if (t_event.m_type != EventType::kTapIntervalChanged
-      && t_event.m_type != EventType::kPot0Moved
-      && t_event.m_type != EventType::kProgramChanged) return;
-
   switch (t_event.m_type) {
     case EventType::kTapIntervalChanged:
       m_interval = Utils::clamp<uint16_t>(t_event.m_data.value, m_minInterval, m_maxInterval);
@@ -33,6 +29,13 @@ void TempoService::handleEvent(const Event& t_event) {
       m_source = TempoSource::kPot;
 
       m_logicState.m_tempo = m_interval;
+      publishTempoEvent(t_event);
+      break;
+
+    case EventType::kMenuTempoChanged:
+      m_interval = Utils::clamp<uint16_t>(m_interval + t_event.m_data.delta, m_minInterval, m_maxInterval);
+      m_source = TempoSource::kMenu;
+
       publishTempoEvent(t_event);
       break;
 
@@ -54,4 +57,11 @@ void TempoService::handleEvent(const Event& t_event) {
 
 void TempoService::update() {
 
+}
+
+bool TempoService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
+  return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent
+      || t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuTempoEvent
+      || t_category == EventCategory::kTempoEvent && t_subCategory == EventSubCategory::kTapIntervalEvent
+      || t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent;
 }
