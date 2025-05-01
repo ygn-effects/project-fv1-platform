@@ -33,8 +33,7 @@ void TapService::handleEvent(const Event& t_event) {
 
   if (! m_logicalState.m_activeProgram->m_supportsTap) return;
 
-  if (t_event.m_type != EventType::kTapPressed && t_event.m_type != EventType::kTapLongPressed) return;
-  else if (t_event.m_type == EventType::kTapPressed) {
+  if (t_event.m_type == EventType::kTapPressed) {
     m_tapHandler.registerTap(t_event.m_timestamp);
 
     if (m_tapHandler.getIsNewIntervalSet()) {
@@ -54,8 +53,23 @@ void TapService::handleEvent(const Event& t_event) {
 
     publishTapIntervalEvent(t_event);
   }
+  else if (t_event.m_type == EventType::kPot0Moved && m_logicalState.m_tapState == TapState::kEnabled
+        || t_event.m_type == EventType::kMenuTempoChanged && m_logicalState.m_tapState == TapState::kEnabled) {
+    m_logicalState.m_tapState = TapState::kDisabled;
+    m_logicalState.m_divState = DivState::kDisabled;
+    m_logicalState.m_divValue = DivValue::kQuarter;
+
+    init();
+  }
 }
 
 void TapService::update() {
 
+}
+
+bool TapService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
+  return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kTapEvent
+      || t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent
+      || t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuTempoEvent
+      || t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent;
 }
