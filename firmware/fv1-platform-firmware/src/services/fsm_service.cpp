@@ -14,6 +14,7 @@ void FsmService::init() {
 void FsmService::handleEvent(const Event& t_event) {
   switch(m_state) {
     case AppState::kBoot:
+    case AppState::kRestoreState:
       if (t_event.m_type == EventType::kBootCompleted) {
         transitionTo(m_logicalState.m_programMode == ProgramMode::kProgram
                       ? AppState::kProgramIdle
@@ -83,4 +84,9 @@ void FsmService::handleEvent(const Event& t_event) {
 
 void FsmService::update() {
 
+}
+
+bool FsmService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
+  return t_category == EventCategory::kRawPhysicalEvent || t_category == EventCategory::kBootEvent
+      || t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuLockEvent;
 }
