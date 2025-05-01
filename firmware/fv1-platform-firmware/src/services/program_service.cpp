@@ -9,8 +9,6 @@ void ProgramService::init() {
 }
 
 void ProgramService::handleEvent(const Event& e) {
-  if (e.m_type != EventType::kProgramChanged) return;
-
   int max = static_cast<int>(ProgramConstants::c_maxPrograms);
   int delta = static_cast<int>(e.m_data.delta);
   if (delta < -max || delta > max) return;
@@ -26,3 +24,8 @@ void ProgramService::handleEvent(const Event& e) {
 void ProgramService::update() {
 
 }
+
+bool ProgramService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
+  return t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuProgramChangedEvent;
+}
+

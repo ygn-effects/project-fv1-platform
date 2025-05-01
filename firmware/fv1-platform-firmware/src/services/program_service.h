@@ -18,4 +18,5 @@ class ProgramService : public Service {
     void init() override;
     void handleEvent(const Event& t_event) override;
     void update() override;
+    bool interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const override;
 };
