@@ -62,7 +62,15 @@ enum class EventType : uint8_t {
 
   // Bypass events
   kBypassEnabled,
-  kBypassDisabled
+  kBypassDisabled,
+
+  // MIDI events
+  kMidiProgramChanged,
+  kMidiPot0Moved,
+  kMidiPot1Moved,
+  kMidiPot2Moved,
+  kMidiMixPotMoved,
+  kMidiTempoChanged
 };
 
 enum class EventCategory : uint8_t {
@@ -73,7 +81,8 @@ enum class EventCategory : uint8_t {
   kMenuEvent,
   kProgramEvent,
   kTempoEvent,
-  kBypassEvent
+  kBypassEvent,
+  kMidiEvent
 };
 
 enum class EventSubCategory : uint8_t {
@@ -99,7 +108,10 @@ enum class EventSubCategory : uint8_t {
   kTapIntervalEvent,
   kTempoChangedEvent,
   kBypassEnabledEvent,
-  kBypassDisabledEvent
+  kBypassDisabledEvent,
+  kMidiProgramChangedEvent,
+  kMidiPotMovedEvent,
+  kMidiTempoChangedEvent
 };
 
 constexpr EventCategory eventCategoryMap[] = {
@@ -148,6 +160,12 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kTempoEvent,         // kTempoChanged
   EventCategory::kBypassEvent,        // kBypassEnabled
   EventCategory::kBypassEvent,        // kBypassDisabled
+  EventCategory::kMidiEvent,          // kMidiProgramChanged
+  EventCategory::kMidiEvent,          // kMidiPot0Moved
+  EventCategory::kMidiEvent,          // kMidiPot1Moved
+  EventCategory::kMidiEvent,          // kMidiPot2Moved
+  EventCategory::kMidiEvent,          // kMidiMixPotMoved
+  EventCategory::kMidiEvent           // kMidiTempoChanged
 };
 
 constexpr EventSubCategory eventSubCategoryMap[] = {
@@ -196,6 +214,12 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kTempoChangedEvent,       // kTempoChanged
   EventSubCategory::kBypassEnabledEvent,      // kBypassEnabled
   EventSubCategory::kBypassDisabledEvent,     // kBypassDisabled
+  EventSubCategory::kMidiProgramChangedEvent, // kMidiProgramChanged
+  EventSubCategory::kMidiPotMovedEvent,       // kMidiPot0Moved
+  EventSubCategory::kMidiPotMovedEvent,       // kMidiPot1Moved
+  EventSubCategory::kMidiPotMovedEvent,       // kMidiPot2Moved
+  EventSubCategory::kMidiPotMovedEvent,       // kMidiMixPotMoved
+  EventSubCategory::kMidiTempoChangedEvent    // kMidiTempoChanged
 };
 
 constexpr EventCategory eventToCategory(EventType t_type) {
