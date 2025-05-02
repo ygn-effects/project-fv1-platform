@@ -34,6 +34,7 @@ void TempoService::handleEvent(const Event& t_event) {
 
     case EventType::kMenuTempoChanged:
       m_interval = Utils::clamp<uint16_t>(m_interval + t_event.m_data.delta, m_minInterval, m_maxInterval);
+      m_logicState.m_tempo = m_interval;
       m_source = TempoSource::kMenu;
 
       publishTempoEvent(t_event);
