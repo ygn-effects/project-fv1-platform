@@ -28,6 +28,22 @@ void PotService::handleEvent(const Event& t_event) {
       m_logicalState.m_potParams[3].m_value = t_event.m_data.value;
       break;
 
+    case EventType::kMenuPot0Moved:
+      m_logicalState.m_potParams[0].m_value += t_event.m_data.value;
+      break;
+
+    case EventType::kMenuPot1Moved:
+      m_logicalState.m_potParams[1].m_value += t_event.m_data.value;
+      break;
+
+    case EventType::kMenuPot2Moved:
+      m_logicalState.m_potParams[2].m_value += t_event.m_data.value;
+      break;
+
+    case EventType::kMenuMixPotMoved:
+      m_logicalState.m_potParams[3].m_value += t_event.m_data.value;
+      break;
+
     default:
       break;
   }
@@ -38,5 +54,6 @@ void PotService::update() {
 }
 
 bool PotService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent;
+  return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent
+      || t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPotEvent;
 }
