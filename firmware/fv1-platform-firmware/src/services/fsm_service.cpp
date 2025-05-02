@@ -40,7 +40,7 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
-      // 4) Encoder‑switch long press
+      // Encoder‑switch long press
       if (t_event.m_type == EventType::kRawMenuEncoderLongPressed && m_logicalState.m_bypassState==BypassState::kActive) {
         EventBus::publish({EventType::kMenuEncoderLongPressed, t_event.m_timestamp, {}});
         return;
@@ -59,6 +59,11 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
+      if (t_event.m_type == EventType::kRawMenuEncoderPressed) {
+        EventBus::publish({EventType::kMenuEncoderPressed, t_event.m_timestamp, {}});
+        return;
+      }
+
       if (t_event.m_type == EventType::kRawMenuEncoderLongPressed) {
         EventBus::publish({EventType::kMenuEncoderLongPressed, t_event.m_timestamp, {}});
         return;
@@ -66,6 +71,30 @@ void FsmService::handleEvent(const Event& t_event) {
 
       if (t_event.m_type == EventType::kRawMenuEncoderMoved) {
         EventBus::publish({EventType::kMenuEncoderMoved, t_event.m_timestamp, {.delta = t_event.m_data.delta}});
+      }
+
+      // Pot 0 move
+      if (t_event.m_type == EventType::kRawPot0Moved && m_logicalState.m_bypassState==BypassState::kActive) {
+        EventBus::publish({EventType::kPot0Moved, t_event.m_timestamp, {.value = t_event.m_data.value}});
+        return;
+      }
+
+      // Pot 1 move
+      if (t_event.m_type == EventType::kRawPot1Moved && m_logicalState.m_bypassState==BypassState::kActive) {
+        EventBus::publish({EventType::kPot1Moved, t_event.m_timestamp, {.value = t_event.m_data.value}});
+        return;
+      }
+
+      // Pot 2 move
+      if (t_event.m_type == EventType::kRawPot2Moved && m_logicalState.m_bypassState==BypassState::kActive) {
+        EventBus::publish({EventType::kPot2Moved, t_event.m_timestamp, {.value = t_event.m_data.value}});
+        return;
+      }
+
+      // Mix pot move
+      if (t_event.m_type == EventType::kRawMixPotMoved && m_logicalState.m_bypassState==BypassState::kActive) {
+        EventBus::publish({EventType::kMixPotMoved, t_event.m_timestamp, {.value = t_event.m_data.value}});
+        return;
       }
 
       if (t_event.m_type == EventType::kMenuLocked) {
