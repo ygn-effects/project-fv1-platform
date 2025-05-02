@@ -80,13 +80,13 @@ void test_scroll() {
   TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
-  TEST_ASSERT_EQUAL("Delay time", menuService.getcurrentMenuItem().m_label(&logicalState));
-
-  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
   TEST_ASSERT_EQUAL("Feedback", menuService.getcurrentMenuItem().m_label(&logicalState));
 
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_EQUAL("Low pass", menuService.getcurrentMenuItem().m_label(&logicalState));
+
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
-  TEST_ASSERT_EQUAL("Delay time", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Feedback", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
   TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
@@ -180,22 +180,6 @@ void test_edit_begin_move_end() {
   TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
-  TEST_ASSERT_EQUAL("Delay time", menuService.getcurrentMenuItem().m_label(&logicalState));
-
-  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
-  TEST_ASSERT_EQUAL(SubState::kEditing, menuService.getsubState());
-
-  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
-  TEST_ASSERT_TRUE(EventBus::hasEvent());
-  EventBus::recall(e);
-
-  TEST_ASSERT_EQUAL(EventType::kMenuPot0Moved, e.m_type);
-  TEST_ASSERT_EQUAL(1, e.m_data.delta);
-
-  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
-  TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
-
-  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
   TEST_ASSERT_EQUAL("Feedback", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
@@ -206,6 +190,22 @@ void test_edit_begin_move_end() {
   EventBus::recall(e);
 
   TEST_ASSERT_EQUAL(EventType::kMenuPot1Moved, e.m_type);
+  TEST_ASSERT_EQUAL(1, e.m_data.delta);
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+  TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_EQUAL("Low pass", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
+  TEST_ASSERT_EQUAL(SubState::kEditing, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuPot2Moved, e.m_type);
   TEST_ASSERT_EQUAL(1, e.m_data.delta);
 
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
@@ -250,9 +250,9 @@ void test_not_visible() {
   TEST_ASSERT_EQUAL("State", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
-  TEST_ASSERT_EQUAL("Mapped Pot", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL("State", menuService.getcurrentMenuItem().m_label(&logicalState));
 
-  TEST_ASSERT_FALSE(menuService.getcurrentMenuItem().m_visible(&logicalState));
+  TEST_ASSERT_TRUE(menuService.getcurrentMenuItem().m_visible(&logicalState));
   logicalState.m_exprParams[logicalState.m_currentProgram].m_state = ExprState::kActive;
 
   TEST_ASSERT_TRUE(menuService.getcurrentMenuItem().m_visible(&logicalState));

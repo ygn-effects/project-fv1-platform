@@ -89,11 +89,11 @@ void MenuService::handleEditing(const Event& t_event) {
 }
 
 void MenuService::moveCursor(int8_t t_delta) {
-  uint8_t itemsCount = getcurrentMenuPage().m_count;
-  int8_t index = static_cast<int16_t>(m_cursor) + t_delta;
+  uint8_t visibleCount = getVisibleItemCount();
+  int8_t index = static_cast<int8_t>(m_cursor) + t_delta;
 
-  if (index < 0) index += itemsCount;
-  if (index >= itemsCount) index -= itemsCount;
+  if (index < 0) index += visibleCount;
+  if (index >= visibleCount) index -= visibleCount;
 
   m_cursor = static_cast<uint8_t>(index);
 
@@ -105,6 +105,22 @@ void MenuService::moveCursor(int8_t t_delta) {
   }
 }
 
+uint8_t MenuService::visibleToRealIndex(uint8_t visibleIndex) const {
+  const auto& page = getcurrentMenuPage();
+  uint8_t visCount = 0;
+
+  for (uint8_t i = 0; i < page.m_count; ++i) {
+    if (page.m_items[i].m_visible(&m_logicState)) {
+      if (visCount == visibleIndex) {
+        return i;
+      }
+      ++visCount;
+    }
+  }
+
+  return 0;
+}
+
 void MenuService::beginEditing() {
   m_editRow = m_first + m_cursor;
   m_subState = SubState::kEditing;
@@ -113,6 +129,19 @@ void MenuService::beginEditing() {
 void MenuService::endEditing() {
   m_editRow = 0;
   m_subState = SubState::kSelecting;
+}
+
+uint8_t MenuService::getVisibleItemCount() const {
+  const ui::MenuPage& page = getcurrentMenuPage();
+  uint8_t count = 0;
+
+  for (uint8_t i = 0; i < page.m_count; ++i) {
+    if (page.m_items[i].m_visible(&m_logicState)) {
+      ++count;
+    }
+  }
+
+  return count;
 }
 
 void MenuService::publishView() {
@@ -135,8 +164,8 @@ void MenuService::publishView() {
     if (sliceCount < MenuConstants::c_visibleItemsPerPage) {
       m_view.m_items[sliceCount] = &item;
 
-      if (i == m_cursor) {
-          m_view.m_selected = sliceCount;
+      if (visIndex == m_cursor) {
+        m_view.m_selected = sliceCount;
       }
 
       ++sliceCount;
@@ -146,10 +175,12 @@ void MenuService::publishView() {
   }
 
   m_view.m_count = sliceCount;
+  m_view.m_header = page.m_header;
 }
 
 void MenuService::init() {
   m_menuStack.push(&ui::LockScreenMenu);
+  publishView();
 }
 
 void MenuService::handleEvent(const Event& t_event) {
@@ -181,7 +212,7 @@ const ui::MenuPage& MenuService::getcurrentMenuPage() const {
 }
 
 const ui::MenuItem& MenuService::getcurrentMenuItem() const {
-  return m_menuStack.top()->m_items[m_cursor];
+  return m_menuStack.top()->m_items[visibleToRealIndex(m_cursor)];
 }
 
 const SubState MenuService::getsubState() const {
@@ -190,4 +221,8 @@ const SubState MenuService::getsubState() const {
 
 const MenuView* MenuService::getMenuView() const {
   return &m_view;
+}
+
+bool MenuService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
+  return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kEncoderEvent;
 }

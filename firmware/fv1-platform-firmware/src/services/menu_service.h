@@ -24,6 +24,7 @@ enum class SubState : uint8_t {
 };
 
 struct MenuView {
+  const char* m_header;
   const ui::MenuItem* m_items[MenuConstants::c_visibleItemsPerPage];
   uint8_t m_count;
   uint8_t m_selected;
@@ -56,6 +57,9 @@ class MenuService : public Service {
     void beginEditing();
     void endEditing();
 
+    uint8_t getVisibleItemCount() const;
+    uint8_t visibleToRealIndex(uint8_t visibleIndex) const;
+
     void publishView();
 
   public:
@@ -64,10 +68,12 @@ class MenuService : public Service {
     void init() override;
     void handleEvent(const Event& t_event) override;
     void update() override;
+    bool interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const override;
 
     // Debug
     const ui::MenuPage& getcurrentMenuPage() const;
     const ui::MenuItem& getcurrentMenuItem() const;
     const SubState getsubState() const;
     const MenuView* getMenuView() const;
+    const uint8_t getCursor() const { return m_cursor; }
 };
