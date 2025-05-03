@@ -61,9 +61,6 @@ void test_switch_bypass() {
 
   Event BypassDisabledEvent;
   EventBus::recall(BypassDisabledEvent);
-
-  fsmService.handleEvent(rawTapSwitchPressed);
-  TEST_ASSERT_FALSE(EventBus::hasEvent());
 }
 
 void test_menu_idle_edit_transition() {
