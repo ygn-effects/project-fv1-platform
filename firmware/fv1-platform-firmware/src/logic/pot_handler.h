@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "utils/utils.h"
 
 namespace PotConstants {
   constexpr uint8_t c_potCount = 4;
@@ -21,4 +22,6 @@ class PotHandler {
     void setState(PotState t_state, uint8_t t_potIndex);
     void setMinValue(uint16_t t_min, uint8_t t_potIndex);
     void setMaxValue(uint16_t t_max, uint8_t t_potIndex);
+
+    uint16_t mapMidiValue(uint8_t t_midiValue, uint8_t t_potIndex);
 };

@@ -7,7 +7,9 @@ void PotService::syncHandler(uint8_t t_potIndex) {
 }
 
 void PotService::init() {
-
+  for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
+    syncHandler(i);
+  }
 }
 
 void PotService::handleEvent(const Event& t_event) {
@@ -44,6 +46,22 @@ void PotService::handleEvent(const Event& t_event) {
       m_logicalState.m_potParams[3].m_value += t_event.m_data.value;
       break;
 
+    case EventType::kMidiPot0Moved:
+      m_logicalState.m_potParams[0].m_value = m_handler.mapMidiValue(t_event.m_data.value, 0);
+      break;
+
+    case EventType::kMidiPot1Moved:
+      m_logicalState.m_potParams[1].m_value = m_handler.mapMidiValue(t_event.m_data.value, 1);
+      break;
+
+    case EventType::kMidiPot2Moved:
+      m_logicalState.m_potParams[2].m_value = m_handler.mapMidiValue(t_event.m_data.value, 2);
+      break;
+
+    case EventType::kMidiMixPotMoved:
+      m_logicalState.m_potParams[3].m_value = m_handler.mapMidiValue(t_event.m_data.value, 3);
+      break;
+
     default:
       break;
   }
@@ -55,5 +73,6 @@ void PotService::update() {
 
 bool PotService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
   return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent
-      || t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPotEvent;
+      || t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPotEvent
+      || t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiPotMovedEvent;
 }
