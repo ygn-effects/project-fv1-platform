@@ -4,6 +4,7 @@
 #include "core/event_bus.h"
 #include "core/service.h"
 #include "logic/logical_state.h"
+#include "services/midi_service.h"
 
 class BypassService : public Service {
   private:

@@ -5,20 +5,34 @@ void BypassService::init() {
 }
 
 void BypassService::handleEvent(const Event& t_event) {
-  m_logicalState.m_bypassState = m_logicalState.m_bypassState == BypassState::kActive
-                                  ? BypassState::kBypassed
-                                  : BypassState::kActive;
+  switch (t_event.m_type) {
+    case EventType::kBypassPressed:
+      m_logicalState.m_bypassState = m_logicalState.m_bypassState == BypassState::kActive
+        ? BypassState::kBypassed
+        : BypassState::kActive;
+
+      break;
+
+    case EventType::kMidiBypassPressed:
+      if (t_event.m_data.value == MidiCCValues::c_bypassDisable) {
+        m_logicalState.m_bypassState = BypassState::kBypassed;
+      }
+      else if (t_event.m_data.value == MidiCCValues::c_bypassEnable) {
+        m_logicalState.m_bypassState = BypassState::kActive;
+      }
+
+      break;
+
+    default:
+      break;
+  }
 
   // Switch bypass relay
   // Switch bypass LED
 
-  Event bypassEvent;
-  bypassEvent.m_timestamp = t_event.m_timestamp;
-  bypassEvent.m_type = m_logicalState.m_bypassState == BypassState::kActive
-                        ? EventType::kBypassEnabled
-                        : EventType::kBypassDisabled;
-
-  EventBus::publish(bypassEvent);
+  EventBus::publish({m_logicalState.m_bypassState == BypassState::kActive
+    ? EventType::kBypassEnabled
+    : EventType::kBypassDisabled, t_event.m_timestamp, {}});
 }
 
 void BypassService::update() {
@@ -26,5 +40,6 @@ void BypassService::update() {
 }
 
 bool BypassService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kBypassEvent;
+  return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kBypassEvent
+      || t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiBypassPressedEvent;
 }
