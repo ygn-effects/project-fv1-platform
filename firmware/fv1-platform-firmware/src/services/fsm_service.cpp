@@ -16,10 +16,32 @@ void FsmService::handleEvent(const Event& t_event) {
     case AppState::kBoot:
     case AppState::kRestoreState:
       if (t_event.m_type == EventType::kBootCompleted) {
+        if (m_logicalState.m_bypassState == BypassState::kActive) {
+          transitionTo(m_logicalState.m_programMode == ProgramMode::kProgram
+                        ? AppState::kProgramIdle
+                        : AppState::kPresetIdle, t_event.m_timestamp);
+        }
+        else {
+          transitionTo(AppState::kBypassed, t_event.m_timestamp);
+        }
+      }
+
+      break;
+
+    case AppState::kBypassed:
+      // Bypass
+      if (t_event.m_type == EventType::kRawBypassPressed) {
+        EventBus::publish({EventType::kBypassPressed, t_event.m_timestamp, {}});
+        return;
+      }
+
+      if (t_event.m_type == EventType::kBypassEnabled) {
         transitionTo(m_logicalState.m_programMode == ProgramMode::kProgram
                       ? AppState::kProgramIdle
                       : AppState::kPresetIdle, t_event.m_timestamp);
       }
+
+      break;
 
     case AppState::kProgramIdle:
       // Bypass
@@ -28,20 +50,25 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
+      if (t_event.m_type == EventType::kBypassDisabled) {
+        transitionTo(AppState::kBypassed, t_event.m_timestamp);
+        return;
+      }
+
       // Tap
-      if (t_event.m_type == EventType::kRawTapPressed && m_logicalState.m_bypassState==BypassState::kActive) {
+      if (t_event.m_type == EventType::kRawTapPressed) {
         EventBus::publish({EventType::kTapPressed, t_event.m_timestamp, {}});
         return;
       }
 
       // Long‑tap
-      if (t_event.m_type == EventType::kRawTapLongPressed && m_logicalState.m_bypassState==BypassState::kActive) {
+      if (t_event.m_type == EventType::kRawTapLongPressed) {
         EventBus::publish({EventType::kTapLongPressed, t_event.m_timestamp, {}});
         return;
       }
 
       // Encoder‑switch long press
-      if (t_event.m_type == EventType::kRawMenuEncoderLongPressed && m_logicalState.m_bypassState==BypassState::kActive) {
+      if (t_event.m_type == EventType::kRawMenuEncoderLongPressed) {
         EventBus::publish({EventType::kMenuEncoderLongPressed, t_event.m_timestamp, {}});
         return;
       }
