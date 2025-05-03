@@ -30,8 +30,8 @@ void MidiHandler::pushByte(uint8_t t_byte) {
       MidiMessage message = {
         .m_type = static_cast<MidiMessageType>(m_runningStatus),
         .m_channel = m_currentChannel,
-        .m_param = m_dataBuffer[1],
-        .m_value = m_expectedDataCount > 1 ? m_dataBuffer[1] : 0
+        .m_param = m_dataBuffer[0],
+        .m_value = static_cast<uint8_t>(m_expectedDataCount > 1 ? m_dataBuffer[1] : 0)
       };
 
       m_messageBuffer.push(message);
