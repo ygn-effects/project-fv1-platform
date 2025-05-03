@@ -9,10 +9,12 @@
 #include "services/program_service.h"
 #include "services/tap_service.h"
 #include "services/tempo_service.h"
+#include "services/midi_service.h"
 
 #include "../src/logic/pot_handler.cpp"
 #include "../src/logic/tap_handler.cpp"
 #include "../src/logic/expr_handler.cpp"
+#include "../src/logic/midi_handler.cpp"
 #include "../src/services/bypass_service.cpp"
 #include "../src/services/expr_service.cpp"
 #include "../src/services/fsm_service.cpp"
@@ -21,6 +23,7 @@
 #include "../src/services/program_service.cpp"
 #include "../src/services/tap_service.cpp"
 #include "../src/services/tempo_service.cpp"
+#include "../src/services/midi_service.cpp"
 
 
 void setUp() {
@@ -286,8 +289,141 @@ void test() {
   }
 }
 
+void test_midi() {
+  LogicalState logicalState;
+
+  FsmService fsmService(logicalState);
+  MidiService midiService(logicalState);
+  BypassService bypassService(logicalState);
+  ProgramService programService(logicalState);
+  PotService potService(logicalState);
+  ExprService exprService(logicalState);
+  TapService tapService(logicalState);
+  TempoService tempoService(logicalState);
+  MenuService menuService(logicalState);
+
+  MidiHandler* midiHandler = midiService.getMidiHandler();
+
+  Service* services[] = {
+    &fsmService,
+    &midiService,
+    &bypassService,
+    &programService,
+    &potService,
+    &exprService,
+    &tapService,
+    &tempoService,
+    &menuService
+  };
+
+  for (auto* service: services) {
+    service->init();
+  }
+
+  uint8_t servicesCount = sizeof(services) / sizeof(services[0]);
+
+  EventBus::publish({EventType::kBootCompleted, 10, {}});
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  // Bypass is on
+  TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
+
+  midiHandler->pushByte(0xB0);
+  midiHandler->pushByte(0x04);
+  midiHandler->pushByte(0x00);
+  runUpdateChain(services, servicesCount);
+  runEventChain(services, servicesCount);
+
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+
+  // Bypass is off
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
+
+  midiHandler->pushByte(0xB0);
+  midiHandler->pushByte(0x04);
+  midiHandler->pushByte(0x7F);
+  runUpdateChain(services, servicesCount);
+  runEventChain(services, servicesCount);
+
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+
+  // Bypass is on
+  TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
+
+  midiHandler->pushByte(0xB0);
+  midiHandler->pushByte(0x00);
+  midiHandler->pushByte(0x3E);
+  runUpdateChain(services, servicesCount);
+  runEventChain(services, servicesCount);
+
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+
+  // Bypass is on
+  TEST_ASSERT_EQUAL(499, logicalState.m_potParams[0].m_value);
+
+  midiHandler->pushByte(0xB0);
+  midiHandler->pushByte(0x01);
+  midiHandler->pushByte(0x20);
+  runUpdateChain(services, servicesCount);
+  runEventChain(services, servicesCount);
+
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+
+  // Bypass is on
+  TEST_ASSERT_EQUAL(257, logicalState.m_potParams[1].m_value);
+
+  midiHandler->pushByte(0xB0);
+  midiHandler->pushByte(0x02);
+  midiHandler->pushByte(0x10);
+  runUpdateChain(services, servicesCount);
+  runEventChain(services, servicesCount);
+
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+
+  // Bypass is on
+  TEST_ASSERT_EQUAL(128, logicalState.m_potParams[2].m_value);
+
+  midiHandler->pushByte(0xB0);
+  midiHandler->pushByte(0x03);
+  midiHandler->pushByte(0x05);
+  runUpdateChain(services, servicesCount);
+  runEventChain(services, servicesCount);
+
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+
+  // Bypass is on
+  TEST_ASSERT_EQUAL(40, logicalState.m_potParams[3].m_value);
+
+  // Tap is disabled
+  TEST_ASSERT_EQUAL(TapState::kDisabled, logicalState.m_tapState);
+
+  tapService.handleEvent({EventType::kMidiTapPressed, 200, {.value=0}});
+  tapService.handleEvent({EventType::kMidiTapPressed, 400, {.value=0}});
+  tapService.handleEvent({EventType::kMidiTapPressed, 600, {.value=0}});
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  // Tap is activated
+  TEST_ASSERT_EQUAL(TapState::kEnabled, logicalState.m_tapState);
+  // Assert tempo
+  TEST_ASSERT_EQUAL(200, logicalState.m_tempo);
+
+  // Div is disabled
+  TEST_ASSERT_EQUAL(DivState::kDisabled, logicalState.m_divState);
+
+  tapService.handleEvent({EventType::kMidiTapPressed, 200, {.value=127}});
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  // Div is enabled
+  TEST_ASSERT_EQUAL(DivState::kEnabled, logicalState.m_divState);
+  TEST_ASSERT_EQUAL(DivValue::kEight, logicalState.m_divValue);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test);
+  RUN_TEST(test_midi);
   UNITY_END();
 }
