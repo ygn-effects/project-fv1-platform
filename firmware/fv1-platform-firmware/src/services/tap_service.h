@@ -4,6 +4,7 @@
 #include "core/service.h"
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
+#include "services/midi_service.h"
 
 class TapService : public Service {
   private:
