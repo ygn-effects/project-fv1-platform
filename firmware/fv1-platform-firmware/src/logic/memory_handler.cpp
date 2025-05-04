@@ -1,0 +1,211 @@
+#include "logic/memory_handler.h"
+
+void MemoryHandler::serializeBypass(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex) {
+  t_buffer[t_startIndex] = static_cast<uint8_t>(t_lState.m_bypassState);
+}
+
+void MemoryHandler::serializeProgramMode(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex) {
+  t_buffer[t_startIndex] = static_cast<uint8_t>(t_lState.m_programMode);
+}
+
+void MemoryHandler::serializeCurrentProgram(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex) {
+  t_buffer[t_startIndex] = static_cast<uint8_t>(t_lState.m_currentProgram);
+}
+
+void MemoryHandler::serializeCurrentPreset(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex) {
+  t_buffer[t_startIndex] = static_cast<uint8_t>(t_lState.m_currentPreset);
+}
+
+void MemoryHandler::serializeMidiChannel(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex) {
+  t_buffer[t_startIndex] = static_cast<uint8_t>(t_lState.m_midiChannel);
+}
+
+void MemoryHandler::serializeDeviceState(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex) {
+  serializeBypass(t_lState, t_buffer, t_startIndex);
+  serializeProgramMode(t_lState, t_buffer, t_startIndex + 1);
+  serializeCurrentProgram(t_lState, t_buffer, t_startIndex + 2);
+  serializeCurrentPreset(t_lState, t_buffer, t_startIndex + 3);
+  serializeMidiChannel(t_lState, t_buffer, t_startIndex + 4);
+}
+
+void MemoryHandler::serializeTap(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex) {
+  t_buffer[t_startIndex] = static_cast<uint8_t>(t_lState.m_tapState);
+  t_buffer[t_startIndex + 1] = static_cast<uint8_t>(t_lState.m_divState);
+  t_buffer[t_startIndex + 2] = static_cast<uint8_t>(t_lState.m_divValue);
+
+  uint8_t low = 0, high = 0;
+  Utils::pack16(t_lState.m_interval, low, high);
+  t_buffer[t_startIndex + 3] = low;
+  t_buffer[t_startIndex + 4] = high;
+
+  Utils::pack16(t_lState.m_divInterval, low, high);
+  t_buffer[t_startIndex + 5] = low;
+  t_buffer[t_startIndex + 6] = high;
+}
+
+void MemoryHandler::serializeTempo(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex) {
+  uint8_t low = 0, high = 0;
+  Utils::pack16(t_lState.m_tempo, low, high);
+  t_buffer[t_startIndex] = low;
+  t_buffer[t_startIndex + 1] = high;
+}
+
+void MemoryHandler::serializeExprParam(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_programIndex) {
+  t_buffer[t_startIndex] = static_cast<uint8_t>(t_lState.m_exprParams[t_programIndex].m_state);
+  t_buffer[t_startIndex + 1] = static_cast<uint8_t>(t_lState.m_exprParams[t_programIndex].m_mappedPot);
+  t_buffer[t_startIndex + 2] = static_cast<uint8_t>(t_lState.m_exprParams[t_programIndex].m_direction);
+
+  uint8_t low = 0, high = 0;
+  Utils::pack16(t_lState.m_exprParams[t_programIndex].m_heelValue, low, high);
+  t_buffer[t_startIndex + 3] = low;
+  t_buffer[t_startIndex + 4] = high;
+
+  Utils::pack16(t_lState.m_exprParams[t_programIndex].m_toeValue, low, high);
+  t_buffer[t_startIndex + 5] = low;
+  t_buffer[t_startIndex + 6] = high;
+}
+
+void MemoryHandler::serializePotParam(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_potIndex) {
+  t_buffer[t_startIndex] = static_cast<uint8_t>(t_lState.m_potParams[t_potIndex].m_state);
+
+  uint8_t low = 0, high = 0;
+  Utils::pack16(t_lState.m_potParams[t_potIndex].m_value, low, high);
+  t_buffer[t_startIndex + 1] = low;
+  t_buffer[t_startIndex + 2] = high;
+
+  Utils::pack16(t_lState.m_potParams[t_potIndex].m_minValue, low, high);
+  t_buffer[t_startIndex + 3] = low;
+  t_buffer[t_startIndex + 4] = high;
+
+  Utils::pack16(t_lState.m_potParams[t_potIndex].m_maxValue, low, high);
+  t_buffer[t_startIndex + 5] = low;
+  t_buffer[t_startIndex + 6] = high;
+}
+
+RegionInfo MemoryHandler::calculateRegionInfo(MemoryRegion t_region, uint8_t t_programIndex, uint8_t t_index) {
+  RegionInfo info = {0, 0};
+
+  switch (t_region) {
+    case MemoryRegion::kBypass:
+      info = {
+        .m_address = MemoryLayout::c_bypassState,
+        .m_length = 1
+      };
+      break;
+
+    case MemoryRegion::kProgramMode:
+      info = {
+        .m_address = MemoryLayout::c_programMode,
+        .m_length = 1
+      };
+      break;
+
+    case MemoryRegion::kCurrentProgram:
+      info = {
+        .m_address = MemoryLayout::c_currentProgram,
+        .m_length = 1
+      };
+      break;
+
+    case MemoryRegion::kCurrentPreset:
+      info = {
+        .m_address = MemoryLayout::c_currentPreset,
+        .m_length = 1
+      };
+      break;
+
+    case MemoryRegion::kMidiChannel:
+      info = {
+        .m_address = MemoryLayout::c_midiChannel,
+        .m_length = 1
+      };
+      break;
+
+    case MemoryRegion::kDeviceState:
+      info = {
+        .m_address = MemoryLayout::c_deviceStateStart,
+        .m_length = MemoryLayout::c_deviceStateSize
+      };
+      break;
+
+    case MemoryRegion::kTap:
+      info = {
+        .m_address = MemoryLayout::c_tapStart,
+        .m_length = MemoryLayout::c_tapSize
+      };
+      break;
+
+    case MemoryRegion::kTempo:
+      info = {
+        .m_address = MemoryLayout::c_tempoStart,
+        .m_length = MemoryLayout::c_tempoSize
+      };
+      break;
+
+    case MemoryRegion::kExpr:
+      info = {
+        .m_address = MemoryLayout::getExprParamOffset(t_programIndex),
+        .m_length = MemoryLayout::c_exprSize
+      };
+      break;
+
+    case MemoryRegion::kPot:
+      info = {
+        .m_address = MemoryLayout::getPotParamOffset(t_programIndex, t_index),
+        .m_length = MemoryLayout::c_potParamSize
+      };
+      break;
+
+    default:
+      return info;
+  }
+
+  return info;
+}
+
+void MemoryHandler::serializeRegion(MemoryRegion t_region, const LogicalState& t_lState, uint8_t* t_buffer, uint8_t t_programIndex, uint8_t t_index) {
+  switch (t_region) {
+    case MemoryRegion::kBypass:
+      serializeBypass(t_lState, t_buffer, 0);
+      break;
+
+    case MemoryRegion::kProgramMode:
+      serializeProgramMode(t_lState, t_buffer, 0);
+      break;
+
+    case MemoryRegion::kCurrentProgram:
+      serializeCurrentProgram(t_lState, t_buffer, 0);
+      break;
+
+    case MemoryRegion::kCurrentPreset:
+      serializeCurrentPreset(t_lState, t_buffer, 0);
+      break;
+
+    case MemoryRegion::kMidiChannel:
+      serializeMidiChannel(t_lState, t_buffer, 0);
+      break;
+
+    case MemoryRegion::kDeviceState:
+      serializeDeviceState(t_lState, t_buffer, 0);
+      break;
+
+    case MemoryRegion::kTap:
+      serializeTap(t_lState, t_buffer, 0);
+      break;
+
+    case MemoryRegion::kTempo:
+      serializeTempo(t_lState, t_buffer, 0);
+      break;
+
+    case MemoryRegion::kExpr:
+      serializeExprParam(t_lState, t_buffer, 0, t_programIndex);
+      break;
+
+    case MemoryRegion::kPot:
+      serializePotParam(t_lState, t_buffer, 0, t_index);
+      break;
+
+    default:
+      break;
+  }
+}
