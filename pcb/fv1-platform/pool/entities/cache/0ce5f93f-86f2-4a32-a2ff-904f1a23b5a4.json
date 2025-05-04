@@ -1,0 +1,19 @@
+{
+    "gates": {
+        "742238ed-b4d2-4d9d-872b-cbd01d8add54": {
+            "name": "Main",
+            "suffix": "",
+            "swap_group": 0,
+            "unit": "e764a137-e26b-40eb-adbd-fd5379be1b1a"
+        }
+    },
+    "manufacturer": "",
+    "name": "Inductor",
+    "prefix": "L",
+    "tags": [
+        "inductor",
+        "passive"
+    ],
+    "type": "entity",
+    "uuid": "0ce5f93f-86f2-4a32-a2ff-904f1a23b5a4"
+}

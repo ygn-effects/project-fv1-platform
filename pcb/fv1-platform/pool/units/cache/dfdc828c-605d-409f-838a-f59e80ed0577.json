@@ -1,0 +1,176 @@
+{
+    "manufacturer": "Spinsemi",
+    "name": "FV-1",
+    "pins": {
+        "118722c0-1904-40e1-891e-fe2ccc3e4109": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "POT1",
+            "swap_group": 0
+        },
+        "19520939-f5af-41c1-a658-b9c8ed8639ff": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "DVDD",
+            "swap_group": 0
+        },
+        "22b124b3-94f0-41b8-a77c-68e73d550195": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "X2",
+            "swap_group": 0
+        },
+        "28ca8b1b-ab81-4a7f-8792-f28355c30ab4": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "GND",
+            "swap_group": 0
+        },
+        "4246fd15-7cb3-4ba1-be8a-fd20dbce1245": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "GND4",
+            "swap_group": 0
+        },
+        "4afc1a94-93b0-48e5-8440-9df0510aefd1": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "GND3",
+            "swap_group": 0
+        },
+        "4b9361bb-3f6b-4abb-b9b8-c51152e5a200": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "POT0",
+            "swap_group": 0
+        },
+        "588f82ad-733b-4332-8630-e8feda4eb477": {
+            "direction": "output",
+            "names": [],
+            "primary_name": "CLIP",
+            "swap_group": 0
+        },
+        "74bcb111-cc6b-426f-a57b-75d8134fbac2": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "SDA",
+            "swap_group": 0
+        },
+        "812376ad-4c01-45e0-9fa7-b64716af5b61": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "S0",
+            "swap_group": 0
+        },
+        "8e93e2d5-efe3-409e-8a3a-2a01e2f46ca1": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "T1",
+            "swap_group": 0
+        },
+        "9a362e0d-afc3-4717-868d-216655189d76": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "REFN",
+            "swap_group": 0
+        },
+        "9a6732e4-26ce-4d5f-a49d-c7a6213c541f": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "S1",
+            "swap_group": 0
+        },
+        "9b6cea70-6dbd-437c-b114-b09c97454441": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "S2",
+            "swap_group": 0
+        },
+        "9d9aaa6a-345b-4b52-b439-4d8ffc13a5fb": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "SCK",
+            "swap_group": 0
+        },
+        "a57d5b5f-6afb-481e-a2dc-9c2c90d3acf0": {
+            "direction": "output",
+            "names": [],
+            "primary_name": "LOUT",
+            "swap_group": 0
+        },
+        "ae7d12c9-dc1d-4528-bac1-3273a158b890": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "LIN",
+            "swap_group": 0
+        },
+        "b305afcf-3bf4-4697-b372-b3b0dbeb8615": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "X1",
+            "swap_group": 0
+        },
+        "c05ac94a-89e3-4c77-a700-51c53e7f70f3": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "REFP",
+            "swap_group": 0
+        },
+        "c445610d-3a47-4ae6-8284-9ba33096d24f": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "POT2",
+            "swap_group": 0
+        },
+        "c876fb73-917a-4d08-9591-784a299da954": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "MID",
+            "swap_group": 0
+        },
+        "d65b931f-87c6-4295-949b-a38242fc444d": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "RIN",
+            "swap_group": 0
+        },
+        "dd061dde-ca9b-40c5-8d79-b2654db6540f": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "T0",
+            "swap_group": 0
+        },
+        "dd14c1bc-d585-4154-ad73-baadc79344b4": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "DVDD2",
+            "swap_group": 0
+        },
+        "dd62132b-bb4d-4761-acd5-e2e6ebb38958": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "GND2",
+            "swap_group": 0
+        },
+        "e2d947b0-8669-4cda-970e-f1dbfda18600": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "GND5",
+            "swap_group": 0
+        },
+        "e36246f0-6e0e-4b28-9c98-2c0c82f17e59": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "AVDD",
+            "swap_group": 0
+        },
+        "e4efd14d-acad-4ffe-8410-b140eb66e29a": {
+            "direction": "output",
+            "names": [],
+            "primary_name": "ROUT",
+            "swap_group": 0
+        }
+    },
+    "type": "unit",
+    "uuid": "dfdc828c-605d-409f-838a-f59e80ed0577"
+}

@@ -1,0 +1,51 @@
+{
+    "MPN": [
+        false,
+        "MLZ1608N100LT000"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "INDUCTOR SMD 10UH 20%"
+    ],
+    "entity": "0ce5f93f-86f2-4a32-a2ff-904f1a23b5a4",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "TDK"
+    ],
+    "model": "ab49c4b9-2130-4d6b-a725-9af0e16a3d0a",
+    "package": "0a99687f-699d-4351-bb61-008ed5453128",
+    "pad_map": {
+        "64b46d86-174d-40d7-9d7b-00c46d395eeb": {
+            "gate": "742238ed-b4d2-4d9d-872b-cbd01d8add54",
+            "pin": "05e9394d-395b-4182-b83c-f3ef7b883adc"
+        },
+        "d0e71249-0e81-4b92-865d-f9d3356be6a9": {
+            "gate": "742238ed-b4d2-4d9d-872b-cbd01d8add54",
+            "pin": "3d13da9b-92de-4697-9297-1abb5cb6169b"
+        }
+    },
+    "parametric": {
+        "current_rating": "0.3",
+        "dc_resistance": "0.6",
+        "inductance": "1e-05",
+        "package": "0603",
+        "price": "0.082",
+        "saturation_current": "0.06",
+        "self_resonant_frequency": "0",
+        "table": "inductors",
+        "tolerance": "20"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "1c513ef5-c8b5-4249-ae3d-892282226a83",
+    "value": [
+        false,
+        "10u"
+    ]
+}
