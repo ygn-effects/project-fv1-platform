@@ -3,10 +3,11 @@
 void ExprService::syncHandler() {
   auto& params = m_logicState.m_exprParams[m_logicState.m_currentProgram];
 
-  m_exprHandler.setState(params.m_state);
-  m_exprHandler.setMappedPot(params.m_mappedPot);
-  m_exprHandler.setDirection(params.m_direction);
-  m_exprHandler.setHeelToeValues(params.m_heelValue, params.m_toeValue);
+  m_exprHandler.m_state = params.m_state;
+  m_exprHandler.m_mappedPot = params.m_mappedPot;
+  m_exprHandler.m_direction = params.m_direction;
+  m_exprHandler.m_heelValue = params.m_heelValue;
+  m_exprHandler.m_toeValue = params.m_toeValue;
 }
 
 void ExprService::init() {
@@ -15,13 +16,13 @@ void ExprService::init() {
 
 void ExprService::handleEvent(const Event& t_event) {
   if (t_event.m_type == EventType::kProgramChanged) { syncHandler(); return; }
-  if (m_exprHandler.getState() != ExprState::kActive) return;
+  if (m_exprHandler.m_state != ExprState::kActive) return;
 
   Event e;
   e.m_timestamp = t_event.m_timestamp;
   e.m_data.value = m_exprHandler.mapAdcValue(t_event.m_data.value);
 
-  switch (m_exprHandler.getMappedPot()) {
+  switch (m_exprHandler.m_mappedPot) {
     case MappedPot::kPot0:
       e.m_type = EventType::kPot0Moved;
       break;
