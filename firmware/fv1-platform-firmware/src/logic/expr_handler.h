@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdint.h>
-#include <algorithm>
-#include "utils/enum_validator.h"
+#include "utils/enum_utils.h"
+#include "utils/utils.h"
 
 /**
  * @brief Expression pedal state (active/inactive)
@@ -12,7 +12,7 @@ enum class ExprState : uint8_t {
   kActive
 };
 
-using ExprStateValidator = EnumValidator<ExprState, ExprState::kInactive, ExprState::kActive>;
+using ExprStateValidator = EnumUtils::EnumValidator<ExprState, ExprState::kInactive, ExprState::kActive>;
 
 /**
  * @brief Parameter controlled by the expression pedal
@@ -24,7 +24,7 @@ enum class MappedPot : uint8_t {
   kMixPot
 };
 
-using MappedPotValidator = EnumValidator<MappedPot, MappedPot::kPot0, MappedPot::kPot1, MappedPot::kPot2, MappedPot::kMixPot>;
+using MappedPotValidator = EnumUtils::EnumValidator<MappedPot, MappedPot::kPot0, MappedPot::kPot1, MappedPot::kPot2, MappedPot::kMixPot>;
 
 /**
  * @brief Direction of the expression pedal mapping
@@ -34,30 +34,17 @@ enum class Direction : uint8_t {
   kInverted  // Heel = maximum, Toe = minimum
 };
 
-using DirectionValidator = EnumValidator<Direction, Direction::kNormal, Direction::kInverted>;
+using DirectionValidator = EnumUtils::EnumValidator<Direction, Direction::kNormal, Direction::kInverted>;
 
 /**
  * @brief Handles mapping and logic for expression pedal input.
  */
-class ExprHandler {
-  private:
-    ExprState m_state{ExprState::kInactive};
-    MappedPot m_mappedPot{MappedPot::kPot0};
-    Direction m_direction{Direction::kNormal};
-    uint16_t m_heelValue{0};
-    uint16_t m_toeValue{1023};
+struct ExprHandler {
+  ExprState m_state = ExprState::kInactive;
+  MappedPot m_mappedPot = MappedPot::kPot0;
+  Direction m_direction = Direction::kNormal;
+  uint16_t m_heelValue = 0;
+  uint16_t m_toeValue = 1023;
 
-  public:
-    void setMappedPot(MappedPot pot);
-    void setDirection(Direction direction);
-    void setHeelToeValues(uint16_t heel, uint16_t toe);
-    void setState(ExprState state);
-
-    uint16_t mapAdcValue(uint16_t adcValue) const;
-
-    ExprState getState() const { return m_state; }
-    MappedPot getMappedPot() const { return m_mappedPot; }
-    Direction getDirection() const { return m_direction; }
-    uint16_t getHeelValue() const { return m_heelValue; }
-    uint16_t getToeValue() const { return m_toeValue; }
+  uint16_t mapAdcValue(uint16_t t_adcValue) const;
 };
