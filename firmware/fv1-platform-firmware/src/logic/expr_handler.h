@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <algorithm>
+#include "utils/enum_validator.h"
 
 /**
  * @brief Expression pedal state (active/inactive)
@@ -10,6 +11,8 @@ enum class ExprState : uint8_t {
   kInactive,
   kActive
 };
+
+using ExprStateValidator = EnumValidator<ExprState, ExprState::kInactive, ExprState::kActive>;
 
 /**
  * @brief Parameter controlled by the expression pedal
@@ -21,6 +24,8 @@ enum class MappedPot : uint8_t {
   kMixPot
 };
 
+using MappedPotValidator = EnumValidator<MappedPot, MappedPot::kPot0, MappedPot::kPot1, MappedPot::kPot2, MappedPot::kMixPot>;
+
 /**
  * @brief Direction of the expression pedal mapping
  */
@@ -28,6 +33,8 @@ enum class Direction : uint8_t {
   kNormal,   // Heel = minimum, Toe = maximum
   kInverted  // Heel = maximum, Toe = minimum
 };
+
+using DirectionValidator = EnumValidator<Direction, Direction::kNormal, Direction::kInverted>;
 
 /**
  * @brief Handles mapping and logic for expression pedal input.
