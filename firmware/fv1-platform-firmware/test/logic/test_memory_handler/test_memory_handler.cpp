@@ -4,7 +4,6 @@
 #include "logic/memory_handler.h"
 
 #include "../src/logic/memory_handler.cpp"
-#include "../src/utils/utils.cpp"
 
 
 void setUp() {
@@ -163,8 +162,52 @@ void test_serialize() {
   TEST_ASSERT_EQUAL(800, toe);
 }
 
+void test_validators() {
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, LogicalStateValidator::setSafeBypassState(0));
+  TEST_ASSERT_EQUAL(BypassState::kActive, LogicalStateValidator::setSafeBypassState(1));
+  TEST_ASSERT_EQUAL(BypassState::kActive, LogicalStateValidator::setSafeBypassState(2));
+
+  TEST_ASSERT_EQUAL(ProgramMode::kProgram, LogicalStateValidator::setSafeProgramMode(0));
+  TEST_ASSERT_EQUAL(ProgramMode::kPreset, LogicalStateValidator::setSafeProgramMode(1));
+  TEST_ASSERT_EQUAL(ProgramMode::kProgram, LogicalStateValidator::setSafeProgramMode(2));
+
+  TEST_ASSERT_EQUAL(ExprState::kInactive, LogicalStateValidator::setSafeExprState(0));
+  TEST_ASSERT_EQUAL(ExprState::kActive, LogicalStateValidator::setSafeExprState(1));
+  TEST_ASSERT_EQUAL(ExprState::kInactive, LogicalStateValidator::setSafeExprState(2));
+
+  TEST_ASSERT_EQUAL(MappedPot::kPot0, LogicalStateValidator::setSafeMappedPot(0));
+  TEST_ASSERT_EQUAL(MappedPot::kPot1, LogicalStateValidator::setSafeMappedPot(1));
+  TEST_ASSERT_EQUAL(MappedPot::kPot2, LogicalStateValidator::setSafeMappedPot(2));
+  TEST_ASSERT_EQUAL(MappedPot::kMixPot, LogicalStateValidator::setSafeMappedPot(3));
+  TEST_ASSERT_EQUAL(MappedPot::kPot0, LogicalStateValidator::setSafeMappedPot(4));
+
+  TEST_ASSERT_EQUAL(Direction::kNormal, LogicalStateValidator::setSafeDirection(0));
+  TEST_ASSERT_EQUAL(Direction::kInverted, LogicalStateValidator::setSafeDirection(1));
+  TEST_ASSERT_EQUAL(Direction::kNormal, LogicalStateValidator::setSafeDirection(2));
+
+  TEST_ASSERT_EQUAL(PotState::kDisabled, LogicalStateValidator::setSafePotState(0));
+  TEST_ASSERT_EQUAL(PotState::kActive, LogicalStateValidator::setSafePotState(1));
+  TEST_ASSERT_EQUAL(PotState::kActive, LogicalStateValidator::setSafePotState(2));
+
+  TEST_ASSERT_EQUAL(TapState::kDisabled, LogicalStateValidator::setSafeTapState(0));
+  TEST_ASSERT_EQUAL(TapState::kEnabled, LogicalStateValidator::setSafeTapState(1));
+  TEST_ASSERT_EQUAL(TapState::kDisabled, LogicalStateValidator::setSafeTapState(2));
+
+  TEST_ASSERT_EQUAL(DivState::kDisabled, LogicalStateValidator::setSafeDivState(0));
+  TEST_ASSERT_EQUAL(DivState::kEnabled, LogicalStateValidator::setSafeDivState(1));
+  TEST_ASSERT_EQUAL(DivState::kDisabled, LogicalStateValidator::setSafeDivState(2));
+
+  TEST_ASSERT_EQUAL(DivValue::kQuarter, LogicalStateValidator::setSafeDivValue(0));
+  TEST_ASSERT_EQUAL(DivValue::kEight, LogicalStateValidator::setSafeDivValue(1));
+  TEST_ASSERT_EQUAL(DivValue::kSixteenth, LogicalStateValidator::setSafeDivValue(2));
+  TEST_ASSERT_EQUAL(DivValue::kDottedEight, LogicalStateValidator::setSafeDivValue(3));
+  TEST_ASSERT_EQUAL(DivValue::kEightTriplet, LogicalStateValidator::setSafeDivValue(4));
+  TEST_ASSERT_EQUAL(DivValue::kQuarter, LogicalStateValidator::setSafeDivValue(5));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_serialize);
+  RUN_TEST(test_validators);
   UNITY_END();
 }

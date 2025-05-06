@@ -103,18 +103,56 @@ struct RegionInfo {
   uint16_t m_length;
 };
 
+namespace LogicalStateValidator {
+  inline BypassState setSafeBypassState(uint8_t t_eepromValue) {
+    return BypassStateValidator::sanitize(t_eepromValue, BypassState::kActive);
+  }
+
+  inline ProgramMode setSafeProgramMode(uint8_t t_eepromValue) {
+    return ProgramModeValidator::sanitize(t_eepromValue, ProgramMode::kProgram);
+  }
+
+  inline ExprState setSafeExprState(uint8_t t_eepromValue) {
+    return ExprStateValidator::sanitize(t_eepromValue, ExprState::kInactive);
+  }
+
+  inline MappedPot setSafeMappedPot(uint8_t t_eepromValue) {
+    return MappedPotValidator::sanitize(t_eepromValue, MappedPot::kPot0);
+  }
+
+  inline Direction setSafeDirection(uint8_t t_eepromValue) {
+    return DirectionValidator::sanitize(t_eepromValue, Direction::kNormal);
+  }
+
+  inline PotState setSafePotState(uint8_t t_eepromValue) {
+    return PotStateValidator::sanitize(t_eepromValue, PotState::kActive);
+  }
+
+  inline TapState setSafeTapState(uint8_t t_eepromValue) {
+    return TapStateValidator::sanitize(t_eepromValue, TapState::kDisabled);
+  }
+
+  inline DivState setSafeDivState(uint8_t t_eepromValue) {
+    return DivStateValidator::sanitize(t_eepromValue, DivState::kDisabled);
+  }
+
+  inline DivValue setSafeDivValue(uint8_t t_eepromValue) {
+    return DivValueValidator::sanitize(t_eepromValue, DivValue::kQuarter);
+  }
+};
+
 class MemoryHandler {
   private:
-  void serializeBypass(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
-  void serializeProgramMode(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
-  void serializeCurrentProgram(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
-  void serializeCurrentPreset(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
-  void serializeMidiChannel(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
-  void serializeDeviceState(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
-  void serializeTap(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
-  void serializeTempo(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
-  void serializeExprParam(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_programIndex);
-  void serializePotParam(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_potIndex);
+    void serializeBypass(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
+    void serializeProgramMode(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
+    void serializeCurrentProgram(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
+    void serializeCurrentPreset(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
+    void serializeMidiChannel(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
+    void serializeDeviceState(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
+    void serializeTap(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
+    void serializeTempo(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
+    void serializeExprParam(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_programIndex);
+    void serializePotParam(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_potIndex);
 
   public:
     RegionInfo calculateRegionInfo(MemoryRegion t_region, uint8_t t_programIndex = 0, uint8_t t_index = 0);
