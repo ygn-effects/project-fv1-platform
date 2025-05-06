@@ -22,6 +22,8 @@ void test_pot() {
   LogicalState logicalState;
   PotService potService(logicalState);
 
+  potService.init();
+
   potService.handleEvent({EventType::kPot0Moved, 100, {.value=100}});
   potService.handleEvent({EventType::kPot1Moved, 200, {.value=200}});
   potService.handleEvent({EventType::kPot2Moved, 300, {.value=300}});
