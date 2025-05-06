@@ -42,7 +42,7 @@ void TapHandler::registerTap(uint32_t t_currentTime) {
     m_divInterval = 0;
     m_timesTapped = 1;
 
-    setTapState(TapState::kDisabled);
+    m_tapState = TapState::kDisabled;
   }
   else {
     // Subsequent taps
@@ -57,65 +57,16 @@ void TapHandler::registerTap(uint32_t t_currentTime) {
       }
 
       m_isNewIntervalSet = true;
-      setTapState(TapState::kEnabled);
+      m_tapState = TapState::kEnabled;
     }
   }
 }
 
-TapState TapHandler::getTapState() const {
-  return m_tapState;
-}
-
-DivState TapHandler::getDivState() const {
-  return m_divState;
-}
-
-DivValue TapHandler::getDivValue() const {
-  return m_divValue;
-}
-
-uint16_t TapHandler::getInterval() const {
-  return m_interval;
-}
-
-uint16_t TapHandler::getDivInterval() const {
-  return m_divInterval;
-}
-
-bool TapHandler::getIsNewIntervalSet() const {
-  return m_isNewIntervalSet;
-}
-
-void TapHandler::setTapState(TapState t_state) {
-  m_tapState = t_state;
-}
-
-void TapHandler::setDivState(DivState t_state) {
-  m_divState = t_state;
-}
-
-void TapHandler::setDivValue(DivValue t_value) {
-  m_divValue = t_value;
-}
-
-void TapHandler::setInterval(uint16_t t_interval) {
-  m_interval = t_interval;
-}
-
-void TapHandler::setDivInterval(uint16_t t_divInterval) {
-  m_divInterval = t_divInterval;
-}
-
 void TapHandler::setNextDivValue() {
-  uint8_t rawNextValue = (static_cast<uint8_t>(getDivValue()) + 1) % TapHandlerConstants::kDivValueCount;
-  setDivValue(static_cast<DivValue>(rawNextValue));
+  m_divValue = EnumUtils::nextEnumValue<DivValue, TapHandlerConstants::kDivValueCount>(m_divValue);
   calculateDivInterval();
 
-  getDivValue() == DivValue::kQuarter
-    ? setDivState(DivState::kDisabled)
-    : setDivState(DivState::kEnabled);
-}
-
-void TapHandler::setTapTimeout(uint16_t t_timeout) {
-  m_tapTimeout = t_timeout;
+  m_divValue == DivValue::kQuarter
+    ? m_divState = DivState::kDisabled
+    : m_divState = DivState::kEnabled;
 }
