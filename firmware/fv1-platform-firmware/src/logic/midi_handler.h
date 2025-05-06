@@ -13,6 +13,11 @@ namespace MidiMessageMasks {
   constexpr uint8_t c_channelMask = 0xF;
 }
 
+namespace MidiMessageConstants {
+  constexpr uint8_t c_minValue = 0;
+  constexpr uint8_t c_maxValue = 127;
+}
+
 enum class MidiMessageType : uint8_t {
   kControlChange = 0x30,
   kProgramChange = 0x40
