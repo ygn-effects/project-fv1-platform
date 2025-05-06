@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "logic/logical_state.h"
+#include "logic/preset_handler.h"
 #include "utils/utils.h"
 
 /*
@@ -141,7 +142,7 @@ namespace LogicalStateValidator {
   }
 };
 
-class MemoryHandler {
+struct MemoryHandler {
   private:
     void serializeBypass(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
     void serializeProgramMode(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
@@ -154,7 +155,19 @@ class MemoryHandler {
     void serializeExprParam(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_programIndex);
     void serializePotParam(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_potIndex);
 
+    void deserializeBypass(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
+    void deserializeProgramMode(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
+    void deserializeCurrentProgram(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
+    void deserializeCurrentPreset(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
+    void deserializeMidiChannel(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
+    void deserializeDeviceState(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
+    void deserializeTap(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
+    void deserializeTempo(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
+    void deserializeExprParam(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_programIndex);
+    void deserializePotParam(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_potIndex);
+
   public:
     RegionInfo calculateRegionInfo(MemoryRegion t_region, uint8_t t_programIndex = 0, uint8_t t_index = 0);
     void serializeRegion(MemoryRegion t_region, const LogicalState& t_lState, uint8_t* t_buffer, uint8_t t_programIndex = 0, uint8_t t_index = 0);
+    void deserializeRegion(MemoryRegion t_region, LogicalState& t_lState, const uint8_t* t_buffer, uint8_t t_programIndex = 0, uint8_t t_index = 0);
 };

@@ -160,6 +160,251 @@ void test_serialize() {
   TEST_ASSERT_EQUAL(600, heel);
   Utils::unpack16(exprBuffer[5], exprBuffer[6], toe);
   TEST_ASSERT_EQUAL(800, toe);
+
+  // Pot
+  info = memoryHandler.calculateRegionInfo(MemoryRegion::kPot, 3, 2);
+  TEST_ASSERT_EQUAL(168, info.m_address);
+  TEST_ASSERT_EQUAL(7, info.m_length);
+
+  uint8_t potBuffer[info.m_length];
+  memoryHandler.serializeRegion(MemoryRegion::kPot, logicalState, potBuffer, 3, 2);
+  TEST_ASSERT_EQUAL(1, potBuffer[0]);
+  TEST_ASSERT_EQUAL(0, potBuffer[1]);
+  TEST_ASSERT_EQUAL(0, potBuffer[2]);
+  TEST_ASSERT_EQUAL(0, potBuffer[3]);
+  TEST_ASSERT_EQUAL(0, potBuffer[4]);
+  TEST_ASSERT_EQUAL(255, potBuffer[5]);
+  TEST_ASSERT_EQUAL(3, potBuffer[6]);
+
+  logicalState.m_potParams[1].m_state = PotState::kDisabled;
+  logicalState.m_potParams[1].m_minValue = 128;
+  logicalState.m_potParams[1].m_maxValue = 768;
+  logicalState.m_potParams[1].m_value = 512;
+  memoryHandler.serializeRegion(MemoryRegion::kPot, logicalState, potBuffer, 3, 1);
+  TEST_ASSERT_EQUAL(0, potBuffer[0]);
+  TEST_ASSERT_EQUAL(0, potBuffer[1]);
+  TEST_ASSERT_EQUAL(2, potBuffer[2]);
+  TEST_ASSERT_EQUAL(128, potBuffer[3]);
+  TEST_ASSERT_EQUAL(0, potBuffer[4]);
+  TEST_ASSERT_EQUAL(0, potBuffer[5]);
+  TEST_ASSERT_EQUAL(3, potBuffer[6]);
+}
+
+void test_deserialize() {
+  LogicalState logicalState;
+  MemoryHandler memoryHandler;
+
+  // Bypass
+  RegionInfo info = memoryHandler.calculateRegionInfo(MemoryRegion::kBypass);
+  uint8_t bypassBuffer[info.m_length];
+  bypassBuffer[0] = static_cast<uint8_t>(BypassState::kBypassed);
+  memoryHandler.deserializeRegion(MemoryRegion::kBypass, logicalState, bypassBuffer);
+
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
+
+  bypassBuffer[0] = static_cast<uint8_t>(BypassState::kActive);
+  memoryHandler.deserializeRegion(MemoryRegion::kBypass, logicalState, bypassBuffer);
+
+  TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
+
+  // Program mode
+  info = memoryHandler.calculateRegionInfo(MemoryRegion::kProgramMode);
+  uint8_t programModeBuffer[info.m_length];
+  programModeBuffer[0] = static_cast<uint8_t>(ProgramMode::kProgram);
+  memoryHandler.deserializeRegion(MemoryRegion::kProgramMode, logicalState, programModeBuffer);
+
+  TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
+
+  programModeBuffer[0] = static_cast<uint8_t>(ProgramMode::kPreset);
+  memoryHandler.deserializeRegion(MemoryRegion::kProgramMode, logicalState, programModeBuffer);
+
+  TEST_ASSERT_EQUAL(ProgramMode::kPreset, logicalState.m_programMode);
+
+  // Current program
+  info = memoryHandler.calculateRegionInfo(MemoryRegion::kCurrentProgram);
+  uint8_t currentProgramBuffer[info.m_length];
+  currentProgramBuffer[0] = 1;
+  memoryHandler.deserializeRegion(MemoryRegion::kCurrentProgram, logicalState, currentProgramBuffer);
+
+  TEST_ASSERT_EQUAL(1, logicalState.m_currentProgram);
+
+  currentProgramBuffer[0] = 2;
+  memoryHandler.deserializeRegion(MemoryRegion::kCurrentProgram, logicalState, currentProgramBuffer);
+
+  TEST_ASSERT_EQUAL(2, logicalState.m_currentProgram);
+
+  // Current preset
+  info = memoryHandler.calculateRegionInfo(MemoryRegion::kCurrentPreset);
+  uint8_t currentPresetBuffer[info.m_length];
+  currentPresetBuffer[0] = 3;
+  memoryHandler.deserializeRegion(MemoryRegion::kCurrentPreset, logicalState, currentPresetBuffer);
+
+  TEST_ASSERT_EQUAL(3, logicalState.m_currentPreset);
+
+  currentPresetBuffer[0] = 4;
+  memoryHandler.deserializeRegion(MemoryRegion::kCurrentPreset, logicalState, currentPresetBuffer);
+
+  TEST_ASSERT_EQUAL(4, logicalState.m_currentPreset);
+
+  // Midi Channel
+  info = memoryHandler.calculateRegionInfo(MemoryRegion::kMidiChannel);
+  uint8_t midiChannelBuffer[info.m_length];
+  midiChannelBuffer[0] = 5;
+  memoryHandler.deserializeRegion(MemoryRegion::kMidiChannel, logicalState, midiChannelBuffer);
+
+  TEST_ASSERT_EQUAL(5, logicalState.m_midiChannel);
+
+  midiChannelBuffer[0] = 6;
+  memoryHandler.deserializeRegion(MemoryRegion::kMidiChannel, logicalState, midiChannelBuffer);
+
+  TEST_ASSERT_EQUAL(6, logicalState.m_midiChannel);
+
+  // Device state
+  info = memoryHandler.calculateRegionInfo(MemoryRegion::kDeviceState);
+  uint8_t deviceStateBuffer[info.m_length];
+  deviceStateBuffer[0] = static_cast<uint8_t>(BypassState::kActive);
+  deviceStateBuffer[1] = static_cast<uint8_t>(ProgramMode::kProgram);
+  deviceStateBuffer[2] = 3;
+  deviceStateBuffer[3] = 0;
+  deviceStateBuffer[4] = 7;
+  memoryHandler.deserializeRegion(MemoryRegion::kDeviceState, logicalState, deviceStateBuffer);
+
+  TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
+  TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
+  TEST_ASSERT_EQUAL(3, logicalState.m_currentProgram);
+  TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
+  TEST_ASSERT_EQUAL(7, logicalState.m_midiChannel);
+
+  deviceStateBuffer[0] = static_cast<uint8_t>(BypassState::kBypassed);
+  deviceStateBuffer[1] = static_cast<uint8_t>(ProgramMode::kPreset);
+  deviceStateBuffer[2] = 0;
+  deviceStateBuffer[3] = 5;
+  deviceStateBuffer[4] = 2;
+  memoryHandler.deserializeRegion(MemoryRegion::kDeviceState, logicalState, deviceStateBuffer);
+
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
+  TEST_ASSERT_EQUAL(ProgramMode::kPreset, logicalState.m_programMode);
+  TEST_ASSERT_EQUAL(0, logicalState.m_currentProgram);
+  TEST_ASSERT_EQUAL(5, logicalState.m_currentPreset);
+  TEST_ASSERT_EQUAL(2, logicalState.m_midiChannel);
+
+  // Tap
+  info = memoryHandler.calculateRegionInfo(MemoryRegion::kTap);
+  uint8_t tapBuffer[info.m_length];
+  tapBuffer[0] = static_cast<uint8_t>(TapState::kEnabled);
+  tapBuffer[1] = static_cast<uint8_t>(DivState::kDisabled);
+  tapBuffer[2] = static_cast<uint8_t>(DivValue::kQuarter);
+  tapBuffer[3] = 0;
+  tapBuffer[4] = 1;
+  tapBuffer[5] = 0;
+  tapBuffer[6] = 0;
+  memoryHandler.deserializeRegion(MemoryRegion::kTap, logicalState, tapBuffer);
+
+  TEST_ASSERT_EQUAL(TapState::kEnabled, logicalState.m_tapState);
+  TEST_ASSERT_EQUAL(DivState::kDisabled, logicalState.m_divState);
+  TEST_ASSERT_EQUAL(DivValue::kQuarter, logicalState.m_divValue);
+  TEST_ASSERT_EQUAL(256, logicalState.m_interval);
+  TEST_ASSERT_EQUAL(0, logicalState.m_divInterval);
+
+  tapBuffer[0] = static_cast<uint8_t>(TapState::kDisabled);
+  tapBuffer[1] = static_cast<uint8_t>(DivState::kEnabled);
+  tapBuffer[2] = static_cast<uint8_t>(DivValue::kEight);
+  tapBuffer[3] = 0;
+  tapBuffer[4] = 2;
+  tapBuffer[5] = 0;
+  tapBuffer[6] = 1;
+  memoryHandler.deserializeRegion(MemoryRegion::kTap, logicalState, tapBuffer);
+
+  TEST_ASSERT_EQUAL(TapState::kDisabled, logicalState.m_tapState);
+  TEST_ASSERT_EQUAL(DivState::kEnabled, logicalState.m_divState);
+  TEST_ASSERT_EQUAL(DivValue::kEight, logicalState.m_divValue);
+  TEST_ASSERT_EQUAL(512, logicalState.m_interval);
+  TEST_ASSERT_EQUAL(256, logicalState.m_divInterval);
+
+  // Tempo
+  info = memoryHandler.calculateRegionInfo(MemoryRegion::kTempo);
+  uint8_t tempoBuffer[info.m_length];
+  tempoBuffer[0] = 0;
+  tempoBuffer[1] = 1;
+  memoryHandler.deserializeRegion(MemoryRegion::kTempo, logicalState, tempoBuffer);
+
+  TEST_ASSERT_EQUAL(256, logicalState.m_tempo);
+
+  tempoBuffer[0] = 0;
+  tempoBuffer[1] = 2;
+  memoryHandler.deserializeRegion(MemoryRegion::kTempo, logicalState, tempoBuffer);
+
+  TEST_ASSERT_EQUAL(512, logicalState.m_tempo);
+
+  // Expr
+  info = memoryHandler.calculateRegionInfo(MemoryRegion::kExpr, 2);
+  uint8_t exprBuffer[info.m_length];
+  exprBuffer[0] = static_cast<uint8_t>(ExprState::kActive);
+  exprBuffer[1] = static_cast<uint8_t>(MappedPot::kPot1);
+  exprBuffer[2] = static_cast<uint8_t>(Direction::kNormal);
+  exprBuffer[3] = 0;
+  exprBuffer[4] = 1;
+  exprBuffer[5] = 0;
+  exprBuffer[6] = 2;
+  memoryHandler.deserializeRegion(MemoryRegion::kExpr, logicalState, exprBuffer, 2);
+
+  TEST_ASSERT_EQUAL(ExprState::kActive, logicalState.m_exprParams[2].m_state);
+  TEST_ASSERT_EQUAL(MappedPot::kPot1, logicalState.m_exprParams[2].m_mappedPot);
+  TEST_ASSERT_EQUAL(Direction::kNormal, logicalState.m_exprParams[2].m_direction);
+  TEST_ASSERT_EQUAL(256, logicalState.m_exprParams[2].m_heelValue);
+  TEST_ASSERT_EQUAL(512, logicalState.m_exprParams[2].m_toeValue);
+
+  exprBuffer[0] = static_cast<uint8_t>(ExprState::kInactive);
+  exprBuffer[1] = static_cast<uint8_t>(MappedPot::kMixPot);
+  exprBuffer[2] = static_cast<uint8_t>(Direction::kInverted);
+  exprBuffer[3] = 0;
+  exprBuffer[4] = 1;
+  exprBuffer[5] = 0;
+  exprBuffer[6] = 2;
+  memoryHandler.deserializeRegion(MemoryRegion::kExpr, logicalState, exprBuffer, 1);
+
+  TEST_ASSERT_EQUAL(ExprState::kActive, logicalState.m_exprParams[2].m_state);
+  TEST_ASSERT_EQUAL(MappedPot::kPot1, logicalState.m_exprParams[2].m_mappedPot);
+  TEST_ASSERT_EQUAL(Direction::kNormal, logicalState.m_exprParams[2].m_direction);
+  TEST_ASSERT_EQUAL(256, logicalState.m_exprParams[2].m_heelValue);
+  TEST_ASSERT_EQUAL(512, logicalState.m_exprParams[2].m_toeValue);
+
+  TEST_ASSERT_EQUAL(ExprState::kInactive, logicalState.m_exprParams[1].m_state);
+  TEST_ASSERT_EQUAL(MappedPot::kMixPot, logicalState.m_exprParams[1].m_mappedPot);
+  TEST_ASSERT_EQUAL(Direction::kInverted, logicalState.m_exprParams[1].m_direction);
+  TEST_ASSERT_EQUAL(256, logicalState.m_exprParams[1].m_heelValue);
+  TEST_ASSERT_EQUAL(512, logicalState.m_exprParams[1].m_toeValue);
+
+  // Pot
+  info = memoryHandler.calculateRegionInfo(MemoryRegion::kExpr, 3, 2);
+  uint8_t potBuffer[info.m_length];
+  potBuffer[0] = static_cast<uint8_t>(PotState::kActive);
+  potBuffer[1] = 0;
+  potBuffer[2] = 2;
+  potBuffer[3] = 128;
+  potBuffer[4] = 0;
+  potBuffer[5] = 0;
+  potBuffer[6] = 3;
+  memoryHandler.deserializeRegion(MemoryRegion::kPot, logicalState, potBuffer, 3, 2);
+
+  TEST_ASSERT_EQUAL(PotState::kActive, logicalState.m_potParams[2].m_state);
+  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[2].m_value);
+  TEST_ASSERT_EQUAL(128, logicalState.m_potParams[2].m_minValue);
+  TEST_ASSERT_EQUAL(768, logicalState.m_potParams[2].m_maxValue);
+
+  potBuffer[0] = static_cast<uint8_t>(PotState::kDisabled);
+  potBuffer[1] = 0;
+  potBuffer[2] = 1;
+  potBuffer[3] = 127;
+  potBuffer[4] = 0;
+  potBuffer[5] = 0;
+  potBuffer[6] = 2;
+  memoryHandler.deserializeRegion(MemoryRegion::kPot, logicalState, potBuffer, 3, 3);
+
+  TEST_ASSERT_EQUAL(PotState::kDisabled, logicalState.m_potParams[3].m_state);
+  TEST_ASSERT_EQUAL(256, logicalState.m_potParams[3].m_value);
+  TEST_ASSERT_EQUAL(127, logicalState.m_potParams[3].m_minValue);
+  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[3].m_maxValue);
 }
 
 void test_validators() {
@@ -208,6 +453,7 @@ void test_validators() {
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_serialize);
+  RUN_TEST(test_deserialize);
   RUN_TEST(test_validators);
   UNITY_END();
 }
