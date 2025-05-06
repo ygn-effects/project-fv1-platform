@@ -6,16 +6,21 @@
 #include "logic/tap_handler.h"
 #include "logic/expr_handler.h"
 #include "logic/pot_handler.h"
+#include "utils/enum_utils.h"
 
 enum class BypassState : uint8_t {
   kBypassed,
   kActive
 };
 
+using BypassStateValidator = EnumUtils::EnumValidator<BypassState, BypassState::kBypassed, BypassState::kActive>;
+
 enum class ProgramMode : uint8_t {
   kProgram,
   kPreset
 };
+
+using ProgramModeValidator = EnumUtils::EnumValidator<ProgramMode, ProgramMode::kProgram, ProgramMode::kPreset>;
 
 struct LogicalState {
   BypassState m_bypassState = BypassState::kActive;
