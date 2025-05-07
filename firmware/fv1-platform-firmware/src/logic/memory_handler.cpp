@@ -82,6 +82,27 @@ void MemoryHandler::serializePotParam(const LogicalState& t_lState, uint8_t* t_b
   t_buffer[t_startIndex + 6] = high;
 }
 
+void MemoryHandler::serializeLogicalState(const LogicalState& t_lState, uint8_t* t_buffer) {
+  serializeDeviceState(t_lState, t_buffer, 0);
+  uint16_t offset = MemoryLayout::c_deviceStateSize;
+  serializeTap(t_lState, t_buffer, offset);
+  offset += MemoryLayout::c_tapSize;
+  serializeTempo(t_lState, t_buffer, offset),
+  offset += MemoryLayout::c_tempoSize;
+
+  for (uint8_t i = 0; i < ProgramConstants::c_maxPrograms; i++) {
+    serializeExprParam(t_lState, t_buffer, offset, i);
+    offset += MemoryLayout::c_exprSize;
+  }
+
+  for (uint8_t i = 0; i < ProgramConstants::c_maxPrograms; i++) {
+    for (uint8_t j = 0; j < PotConstants::c_potCount; j++) {
+      serializePotParam(t_lState, t_buffer, offset, i, j);
+      offset += MemoryLayout::c_potParamSize;
+    }
+  }
+}
+
 void MemoryHandler::deserializeBypass(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex) {
   t_lState.m_bypassState = LogicalStateValidator::setSafeBypassState(t_buffer[t_startIndex]);
 }
@@ -165,6 +186,27 @@ void MemoryHandler::deserializePotParam(LogicalState& t_lState, const uint8_t* t
   t_lState.m_potParams[t_programIndex][t_potIndex].m_maxValue = Utils::clamp<uint16_t>(maxValue, 0, 1023);
 }
 
+void MemoryHandler::deserializeLogicalState(LogicalState& t_lState, const uint8_t* t_buffer) {
+  deserializeDeviceState(t_lState, t_buffer, 0);
+  uint16_t offset = MemoryLayout::c_tapStart;
+  deserializeTap(t_lState, t_buffer, offset);
+  offset += MemoryLayout::c_tapSize;
+  deserializeTempo(t_lState, t_buffer, offset);
+  offset += MemoryLayout::c_tempoSize;
+
+  for (uint8_t i = 0; i < ProgramConstants::c_maxPrograms; i++) {
+    deserializeExprParam(t_lState, t_buffer, offset, i);
+    offset += MemoryLayout::c_exprSize;
+  }
+
+  for (uint8_t i = 0; i < ProgramConstants::c_maxPrograms; i++) {
+    for (uint8_t j = 0; j < PotConstants::c_potCount; j++) {
+      deserializePotParam(t_lState, t_buffer, offset, i, j);
+      offset += MemoryLayout::c_potParamSize;
+    }
+  }
+}
+
 RegionInfo MemoryHandler::calculateRegionInfo(MemoryRegion t_region, uint8_t t_programIndex, uint8_t t_index) {
   RegionInfo info = {0, 0};
 
@@ -208,6 +250,13 @@ RegionInfo MemoryHandler::calculateRegionInfo(MemoryRegion t_region, uint8_t t_p
       info = {
         .m_address = MemoryLayout::c_deviceStateStart,
         .m_length = MemoryLayout::c_deviceStateSize
+      };
+      break;
+
+    case MemoryRegion::kLogicalState:
+      info = {
+        .m_address = MemoryLayout::c_deviceStateStart,
+        .m_length = MemoryLayout::c_potParamEnd
       };
       break;
 
@@ -288,6 +337,10 @@ void MemoryHandler::serializeRegion(MemoryRegion t_region, const LogicalState& t
       serializePotParam(t_lState, t_buffer, 0, t_programIndex, t_index);
       break;
 
+    case MemoryRegion::kLogicalState:
+      serializeLogicalState(t_lState, t_buffer);
+      break;
+
     default:
       break;
   }
@@ -333,6 +386,10 @@ void MemoryHandler::deserializeRegion(MemoryRegion t_region, LogicalState& t_lSt
 
     case MemoryRegion::kPot:
       deserializePotParam(t_lState, t_buffer, 0, t_programIndex, t_index);
+      break;
+
+    case MemoryRegion::kLogicalState:
+      deserializeLogicalState(t_lState, t_buffer);
       break;
 
     default:

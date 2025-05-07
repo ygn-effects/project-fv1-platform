@@ -45,6 +45,7 @@
 
 enum class MemoryRegion : uint8_t {
   kDeviceState,
+  kLogicalState,
   kBypass,
   kProgramMode,
   kCurrentProgram,
@@ -154,6 +155,7 @@ struct MemoryHandler {
     void serializeTempo(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
     void serializeExprParam(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_programIndex);
     void serializePotParam(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_programIndex, uint8_t t_potIndex);
+    void serializeLogicalState(const LogicalState& t_lState, uint8_t* t_buffer);
 
     void deserializeBypass(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
     void deserializeProgramMode(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
@@ -165,6 +167,7 @@ struct MemoryHandler {
     void deserializeTempo(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
     void deserializeExprParam(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_programIndex);
     void deserializePotParam(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_programIndex, uint8_t t_potIndex);
+    void deserializeLogicalState(LogicalState& t_lState, const uint8_t* t_buffer);
 
   public:
     RegionInfo calculateRegionInfo(MemoryRegion t_region, uint8_t t_programIndex = 0, uint8_t t_index = 0);
