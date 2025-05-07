@@ -84,20 +84,20 @@ void valuePot(const LogicalState* t_state, uint8_t t_potIndex, char* buffer, siz
 
   switch (param.m_unit) {
     case ParamUnit::kHz:
-      snprintf(buffer, bufferSize, "%u Hz", t_state->m_potParams[t_potIndex].m_value);
+      snprintf(buffer, bufferSize, "%u Hz", t_state->m_potParams[t_state->m_currentProgram][t_potIndex].m_value);
       break;
 
     case ParamUnit::kMs:
-      snprintf(buffer, bufferSize, "%u ms", t_state->m_potParams[t_potIndex].m_value);
+      snprintf(buffer, bufferSize, "%u ms", t_state->m_potParams[t_state->m_currentProgram][t_potIndex].m_value);
       break;
 
     case ParamUnit::kPercent:
-      snprintf(buffer, bufferSize, "%u %%", t_state->m_potParams[t_potIndex].m_value);
+      snprintf(buffer, bufferSize, "%u %%", t_state->m_potParams[t_state->m_currentProgram][t_potIndex].m_value);
       break;
 
     case ParamUnit::kNone:
     case ParamUnit::kRaw:
-      snprintf(buffer, bufferSize, "%u", t_state->m_potParams[t_potIndex].m_value);
+      snprintf(buffer, bufferSize, "%u", t_state->m_potParams[t_state->m_currentProgram][t_potIndex].m_value);
       break;
 
     default:
