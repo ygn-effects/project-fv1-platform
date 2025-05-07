@@ -29,10 +29,10 @@ void test_pot() {
   potService.handleEvent({EventType::kPot2Moved, 300, {.value=300}});
   potService.handleEvent({EventType::kMixPotMoved, 400, {.value=400}});
 
-  TEST_ASSERT_EQUAL(100, logicalState.m_potParams[0].m_value);
-  TEST_ASSERT_EQUAL(200, logicalState.m_potParams[1].m_value);
-  TEST_ASSERT_EQUAL(300, logicalState.m_potParams[2].m_value);
-  TEST_ASSERT_EQUAL(400, logicalState.m_potParams[3].m_value);
+  TEST_ASSERT_EQUAL(100, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
+  TEST_ASSERT_EQUAL(200, logicalState.m_potParams[logicalState.m_currentProgram][1].m_value);
+  TEST_ASSERT_EQUAL(300, logicalState.m_potParams[logicalState.m_currentProgram][2].m_value);
+  TEST_ASSERT_EQUAL(400, logicalState.m_potParams[logicalState.m_currentProgram][3].m_value);
 }
 
 void test_interested_in() {
