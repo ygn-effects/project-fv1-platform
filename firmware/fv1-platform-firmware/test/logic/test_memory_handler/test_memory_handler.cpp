@@ -176,10 +176,10 @@ void test_serialize() {
   TEST_ASSERT_EQUAL(255, potBuffer[5]);
   TEST_ASSERT_EQUAL(3, potBuffer[6]);
 
-  logicalState.m_potParams[1].m_state = PotState::kDisabled;
-  logicalState.m_potParams[1].m_minValue = 128;
-  logicalState.m_potParams[1].m_maxValue = 768;
-  logicalState.m_potParams[1].m_value = 512;
+  logicalState.m_potParams[3][1].m_state = PotState::kDisabled;
+  logicalState.m_potParams[3][1].m_minValue = 128;
+  logicalState.m_potParams[3][1].m_maxValue = 768;
+  logicalState.m_potParams[3][1].m_value = 512;
   memoryHandler.serializeRegion(MemoryRegion::kPot, logicalState, potBuffer, 3, 1);
   TEST_ASSERT_EQUAL(0, potBuffer[0]);
   TEST_ASSERT_EQUAL(0, potBuffer[1]);
@@ -387,10 +387,10 @@ void test_deserialize() {
   potBuffer[6] = 3;
   memoryHandler.deserializeRegion(MemoryRegion::kPot, logicalState, potBuffer, 3, 2);
 
-  TEST_ASSERT_EQUAL(PotState::kActive, logicalState.m_potParams[2].m_state);
-  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[2].m_value);
-  TEST_ASSERT_EQUAL(128, logicalState.m_potParams[2].m_minValue);
-  TEST_ASSERT_EQUAL(768, logicalState.m_potParams[2].m_maxValue);
+  TEST_ASSERT_EQUAL(PotState::kActive, logicalState.m_potParams[3][2].m_state);
+  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[3][2].m_value);
+  TEST_ASSERT_EQUAL(128, logicalState.m_potParams[3][2].m_minValue);
+  TEST_ASSERT_EQUAL(768, logicalState.m_potParams[3][2].m_maxValue);
 
   potBuffer[0] = static_cast<uint8_t>(PotState::kDisabled);
   potBuffer[1] = 0;
@@ -401,10 +401,10 @@ void test_deserialize() {
   potBuffer[6] = 2;
   memoryHandler.deserializeRegion(MemoryRegion::kPot, logicalState, potBuffer, 3, 3);
 
-  TEST_ASSERT_EQUAL(PotState::kDisabled, logicalState.m_potParams[3].m_state);
-  TEST_ASSERT_EQUAL(256, logicalState.m_potParams[3].m_value);
-  TEST_ASSERT_EQUAL(127, logicalState.m_potParams[3].m_minValue);
-  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[3].m_maxValue);
+  TEST_ASSERT_EQUAL(PotState::kDisabled, logicalState.m_potParams[3][3].m_state);
+  TEST_ASSERT_EQUAL(256, logicalState.m_potParams[3][3].m_value);
+  TEST_ASSERT_EQUAL(127, logicalState.m_potParams[3][3].m_minValue);
+  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[3][3].m_maxValue);
 }
 
 void test_validators() {

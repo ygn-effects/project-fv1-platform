@@ -65,19 +65,19 @@ void MemoryHandler::serializeExprParam(const LogicalState& t_lState, uint8_t* t_
   t_buffer[t_startIndex + 6] = high;
 }
 
-void MemoryHandler::serializePotParam(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_potIndex) {
-  t_buffer[t_startIndex] = static_cast<uint8_t>(t_lState.m_potParams[t_potIndex].m_state);
+void MemoryHandler::serializePotParam(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_programIndex, uint8_t t_potIndex) {
+  t_buffer[t_startIndex] = static_cast<uint8_t>(t_lState.m_potParams[t_programIndex][t_potIndex].m_state);
 
   uint8_t low = 0, high = 0;
-  Utils::pack16(t_lState.m_potParams[t_potIndex].m_value, low, high);
+  Utils::pack16(t_lState.m_potParams[t_programIndex][t_potIndex].m_value, low, high);
   t_buffer[t_startIndex + 1] = low;
   t_buffer[t_startIndex + 2] = high;
 
-  Utils::pack16(t_lState.m_potParams[t_potIndex].m_minValue, low, high);
+  Utils::pack16(t_lState.m_potParams[t_programIndex][t_potIndex].m_minValue, low, high);
   t_buffer[t_startIndex + 3] = low;
   t_buffer[t_startIndex + 4] = high;
 
-  Utils::pack16(t_lState.m_potParams[t_potIndex].m_maxValue, low, high);
+  Utils::pack16(t_lState.m_potParams[t_programIndex][t_potIndex].m_maxValue, low, high);
   t_buffer[t_startIndex + 5] = low;
   t_buffer[t_startIndex + 6] = high;
 }
@@ -149,20 +149,20 @@ void MemoryHandler::deserializeExprParam(LogicalState& t_lState, const uint8_t* 
   t_lState.m_exprParams[t_programIndex].m_toeValue = Utils::clamp<uint16_t>(toeValue, 0, 1023);
 }
 
-void MemoryHandler::deserializePotParam(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_potIndex) {
-  t_lState.m_potParams[t_potIndex].m_state = LogicalStateValidator::setSafePotState(t_buffer[t_startIndex]);
+void MemoryHandler::deserializePotParam(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex, uint8_t t_programIndex, uint8_t t_potIndex) {
+  t_lState.m_potParams[t_programIndex][t_potIndex].m_state = LogicalStateValidator::setSafePotState(t_buffer[t_startIndex]);
 
   uint16_t value = 0;
   Utils::unpack16(t_buffer[t_startIndex + 1], t_buffer[t_startIndex + 2], value);
-  t_lState.m_potParams[t_potIndex].m_value = Utils::clamp<uint16_t>(value, 0, 1023);
+  t_lState.m_potParams[t_programIndex][t_potIndex].m_value = Utils::clamp<uint16_t>(value, 0, 1023);
 
   uint16_t minValue = 0;
   Utils::unpack16(t_buffer[t_startIndex + 3], t_buffer[t_startIndex + 4], minValue);
-  t_lState.m_potParams[t_potIndex].m_minValue = Utils::clamp<uint16_t>(minValue, 0, 1023);
+  t_lState.m_potParams[t_programIndex][t_potIndex].m_minValue = Utils::clamp<uint16_t>(minValue, 0, 1023);
 
   uint16_t maxValue = 0;
   Utils::unpack16(t_buffer[t_startIndex + 5], t_buffer[t_startIndex + 6], maxValue);
-  t_lState.m_potParams[t_potIndex].m_maxValue = Utils::clamp<uint16_t>(maxValue, 0, 1023);
+  t_lState.m_potParams[t_programIndex][t_potIndex].m_maxValue = Utils::clamp<uint16_t>(maxValue, 0, 1023);
 }
 
 RegionInfo MemoryHandler::calculateRegionInfo(MemoryRegion t_region, uint8_t t_programIndex, uint8_t t_index) {
@@ -285,7 +285,7 @@ void MemoryHandler::serializeRegion(MemoryRegion t_region, const LogicalState& t
       break;
 
     case MemoryRegion::kPot:
-      serializePotParam(t_lState, t_buffer, 0, t_index);
+      serializePotParam(t_lState, t_buffer, 0, t_programIndex, t_index);
       break;
 
     default:
@@ -332,7 +332,7 @@ void MemoryHandler::deserializeRegion(MemoryRegion t_region, LogicalState& t_lSt
       break;
 
     case MemoryRegion::kPot:
-      deserializePotParam(t_lState, t_buffer, 0, t_index);
+      deserializePotParam(t_lState, t_buffer, 0, t_programIndex, t_index);
       break;
 
     default:
