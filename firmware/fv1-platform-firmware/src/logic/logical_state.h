@@ -45,7 +45,7 @@ struct LogicalState {
     uint16_t m_maxValue = 1023;
   };
 
-  PotParams m_potParams[PotConstants::c_potCount];
+  PotParams m_potParams[ProgramConstants::c_maxPrograms][PotConstants::c_potCount];
 
   struct ExprParams {
       ExprState m_state = ExprState::kInactive;
