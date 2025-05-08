@@ -27,6 +27,7 @@ struct LogicalState {
   ProgramMode m_programMode = ProgramMode::kProgram;
   const Program* m_activeProgram = &ProgramsDefinitions::kPrograms[0];
   uint8_t m_currentProgram = 0;
+  uint8_t m_currentPresetBank = 0;
   uint8_t m_currentPreset = 0;
   uint8_t m_midiChannel = 0;
 
