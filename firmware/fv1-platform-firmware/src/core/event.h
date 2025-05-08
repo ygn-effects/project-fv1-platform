@@ -41,6 +41,8 @@ enum class EventType : uint8_t {
   kMenuUnlocked,
   kMenuLocked,
   kMenuProgramChanged,
+  kMenuPresetChanged,
+  kMenuPresetBankChanged,
   kMenuPot0Moved,
   kMenuPot1Moved,
   kMenuPot2Moved,
@@ -55,6 +57,7 @@ enum class EventType : uint8_t {
   // Program events
   kProgramChanged,
   kPresetChanged,
+  kPresetBankChanged,
 
   // Tempo events
   kTapIntervalChanged,
@@ -86,7 +89,9 @@ enum class EventType : uint8_t {
   kSaveTap,
   kSaveTempo,
   kSavePot,
-  kSaveExpr
+  kSaveExpr,
+  kLoadPresetBank,
+  kPresetBankLoaded
 };
 
 enum class EventCategory : uint8_t {
@@ -99,7 +104,8 @@ enum class EventCategory : uint8_t {
   kTempoEvent,
   kBypassEvent,
   kMidiEvent,
-  kSaveEvent
+  kSaveEvent,
+  kLoadEvent
 };
 
 enum class EventSubCategory : uint8_t {
@@ -117,11 +123,14 @@ enum class EventSubCategory : uint8_t {
   kStateChangedEvent,
   kMenuLockEvent,
   kMenuProgramChangedEvent,
+  kMenuPresetChangedEvent,
+  kMenuPresetBankChangedEvent,
   kMenuPotEvent,
   kMenuTempoEvent,
   kMenuExprEvent,
   kProgramChangedEvent,
   kPresetChangedEvent,
+  kPresetBankChangedEvent,
   kTapIntervalEvent,
   kTempoChangedEvent,
   kBypassEnabledEvent,
@@ -132,7 +141,8 @@ enum class EventSubCategory : uint8_t {
   kMidiTempoChangedEvent,
   kMidiProgramChangedEvent,
   kMidiProgramModeChangedEvent,
-  kSaveEvent
+  kSaveEvent,
+  kBankLoadEvent
 };
 
 constexpr EventCategory eventCategoryMap[] = {
@@ -165,6 +175,8 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kMenuEvent,          // kMenuUnlocked
   EventCategory::kMenuEvent,          // kMenuLocked
   EventCategory::kMenuEvent,          // kMenuProgramChanged
+  EventCategory::kMenuEvent,          // kMenuPresetChanged
+  EventCategory::kMenuEvent,          // kMenuPresetBankChanged
   EventCategory::kMenuEvent,          // kMenuPot0Moved
   EventCategory::kMenuEvent,          // kMenuPot1Moved
   EventCategory::kMenuEvent,          // kMenuPot2Moved
@@ -177,6 +189,7 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kMenuEvent,          // kMenuExprToeValueMoved
   EventCategory::kProgramEvent,       // kProgramChanged
   EventCategory::kProgramEvent,       // kPresetChanged
+  EventCategory::kProgramEvent,       // kPresetBankChanged
   EventCategory::kTempoEvent,         // kTapIntervalChanged
   EventCategory::kTempoEvent,         // kTempoChanged
   EventCategory::kBypassEvent,        // kBypassEnabled
@@ -200,7 +213,9 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kSaveEvent,          // kSaveTap
   EventCategory::kSaveEvent,          // kSaveTempo
   EventCategory::kSaveEvent,          // kSavePot
-  EventCategory::kSaveEvent           // kSaveExpr
+  EventCategory::kSaveEvent,          // kSaveExpr
+  EventCategory::kLoadEvent,          // kLoadPresetBank
+  EventCategory::kLoadEvent           // kPresetBankLoaded
 };
 
 constexpr EventSubCategory eventSubCategoryMap[] = {
@@ -233,6 +248,8 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kMenuLockEvent,               // kMenuUnlocked
   EventSubCategory::kMenuLockEvent,               // kMenuLocked
   EventSubCategory::kMenuProgramChangedEvent,     // kMenuProgramChanged
+  EventSubCategory::kMenuPresetChangedEvent,      // kMenuPresetChanged
+  EventSubCategory::kMenuPresetBankChangedEvent,  // kMenuPresetBankChanged
   EventSubCategory::kMenuPotEvent,                // kMenuPot0Moved
   EventSubCategory::kMenuPotEvent,                // kMenuPot1Moved
   EventSubCategory::kMenuPotEvent,                // kMenuPot2Moved
@@ -245,6 +262,7 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kMenuExprEvent,               // kMenuExprToeValueMoved
   EventSubCategory::kProgramChangedEvent,         // kProgramChanged
   EventSubCategory::kPresetChangedEvent,          // kPresetChanged
+  EventSubCategory::kPresetBankChangedEvent,      // kPresetBankChanged
   EventSubCategory::kTapIntervalEvent,            // kTapIntervalChanged
   EventSubCategory::kTempoChangedEvent,           // kTempoChanged
   EventSubCategory::kBypassEnabledEvent,          // kBypassEnabled
@@ -268,7 +286,9 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kSaveEvent,                   // kSaveTap
   EventSubCategory::kSaveEvent,                   // kSaveTempo
   EventSubCategory::kSaveEvent,                   // kSavePot
-  EventSubCategory::kSaveEvent                    // kSaveExpr
+  EventSubCategory::kSaveEvent,                   // kSaveExpr
+  EventSubCategory::kBankLoadEvent,               // kLoadPresetBank
+  EventSubCategory::kBankLoadEvent                // kPresetBankLoaded
 };
 
 constexpr EventCategory eventToCategory(EventType t_type) {
