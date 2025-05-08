@@ -73,7 +73,20 @@ enum class EventType : uint8_t {
   kMidiMixPotMoved,
   kMidiTempoChanged,
   kMidiProgramChanged,
-  kMidiProgramModeChanged
+  kMidiProgramModeChanged,
+
+  // Memory events
+  kSaveBypass,
+  kSaveProgramMode,
+  kSaveCurrentProgram,
+  kSaveCurrentPreset,
+  kSaveMidiChannel,
+  kSaveDeviceState,
+  kSaveLogicalState,
+  kSaveTap,
+  kSaveTempo,
+  kSavePot,
+  kSaveExpr
 };
 
 enum class EventCategory : uint8_t {
@@ -85,7 +98,8 @@ enum class EventCategory : uint8_t {
   kProgramEvent,
   kTempoEvent,
   kBypassEvent,
-  kMidiEvent
+  kMidiEvent,
+  kSaveEvent
 };
 
 enum class EventSubCategory : uint8_t {
@@ -118,6 +132,7 @@ enum class EventSubCategory : uint8_t {
   kMidiTempoChangedEvent,
   kMidiProgramChangedEvent,
   kMidiProgramModeChangedEvent,
+  kSaveEvent
 };
 
 constexpr EventCategory eventCategoryMap[] = {
@@ -175,63 +190,85 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kMidiEvent,          // kMidiTempoChanged
   EventCategory::kMidiEvent,          // kMidiProgramChanged
   EventCategory::kMidiEvent,          // kMidiProgramModeChanged
+  EventCategory::kSaveEvent,          // kSaveBypass
+  EventCategory::kSaveEvent,          // kSaveProgramMode
+  EventCategory::kSaveEvent,          // kSaveCurrentProgram
+  EventCategory::kSaveEvent,          // kSaveCurrentPreset
+  EventCategory::kSaveEvent,          // kSaveMidiChannel
+  EventCategory::kSaveEvent,          // kSaveDeviceState
+  EventCategory::kSaveEvent,          // kSaveLogicalState
+  EventCategory::kSaveEvent,          // kSaveTap
+  EventCategory::kSaveEvent,          // kSaveTempo
+  EventCategory::kSaveEvent,          // kSavePot
+  EventCategory::kSaveEvent           // kSaveExpr
 };
 
 constexpr EventSubCategory eventSubCategoryMap[] = {
-  EventSubCategory::kBootEvent,                  // Boot
-  EventSubCategory::kBootEvent,                  // kRestoreState
-  EventSubCategory::kBootEvent,                  // kBootCompleted
-  EventSubCategory::kRawBypassEvent,             // kRawBypassPressed
-  EventSubCategory::kRawTapEvent,                // kRawTapPressed
-  EventSubCategory::kRawTapEvent,                // kRawTapLongPressed
-  EventSubCategory::kRawEncoderEvent,            // kRawMenuEncoderPressed
-  EventSubCategory::kRawEncoderEvent,            // kRawMenuEncoderLongPressed
-  EventSubCategory::kRawEncoderEvent,            // kRawMenuEncoderMoved
-  EventSubCategory::kRawPotEvent,                // kRawPot0Moved
-  EventSubCategory::kRawPotEvent,                // kRawPot1Moved
-  EventSubCategory::kRawPotEvent,                // kRawPot2Moved
-  EventSubCategory::kRawPotEvent,                // kRawMixPotMoved
-  EventSubCategory::kRawExprEvent,               // kRawExprMoved
-  EventSubCategory::kBypassEvent,                // kBypassPressed
-  EventSubCategory::kTapEvent,                   // kTapPressed
-  EventSubCategory::kTapEvent,                   // kTapLongPressed
-  EventSubCategory::kEncoderEvent,               // kMenuEncoderPressed
-  EventSubCategory::kEncoderEvent,               // kMenuEncoderLongPressed
-  EventSubCategory::kEncoderEvent,               // kMenuEncoderMoved
-  EventSubCategory::kPotEvent,                   // kPot0Moved
-  EventSubCategory::kPotEvent,                   // kPot1Moved
-  EventSubCategory::kPotEvent,                   // kPot2Moved
-  EventSubCategory::kPotEvent,                   // kMixPotMoved
-  EventSubCategory::kExprEvent,                  // kExprMoved
-  EventSubCategory::kStateChangedEvent,          // kStateChanged
-  EventSubCategory::kMenuLockEvent,              // kMenuUnlocked
-  EventSubCategory::kMenuLockEvent,              // kMenuLocked
-  EventSubCategory::kMenuProgramChangedEvent,    // kMenuProgramChanged
-  EventSubCategory::kMenuPotEvent,               // kMenuPot0Moved
-  EventSubCategory::kMenuPotEvent,               // kMenuPot1Moved
-  EventSubCategory::kMenuPotEvent,               // kMenuPot2Moved
-  EventSubCategory::kMenuPotEvent,               // kMenuMixPotMoved
-  EventSubCategory::kMenuTempoEvent,             // kMenuTempoChanged
-  EventSubCategory::kMenuExprEvent,              // kMenuExprStateToggled
-  EventSubCategory::kMenuExprEvent,              // kMenuExprMappedPotMoved
-  EventSubCategory::kMenuExprEvent,              // kMenuExprDirectionToggled
-  EventSubCategory::kMenuExprEvent,              // kMenuExprHeelValueMoved
-  EventSubCategory::kMenuExprEvent,              // kMenuExprToeValueMoved
-  EventSubCategory::kProgramChangedEvent,        // kProgramChanged
-  EventSubCategory::kPresetChangedEvent,         // kPresetChanged
-  EventSubCategory::kTapIntervalEvent,           // kTapIntervalChanged
-  EventSubCategory::kTempoChangedEvent,          // kTempoChanged
-  EventSubCategory::kBypassEnabledEvent,         // kBypassEnabled
-  EventSubCategory::kBypassDisabledEvent,        // kBypassDisabled
-  EventSubCategory::kMidiBypassPressedEvent,     // kMidiBypassPressed
-  EventSubCategory::kMidiTapPressedEvent,        // kMidiTapPressed
-  EventSubCategory::kMidiPotMovedEvent,          // kMidiPot0Moved
-  EventSubCategory::kMidiPotMovedEvent,          // kMidiPot1Moved
-  EventSubCategory::kMidiPotMovedEvent,          // kMidiPot2Moved
-  EventSubCategory::kMidiPotMovedEvent,          // kMidiMixPotMoved
-  EventSubCategory::kMidiTempoChangedEvent,      // kMidiTempoChanged
-  EventSubCategory::kMidiProgramChangedEvent,    // kMidiProgramChanged
-  EventSubCategory::kMidiProgramModeChangedEvent // kMidiProgramModeChange
+  EventSubCategory::kBootEvent,                   // Boot
+  EventSubCategory::kBootEvent,                   // kRestoreState
+  EventSubCategory::kBootEvent,                   // kBootCompleted
+  EventSubCategory::kRawBypassEvent,              // kRawBypassPressed
+  EventSubCategory::kRawTapEvent,                 // kRawTapPressed
+  EventSubCategory::kRawTapEvent,                 // kRawTapLongPressed
+  EventSubCategory::kRawEncoderEvent,             // kRawMenuEncoderPressed
+  EventSubCategory::kRawEncoderEvent,             // kRawMenuEncoderLongPressed
+  EventSubCategory::kRawEncoderEvent,             // kRawMenuEncoderMoved
+  EventSubCategory::kRawPotEvent,                 // kRawPot0Moved
+  EventSubCategory::kRawPotEvent,                 // kRawPot1Moved
+  EventSubCategory::kRawPotEvent,                 // kRawPot2Moved
+  EventSubCategory::kRawPotEvent,                 // kRawMixPotMoved
+  EventSubCategory::kRawExprEvent,                // kRawExprMoved
+  EventSubCategory::kBypassEvent,                 // kBypassPressed
+  EventSubCategory::kTapEvent,                    // kTapPressed
+  EventSubCategory::kTapEvent,                    // kTapLongPressed
+  EventSubCategory::kEncoderEvent,                // kMenuEncoderPressed
+  EventSubCategory::kEncoderEvent,                // kMenuEncoderLongPressed
+  EventSubCategory::kEncoderEvent,                // kMenuEncoderMoved
+  EventSubCategory::kPotEvent,                    // kPot0Moved
+  EventSubCategory::kPotEvent,                    // kPot1Moved
+  EventSubCategory::kPotEvent,                    // kPot2Moved
+  EventSubCategory::kPotEvent,                    // kMixPotMoved
+  EventSubCategory::kExprEvent,                   // kExprMoved
+  EventSubCategory::kStateChangedEvent,           // kStateChanged
+  EventSubCategory::kMenuLockEvent,               // kMenuUnlocked
+  EventSubCategory::kMenuLockEvent,               // kMenuLocked
+  EventSubCategory::kMenuProgramChangedEvent,     // kMenuProgramChanged
+  EventSubCategory::kMenuPotEvent,                // kMenuPot0Moved
+  EventSubCategory::kMenuPotEvent,                // kMenuPot1Moved
+  EventSubCategory::kMenuPotEvent,                // kMenuPot2Moved
+  EventSubCategory::kMenuPotEvent,                // kMenuMixPotMoved
+  EventSubCategory::kMenuTempoEvent,              // kMenuTempoChanged
+  EventSubCategory::kMenuExprEvent,               // kMenuExprStateToggled
+  EventSubCategory::kMenuExprEvent,               // kMenuExprMappedPotMoved
+  EventSubCategory::kMenuExprEvent,               // kMenuExprDirectionToggled
+  EventSubCategory::kMenuExprEvent,               // kMenuExprHeelValueMoved
+  EventSubCategory::kMenuExprEvent,               // kMenuExprToeValueMoved
+  EventSubCategory::kProgramChangedEvent,         // kProgramChanged
+  EventSubCategory::kPresetChangedEvent,          // kPresetChanged
+  EventSubCategory::kTapIntervalEvent,            // kTapIntervalChanged
+  EventSubCategory::kTempoChangedEvent,           // kTempoChanged
+  EventSubCategory::kBypassEnabledEvent,          // kBypassEnabled
+  EventSubCategory::kBypassDisabledEvent,         // kBypassDisabled
+  EventSubCategory::kMidiBypassPressedEvent,      // kMidiBypassPressed
+  EventSubCategory::kMidiTapPressedEvent,         // kMidiTapPressed
+  EventSubCategory::kMidiPotMovedEvent,           // kMidiPot0Moved
+  EventSubCategory::kMidiPotMovedEvent,           // kMidiPot1Moved
+  EventSubCategory::kMidiPotMovedEvent,           // kMidiPot2Moved
+  EventSubCategory::kMidiPotMovedEvent,           // kMidiMixPotMoved
+  EventSubCategory::kMidiTempoChangedEvent,       // kMidiTempoChanged
+  EventSubCategory::kMidiProgramChangedEvent,     // kMidiProgramChanged
+  EventSubCategory::kMidiProgramModeChangedEvent, // kMidiProgramModeChange
+  EventSubCategory::kSaveEvent,                   // kSaveBypass
+  EventSubCategory::kSaveEvent,                   // kSaveProgramMode
+  EventSubCategory::kSaveEvent,                   // kSaveCurrentProgram
+  EventSubCategory::kSaveEvent,                   // kSaveCurrentPreset
+  EventSubCategory::kSaveEvent,                   // kSaveMidiChannel
+  EventSubCategory::kSaveEvent,                   // kSaveDeviceState
+  EventSubCategory::kSaveEvent,                   // kSaveLogicalState
+  EventSubCategory::kSaveEvent,                   // kSaveTap
+  EventSubCategory::kSaveEvent,                   // kSaveTempo
+  EventSubCategory::kSaveEvent,                   // kSavePot
+  EventSubCategory::kSaveEvent                    // kSaveExpr
 };
 
 constexpr EventCategory eventToCategory(EventType t_type) {
