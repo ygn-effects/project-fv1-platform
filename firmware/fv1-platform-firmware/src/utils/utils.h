@@ -29,4 +29,11 @@ namespace Utils {
     x = clamp(x, in_min, in_max);
     return mapValue(x, in_min, in_max, out_min, out_max);
   }
+
+  inline uint8_t wrappedAdd(uint8_t current, int8_t delta, uint8_t max) {
+    int next = static_cast<int>(current) + static_cast<int>(delta);
+    next %= static_cast<int>(max);
+    if (next < 0) next += max;
+    return static_cast<uint8_t>(next);
+  }
 } // namespace utils
