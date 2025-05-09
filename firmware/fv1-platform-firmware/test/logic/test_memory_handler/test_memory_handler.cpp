@@ -2,9 +2,10 @@
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
 #include "logic/memory_handler.h"
+#include "logic/preset_handler.h"
 
 #include "../src/logic/memory_handler.cpp"
-
+#include "../src/logic/preset_handler.cpp"
 
 void setUp() {
   Event event;
@@ -577,6 +578,214 @@ void test_validators() {
   TEST_ASSERT_EQUAL(DivValue::kQuarter, LogicalStateValidator::setSafeDivValue(5));
 }
 
+void test_serialize_preset() {
+  LogicalState logicalState;
+  MemoryHandler memoryHandler;
+  PresetHandler presetHandler;
+
+  RegionInfo info = memoryHandler.calculateRegionInfo(MemoryRegion::kPreset, 2, 2);
+  TEST_ASSERT_EQUAL(758, info.m_address);
+  TEST_ASSERT_EQUAL(46, info.m_length);
+
+  uint8_t buffer[info.m_length];
+  Preset& preset = presetHandler.m_currentPresetBank.m_presets[1];
+
+  preset.m_programIndex = 2;
+  preset.m_tapState = TapState::kEnabled;
+  preset.m_divState = DivState::kEnabled;
+  preset.m_divValue = DivValue::kEight;
+  preset.m_interval = 512;
+  preset.m_divInterval = 256;
+  preset.m_tempo = 256;
+  preset.m_exprState = ExprState::kActive;
+  preset.m_mappedPot = MappedPot::kPot0;
+  preset.m_direction = Direction::kInverted;
+  preset.m_heelValue = 256;
+  preset.m_toeValue = 512;
+  preset.m_potParams[3].m_state = PotState::kActive;
+  preset.m_potParams[3].m_value = 512;
+  preset.m_potParams[3].m_minValue = 256;
+  preset.m_potParams[3].m_maxValue = 768;
+
+  memoryHandler.serializePreset(preset, buffer, 0, 1, 0);
+
+  TEST_ASSERT_EQUAL(2, buffer[PresetLayout::c_programIndex]);
+  TEST_ASSERT_EQUAL(TapState::kEnabled, buffer[PresetLayout::c_tapState]);
+  TEST_ASSERT_EQUAL(DivState::kEnabled, buffer[PresetLayout::c_divState]);
+  TEST_ASSERT_EQUAL(DivValue::kEight, buffer[PresetLayout::c_divValue]);
+  TEST_ASSERT_EQUAL(0, buffer[PresetLayout::c_intervalL]);
+  TEST_ASSERT_EQUAL(2, buffer[PresetLayout::c_intervalH]);
+  TEST_ASSERT_EQUAL(0, buffer[PresetLayout::c_divIntervalL]);
+  TEST_ASSERT_EQUAL(1, buffer[PresetLayout::c_divIntervalH]);
+  TEST_ASSERT_EQUAL(0, buffer[PresetLayout::c_tempoL]);
+  TEST_ASSERT_EQUAL(1, buffer[PresetLayout::c_tempoH]);
+  TEST_ASSERT_EQUAL(ExprState::kActive, buffer[PresetLayout::c_exprState]);
+  TEST_ASSERT_EQUAL(MappedPot::kPot0, buffer[PresetLayout::c_mappedPot]);
+  TEST_ASSERT_EQUAL(Direction::kInverted, buffer[PresetLayout::c_direction]);
+  TEST_ASSERT_EQUAL(0, buffer[PresetLayout::c_heelValueL]);
+  TEST_ASSERT_EQUAL(1, buffer[PresetLayout::c_heelValueH]);
+  TEST_ASSERT_EQUAL(0, buffer[PresetLayout::c_toeValueL]);
+  TEST_ASSERT_EQUAL(2, buffer[PresetLayout::c_toeValueH]);
+  TEST_ASSERT_EQUAL(PotState::kActive, buffer[PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3]);
+  TEST_ASSERT_EQUAL(0, buffer[(PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 1]);
+  TEST_ASSERT_EQUAL(2, buffer[(PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 2]);
+  TEST_ASSERT_EQUAL(0, buffer[(PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 3]);
+  TEST_ASSERT_EQUAL(1, buffer[(PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 4]);
+  TEST_ASSERT_EQUAL(0, buffer[(PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 5]);
+  TEST_ASSERT_EQUAL(3, buffer[(PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 6]);
+}
+
+void test_deserialize_preset() {
+  LogicalState logicalState;
+  MemoryHandler memoryHandler;
+  PresetHandler presetHandler;
+
+  RegionInfo info = memoryHandler.calculateRegionInfo(MemoryRegion::kPreset, 2, 2);
+  TEST_ASSERT_EQUAL(758, info.m_address);
+  TEST_ASSERT_EQUAL(46, info.m_length);
+
+  uint8_t buffer[info.m_length];
+  Preset& preset = presetHandler.m_currentPresetBank.m_presets[1];
+
+  buffer[PresetLayout::c_id] = 2;
+  buffer[PresetLayout::c_programIndex] = 3;
+  buffer[PresetLayout::c_tapStart] = 1;
+  buffer[PresetLayout::c_divState] = 1;
+  buffer[PresetLayout::c_divValue] = 1;
+  buffer[PresetLayout::c_intervalL] = 0;
+  buffer[PresetLayout::c_intervalH] = 2;
+  buffer[PresetLayout::c_divIntervalL] = 0;
+  buffer[PresetLayout::c_divIntervalH] = 1;
+  buffer[PresetLayout::c_tempoL] = 0;
+  buffer[PresetLayout::c_tempoH] = 1;
+  buffer[PresetLayout::c_exprState] = 1;
+  buffer[PresetLayout::c_mappedPot] = 1;
+  buffer[PresetLayout::c_direction] = 0;
+  buffer[PresetLayout::c_heelValueL] = 0;
+  buffer[PresetLayout::c_heelValueH] = 1;
+  buffer[PresetLayout::c_toeValueL] = 0;
+  buffer[PresetLayout::c_toeValueH] = 2;
+  buffer[PresetLayout::c_toeValueH] = 2;
+  buffer[(PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3)] = 1;
+  buffer[(PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 1] = 0;
+  buffer[(PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 2] = 2;
+  buffer[(PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 3] = 0;
+  buffer[(PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 4] = 1;
+  buffer[(PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 5] = 0;
+  buffer[(PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 6] = 3;
+
+  memoryHandler.deserializePreset(preset, buffer, 0, 1, 0);
+
+  TEST_ASSERT_EQUAL(2, preset.m_id);
+  TEST_ASSERT_EQUAL(3, preset.m_programIndex);
+  TEST_ASSERT_EQUAL(TapState::kEnabled, preset.m_tapState);
+  TEST_ASSERT_EQUAL(DivState::kEnabled, preset.m_divState);
+  TEST_ASSERT_EQUAL(DivValue::kEight, preset.m_divValue);
+  TEST_ASSERT_EQUAL(512, preset.m_interval);
+  TEST_ASSERT_EQUAL(256, preset.m_divInterval);
+  TEST_ASSERT_EQUAL(256, preset.m_tempo);
+  TEST_ASSERT_EQUAL(ExprState::kActive, preset.m_exprState);
+  TEST_ASSERT_EQUAL(MappedPot::kPot1, preset.m_mappedPot);
+  TEST_ASSERT_EQUAL(Direction::kNormal, preset.m_direction);
+  TEST_ASSERT_EQUAL(256, preset.m_heelValue);
+  TEST_ASSERT_EQUAL(512, preset.m_toeValue);
+  TEST_ASSERT_EQUAL(PotState::kActive, preset.m_potParams[3].m_state);
+  TEST_ASSERT_EQUAL(512, preset.m_potParams[3].m_value);
+  TEST_ASSERT_EQUAL(256, preset.m_potParams[3].m_minValue);
+  TEST_ASSERT_EQUAL(768, preset.m_potParams[3].m_maxValue);
+}
+
+void test_serialize_preset_bank() {
+  LogicalState logicalState;
+  MemoryHandler memoryHandler;
+  PresetHandler presetHandler;
+
+  RegionInfo info = memoryHandler.calculateRegionInfo(MemoryRegion::kPresetBank, 2);
+  TEST_ASSERT_EQUAL(665, info.m_address);
+  TEST_ASSERT_EQUAL(185, info.m_length);
+
+  uint8_t buffer[info.m_length];
+  PresetBank& bank = presetHandler.m_currentPresetBank;
+  Preset& preset = presetHandler.m_currentPresetBank.m_presets[1];
+
+  bank.m_id = 2;
+  preset.m_id = 1;
+  preset.m_programIndex = 3;
+  preset.m_tapState = TapState::kEnabled;
+  preset.m_divState = DivState::kEnabled;
+  preset.m_divValue = DivValue::kEight;
+  preset.m_interval = 512;
+  preset.m_divInterval = 256;
+  preset.m_tempo = 256;
+  preset.m_exprState = ExprState::kActive;
+  preset.m_mappedPot = MappedPot::kPot2;
+  preset.m_direction = Direction::kInverted;
+  preset.m_heelValue = 256;
+  preset.m_toeValue = 512;
+  preset.m_potParams[3].m_state = PotState::kActive;
+  preset.m_potParams[3].m_value = 512;
+  preset.m_potParams[3].m_minValue = 256;
+  preset.m_potParams[3].m_maxValue = 768;
+
+  memoryHandler.serializePresetBank(presetHandler.m_currentPresetBank, buffer, 2, 0);
+
+  uint8_t progIndex = 1 + PresetLayout::c_presetSize;
+
+  TEST_ASSERT_EQUAL(2, buffer[0]);
+  TEST_ASSERT_EQUAL(1, buffer[progIndex]);
+  TEST_ASSERT_EQUAL(3, buffer[progIndex + 1]);
+}
+
+void test_deserialize_preset_bank() {
+  LogicalState logicalState;
+  MemoryHandler memoryHandler;
+  PresetHandler presetHandler;
+
+  RegionInfo info = memoryHandler.calculateRegionInfo(MemoryRegion::kPresetBank, 2);
+  TEST_ASSERT_EQUAL(665, info.m_address);
+  TEST_ASSERT_EQUAL(185, info.m_length);
+
+  uint8_t buffer[info.m_length];
+  PresetBank& bank = presetHandler.m_currentPresetBank;
+  Preset& preset = presetHandler.m_currentPresetBank.m_presets[1];
+
+  uint8_t progIndex = 1 + PresetLayout::c_presetSize;
+
+  buffer[0] = 1;
+  buffer[progIndex + PresetLayout::c_id] = 2;
+  buffer[progIndex + PresetLayout::c_programIndex] = 3;
+  buffer[progIndex + PresetLayout::c_tapStart] = 1;
+  buffer[progIndex + PresetLayout::c_divState] = 1;
+  buffer[progIndex + PresetLayout::c_divValue] = 1;
+  buffer[progIndex + PresetLayout::c_intervalL] = 0;
+  buffer[progIndex + PresetLayout::c_intervalH] = 2;
+  buffer[progIndex + PresetLayout::c_divIntervalL] = 0;
+  buffer[progIndex + PresetLayout::c_divIntervalH] = 1;
+  buffer[progIndex + PresetLayout::c_tempoL] = 0;
+  buffer[progIndex + PresetLayout::c_tempoH] = 1;
+  buffer[progIndex + PresetLayout::c_exprState] = 1;
+  buffer[progIndex + PresetLayout::c_mappedPot] = 1;
+  buffer[progIndex + PresetLayout::c_direction] = 0;
+  buffer[progIndex + PresetLayout::c_heelValueL] = 0;
+  buffer[progIndex + PresetLayout::c_heelValueH] = 1;
+  buffer[progIndex + PresetLayout::c_toeValueL] = 0;
+  buffer[progIndex + PresetLayout::c_toeValueH] = 2;
+  buffer[progIndex + PresetLayout::c_toeValueH] = 2;
+  buffer[progIndex + (PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3)] = 1;
+  buffer[progIndex + (PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 1] = 0;
+  buffer[progIndex + (PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 2] = 2;
+  buffer[progIndex + (PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 3] = 0;
+  buffer[progIndex + (PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 4] = 1;
+  buffer[progIndex + (PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 5] = 0;
+  buffer[progIndex + (PresetLayout::c_potParamStart + PresetLayout::c_potParamSize * 3) + 6] = 3;
+
+  memoryHandler.deserializePresetBank(bank, buffer, 2, 0);
+
+  TEST_ASSERT_EQUAL(1, bank.m_id);
+  TEST_ASSERT_EQUAL(2, preset.m_id);
+  TEST_ASSERT_EQUAL(3, preset.m_programIndex);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_serialize);
@@ -584,5 +793,9 @@ int main() {
   RUN_TEST(test_serialize_logical_state);
   RUN_TEST(test_deserialize_logical_state);
   RUN_TEST(test_validators);
+  RUN_TEST(test_serialize_preset);
+  RUN_TEST(test_deserialize_preset);
+  RUN_TEST(test_serialize_preset_bank);
+  RUN_TEST(test_deserialize_preset_bank);
   UNITY_END();
 }

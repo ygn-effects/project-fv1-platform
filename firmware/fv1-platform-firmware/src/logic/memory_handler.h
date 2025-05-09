@@ -43,6 +43,50 @@
  *                   | maxValue        Max value high byte
  */
 
+/*
+ * Memory Map for Preset Bank Storage in EEPROM
+ *
+ * Byte Range       Field Name         Description
+ * -----------------------------------------------------------------
+ * 0                id                 Bank ID
+ * 1 - N            presets            Array of presets (see below)
+ */
+
+/*
+ * Memory Map for Single Preset in EEPROM
+ *
+ * Byte Range       Field Name         Description
+ * -----------------------------------------------------------------
+ * 0                id                 Preset ID
+ * 1                programIndex       Active program
+ * 2 - 8            tapHandler         Tap handler data
+ *                   | tapState        Tap state
+ *                   | divState        Div state
+ *                   | divValue        Div value
+ *                   | interval        Interval low byte
+ *                   | interval        Interval high byte
+ *                   | divInterval     Div interval low byte
+ *                   | divinterval     Div interval high byte
+ * 9                tempo              Current tempo low byte
+ * 10               tempo              Current tempo high byte
+ * 11 - 17          exprParam          Expr handler data
+ *                   | state           Expr state
+ *                   | mappedPot       Expr mapped pot
+ *                   | direction       Expr direction
+ *                   | heelValue       Heel value low byte
+ *                   | heelValue       Heel value high byte
+ *                   | toeValue        Toe value low byte
+ *                   | toeValue        Toe value high byte
+ * 18 - 45          potParam           Pot param data x4 (4 × 7 bytes)
+ *                   | state           Pot state
+ *                   | value           Pot value low byte
+ *                   | value           Pot value high byte
+ *                   | minValue        Min value low bytes
+ *                   | minValue        Min value high byte
+ *                   | maxValue        Max value low bytes
+ *                   | maxValue        Max value high byte
+ */
+
 enum class MemoryRegion : uint8_t {
   kDeviceState,
   kLogicalState,
@@ -55,7 +99,9 @@ enum class MemoryRegion : uint8_t {
   kTap,
   kTempo,
   kPot,
-  kExpr
+  kExpr,
+  kPreset,
+  kPresetBank
 };
 
 namespace MemoryLayout {
@@ -97,6 +143,49 @@ namespace MemoryLayout {
 
   constexpr uint16_t getPotParamOffset(uint8_t t_programIndex, uint8_t t_potIndex) {
     return c_potParamStart + ((t_programIndex * PotConstants::c_potCount + t_potIndex) * c_potParamSize);
+  }
+}
+
+namespace PresetLayout {
+  constexpr uint16_t c_presetBankStart = MemoryLayout::c_potParamEnd + 1;
+  constexpr uint8_t c_presetSize = 46;
+  constexpr uint8_t c_presetsPerBank = PresetConstants::c_presetPerBank;
+  constexpr uint8_t c_bankHeaderSize = 1;
+
+  constexpr uint16_t c_id = 0;
+  constexpr uint16_t c_programIndex = 1;
+
+  constexpr uint16_t c_tapStart = 2;
+  constexpr uint16_t c_tapState = c_tapStart;
+  constexpr uint16_t c_divState = c_tapStart + 1;
+  constexpr uint16_t c_divValue = c_tapStart + 2;
+  constexpr uint16_t c_intervalL = c_tapStart + 3;
+  constexpr uint16_t c_intervalH = c_tapStart + 4;
+  constexpr uint16_t c_divIntervalL = c_tapStart + 5;
+  constexpr uint16_t c_divIntervalH = c_tapStart + 6;
+
+  constexpr uint16_t c_tempoL = 9;
+  constexpr uint16_t c_tempoH = 10;
+
+  constexpr uint16_t c_exprStart = 11;
+  constexpr uint16_t c_exprState = c_exprStart;
+  constexpr uint16_t c_mappedPot = c_exprStart + 1;
+  constexpr uint16_t c_direction = c_exprStart + 2;
+  constexpr uint16_t c_heelValueL = c_exprStart + 3;
+  constexpr uint16_t c_heelValueH = c_exprStart + 4;
+  constexpr uint16_t c_toeValueL = c_exprStart + 5;
+  constexpr uint16_t c_toeValueH = c_exprStart + 6;
+
+  constexpr uint16_t c_potParamStart = 18;
+  constexpr uint16_t c_potParamSize = 7;
+
+  constexpr uint16_t getPresetOffset(uint8_t t_bankIndex, uint8_t t_presetIndex) {
+    return c_presetBankStart + ((t_bankIndex * (c_bankHeaderSize + c_presetsPerBank * c_presetSize)) +
+           c_bankHeaderSize + (t_presetIndex * c_presetSize));
+  }
+
+  constexpr uint16_t getBankOffset(uint8_t t_bankIndex) {
+    return c_presetBankStart + (t_bankIndex * (c_bankHeaderSize + c_presetsPerBank * c_presetSize));
   }
 }
 
@@ -173,4 +262,8 @@ struct MemoryHandler {
     RegionInfo calculateRegionInfo(MemoryRegion t_region, uint8_t t_programIndex = 0, uint8_t t_index = 0);
     void serializeRegion(MemoryRegion t_region, const LogicalState& t_lState, uint8_t* t_buffer, uint8_t t_programIndex = 0, uint8_t t_index = 0);
     void deserializeRegion(MemoryRegion t_region, LogicalState& t_lState, const uint8_t* t_buffer, uint8_t t_programIndex = 0, uint8_t t_index = 0);
+    void serializePreset(const Preset& t_preset, uint8_t* t_buffer, uint8_t t_bankIndex, uint8_t t_presetIndex, uint8_t t_startIndex);
+    void deserializePreset(Preset& t_preset, const uint8_t* t_buffer, uint8_t t_bankIndex, uint8_t t_presetIndex, uint8_t t_startIndex);
+    void serializePresetBank(const PresetBank& t_presetBank, uint8_t* t_buffer, uint8_t t_bankIndex, uint8_t t_startIndex);
+    void deserializePresetBank(PresetBank& t_presetBank, const uint8_t* t_buffer, uint8_t t_bankIndex, uint8_t t_startIndex);
 };
