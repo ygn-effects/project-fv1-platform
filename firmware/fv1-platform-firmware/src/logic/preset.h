@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdint.h>
 #include "logic/logical_state.h"
 
