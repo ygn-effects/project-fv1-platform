@@ -43,6 +43,7 @@ enum class EventType : uint8_t {
   kMenuProgramChanged,
   kMenuPresetChanged,
   kMenuPresetBankChanged,
+  kMenuSavePreset,
   kMenuPot0Moved,
   kMenuPot1Moved,
   kMenuPot2Moved,
@@ -90,6 +91,7 @@ enum class EventType : uint8_t {
   kSaveTempo,
   kSavePot,
   kSaveExpr,
+  kSavePreset,
   kLoadPresetBank,
   kPresetBankLoaded
 };
@@ -125,6 +127,7 @@ enum class EventSubCategory : uint8_t {
   kMenuProgramChangedEvent,
   kMenuPresetChangedEvent,
   kMenuPresetBankChangedEvent,
+  kMenuPresetSaveEvent,
   kMenuPotEvent,
   kMenuTempoEvent,
   kMenuExprEvent,
@@ -177,6 +180,7 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kMenuEvent,          // kMenuProgramChanged
   EventCategory::kMenuEvent,          // kMenuPresetChanged
   EventCategory::kMenuEvent,          // kMenuPresetBankChanged
+  EventCategory::kMenuEvent,          // kMenuSavePreset
   EventCategory::kMenuEvent,          // kMenuPot0Moved
   EventCategory::kMenuEvent,          // kMenuPot1Moved
   EventCategory::kMenuEvent,          // kMenuPot2Moved
@@ -214,6 +218,7 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kSaveEvent,          // kSaveTempo
   EventCategory::kSaveEvent,          // kSavePot
   EventCategory::kSaveEvent,          // kSaveExpr
+  EventCategory::kSaveEvent,          // kSavePreset
   EventCategory::kLoadEvent,          // kLoadPresetBank
   EventCategory::kLoadEvent           // kPresetBankLoaded
 };
@@ -250,6 +255,7 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kMenuProgramChangedEvent,     // kMenuProgramChanged
   EventSubCategory::kMenuPresetChangedEvent,      // kMenuPresetChanged
   EventSubCategory::kMenuPresetBankChangedEvent,  // kMenuPresetBankChanged
+  EventSubCategory::kMenuPresetSaveEvent,         // kMenuSavePreset
   EventSubCategory::kMenuPotEvent,                // kMenuPot0Moved
   EventSubCategory::kMenuPotEvent,                // kMenuPot1Moved
   EventSubCategory::kMenuPotEvent,                // kMenuPot2Moved
@@ -287,6 +293,7 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kSaveEvent,                   // kSaveTempo
   EventSubCategory::kSaveEvent,                   // kSavePot
   EventSubCategory::kSaveEvent,                   // kSaveExpr
+  EventSubCategory::kSaveEvent,                   // kSavePreset
   EventSubCategory::kBankLoadEvent,               // kLoadPresetBank
   EventSubCategory::kBankLoadEvent                // kPresetBankLoaded
 };
