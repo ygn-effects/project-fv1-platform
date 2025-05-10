@@ -412,7 +412,7 @@ void MemoryHandler::deserializeRegion(MemoryRegion t_region, LogicalState& t_lSt
 }
 
 void MemoryHandler::serializePreset(const Preset& t_preset, uint8_t* t_buffer, uint8_t t_bankIndex, uint8_t t_presetIndex, uint8_t t_startIndex) {
-  t_buffer[t_startIndex] = t_preset.m_id;
+  t_buffer[t_startIndex] = t_presetIndex;
   t_buffer[t_startIndex + 1] = t_preset.m_programIndex;
   t_buffer[t_startIndex + 2] = static_cast<uint8_t>(t_preset.m_tapState);
   t_buffer[t_startIndex + 3] = static_cast<uint8_t>(t_preset.m_divState);
@@ -465,59 +465,59 @@ void MemoryHandler::serializePreset(const Preset& t_preset, uint8_t* t_buffer, u
 }
 
 void MemoryHandler::deserializePreset(Preset& t_preset, const uint8_t* t_buffer, uint8_t t_bankIndex, uint8_t t_presetIndex, uint8_t t_startIndex) {
-  t_preset.m_id = t_buffer[t_startIndex];
-  t_preset.m_programIndex = t_buffer[t_startIndex + 1];
-  t_preset.m_tapState = static_cast<TapState>(t_buffer[t_startIndex + 2]);
-  t_preset.m_divState = static_cast<DivState>(t_buffer[t_startIndex + 3]);
-  t_preset.m_divValue = static_cast<DivValue>(t_buffer[t_startIndex + 4]);
+  t_preset.m_id = t_presetIndex;
+  t_preset.m_programIndex = Utils::clamp<uint8_t>(t_buffer[t_startIndex + 1], 0, PresetConstants::c_presetPerBank);
+  t_preset.m_tapState = LogicalStateValidator::setSafeTapState(t_buffer[t_startIndex + 2]);
+  t_preset.m_divState = LogicalStateValidator::setSafeDivState(t_buffer[t_startIndex + 3]);
+  t_preset.m_divValue = LogicalStateValidator::setSafeDivValue(t_buffer[t_startIndex + 4]);
 
   uint16_t interval = 0;
   Utils::unpack16(t_buffer[t_startIndex + 5], t_buffer[t_startIndex + 6], interval);
-  t_preset.m_interval = interval;
+  t_preset.m_interval = Utils::clamp<uint16_t>(interval, 0, 1000);
 
   uint16_t divInterval = 0;
   Utils::unpack16(t_buffer[t_startIndex + 7], t_buffer[t_startIndex + 8], divInterval);
-  t_preset.m_divInterval = divInterval;
+  t_preset.m_divInterval = Utils::clamp<uint16_t>(divInterval, 0, 1000);
 
   uint16_t tempo = 0;
   Utils::unpack16(t_buffer[t_startIndex + 9], t_buffer[t_startIndex + 10], tempo);
-  t_preset.m_tempo = tempo;
+  t_preset.m_tempo = Utils::clamp<uint16_t>(tempo, 0, 1000);
 
-  t_preset.m_exprState = static_cast<ExprState>(t_buffer[11]);
-  t_preset.m_mappedPot = static_cast<MappedPot>(t_buffer[12]);
-  t_preset.m_direction = static_cast<Direction>(t_buffer[13]);
+  t_preset.m_exprState = LogicalStateValidator::setSafeExprState(t_buffer[t_startIndex + 11]);
+  t_preset.m_mappedPot = LogicalStateValidator::setSafeMappedPot(t_buffer[t_startIndex + 12]);
+  t_preset.m_direction = LogicalStateValidator::setSafeDirection(t_buffer[t_startIndex + 13]);
 
   uint16_t heelValue = 0;
   Utils::unpack16(t_buffer[t_startIndex + 14], t_buffer[t_startIndex + 15], heelValue);
-  t_preset.m_heelValue = heelValue;
+  t_preset.m_heelValue = Utils::clamp<uint16_t>(heelValue, 0, 1023);
 
   uint16_t toeValue = 0;
   Utils::unpack16(t_buffer[t_startIndex + 16], t_buffer[t_startIndex + 17], toeValue);
-  t_preset.m_toeValue = toeValue;
+  t_preset.m_toeValue = Utils::clamp<uint16_t>(toeValue, 0, 1023);
 
   uint8_t offset = t_startIndex + PresetLayout::c_potParamStart;
 
   for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
-    t_preset.m_potParams[i].m_state = static_cast<PotState>(t_buffer[offset]);
+    t_preset.m_potParams[i].m_state = LogicalStateValidator::setSafePotState(t_buffer[offset]);
 
     uint16_t value = 0;
     Utils::unpack16(t_buffer[offset + 1], t_buffer[offset + 2], value);
-    t_preset.m_potParams[i].m_value = value;
+    t_preset.m_potParams[i].m_value = Utils::clamp<uint16_t>(value, 0, 1023);
 
     uint16_t minValue = 0;
     Utils::unpack16(t_buffer[offset + 3], t_buffer[offset + 4], minValue);
-    t_preset.m_potParams[i].m_minValue = minValue;
+    t_preset.m_potParams[i].m_minValue = Utils::clamp<uint16_t>(minValue, 0, 1023);
 
     uint16_t maxValue = 0;
     Utils::unpack16(t_buffer[offset + 5], t_buffer[offset + 6], maxValue);
-    t_preset.m_potParams[i].m_maxValue = maxValue;
+    t_preset.m_potParams[i].m_maxValue = Utils::clamp<uint16_t>(maxValue, 0, 1023);
 
     offset += PresetLayout::c_potParamSize;
   }
 }
 
 void MemoryHandler::serializePresetBank(const PresetBank& t_presetBank, uint8_t* t_buffer, uint8_t t_bankIndex, uint8_t t_startIndex) {
-  t_buffer[t_startIndex] = t_presetBank.m_id;
+  t_buffer[t_startIndex] = t_bankIndex;
 
   uint8_t offset = t_startIndex + 1;
 
@@ -528,7 +528,7 @@ void MemoryHandler::serializePresetBank(const PresetBank& t_presetBank, uint8_t*
 }
 
 void MemoryHandler::deserializePresetBank(PresetBank& t_presetBank, const uint8_t* t_buffer, uint8_t t_bankIndex, uint8_t t_startIndex) {
-  t_presetBank.m_id = t_buffer[0];
+  t_presetBank.m_id = t_bankIndex;
 
   uint8_t offset = t_startIndex + 1;
 
