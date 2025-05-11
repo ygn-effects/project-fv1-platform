@@ -84,7 +84,7 @@ void PotService::update() {
 }
 
 bool PotService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent
-      || t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPotEvent
-      || t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiPotMovedEvent;
+  return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent)
+      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPotEvent)
+      || (t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiPotMovedEvent);
 }

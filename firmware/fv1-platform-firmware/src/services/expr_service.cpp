@@ -52,6 +52,6 @@ void ExprService::update() {
 }
 
 bool ExprService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kExprEvent
-      || t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent;
+  return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kExprEvent)
+      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent);
 }

@@ -1,8 +1,8 @@
 #include "services/tempo_service.h"
 
 TempoService::TempoService(LogicalState& t_lState) :
-    m_logicState(t_lState), m_interval(0), m_source(TempoSource::kPot),
-    m_minInterval(0), m_maxInterval(0) {}
+    m_logicState(t_lState), m_interval(0),
+    m_minInterval(0), m_maxInterval(0), m_source(TempoSource::kPot) {}
 
 void TempoService::publishTempoEvent(const Event& t_event) const {
   EventBus::publish({EventType::kTempoChanged, t_event.m_timestamp, {.value = m_interval}});
@@ -61,8 +61,8 @@ void TempoService::update() {
 }
 
 bool TempoService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent
-      || t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuTempoEvent
-      || t_category == EventCategory::kTempoEvent && t_subCategory == EventSubCategory::kTapIntervalEvent
-      || t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent;
+  return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent)
+      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuTempoEvent)
+      || (t_category == EventCategory::kTempoEvent && t_subCategory == EventSubCategory::kTapIntervalEvent)
+      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent);
 }

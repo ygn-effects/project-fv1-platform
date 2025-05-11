@@ -69,9 +69,9 @@ void TapService::update() {
 }
 
 bool TapService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kTapEvent
-      || t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent
-      || t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuTempoEvent
-      || t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent
-      || t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiTapPressedEvent;
+  return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kTapEvent)
+      || (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent)
+      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuTempoEvent)
+      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent)
+      || (t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiTapPressedEvent);
 }

@@ -40,6 +40,6 @@ void BypassService::update() {
 }
 
 bool BypassService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kBypassEvent
-      || t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiBypassPressedEvent;
+  return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kBypassEvent)
+      || (t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiBypassPressedEvent);
 }

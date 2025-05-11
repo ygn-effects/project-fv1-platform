@@ -97,30 +97,50 @@ void FsmService::handleEvent(const Event& t_event) {
       }
 
       if (t_event.m_type == EventType::kRawMenuEncoderMoved) {
-        EventBus::publish({EventType::kMenuEncoderMoved, t_event.m_timestamp, {.delta = t_event.m_data.delta}});
+        Event e;
+        e.m_type = EventType::kMenuEncoderMoved;
+        e.m_timestamp = t_event.m_timestamp;
+        e.m_data.delta = t_event.m_data.delta;
+        EventBus::publish(e);
       }
 
       // Pot 0 move
       if (t_event.m_type == EventType::kRawPot0Moved && m_logicalState.m_bypassState==BypassState::kActive) {
-        EventBus::publish({EventType::kPot0Moved, t_event.m_timestamp, {.value = t_event.m_data.value}});
+        Event e;
+        e.m_type = EventType::kPot0Moved;
+        e.m_timestamp = t_event.m_timestamp;
+        e.m_data.value = t_event.m_data.value;
+        EventBus::publish(e);
         return;
       }
 
       // Pot 1 move
       if (t_event.m_type == EventType::kRawPot1Moved && m_logicalState.m_bypassState==BypassState::kActive) {
-        EventBus::publish({EventType::kPot1Moved, t_event.m_timestamp, {.value = t_event.m_data.value}});
+        Event e;
+        e.m_type = EventType::kPot1Moved;
+        e.m_timestamp = t_event.m_timestamp;
+        e.m_data.value = t_event.m_data.value;
+        EventBus::publish(e);
         return;
       }
 
       // Pot 2 move
       if (t_event.m_type == EventType::kRawPot2Moved && m_logicalState.m_bypassState==BypassState::kActive) {
-        EventBus::publish({EventType::kPot2Moved, t_event.m_timestamp, {.value = t_event.m_data.value}});
+        Event e;
+        e.m_type = EventType::kPot2Moved;
+        e.m_timestamp = t_event.m_timestamp;
+        e.m_data.value = t_event.m_data.value;
+        EventBus::publish(e);
         return;
       }
 
       // Mix pot move
       if (t_event.m_type == EventType::kRawMixPotMoved && m_logicalState.m_bypassState==BypassState::kActive) {
-        EventBus::publish({EventType::kMixPotMoved, t_event.m_timestamp, {.value = t_event.m_data.value}});
+        Event e;
+        e.m_type = EventType::kMixPotMoved;
+        e.m_timestamp = t_event.m_timestamp;
+        e.m_data.value = t_event.m_data.value;
+        EventBus::publish(e);
         return;
       }
 
@@ -143,6 +163,6 @@ void FsmService::update() {
 }
 
 bool FsmService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return t_category == EventCategory::kRawPhysicalEvent || t_category == EventCategory::kBootEvent
-      || t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuLockEvent;
+  return (t_category == EventCategory::kRawPhysicalEvent || t_category == EventCategory::kBootEvent)
+      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuLockEvent);
 }

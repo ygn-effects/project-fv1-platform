@@ -1,9 +1,9 @@
 #include "services/menu_service.h"
 
 MenuService::MenuService(LogicalState& t_lState)
-    : m_logicState(t_lState), m_cursor(0), m_first(0),
-      m_subState(SubState::kSelecting), m_editRow(0),
-      m_valueBackup(0), m_mode(UiMode::kLocked) {}
+    : m_logicState(t_lState), m_mode(UiMode::kLocked), m_cursor(0), m_first(0),
+      m_lastInputTime(0), m_subState(SubState::kSelecting), m_editRow(0),
+      m_valueBackup(0) {}
 
 void MenuService::handleLocked(const Event& t_event) {
   if (t_event.m_type == EventType::kMenuEncoderLongPressed) {
@@ -61,7 +61,7 @@ void MenuService::handleSelecting(const Event& t_event) {
       moveCursor(t_event.m_data.delta);
       break;
 
-    case EventType::kMenuEncoderPressed:
+    case EventType::kMenuEncoderPressed: {
       ui::MenuItem item = getcurrentMenuItem();
 
       if (item.m_subMenu) {
@@ -75,6 +75,10 @@ void MenuService::handleSelecting(const Event& t_event) {
       else if (item.m_onMove) {
         beginEditing();
       }
+      break;
+    }
+
+    default:
       break;
   }
 }
@@ -192,6 +196,9 @@ void MenuService::handleEvent(const Event& t_event) {
     case UiMode::kUnlocked:
       handleUnlocked(t_event);
       break;
+
+    default:
+      break;
   }
 }
 
@@ -200,7 +207,7 @@ void MenuService::update() {
 
   uint32_t now = 31000; // Dummy value for testing
   if ((now - m_lastInputTime) > MenuConstants::c_menuTimeout) {
-    lockUi({EventType::kMenuEncoderMoved, 500, {.delta = 1}});
+    lockUi({EventType::kMenuEncoderMoved, 500, {}});
   }
 
   // For tests only

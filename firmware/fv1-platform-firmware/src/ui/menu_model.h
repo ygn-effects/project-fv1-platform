@@ -57,7 +57,11 @@ constexpr const char* valueProgram(const LogicalState* t_state) {
 }
 
 void onMoveProgram(int8_t t_delta) {
-  EventBus::publish({EventType::kMenuProgramChanged, 0 /*millis()*/, {.delta=t_delta}});
+  Event e;
+  e.m_type = EventType::kMenuProgramChanged;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
 }
 
 constexpr const char* labelPot(const LogicalState* t_state, uint8_t t_potIndex) {
@@ -135,19 +139,35 @@ const char* valueMixPot(const LogicalState* t_state) {
 }
 
 void onMovePot0(int8_t t_delta) {
-  EventBus::publish({EventType::kMenuPot0Moved, 0 /*millis()*/, {.delta=t_delta}});
+  Event e;
+  e.m_type = EventType::kMenuPot0Moved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
 }
 
 void onMovePot1(int8_t t_delta) {
-  EventBus::publish({EventType::kMenuPot1Moved, 0 /*millis()*/, {.delta=t_delta}});
+  Event e;
+  e.m_type = EventType::kMenuPot1Moved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
 }
 
 void onMovePot2(int8_t t_delta) {
-  EventBus::publish({EventType::kMenuPot2Moved, 0 /*millis()*/, {.delta=t_delta}});
+  Event e;
+  e.m_type = EventType::kMenuPot2Moved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
 }
 
 void onMoveMixPot(int8_t t_delta) {
-  EventBus::publish({EventType::kMenuMixPotMoved, 0 /*millis()*/, {.delta=t_delta}});
+  Event e;
+  e.m_type = EventType::kMenuMixPotMoved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
 }
 
 constexpr const char* labelTempo(const LogicalState* t_state) {
@@ -162,7 +182,11 @@ const char* valueTempo(const LogicalState* t_state) {
 }
 
 void onMoveTempo(int8_t t_delta) {
-  EventBus::publish({EventType::kMenuTempoChanged, 0 /*millis()*/, {.delta=t_delta}});
+  Event e;
+  e.m_type = EventType::kMenuTempoChanged;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
 }
 
 constexpr const char* labelExprSettings(const LogicalState*) {
@@ -207,7 +231,11 @@ constexpr const char* valueExprMappedPot(const LogicalState* t_state) {
 }
 
 void onMoveExprMappedPot(int8_t t_delta) {
-  EventBus::publish({EventType::kMenuExprMappedPotMoved, 0 /*millis()*/, {.delta=t_delta}});
+  Event e;
+  e.m_type = EventType::kMenuExprMappedPotMoved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
 }
 
 constexpr const char* labelExprDirection(const LogicalState* t_state) {
@@ -236,7 +264,11 @@ const char* valueExprHeelValue(const LogicalState* t_state) {
 }
 
 void onMoveExprHeelValue(int8_t t_delta) {
-  EventBus::publish({EventType::kMenuExprHeelValueMoved, 0, {.delta=t_delta}});
+  Event e;
+  e.m_type = EventType::kMenuExprHeelValueMoved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
 }
 
 constexpr const char* labelExprToeValue(const LogicalState* t_state) {
@@ -251,7 +283,11 @@ const char* valueExprToeValue(const LogicalState* t_state) {
 }
 
 void onMoveExprToeValue(int8_t t_delta) {
-  EventBus::publish({EventType::kMenuExprToeValueMoved, 0, {.delta=t_delta}});
+  Event e;
+  e.m_type = EventType::kMenuExprToeValueMoved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
 }
 
 extern const MenuPage ExprSettingsMenuPage;

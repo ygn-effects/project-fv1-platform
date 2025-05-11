@@ -49,9 +49,9 @@ void PresetService::update() {
 }
 
 bool PresetService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kPresetChangedEvent
-      || t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kPresetBankChangedEvent
-      || t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetChangedEvent
-      || t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetBankChangedEvent
-      || t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetSaveEvent;
+  return (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kPresetChangedEvent)
+      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kPresetBankChangedEvent)
+      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetChangedEvent)
+      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetBankChangedEvent)
+      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetSaveEvent);
 }
