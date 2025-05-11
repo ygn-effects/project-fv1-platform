@@ -6,6 +6,7 @@
 #include "core/event_bus.h"
 #include "core/service.h"
 #include "logic/logical_state.h"
+#include "ui/menu_layout.h"
 
 namespace ui {
 
@@ -30,6 +31,7 @@ struct MenuPage {
   const char* m_header;
   const MenuItem* m_items;
   uint8_t m_count;
+  MenuLayout m_layout;
 };
 
 constexpr bool isAlwaysVisible(const LogicalState*) {
