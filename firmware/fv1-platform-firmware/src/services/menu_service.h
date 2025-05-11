@@ -28,6 +28,8 @@ struct MenuView {
   const ui::MenuItem* m_items[MenuConstants::c_visibleItemsPerPage];
   uint8_t m_count;
   uint8_t m_selected;
+  MenuLayout m_layout;
+  bool m_editing;
 };
 
 class MenuService : public Service {
