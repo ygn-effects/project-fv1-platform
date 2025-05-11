@@ -176,6 +176,10 @@ void MenuService::publishView() {
 
   m_view.m_count = sliceCount;
   m_view.m_header = page.m_header;
+  m_view.m_layout = page.m_layout;
+  m_subState == SubState::kEditing
+    ? m_view.m_editing = true
+    : m_view.m_editing = false;
 }
 
 void MenuService::init() {
