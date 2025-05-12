@@ -104,8 +104,8 @@ void MenuService::moveCursor(int8_t t_delta) {
   if (m_cursor < m_first) {
     m_first = m_cursor;
   }
-  else if (m_cursor >= m_first + MenuConstants::c_visibleItemsPerPage) {
-    m_first = m_cursor - (MenuConstants::c_visibleItemsPerPage - 1);
+  else if (m_cursor >= m_first + ui::MenuConstants::c_visibleItemsPerPage) {
+    m_first = m_cursor - (ui::MenuConstants::c_visibleItemsPerPage - 1);
   }
 }
 
@@ -165,7 +165,7 @@ void MenuService::publishView() {
       continue;
     }
 
-    if (sliceCount < MenuConstants::c_visibleItemsPerPage) {
+    if (sliceCount < ui::MenuConstants::c_visibleItemsPerPage) {
       m_view.m_items[sliceCount] = &item;
 
       if (visIndex == m_cursor) {
@@ -230,7 +230,7 @@ const SubState MenuService::getsubState() const {
   return m_subState;
 }
 
-const MenuView* MenuService::getMenuView() const {
+const ui::MenuView* MenuService::getMenuView() const {
   return &m_view;
 }
 

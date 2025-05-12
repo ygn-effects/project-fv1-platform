@@ -2,13 +2,10 @@
 
 #include <stdint.h>
 #include "logic/logical_state.h"
-#include "services/menu_service.h"
 #include "hal/display.h"
+#include "ui/menu_model.h"
 
-enum class MenuLayout {
-  kList,
-  kTwoColumns
-};
+namespace ui {
 
 class BaseLayout {
   protected:
@@ -29,7 +26,7 @@ class BaseLayout {
         m_tab(t_driver.getTextWidth(">") + m_space),
         m_lineMargin(1) {}
 
-    virtual void draw(const MenuView& t_view, const LogicalState& t_lState) = 0;
+    virtual void draw(const ui::MenuView& t_view, const LogicalState& t_lState) = 0;
 };
 
 class ListLayout : public BaseLayout {
@@ -37,7 +34,7 @@ class ListLayout : public BaseLayout {
     ListLayout(DisplayDriver& t_driver)
       : BaseLayout(t_driver) {}
 
-    void draw(const MenuView& t_view, const LogicalState& t_lState) override {
+    void draw(const ui::MenuView& t_view, const LogicalState& t_lState) override {
       m_driver.drawRect(0, 0, m_width, m_lineHeight + m_lineMargin);
       uint16_t headerW = m_driver.getTextWidth(t_view.m_header);
       uint16_t headerX = (m_width - headerW) / 2;
@@ -67,8 +64,9 @@ class ListLayout : public BaseLayout {
 };
 
 struct TwoColumnsLayout : public BaseLayout {
-  void draw(const MenuView& t_view, DisplayDriver& t_driver, const LogicalState& t_lState) {
+  void draw(const ui::MenuView& t_view, DisplayDriver& t_driver, const LogicalState& t_lState) {
 
   }
 };
 
+}
