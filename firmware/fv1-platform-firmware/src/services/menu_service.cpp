@@ -100,8 +100,8 @@ void MenuService::moveCursor(int8_t t_delta) {
   if (m_cursor < m_first) {
     m_first = m_cursor;
   }
-  else if (m_cursor >= m_first + MenuConstants::c_visibleItemsPerPage) {
-    m_first = m_cursor - (MenuConstants::c_visibleItemsPerPage - 1);
+  else if (m_cursor >= m_first + ui::MenuConstants::c_visibleItemsPerPage) {
+    m_first = m_cursor - (ui::MenuConstants::c_visibleItemsPerPage - 1);
   }
 }
 
@@ -161,7 +161,7 @@ void MenuService::publishView() {
       continue;
     }
 
-    if (sliceCount < MenuConstants::c_visibleItemsPerPage) {
+    if (sliceCount < ui::MenuConstants::c_visibleItemsPerPage) {
       m_view.m_items[sliceCount] = &item;
 
       if (visIndex == m_cursor) {
@@ -203,7 +203,7 @@ void MenuService::update() {
   if (m_mode == UiMode::kLocked) return;
 
   uint32_t now = 31000; // Dummy value for testing
-  if ((now - m_lastInputTime) > MenuConstants::c_menuTimeout) {
+  if ((now - m_lastInputTime) > ui::MenuConstants::c_menuTimeout) {
     lockUi({EventType::kMenuEncoderMoved, 500, {.delta = 1}});
   }
 
@@ -223,7 +223,7 @@ const SubState MenuService::getsubState() const {
   return m_subState;
 }
 
-const MenuView* MenuService::getMenuView() const {
+const ui::MenuView* MenuService::getMenuView() const {
   return &m_view;
 }
 

@@ -8,11 +8,6 @@
 #include "ui/menu_model.h"
 #include "ui/menu_stack.h"
 
-namespace MenuConstants {
-  static constexpr uint32_t c_menuTimeout = 30000u;
-  static constexpr uint8_t c_visibleItemsPerPage = 5;
-}
-
 enum class UiMode : uint8_t {
   kLocked,
   kUnlocked
@@ -23,20 +18,11 @@ enum class SubState : uint8_t {
   kEditing
 };
 
-struct MenuView {
-  const char* m_header;
-  const ui::MenuItem* m_items[MenuConstants::c_visibleItemsPerPage];
-  uint8_t m_count;
-  uint8_t m_selected;
-  MenuLayout m_layout;
-  bool m_editing;
-};
-
 class MenuService : public Service {
   private:
     LogicalState& m_logicState;
     MenuStack<4> m_menuStack;
-    MenuView m_view;
+    ui::MenuView m_view;
     UiMode m_mode;
     uint8_t m_cursor;
     uint8_t m_first;
@@ -76,6 +62,6 @@ class MenuService : public Service {
     const ui::MenuPage& getcurrentMenuPage() const;
     const ui::MenuItem& getcurrentMenuItem() const;
     const SubState getsubState() const;
-    const MenuView* getMenuView() const;
+    const ui::MenuView* getMenuView() const;
     const uint8_t getCursor() const { return m_cursor; }
 };

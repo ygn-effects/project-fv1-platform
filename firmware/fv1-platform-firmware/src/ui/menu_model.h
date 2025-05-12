@@ -6,11 +6,20 @@
 #include "core/event_bus.h"
 #include "core/service.h"
 #include "logic/logical_state.h"
-#include "ui/menu_layout.h"
 
 namespace ui {
 
+namespace MenuConstants {
+  static constexpr uint32_t c_menuTimeout = 30000u;
+  static constexpr uint8_t c_visibleItemsPerPage = 5;
+}
+
 struct MenuPage;
+
+enum class MenuLayout {
+  kList,
+  kTwoColumns
+};
 
 using VisibleFn = bool (*)(const LogicalState*);
 using LabelFn = const char* (*)(const LogicalState*);
@@ -32,6 +41,15 @@ struct MenuPage {
   const MenuItem* m_items;
   uint8_t m_count;
   MenuLayout m_layout;
+};
+
+struct MenuView {
+  const char* m_header;
+  const MenuItem* m_items[ui::MenuConstants::c_visibleItemsPerPage];
+  uint8_t m_count;
+  uint8_t m_selected;
+  MenuLayout m_layout;
+  bool m_editing;
 };
 
 constexpr bool isAlwaysVisible(const LogicalState*) {

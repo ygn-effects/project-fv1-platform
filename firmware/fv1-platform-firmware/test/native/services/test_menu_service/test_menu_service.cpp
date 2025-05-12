@@ -269,7 +269,7 @@ void test_publish() {
   EventBus::recall(e);
 
   menuService.update();
-  const MenuView* view = menuService.getMenuView();
+  const ui::MenuView* view = menuService.getMenuView();
 
   TEST_ASSERT_EQUAL("Program", view->m_items[0]->m_label(&logicalState));
   TEST_ASSERT_EQUAL("Tempo", view->m_items[1]->m_label(&logicalState));
