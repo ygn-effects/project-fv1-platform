@@ -63,14 +63,10 @@ class ListLayout : public BaseLayout {
     }
 };
 
-class TwoColumnsLayout : public BaseLayout {
-  public:
-    TwoColumnsLayout(DisplayDriver& t_driver)
-      : BaseLayout(t_driver) {}
+struct TwoColumnsLayout : public BaseLayout {
+  void draw(const ui::MenuView& t_view, DisplayDriver& t_driver, const LogicalState& t_lState) {
 
-    void draw(const ui::MenuView& t_view, const LogicalState& t_lState) override {
-
-    }
+  }
 };
 
 }
