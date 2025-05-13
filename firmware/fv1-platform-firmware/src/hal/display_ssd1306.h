@@ -46,6 +46,10 @@ class SSD1306 : public DisplayDriver {
       }
     }
 
+    void setTextSize(uint8_t t_size) override {
+      m_ssd1306.setTextSize(t_size);
+    }
+
     void display() override {
       m_ssd1306.display();
     }

@@ -8,6 +8,7 @@ class DisplayDriver {
     virtual void clear() = 0;
     virtual void drawRect(int16_t t_x, int16_t t_y, int16_t t_w, int8_t t_h, bool t_filled = true) = 0;
     virtual void drawText(int16_t t_x, int16_t t_y, const char* t_text, bool t_inverted = false) = 0;
+    virtual void setTextSize(uint8_t t_size) = 0;
     virtual void display() = 0;
 
     virtual int16_t getWidth() const = 0;
