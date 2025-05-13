@@ -12,6 +12,7 @@ namespace ui {
 namespace MenuConstants {
   static constexpr uint32_t c_menuTimeout = 30000u;
   static constexpr uint8_t c_visibleItemsPerPage = 5;
+  static constexpr uint8_t c_visibleItemsPerTwoColumns = 2 * MenuConstants::c_visibleItemsPerPage;
 }
 
 struct MenuPage;
@@ -46,7 +47,7 @@ struct MenuPage {
 
 struct MenuView {
   const char* m_header;
-  const MenuItem* m_items[ui::MenuConstants::c_visibleItemsPerPage];
+  const MenuItem* m_items[ui::MenuConstants::c_visibleItemsPerTwoColumns];
   uint8_t m_count;
   uint8_t m_selected;
   MenuLayout m_layout;
@@ -55,6 +56,14 @@ struct MenuView {
 
 constexpr bool isAlwaysVisible(const LogicalState*) {
   return true;
+}
+
+constexpr bool visibleIfPresetMode(const LogicalState* t_state) {
+  return t_state->m_programMode == ProgramMode::kPreset;
+}
+
+constexpr bool visibleIfProgramMode(const LogicalState* t_state) {
+  return t_state->m_programMode == ProgramMode::kProgram;
 }
 
 constexpr bool visibleIfDelayEffect(const LogicalState* t_state) {
@@ -70,11 +79,33 @@ constexpr bool visibleIfExprActive(const LogicalState* t_state) {
 }
 
 constexpr const char* labelProgram(const LogicalState*) {
-  return "Program";
+  return "Prog";
 }
 
 constexpr const char* valueProgram(const LogicalState* t_state) {
   return t_state->m_activeProgram->m_name;
+}
+
+constexpr const char* labelPresetBank(const LogicalState* t_state) {
+  return "Bank";
+}
+
+const char* valuePresetBank(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_currentPresetBank);
+
+  return buffer;
+}
+
+constexpr const char* labelPreset(const LogicalState* t_state) {
+  return "Preset";
+}
+
+const char* valuePreset(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_currentPreset);
+
+  return buffer;
 }
 
 void onMoveProgram(int8_t t_delta) {
@@ -85,6 +116,22 @@ void onMoveProgram(int8_t t_delta) {
   EventBus::publish(e);
 }
 
+constexpr const char* labelPot0Locked(const LogicalState* t_state) {
+  return "P0";
+}
+
+constexpr const char* labelPot1Locked(const LogicalState* t_state) {
+  return "P1";
+}
+
+constexpr const char* labelPot2Locked(const LogicalState* t_state) {
+  return "P2";
+}
+
+constexpr const char* labelMixPotLocked(const LogicalState* t_state) {
+  return "MX";
+}
+
 constexpr const char* labelPot(const LogicalState* t_state, uint8_t t_potIndex) {
   return t_state->m_activeProgram->m_params[t_potIndex].m_label;
 }
@@ -92,6 +139,7 @@ constexpr const char* labelPot(const LogicalState* t_state, uint8_t t_potIndex) 
 constexpr const char* labelPot0(const LogicalState* t_state) {
   return labelPot(t_state, 0);
 }
+
 constexpr const char* labelPot1(const LogicalState* t_state) {
   return labelPot(t_state, 1);
 }
@@ -195,6 +243,10 @@ constexpr const char* labelTempo(const LogicalState* t_state) {
   return "Tempo";
 }
 
+constexpr const char* labelTempoLocked(const LogicalState* t_state) {
+  return "T";
+}
+
 const char* valueTempo(const LogicalState* t_state) {
   static char buffer[8];
   snprintf(buffer, sizeof(buffer), "%u ms", t_state->m_tempo);
@@ -208,6 +260,10 @@ void onMoveTempo(int8_t t_delta) {
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
+}
+
+constexpr const char* labelExprLocked(const LogicalState*) {
+  return "Expr";
 }
 
 constexpr const char* labelExprSettings(const LogicalState*) {
@@ -314,13 +370,22 @@ void onMoveExprToeValue(int8_t t_delta) {
 extern const MenuPage ExprSettingsMenuPage;
 
 constexpr MenuItem lockScreenMenuItems[] = {
-
+  { labelProgram, isAlwaysVisible, valueProgram, nullptr, nullptr, nullptr },
+  { labelPresetBank, visibleIfPresetMode, valuePresetBank, nullptr, nullptr, nullptr },
+  { labelTempoLocked, visibleIfDelayEffect, valueTempo, nullptr, nullptr, nullptr },
+  { labelPreset, visibleIfPresetMode, valuePreset, nullptr, nullptr, nullptr },
+  { labelPot0Locked, notVisibleIfDelayEffect, valuePot0, nullptr, nullptr, nullptr },
+  { labelPot1Locked, isAlwaysVisible, valuePot1, nullptr, nullptr, nullptr },
+  { labelPot2Locked, isAlwaysVisible, valuePot2, nullptr, nullptr, nullptr },
+  { labelMixPot, isAlwaysVisible, valueMixPot, nullptr, nullptr, nullptr },
+  { labelExprLocked, visibleIfExprActive, valueExprMappedPot, nullptr, nullptr, nullptr }
 };
 
 constexpr MenuPage LockScreenMenu = {
   "Lock screen",
   lockScreenMenuItems,
-  0
+  sizeof(lockScreenMenuItems) / sizeof(lockScreenMenuItems[0]),
+  ui::MenuLayout::kTwoColumns
 };
 
 constexpr MenuItem ProgramMenuItems[] = {
