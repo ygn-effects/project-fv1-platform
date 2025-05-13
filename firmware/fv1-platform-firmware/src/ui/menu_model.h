@@ -18,7 +18,8 @@ struct MenuPage;
 
 enum class MenuLayout {
   kList,
-  kTwoColumns
+  kTwoColumns,
+  kLabelValue
 };
 
 using VisibleFn = bool (*)(const LogicalState*);
@@ -335,7 +336,8 @@ constexpr MenuItem ProgramMenuItems[] = {
 constexpr MenuPage ProgramMenuPage = {
   "Program mode",
   ProgramMenuItems,
-  sizeof(ProgramMenuItems) / sizeof(ProgramMenuItems[0])
+  sizeof(ProgramMenuItems) / sizeof(ProgramMenuItems[0]),
+  ui::MenuLayout::kList
 };
 
 constexpr MenuItem PresetMenuItems[] = {
@@ -359,7 +361,52 @@ constexpr MenuItem ExprSettingsMenuItems[] = {
 constexpr MenuPage ExprSettingsMenuPage = {
   "Expression settings",
   ExprSettingsMenuItems,
-  sizeof(ExprSettingsMenuItems) / sizeof(ExprSettingsMenuItems[0])
+  sizeof(ExprSettingsMenuItems) / sizeof(ExprSettingsMenuItems[0]),
+  ui::MenuLayout::kList
+};
+
+constexpr MenuItem Pot0ValueMenuItems[] = {
+  { labelPot0, isAlwaysVisible, valuePot0, onMovePot0, nullptr, nullptr }
+};
+
+constexpr MenuPage Pot0ValueMenuPage = {
+  "P0 Setting",
+  Pot0ValueMenuItems,
+  sizeof(Pot0ValueMenuItems) / sizeof(Pot0ValueMenuItems[0]),
+  ui::MenuLayout::kLabelValue
+};
+
+constexpr MenuItem Pot1ValueMenuItems[] = {
+  { labelPot1, isAlwaysVisible, valuePot1, onMovePot1, nullptr, nullptr }
+};
+
+constexpr MenuPage Pot1ValueMenuPage = {
+  "P1 Setting",
+  Pot1ValueMenuItems,
+  sizeof(Pot1ValueMenuItems) / sizeof(Pot1ValueMenuItems[0]),
+  ui::MenuLayout::kLabelValue
+};
+
+constexpr MenuItem Pot2ValueMenuItems[] = {
+  { labelPot2, isAlwaysVisible, valuePot2, onMovePot2, nullptr, nullptr }
+};
+
+constexpr MenuPage Pot2ValueMenuPage = {
+  "P2 Setting",
+  Pot2ValueMenuItems,
+  sizeof(Pot2ValueMenuItems) / sizeof(Pot2ValueMenuItems[0]),
+  ui::MenuLayout::kLabelValue
+};
+
+constexpr MenuItem MixPotValueMenuItems[] = {
+  { labelMixPot, isAlwaysVisible, valueMixPot, onMoveMixPot, nullptr, nullptr }
+};
+
+constexpr MenuPage MixPotValueMenuPage = {
+  "Mix Setting",
+  MixPotValueMenuItems,
+  sizeof(MixPotValueMenuItems) / sizeof(MixPotValueMenuItems[0]),
+  ui::MenuLayout::kLabelValue
 };
 
 } // namespace ui

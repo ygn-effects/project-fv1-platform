@@ -10,11 +10,13 @@ class MenuRenderer {
   private:
     ui::ListLayout m_listLayout;
     ui::TwoColumnsLayout m_twoColumnsLayout;
+    ui::LabelValueLayout m_labelValueLayout;
 
   public:
     MenuRenderer(DisplayDriver& t_driver)
       : m_listLayout(t_driver),
-        m_twoColumnsLayout(t_driver) {}
+        m_twoColumnsLayout(t_driver),
+        m_labelValueLayout(t_driver) {}
 
     void drawMenu(const ui::MenuView& t_view, const LogicalState& t_lState) {
       switch (t_view.m_layout) {
@@ -26,10 +28,14 @@ class MenuRenderer {
           m_twoColumnsLayout.draw(t_view, t_lState);
           break;
 
+        case ui::MenuLayout::kLabelValue:
+          m_labelValueLayout.draw(t_view, t_lState);
+          break;
+
         default:
           break;
       }
-  }
+    }
 };
 
 }
