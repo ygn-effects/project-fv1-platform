@@ -210,7 +210,7 @@ void MenuService::update() {
   if (m_mode == UiMode::kLocked) return;
 
   uint32_t now = 31000; // Dummy value for testing
-  if ((now - m_lastInputTime) > MenuConstants::c_menuTimeout) {
+  if ((now - m_lastInputTime) > ui::MenuConstants::c_menuTimeout) {
     lockUi({EventType::kMenuEncoderMoved, 500, {}});
   }
 
