@@ -11,6 +11,7 @@ namespace ui {
 
 namespace MenuConstants {
   static constexpr uint32_t c_menuTimeout = 30000u;
+  static constexpr uint32_t c_potMenuTimeout = 500u;
   static constexpr uint8_t c_visibleItemsPerPage = 5;
   static constexpr uint8_t c_visibleItemsPerTwoColumns = 2 * MenuConstants::c_visibleItemsPerPage;
 }
@@ -431,7 +432,8 @@ constexpr MenuPage ExprSettingsMenuPage = {
 };
 
 constexpr MenuItem Pot0ValueMenuItems[] = {
-  { labelPot0, isAlwaysVisible, valuePot0, onMovePot0, nullptr, nullptr }
+  { labelTempo, visibleIfDelayEffect, valueTempo, onMoveTempo, nullptr, nullptr },
+  { labelPot0, notVisibleIfDelayEffect, valuePot0, onMovePot0, nullptr, nullptr }
 };
 
 constexpr MenuPage Pot0ValueMenuPage = {

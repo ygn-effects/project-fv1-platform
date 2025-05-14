@@ -27,6 +27,8 @@ class MenuService : public Service {
     uint8_t m_cursor;
     uint8_t m_first;
     uint32_t m_lastInputTime;
+    uint32_t m_lastPotMoveTime;
+    bool m_potMenuActive;
     SubState m_subState;
     uint8_t m_editRow;
     uint16_t m_valueBackup;
@@ -39,6 +41,8 @@ class MenuService : public Service {
 
     void handleSelecting(const Event& t_event);
     void handleEditing(const Event& t_event);
+
+    void handlePotsMoving(const Event& t_event);
 
     void moveCursor(int8_t t_delta);
 

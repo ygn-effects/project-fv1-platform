@@ -287,6 +287,63 @@ void test_publish() {
   TEST_ASSERT_EQUAL("Expression settings", view->m_items[4]->m_label(&logicalState));
 }
 
+void test_pot_menu() {
+  LogicalState logicalState;
+  MenuService menuService(logicalState);
+
+  menuService.init();
+
+  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  Event e;
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kPot0Moved, 1000, {}});
+  TEST_ASSERT_EQUAL("P0 Setting", menuService.getcurrentMenuPage().m_header);
+  TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.handleEvent({EventType::kPot1Moved, 2000, {}});
+  TEST_ASSERT_EQUAL("P1 Setting", menuService.getcurrentMenuPage().m_header);
+
+  menuService.handleEvent({EventType::kPot2Moved, 2000, {}});
+  TEST_ASSERT_EQUAL("P2 Setting", menuService.getcurrentMenuPage().m_header);
+
+  menuService.handleEvent({EventType::kMixPotMoved, 2000, {}});
+  TEST_ASSERT_EQUAL("Mix Setting", menuService.getcurrentMenuPage().m_header);
+}
+
+void test_pot_menu_timeout() {
+  LogicalState logicalState;
+  MenuService menuService(logicalState);
+
+  menuService.init();
+
+  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 23000, {}});
+  Event e;
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
+
+  menuService.handleEvent({EventType::kPot0Moved, 24000, {}});
+  TEST_ASSERT_EQUAL("P0 Setting", menuService.getcurrentMenuPage().m_header);
+  TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.update();
+
+  TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.handleEvent({EventType::kPot0Moved, 30800, {}});
+  TEST_ASSERT_EQUAL("P0 Setting", menuService.getcurrentMenuPage().m_header);
+  TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.update();
+
+  TEST_ASSERT_EQUAL("P0 Setting", menuService.getcurrentMenuPage().m_header);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_unlock_lock);
@@ -298,5 +355,7 @@ int main() {
   RUN_TEST(test_sub_menu);
   RUN_TEST(test_not_visible);
   RUN_TEST(test_publish);
+  RUN_TEST(test_pot_menu);
+  RUN_TEST(test_pot_menu_timeout);
   UNITY_END();
 }
