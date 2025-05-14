@@ -75,6 +75,33 @@ void test_label_value() {
   driver.display();
 }
 
+void test_two_columns() {
+  LogicalState state;
+  SSD1306 driver;
+  ui::TwoColumnsLayout layout(driver);
+  ui::MenuView view;
+
+  uint8_t offset = 0;
+
+  for (uint8_t i = 0; i < ui::LockScreenMenu.m_count; i++) {
+    if (ui::LockScreenMenu.m_items[i].m_visible(&state)) {
+      view.m_items[offset] = &ui::LockScreenMenu.m_items[i];
+      offset++;
+    }
+  }
+
+  view.m_header = ui::LockScreenMenu.m_header;
+  view.m_count = offset;
+  view.m_layout = ui::LockScreenMenu.m_layout;
+  view.m_editing = false;
+  view.m_selected = 0;
+
+  driver.init();
+  driver.clear();
+  layout.draw(view, state);
+  driver.display();
+}
+
 void tearDown() {
 
 }
@@ -86,6 +113,8 @@ void setup() {
   RUN_TEST(test_list_layout);
   delay(5000);
   RUN_TEST(test_label_value);
+  delay(5000);
+  RUN_TEST(test_two_columns);
   delay(5000);
   UNITY_END();
 }

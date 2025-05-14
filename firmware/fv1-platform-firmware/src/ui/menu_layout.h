@@ -70,9 +70,43 @@ class TwoColumnsLayout : public BaseLayout {
     TwoColumnsLayout(DisplayDriver& t_driver)
       : BaseLayout(t_driver) {}
 
-  void draw(const ui::MenuView& t_view, const LogicalState& t_lState) override {
+    void draw(const ui::MenuView& t_view, const LogicalState& t_lState) override {
+      m_driver.drawRect(0, 0, m_width, m_lineHeight + m_lineMargin * 2);
+      uint16_t headerW = m_driver.getTextWidth(t_view.m_header);
+      uint16_t headerX = (m_width - headerW) / 2;
+      m_driver.drawText(headerX, m_lineMargin, t_view.m_header, true);
 
-  }
+      int16_t x = m_space;
+      int16_t y = (m_lineHeight + m_lineMargin * 2);
+      const char* progLabel = t_view.m_items[0]->m_label(&t_lState);
+      m_driver.drawText(x, y, progLabel);
+
+      if (auto valueF = t_view.m_items[0]->m_value) {
+        x = m_driver.getTextWidth(progLabel) + m_space;
+        m_driver.drawText(x, y, ":");
+        m_driver.drawText(x + m_tab, y, valueF(&t_lState));
+      }
+
+      uint16_t halfWidth = m_width / 2;
+      uint8_t remaining = t_view.m_count - 1;
+      uint8_t rows = (remaining + 1) / 2;
+
+      for (uint8_t i = 0; i < remaining; i++) {
+        uint8_t offset = i + 1;
+        uint8_t column = i / rows;
+        uint8_t row = i % rows;
+        x = column * halfWidth;
+        y = (row + 1) * (m_lineHeight + m_lineMargin * 2) + (m_lineHeight + m_lineMargin * 2);
+
+        const char* label = t_view.m_items[offset]->m_label(&t_lState);
+        m_driver.drawText(x, y, label);
+
+        if (auto valueF = t_view.m_items[offset]->m_value) {
+          m_driver.drawText(column * halfWidth + m_driver.getTextWidth(label) + m_space, y, ":");
+          m_driver.drawText(x + halfWidth - (m_driver.getTextWidth(valueF(&t_lState))) - m_tab, y, valueF(&t_lState));
+        }
+      }
+    }
 };
 
 class LabelValueLayout : public BaseLayout {
