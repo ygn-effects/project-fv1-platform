@@ -74,7 +74,7 @@ void test_scroll() {
   Event e;
   EventBus::recall(e);
 
-  TEST_ASSERT_EQUAL("Program", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
   TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
@@ -102,13 +102,13 @@ void test_wrap_around() {
   Event e;
   EventBus::recall(e);
 
-  TEST_ASSERT_EQUAL("Program", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
   TEST_ASSERT_EQUAL("Expression settings", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
-  TEST_ASSERT_EQUAL("Program", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
 }
 
 void test_edit_begin_end() {
@@ -121,7 +121,7 @@ void test_edit_begin_end() {
   Event e;
   EventBus::recall(e);
 
-  TEST_ASSERT_EQUAL("Program", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
   TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
 
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {.delta=1}});
@@ -141,7 +141,7 @@ void test_edit_begin_move_end() {
   Event e;
   EventBus::recall(e);
 
-  TEST_ASSERT_EQUAL("Program", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
   TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
 
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
@@ -271,7 +271,7 @@ void test_publish() {
   menuService.update();
   const ui::MenuView* view = menuService.getMenuView();
 
-  TEST_ASSERT_EQUAL("Program", view->m_items[0]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Prog", view->m_items[0]->m_label(&logicalState));
   TEST_ASSERT_EQUAL("Tempo", view->m_items[1]->m_label(&logicalState));
   TEST_ASSERT_EQUAL("Feedback", view->m_items[2]->m_label(&logicalState));
   TEST_ASSERT_EQUAL("Low pass", view->m_items[3]->m_label(&logicalState));
