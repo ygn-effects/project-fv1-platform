@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+namespace ui { struct MenuView; }
+
 enum class EventType : uint8_t {
   // Boot events
   kBoot,
@@ -54,6 +56,7 @@ enum class EventType : uint8_t {
   kMenuExprDirectionToggled,
   kMenuExprHeelValueMoved,
   kMenuExprToeValueMoved,
+  kMenuViewUpdated,
 
   // Program events
   kProgramChanged,
@@ -131,6 +134,7 @@ enum class EventSubCategory : uint8_t {
   kMenuPotEvent,
   kMenuTempoEvent,
   kMenuExprEvent,
+  kMenuViewEvent,
   kProgramChangedEvent,
   kPresetChangedEvent,
   kPresetBankChangedEvent,
@@ -191,6 +195,7 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kMenuEvent,          // kMenuExprDirectionToggled
   EventCategory::kMenuEvent,          // kMenuExprHeelValueMoved
   EventCategory::kMenuEvent,          // kMenuExprToeValueMoved
+  EventCategory::kMenuEvent,          // kMenuViewUpdated
   EventCategory::kProgramEvent,       // kProgramChanged
   EventCategory::kProgramEvent,       // kPresetChanged
   EventCategory::kProgramEvent,       // kPresetBankChanged
@@ -266,6 +271,7 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kMenuExprEvent,               // kMenuExprDirectionToggled
   EventSubCategory::kMenuExprEvent,               // kMenuExprHeelValueMoved
   EventSubCategory::kMenuExprEvent,               // kMenuExprToeValueMoved
+  EventSubCategory::kMenuViewEvent,               // kMenuViewUpdated
   EventSubCategory::kProgramChangedEvent,         // kProgramChanged
   EventSubCategory::kPresetChangedEvent,          // kPresetChanged
   EventSubCategory::kPresetBankChangedEvent,      // kPresetBankChanged
@@ -313,6 +319,7 @@ struct Event {
   union {
     uint16_t value;
     int8_t delta;
+    const ui::MenuView* view;
   } m_data;
 };
 
