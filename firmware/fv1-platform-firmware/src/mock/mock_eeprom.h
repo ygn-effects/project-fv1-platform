@@ -3,19 +3,20 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <algorithm>
+#include "hal/eeprom.h"
 
-class MockEEPROM {
+class MockEEPROM : public EEPROM {
   public:
     static constexpr size_t c_size = 32768;
     uint8_t m_memory[c_size] = {0};
 
-    void write(uint16_t address, const uint8_t* data, size_t length) {
-      if (address + length > c_size) return;
-      std::copy(data, data + length, m_memory + address);
+    void read(uint16_t t_address, uint8_t* t_data, size_t t_length) override {
+      if (t_address + t_length > c_size) return;
+      std::copy(m_memory + t_address, m_memory + t_address + t_length, t_data);
     }
 
-    void read(uint16_t address, uint8_t* data, size_t length) const {
-      if (address + length > c_size) return;
-      std::copy(m_memory + address, m_memory + address + length, data);
+    void write(uint16_t t_address, const uint8_t* t_data, size_t t_length) override  {
+      if (t_address + t_length > c_size) return;
+      std::copy(t_data, t_data + t_length, m_memory + t_address);
     }
 };
