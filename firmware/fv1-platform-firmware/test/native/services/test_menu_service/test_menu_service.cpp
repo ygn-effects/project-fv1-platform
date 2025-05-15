@@ -23,16 +23,23 @@ void test_unlock_lock() {
   MenuService menuService(logicalState);
 
   menuService.init();
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  Event event;
+  EventBus::recall(event);
 
   TEST_ASSERT_EQUAL("Lock screen", menuService.getcurrentMenuPage().m_header);
 
   menuService.handleEvent({EventType::kMenuEncoderLongPressed, 100, {}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
-  Event event;
   EventBus::recall(event);
 
   TEST_ASSERT_EQUAL(EventType::kMenuUnlocked, event.m_type);
   TEST_ASSERT_EQUAL("Program mode", menuService.getcurrentMenuPage().m_header);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(event);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, event.m_type);
 
   menuService.handleEvent({EventType::kMenuEncoderLongPressed, 100, {}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
@@ -40,6 +47,11 @@ void test_unlock_lock() {
 
   TEST_ASSERT_EQUAL(EventType::kMenuLocked, event.m_type);
   TEST_ASSERT_EQUAL("Lock screen", menuService.getcurrentMenuPage().m_header);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(event);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, event.m_type);
 }
 
 void test_menu_lock_timeout() {
@@ -48,12 +60,20 @@ void test_menu_lock_timeout() {
 
   menuService.init();
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   Event e;
   EventBus::recall(e);
 
+  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
   TEST_ASSERT_EQUAL(EventType::kMenuUnlocked, e.m_type);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, e.m_type);
   TEST_ASSERT_EQUAL("Program mode", menuService.getcurrentMenuPage().m_header);
 
   menuService.update();
@@ -61,6 +81,11 @@ void test_menu_lock_timeout() {
   EventBus::recall(e);
 
   TEST_ASSERT_EQUAL(EventType::kMenuLocked, e.m_type);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, e.m_type);
   TEST_ASSERT_EQUAL("Lock screen", menuService.getcurrentMenuPage().m_header);
 }
 
@@ -136,10 +161,14 @@ void test_edit_begin_move_end() {
   MenuService menuService(logicalState);
 
   menuService.init();
-
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
   Event e;
   EventBus::recall(e);
+
+  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+
+  while (EventBus::hasEvent()) {
+    EventBus::recall(e);
+  }
 
   TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
   TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
@@ -147,12 +176,19 @@ void test_edit_begin_move_end() {
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
   TEST_ASSERT_EQUAL(SubState::kEditing, menuService.getsubState());
 
+  while (EventBus::hasEvent()) {
+    EventBus::recall(e);
+  }
+
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(e);
-
   TEST_ASSERT_EQUAL(EventType::kMenuProgramChanged, e.m_type);
   TEST_ASSERT_EQUAL(1, e.m_data.delta);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, e.m_type);
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
   EventBus::recall(e);
@@ -163,11 +199,23 @@ void test_edit_begin_move_end() {
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
   TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
 
+  while (EventBus::hasEvent()) {
+    EventBus::recall(e);
+  }
+
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
   TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
 
+  while (EventBus::hasEvent()) {
+    EventBus::recall(e);
+  }
+
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
   TEST_ASSERT_EQUAL(SubState::kEditing, menuService.getsubState());
+
+  while (EventBus::hasEvent()) {
+    EventBus::recall(e);
+  }
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
@@ -175,6 +223,10 @@ void test_edit_begin_move_end() {
 
   TEST_ASSERT_EQUAL(EventType::kMenuTempoChanged, e.m_type);
   TEST_ASSERT_EQUAL(1, e.m_data.delta);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, e.m_type);
 
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
   TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
@@ -185,12 +237,20 @@ void test_edit_begin_move_end() {
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
   TEST_ASSERT_EQUAL(SubState::kEditing, menuService.getsubState());
 
+  while (EventBus::hasEvent()) {
+    EventBus::recall(e);
+  }
+
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(e);
 
   TEST_ASSERT_EQUAL(EventType::kMenuPot1Moved, e.m_type);
   TEST_ASSERT_EQUAL(1, e.m_data.delta);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, e.m_type);
 
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
   TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
@@ -201,12 +261,20 @@ void test_edit_begin_move_end() {
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
   TEST_ASSERT_EQUAL(SubState::kEditing, menuService.getsubState());
 
+  while (EventBus::hasEvent()) {
+    EventBus::recall(e);
+  }
+
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(e);
 
   TEST_ASSERT_EQUAL(EventType::kMenuPot2Moved, e.m_type);
   TEST_ASSERT_EQUAL(1, e.m_data.delta);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, e.m_type);
 
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
   TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
