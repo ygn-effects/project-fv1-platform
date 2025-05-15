@@ -8,8 +8,9 @@ MenuService::MenuService(LogicalState& t_lState)
 void MenuService::handleLocked(const Event& t_event) {
   if (t_event.m_type == EventType::kMenuEncoderLongPressed) {
     unlockUi(t_event);
-
     m_lastInputTime = t_event.m_timestamp;
+
+    publishView();
   }
 }
 
@@ -34,6 +35,7 @@ void MenuService::handleUnlocked(const Event& t_event) {
     handleEditing(t_event);
   }
 
+  publishView();
   m_lastInputTime = t_event.m_timestamp;
 }
 
@@ -244,6 +246,8 @@ void MenuService::publishView() {
   else {
 
   }
+
+  EventBus::publish({EventType::kMenuViewUpdated, 0 /*millis()*/, {.view=&m_view}});
 }
 
 void MenuService::init() {
@@ -272,6 +276,7 @@ void MenuService::update() {
   uint32_t now = 31000; // Dummy value for testing
   if ((now - m_lastInputTime) > ui::MenuConstants::c_menuTimeout) {
     lockUi({EventType::kMenuEncoderMoved, 500, {}});
+    publishView();
   }
 
   if (m_potMenuActive) {
@@ -282,11 +287,10 @@ void MenuService::update() {
       m_logicState.m_programMode == ProgramMode::kProgram
         ? m_menuStack.push(&ui::ProgramMenuPage)
         : m_menuStack.push(&ui::PresetMenuPage);
+
+      publishView();
     }
   }
-
-  // For tests only
-  publishView();
 }
 
 const ui::MenuPage& MenuService::getcurrentMenuPage() const {
