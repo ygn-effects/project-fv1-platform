@@ -331,28 +331,42 @@ void test_publish() {
   MenuService menuService(logicalState);
 
   menuService.init();
-
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 30000, {}});
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
   Event e;
   EventBus::recall(e);
 
-  menuService.update();
-  const ui::MenuView* view = menuService.getMenuView();
+  TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, e.m_type);
 
-  TEST_ASSERT_EQUAL("Prog", view->m_items[0]->m_label(&logicalState));
-  TEST_ASSERT_EQUAL("Tempo", view->m_items[1]->m_label(&logicalState));
-  TEST_ASSERT_EQUAL("Feedback", view->m_items[2]->m_label(&logicalState));
-  TEST_ASSERT_EQUAL("Low pass", view->m_items[3]->m_label(&logicalState));
-  TEST_ASSERT_EQUAL("Mix", view->m_items[4]->m_label(&logicalState));
+  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 30000, {}});
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuUnlocked, e.m_type);
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, e.m_type);
+
+  const ui::MenuView& view = *e.m_data.view;
+
+  TEST_ASSERT_EQUAL("Prog", view.m_items[0]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Tempo", view.m_items[1]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Feedback", view.m_items[2]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Low pass", view.m_items[3]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Mix", view.m_items[4]->m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 30000, {.delta=5}});
-  menuService.update();
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
 
-  TEST_ASSERT_EQUAL("Tempo", view->m_items[0]->m_label(&logicalState));
-  TEST_ASSERT_EQUAL("Feedback", view->m_items[1]->m_label(&logicalState));
-  TEST_ASSERT_EQUAL("Low pass", view->m_items[2]->m_label(&logicalState));
-  TEST_ASSERT_EQUAL("Mix", view->m_items[3]->m_label(&logicalState));
-  TEST_ASSERT_EQUAL("Expression settings", view->m_items[4]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, e.m_type);
+
+  const ui::MenuView& view2 = *e.m_data.view;
+
+  TEST_ASSERT_EQUAL("Tempo", view2.m_items[0]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Feedback", view2.m_items[1]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Low pass", view2.m_items[2]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Mix", view2.m_items[3]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Expression settings", view2.m_items[4]->m_label(&logicalState));
 }
 
 void test_pot_menu() {
