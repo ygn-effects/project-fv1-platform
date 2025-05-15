@@ -5,14 +5,14 @@ void MemoryService::saveRegion(MemoryRegion t_region, uint8_t t_programIndex, ui
 
   uint8_t buffer[info.m_length];
   m_handler.serializeRegion(t_region, m_logicalState, buffer, t_programIndex, t_potIndex);
-  // m_eeprom->write(info.m_address, buffer, info.m_length);
+  m_eeprom.write(info.m_address, buffer, info.m_length);
 }
 
 void MemoryService::loadRegion(MemoryRegion t_region, uint8_t t_programIndex, uint8_t t_potIndex) {
   RegionInfo info = m_handler.calculateRegionInfo(t_region, t_programIndex, t_potIndex);
 
   uint8_t buffer[info.m_length];
-  // m_eeprom->read(info.m_address, buffer, info.m_length);
+  m_eeprom.read(info.m_address, buffer, info.m_length);
   m_handler.deserializeRegion(t_region, m_logicalState, buffer, t_programIndex, t_potIndex);
 }
 
@@ -20,7 +20,7 @@ void MemoryService::loadPresetBank(uint8_t t_bankIndex) {
   RegionInfo info = m_handler.calculateRegionInfo(MemoryRegion::kPresetBank, t_bankIndex);
 
   uint8_t buffer[info.m_length];
-  // m_eeprom->read(info.m_address, buffer, info.m_length);
+  m_eeprom.read(info.m_address, buffer, info.m_length);
   m_handler.deserializePresetBank(m_presetBank, buffer, t_bankIndex, 0);
 }
 
@@ -29,12 +29,13 @@ void MemoryService::savePreset(uint8_t t_bankIndex, uint8_t t_presetIndex) {
 
   uint8_t buffer[info.m_length];
   m_handler.serializePreset(m_presetBank.m_presets[t_presetIndex], buffer, t_bankIndex, t_presetIndex, 0);
-  // m_eeprom->write(info.m_address, buffer, info.m_length);
+  m_eeprom.write(info.m_address, buffer, info.m_length);
 }
 
-MemoryService::MemoryService(LogicalState& t_lState, PresetBank& t_presetBank)
+MemoryService::MemoryService(LogicalState& t_lState, PresetBank& t_presetBank, EEPROM& t_eeprom)
   : m_logicalState(t_lState),
-    m_presetBank(t_presetBank) {}
+    m_presetBank(t_presetBank),
+    m_eeprom(t_eeprom) {}
 
 void MemoryService::init() {
 
