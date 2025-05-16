@@ -123,10 +123,10 @@ void test() {
   runUpdateChain(services, servicesCount);
 
   // Assert pot movement
-  TEST_ASSERT_EQUAL(509, logicalState.m_potParams[0].m_value);
-  TEST_ASSERT_EQUAL(510, logicalState.m_potParams[1].m_value);
-  TEST_ASSERT_EQUAL(511, logicalState.m_potParams[2].m_value);
-  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[3].m_value);
+  TEST_ASSERT_EQUAL(509, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
+  TEST_ASSERT_EQUAL(510, logicalState.m_potParams[logicalState.m_currentProgram][1].m_value);
+  TEST_ASSERT_EQUAL(511, logicalState.m_potParams[logicalState.m_currentProgram][2].m_value);
+  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[logicalState.m_currentProgram][3].m_value);
 
   if (logicalState.m_activeProgram->m_isDelayEffect) {
     // Assert pot movement reflected on the tempo
@@ -134,7 +134,7 @@ void test() {
 
     // Assert menu composition
     TEST_ASSERT_EQUAL("Program mode", menuService.getMenuView()->m_header);
-    TEST_ASSERT_EQUAL("Program", menuService.getMenuView()->m_items[0]->m_label(&logicalState));
+    TEST_ASSERT_EQUAL("Prog", menuService.getMenuView()->m_items[0]->m_label(&logicalState));
     TEST_ASSERT_EQUAL("Tempo", menuService.getMenuView()->m_items[1]->m_label(&logicalState));
     TEST_ASSERT_EQUAL("Feedback", menuService.getMenuView()->m_items[2]->m_label(&logicalState));
     TEST_ASSERT_EQUAL("Low pass", menuService.getMenuView()->m_items[3]->m_label(&logicalState));
@@ -142,7 +142,7 @@ void test() {
 
     // Assert cursor location
     TEST_ASSERT_EQUAL(0, menuService.getMenuView()->m_selected);
-    TEST_ASSERT_EQUAL("Program", menuService.getMenuView()->m_items[menuService.getMenuView()->m_selected]->m_label(&logicalState));
+    TEST_ASSERT_EQUAL("Prog", menuService.getMenuView()->m_items[menuService.getMenuView()->m_selected]->m_label(&logicalState));
   }
 
   // Move encoder down
@@ -198,7 +198,7 @@ void test() {
   runUpdateChain(services, servicesCount);
 
   // Assert feedback change
-  TEST_ASSERT_EQUAL(520, logicalState.m_potParams[1].m_value);
+  TEST_ASSERT_EQUAL(520, logicalState.m_potParams[logicalState.m_currentProgram][1].m_value);
 
   // End edit
   EventBus::publish({EventType::kMenuEncoderPressed, 3400, {}});
@@ -229,7 +229,7 @@ void test() {
   runUpdateChain(services, servicesCount);
 
   // Assert low pass change
-  TEST_ASSERT_EQUAL(521, logicalState.m_potParams[2].m_value);
+  TEST_ASSERT_EQUAL(521, logicalState.m_potParams[logicalState.m_currentProgram][2].m_value);
 
   // End edit
   EventBus::publish({EventType::kMenuEncoderPressed, 3400, {}});
@@ -260,7 +260,7 @@ void test() {
   runUpdateChain(services, servicesCount);
 
   // Assert low pass change
-  TEST_ASSERT_EQUAL(522, logicalState.m_potParams[3].m_value);
+  TEST_ASSERT_EQUAL(522, logicalState.m_potParams[logicalState.m_currentProgram][3].m_value);
 
   // End edit
   EventBus::publish({EventType::kMenuEncoderPressed, 3400, {}});
@@ -360,7 +360,7 @@ void test_midi() {
   TEST_ASSERT_FALSE(EventBus::hasEvent());
 
   // Bypass is on
-  TEST_ASSERT_EQUAL(499, logicalState.m_potParams[0].m_value);
+  TEST_ASSERT_EQUAL(499, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
 
   midiHandler->pushByte(0xB0);
   midiHandler->pushByte(0x01);
@@ -371,7 +371,7 @@ void test_midi() {
   TEST_ASSERT_FALSE(EventBus::hasEvent());
 
   // Bypass is on
-  TEST_ASSERT_EQUAL(257, logicalState.m_potParams[1].m_value);
+  TEST_ASSERT_EQUAL(257, logicalState.m_potParams[logicalState.m_currentProgram][1].m_value);
 
   midiHandler->pushByte(0xB0);
   midiHandler->pushByte(0x02);
@@ -382,7 +382,7 @@ void test_midi() {
   TEST_ASSERT_FALSE(EventBus::hasEvent());
 
   // Bypass is on
-  TEST_ASSERT_EQUAL(128, logicalState.m_potParams[2].m_value);
+  TEST_ASSERT_EQUAL(128, logicalState.m_potParams[logicalState.m_currentProgram][2].m_value);
 
   midiHandler->pushByte(0xB0);
   midiHandler->pushByte(0x03);
@@ -393,7 +393,7 @@ void test_midi() {
   TEST_ASSERT_FALSE(EventBus::hasEvent());
 
   // Bypass is on
-  TEST_ASSERT_EQUAL(40, logicalState.m_potParams[3].m_value);
+  TEST_ASSERT_EQUAL(40, logicalState.m_potParams[logicalState.m_currentProgram][3].m_value);
 
   // Tap is disabled
   TEST_ASSERT_EQUAL(TapState::kDisabled, logicalState.m_tapState);
