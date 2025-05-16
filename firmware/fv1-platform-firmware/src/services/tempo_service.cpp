@@ -15,6 +15,8 @@ void TempoService::init() {
 }
 
 void TempoService::handleEvent(const Event& t_event) {
+  if (! m_logicState.m_activeProgram->m_isDelayEffect) { return; }
+
   switch (t_event.m_type) {
     case EventType::kTapIntervalChanged:
       m_interval = Utils::clamp<uint16_t>(t_event.m_data.value, m_minInterval, m_maxInterval);
