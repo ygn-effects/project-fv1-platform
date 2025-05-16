@@ -326,7 +326,7 @@ void test_not_visible() {
   TEST_ASSERT_TRUE(menuService.getcurrentMenuItem().m_visible(&logicalState));
 }
 
-void test_publish() {
+void test_publish_list_menu() {
   LogicalState logicalState;
   MenuService menuService(logicalState);
 
@@ -426,6 +426,47 @@ void test_pot_menu_timeout() {
   TEST_ASSERT_EQUAL("P0 Setting", menuService.getcurrentMenuPage().m_header);
 }
 
+void test_lock_screen() {
+  LogicalState logicalState;
+  MenuService menuService(logicalState);
+
+  menuService.init();
+
+  Event e;
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL("Lock screen", menuService.getcurrentMenuPage().m_header);
+  TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuPage().m_items[0].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("B", menuService.getcurrentMenuPage().m_items[1].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("P", menuService.getcurrentMenuPage().m_items[2].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("T", menuService.getcurrentMenuPage().m_items[3].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("P0", menuService.getcurrentMenuPage().m_items[4].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("P1", menuService.getcurrentMenuPage().m_items[5].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("P2", menuService.getcurrentMenuPage().m_items[6].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Mix", menuService.getcurrentMenuPage().m_items[7].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Expr", menuService.getcurrentMenuPage().m_items[8].m_label(&logicalState));
+}
+
+void test_publish_lock_screen() {
+  LogicalState logicalState;
+  MenuService menuService(logicalState);
+
+  menuService.init();
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  Event e;
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, e.m_type);
+
+  const ui::MenuView& view = *e.m_data.view;
+
+  TEST_ASSERT_EQUAL("Prog", view.m_items[0]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("T", view.m_items[1]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("P1", view.m_items[2]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("P2", view.m_items[3]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Mix", view.m_items[4]->m_label(&logicalState));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_unlock_lock);
@@ -436,8 +477,10 @@ int main() {
   RUN_TEST(test_edit_begin_move_end);
   RUN_TEST(test_sub_menu);
   RUN_TEST(test_not_visible);
-  RUN_TEST(test_publish);
+  RUN_TEST(test_publish_list_menu);
   RUN_TEST(test_pot_menu);
   RUN_TEST(test_pot_menu_timeout);
+  RUN_TEST(test_lock_screen);
+  RUN_TEST(test_publish_lock_screen);
   UNITY_END();
 }

@@ -196,7 +196,7 @@ void MenuService::publishView() {
     for (uint8_t i = 0; i < page.m_count; ++i) {
       const ui::MenuItem& item = page.m_items[i];
 
-      if (!item.m_visible(&m_logicState))
+      if (! item.m_visible(&m_logicState))
         continue;
 
       if (visIndex < m_first) {
@@ -225,20 +225,45 @@ void MenuService::publishView() {
       : m_view.m_editing = false;
   }
   else if (page.m_layout == ui::MenuLayout::kTwoColumns) {
-
-  }
-  else if (page.m_layout == ui::MenuLayout::kLabelValue) {
-    uint8_t offset = 0;
+    uint8_t sliceCount = 0;
 
     for (uint8_t i = 0; i < page.m_count; i++) {
-      if (page.m_items[i].m_visible(&m_logicState)) {
-        m_view.m_items[offset] = &page.m_items[i];
-        offset++;
+      if (page.m_count > ui::MenuConstants::c_visibleItemsPerTwoColumns) {
+        break;
       }
+
+      const ui::MenuItem& item = page.m_items[i];
+
+      if (! item.m_visible(&m_logicState)) {
+        continue;
+      }
+
+      m_view.m_items[sliceCount] = &page.m_items[i];
+      sliceCount++;
     }
 
     m_view.m_header = page.m_header;
-    m_view.m_count = offset;
+    m_view.m_count = sliceCount;
+    m_view.m_layout = page.m_layout;
+    m_view.m_selected = 0;
+    m_view.m_editing = false;
+  }
+  else if (page.m_layout == ui::MenuLayout::kLabelValue) {
+    uint8_t sliceCount = 0;
+
+    for (uint8_t i = 0; i < page.m_count; i++) {
+      const ui::MenuItem& item = page.m_items[i];
+
+      if (! item.m_visible(&m_logicState)) {
+        continue;
+      }
+
+      m_view.m_items[sliceCount] = &page.m_items[i];
+      sliceCount++;
+    }
+
+    m_view.m_header = page.m_header;
+    m_view.m_count = sliceCount;
     m_view.m_layout = page.m_layout;
     m_view.m_selected = 0;
     m_view.m_editing = false;
