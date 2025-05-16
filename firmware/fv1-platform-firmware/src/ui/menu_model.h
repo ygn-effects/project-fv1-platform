@@ -91,6 +91,10 @@ constexpr const char* labelPresetBank(const LogicalState* t_state) {
   return "Bank";
 }
 
+constexpr const char* labelPresetBankLocked(const LogicalState* t_state) {
+  return "B";
+}
+
 const char* valuePresetBank(const LogicalState* t_state) {
   static char buffer[8];
   snprintf(buffer, sizeof(buffer), "%u", t_state->m_currentPresetBank);
@@ -100,6 +104,10 @@ const char* valuePresetBank(const LogicalState* t_state) {
 
 constexpr const char* labelPreset(const LogicalState* t_state) {
   return "Preset";
+}
+
+constexpr const char* labelPresetLocked(const LogicalState* t_state) {
+  return "P";
 }
 
 const char* valuePreset(const LogicalState* t_state) {
@@ -372,9 +380,9 @@ extern const MenuPage ExprSettingsMenuPage;
 
 constexpr MenuItem lockScreenMenuItems[] = {
   { labelProgram, isAlwaysVisible, valueProgram, nullptr, nullptr, nullptr },
-  { labelPresetBank, visibleIfPresetMode, valuePresetBank, nullptr, nullptr, nullptr },
+  { labelPresetBankLocked, visibleIfPresetMode, valuePresetBank, nullptr, nullptr, nullptr },
+  { labelPresetLocked, visibleIfPresetMode, valuePreset, nullptr, nullptr, nullptr },
   { labelTempoLocked, visibleIfDelayEffect, valueTempo, nullptr, nullptr, nullptr },
-  { labelPreset, visibleIfPresetMode, valuePreset, nullptr, nullptr, nullptr },
   { labelPot0Locked, notVisibleIfDelayEffect, valuePot0, nullptr, nullptr, nullptr },
   { labelPot1Locked, isAlwaysVisible, valuePot1, nullptr, nullptr, nullptr },
   { labelPot2Locked, isAlwaysVisible, valuePot2, nullptr, nullptr, nullptr },
