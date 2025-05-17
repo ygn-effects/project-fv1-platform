@@ -137,7 +137,7 @@ void test() {
     TEST_ASSERT_EQUAL("Prog", menuService.getMenuView()->m_items[0]->m_label(&logicalState));
     TEST_ASSERT_EQUAL("Tempo", menuService.getMenuView()->m_items[1]->m_label(&logicalState));
     TEST_ASSERT_EQUAL("Feedback", menuService.getMenuView()->m_items[2]->m_label(&logicalState));
-    TEST_ASSERT_EQUAL("Low pass", menuService.getMenuView()->m_items[3]->m_label(&logicalState));
+    TEST_ASSERT_EQUAL("Tone LPF", menuService.getMenuView()->m_items[3]->m_label(&logicalState));
     TEST_ASSERT_EQUAL("Mix", menuService.getMenuView()->m_items[4]->m_label(&logicalState));
 
     // Assert cursor location
@@ -214,7 +214,7 @@ void test() {
 
   // Assert cursor position and current select item
   TEST_ASSERT_EQUAL(3, menuService.getMenuView()->m_selected);
-  TEST_ASSERT_EQUAL("Low pass", menuService.getMenuView()->m_items[menuService.getMenuView()->m_selected]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Tone LPF", menuService.getMenuView()->m_items[menuService.getMenuView()->m_selected]->m_label(&logicalState));
 
   // Begin edit
   EventBus::publish({EventType::kRawMenuEncoderPressed, 3700, {}});
@@ -279,7 +279,7 @@ void test() {
     TEST_ASSERT_EQUAL("Program mode", menuService.getMenuView()->m_header);
     TEST_ASSERT_EQUAL("Tempo", menuService.getMenuView()->m_items[0]->m_label(&logicalState));
     TEST_ASSERT_EQUAL("Feedback", menuService.getMenuView()->m_items[1]->m_label(&logicalState));
-    TEST_ASSERT_EQUAL("Low pass", menuService.getMenuView()->m_items[2]->m_label(&logicalState));
+    TEST_ASSERT_EQUAL("Tone LPF", menuService.getMenuView()->m_items[2]->m_label(&logicalState));
     TEST_ASSERT_EQUAL("Mix", menuService.getMenuView()->m_items[3]->m_label(&logicalState));
     TEST_ASSERT_EQUAL("Expression settings", menuService.getMenuView()->m_items[4]->m_label(&logicalState));
 

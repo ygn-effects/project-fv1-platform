@@ -108,7 +108,7 @@ void test_scroll() {
   TEST_ASSERT_EQUAL("Feedback", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
-  TEST_ASSERT_EQUAL("Low pass", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Tone LPF", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
   TEST_ASSERT_EQUAL("Feedback", menuService.getcurrentMenuItem().m_label(&logicalState));
@@ -256,7 +256,7 @@ void test_edit_begin_move_end() {
   TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
-  TEST_ASSERT_EQUAL("Low pass", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Tone LPF", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
   TEST_ASSERT_EQUAL(SubState::kEditing, menuService.getsubState());
@@ -351,7 +351,7 @@ void test_publish_list_menu() {
   TEST_ASSERT_EQUAL("Prog", view.m_items[0]->m_label(&logicalState));
   TEST_ASSERT_EQUAL("Tempo", view.m_items[1]->m_label(&logicalState));
   TEST_ASSERT_EQUAL("Feedback", view.m_items[2]->m_label(&logicalState));
-  TEST_ASSERT_EQUAL("Low pass", view.m_items[3]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Tone LPF", view.m_items[3]->m_label(&logicalState));
   TEST_ASSERT_EQUAL("Mix", view.m_items[4]->m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 30000, {.delta=5}});
@@ -364,7 +364,7 @@ void test_publish_list_menu() {
 
   TEST_ASSERT_EQUAL("Tempo", view2.m_items[0]->m_label(&logicalState));
   TEST_ASSERT_EQUAL("Feedback", view2.m_items[1]->m_label(&logicalState));
-  TEST_ASSERT_EQUAL("Low pass", view2.m_items[2]->m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Tone LPF", view2.m_items[2]->m_label(&logicalState));
   TEST_ASSERT_EQUAL("Mix", view2.m_items[3]->m_label(&logicalState));
   TEST_ASSERT_EQUAL("Expression settings", view2.m_items[4]->m_label(&logicalState));
 }
