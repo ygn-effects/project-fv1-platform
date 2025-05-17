@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 namespace ui { struct MenuView; }
+struct PresetBank;
 
 enum class EventType : uint8_t {
   // Boot events
@@ -320,6 +321,7 @@ struct Event {
     uint16_t value;
     int8_t delta;
     const ui::MenuView* view;
+    PresetBank* bank;
   } m_data;
 };
 
