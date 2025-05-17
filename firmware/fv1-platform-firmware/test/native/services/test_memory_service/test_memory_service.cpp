@@ -26,10 +26,9 @@ void tearDown() {
 
 void test_logical_state() {
   LogicalState logicalState;
-  PresetHandler presetHandler;
   MockEEPROM eeprom;
 
-  MemoryService memoryService(logicalState, presetHandler.m_currentPresetBank, eeprom);
+  MemoryService memoryService(logicalState, eeprom);
 
   logicalState.m_bypassState = BypassState::kActive;
   logicalState.m_currentProgram = 2;
@@ -44,10 +43,9 @@ void test_logical_state() {
 
 void test_bypass() {
   LogicalState logicalState;
-  PresetHandler presetHandler;
   MockEEPROM eeprom;
 
-  MemoryService memoryService(logicalState, presetHandler.m_currentPresetBank, eeprom);
+  MemoryService memoryService(logicalState, eeprom);
 
   logicalState.m_bypassState = BypassState::kBypassed;
   memoryService.handleEvent({EventType::kSaveBypass, 0, {}});
@@ -60,10 +58,9 @@ void test_bypass() {
 
 void test_program_mode() {
   LogicalState logicalState;
-  PresetHandler presetHandler;
   MockEEPROM eeprom;
 
-  MemoryService memoryService(logicalState, presetHandler.m_currentPresetBank, eeprom);
+  MemoryService memoryService(logicalState, eeprom);
 
   logicalState.m_programMode = ProgramMode::kPreset;
   memoryService.handleEvent({EventType::kSaveProgramMode, 0, {}});
@@ -76,10 +73,9 @@ void test_program_mode() {
 
 void test_current_program() {
   LogicalState logicalState;
-  PresetHandler presetHandler;
   MockEEPROM eeprom;
 
-  MemoryService memoryService(logicalState, presetHandler.m_currentPresetBank, eeprom);
+  MemoryService memoryService(logicalState, eeprom);
 
   logicalState.m_currentProgram = 3;
   memoryService.handleEvent({EventType::kSaveCurrentProgram, 0, {}});
@@ -92,10 +88,9 @@ void test_current_program() {
 
 void test_current_preset() {
   LogicalState logicalState;
-  PresetHandler presetHandler;
   MockEEPROM eeprom;
 
-  MemoryService memoryService(logicalState, presetHandler.m_currentPresetBank, eeprom);
+  MemoryService memoryService(logicalState, eeprom);
 
   logicalState.m_currentPreset = 4;
   memoryService.handleEvent({EventType::kSaveCurrentPreset, 0, {}});
@@ -108,10 +103,9 @@ void test_current_preset() {
 
 void test_midi_channel() {
   LogicalState logicalState;
-  PresetHandler presetHandler;
   MockEEPROM eeprom;
 
-  MemoryService memoryService(logicalState, presetHandler.m_currentPresetBank, eeprom);
+  MemoryService memoryService(logicalState, eeprom);
 
   logicalState.m_midiChannel = 7;
   memoryService.handleEvent({EventType::kSaveMidiChannel, 0, {}});
@@ -124,10 +118,9 @@ void test_midi_channel() {
 
 void test_tap() {
   LogicalState logicalState;
-  PresetHandler presetHandler;
   MockEEPROM eeprom;
 
-  MemoryService memoryService(logicalState, presetHandler.m_currentPresetBank, eeprom);
+  MemoryService memoryService(logicalState, eeprom);
 
   logicalState.m_tapState = TapState::kEnabled;
   logicalState.m_divState = DivState::kEnabled;
@@ -152,10 +145,9 @@ void test_tap() {
 
 void test_tempo() {
   LogicalState logicalState;
-  PresetHandler presetHandler;
   MockEEPROM eeprom;
 
-  MemoryService memoryService(logicalState, presetHandler.m_currentPresetBank, eeprom);
+  MemoryService memoryService(logicalState, eeprom);
 
   logicalState.m_tempo = 512;
   memoryService.handleEvent({EventType::kSaveTempo, 0, {}});
@@ -168,10 +160,9 @@ void test_tempo() {
 
 void test_expr() {
   LogicalState logicalState;
-  PresetHandler presetHandler;
   MockEEPROM eeprom;
 
-  MemoryService memoryService(logicalState, presetHandler.m_currentPresetBank, eeprom);
+  MemoryService memoryService(logicalState, eeprom);
 
   logicalState.m_currentProgram = 2;
   logicalState.m_exprParams[2].m_state = ExprState::kActive;
@@ -198,10 +189,9 @@ void test_expr() {
 
 void test_pot() {
   LogicalState logicalState;
-  PresetHandler presetHandler;
   MockEEPROM eeprom;
 
-  MemoryService memoryService(logicalState, presetHandler.m_currentPresetBank, eeprom);
+  MemoryService memoryService(logicalState, eeprom);
 
   logicalState.m_currentProgram = 3;
   logicalState.m_potParams[3][2].m_state = PotState::kDisabled;
@@ -225,10 +215,9 @@ void test_pot() {
 
 void test_corrupted_eeprom() {
   LogicalState logicalState;
-  PresetHandler presetHandler;
   MockEEPROM eeprom;
 
-  MemoryService memoryService(logicalState, presetHandler.m_currentPresetBank, eeprom);
+  MemoryService memoryService(logicalState, eeprom);
 
   uint8_t buffer[MemoryLayout::c_potParamEnd];
 
@@ -247,12 +236,20 @@ void test_preset() {
   PresetHandler presetHandler;
   MockEEPROM eeprom;
 
-  MemoryService memoryService(logicalState, presetHandler.m_currentPresetBank, eeprom);
+  MemoryService memoryService(logicalState, eeprom);
 
-  PresetBank& bank = presetHandler.m_currentPresetBank;
-  Preset& preset = presetHandler.m_currentPresetBank.m_presets[0];
+  memoryService.handleEvent({EventType::kLoadPresetBank, 0, {.value=0}});
 
-  bank.m_id = 0;
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  Event e;
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kPresetBankLoaded, e.m_type);
+
+  PresetBank* bank = e.m_data.bank;
+  Preset& preset = bank->m_presets[0];
+
+  bank->m_id = 0;
   preset.m_id = 0;
   preset.m_programIndex = 3;
   preset.m_tapState = TapState::kEnabled;
@@ -277,9 +274,9 @@ void test_preset() {
     memoryService.handleEvent({EventType::kSavePreset, 0, {.value=preset}});
   }
 
-  preset = presetHandler.m_currentPresetBank.m_presets[0];
+  preset = bank->m_presets[0];
 
-  bank.m_id = 1;
+  bank->m_id = 1;
   preset.m_id = 2;
   preset.m_programIndex = 4;
   preset.m_tapState = TapState::kDisabled;
@@ -300,9 +297,15 @@ void test_preset() {
 
   memoryService.handleEvent({EventType::kLoadPresetBank, 0, {.value=0}});
 
-  preset = presetHandler.m_currentPresetBank.m_presets[0];
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
 
-  TEST_ASSERT_EQUAL(0, bank.m_id);
+  TEST_ASSERT_EQUAL(EventType::kPresetBankLoaded, e.m_type);
+
+  bank = e.m_data.bank;
+  preset = bank->m_presets[0];
+
+  TEST_ASSERT_EQUAL(0, bank->m_id);
   TEST_ASSERT_EQUAL(0, preset.m_id);
   TEST_ASSERT_EQUAL(3, preset.m_programIndex);
   TEST_ASSERT_EQUAL(TapState::kEnabled, preset.m_tapState);
@@ -327,7 +330,7 @@ void test_interested_in() {
   PresetHandler presetHandler;
   MockEEPROM eeprom;
 
-  MemoryService memoryService(logicalState, presetHandler.m_currentPresetBank, eeprom);
+  MemoryService memoryService(logicalState, eeprom);
 
   Event e{EventType::kSaveBypass, 500, {.value=100}};
   TEST_ASSERT_TRUE(memoryService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));

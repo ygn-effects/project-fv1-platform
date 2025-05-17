@@ -581,14 +581,13 @@ void test_validators() {
 void test_serialize_preset() {
   LogicalState logicalState;
   MemoryHandler memoryHandler;
-  PresetHandler presetHandler;
 
   RegionInfo info = memoryHandler.calculateRegionInfo(MemoryRegion::kPreset, 2, 2);
   TEST_ASSERT_EQUAL(758, info.m_address);
   TEST_ASSERT_EQUAL(46, info.m_length);
 
   uint8_t buffer[info.m_length];
-  Preset& preset = presetHandler.m_currentPresetBank.m_presets[1];
+  Preset preset;
 
   preset.m_programIndex = 2;
   preset.m_tapState = TapState::kEnabled;
@@ -638,14 +637,13 @@ void test_serialize_preset() {
 void test_deserialize_preset() {
   LogicalState logicalState;
   MemoryHandler memoryHandler;
-  PresetHandler presetHandler;
 
   RegionInfo info = memoryHandler.calculateRegionInfo(MemoryRegion::kPreset, 2, 2);
   TEST_ASSERT_EQUAL(758, info.m_address);
   TEST_ASSERT_EQUAL(46, info.m_length);
 
   uint8_t buffer[info.m_length];
-  Preset& preset = presetHandler.m_currentPresetBank.m_presets[2];
+  Preset preset;
 
   buffer[PresetLayout::c_id] = 2;
   buffer[PresetLayout::c_programIndex] = 3;
@@ -705,8 +703,8 @@ void test_serialize_preset_bank() {
   TEST_ASSERT_EQUAL(185, info.m_length);
 
   uint8_t buffer[info.m_length];
-  PresetBank& bank = presetHandler.m_currentPresetBank;
-  Preset& preset = presetHandler.m_currentPresetBank.m_presets[1];
+  PresetBank bank;
+  Preset& preset = bank.m_presets[1];
 
   bank.m_id = 2;
   preset.m_id = 1;
@@ -727,7 +725,7 @@ void test_serialize_preset_bank() {
   preset.m_potParams[3].m_minValue = 256;
   preset.m_potParams[3].m_maxValue = 768;
 
-  memoryHandler.serializePresetBank(presetHandler.m_currentPresetBank, buffer, 2, 0);
+  memoryHandler.serializePresetBank(bank, buffer, 2, 0);
 
   uint8_t progIndex = 1 + PresetLayout::c_presetSize;
 
@@ -762,8 +760,8 @@ void test_deserialize_preset_bank() {
   TEST_ASSERT_EQUAL(185, info.m_length);
 
   uint8_t buffer[info.m_length];
-  PresetBank& bank = presetHandler.m_currentPresetBank;
-  Preset& preset = presetHandler.m_currentPresetBank.m_presets[2];
+  PresetBank bank;
+  Preset& preset = bank.m_presets[1];
 
   uint8_t progIndex = 1 + PresetLayout::c_presetSize * 2;
 
@@ -798,7 +796,7 @@ void test_deserialize_preset_bank() {
   memoryHandler.deserializePresetBank(bank, buffer, 2, 0);
 
   TEST_ASSERT_EQUAL(2, bank.m_id);
-  TEST_ASSERT_EQUAL(2, preset.m_id);
+  TEST_ASSERT_EQUAL(1, preset.m_id);
   TEST_ASSERT_EQUAL(3, preset.m_programIndex);
 }
 

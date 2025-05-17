@@ -22,6 +22,9 @@ void test_preset_change() {
   LogicalState logicalState;
   PresetService presetService(logicalState);
 
+  PresetBank bank;
+  presetService.handleEvent({EventType::kPresetBankLoaded, 0, {.bank=&bank}});
+
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPresetBank);
 
@@ -40,6 +43,9 @@ void test_preset_bank_change() {
   LogicalState logicalState;
   PresetService presetService(logicalState);
 
+  PresetBank bank;
+  presetService.handleEvent({EventType::kPresetBankLoaded, 0, {.bank=&bank}});
+
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPresetBank);
 
@@ -50,10 +56,15 @@ void test_preset_bank_change() {
 
   presetService.handleEvent({EventType::kMenuPresetBankChanged, 0, {.delta=1}});
 
+  PresetBank bank2;
+  presetService.handleEvent({EventType::kPresetBankLoaded, 0, {.bank=&bank}});
+
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
   TEST_ASSERT_EQUAL(1, logicalState.m_currentPresetBank);
 
   presetService.handleEvent({EventType::kMenuPresetBankChanged, 0, {.delta=-1}});
+
+  presetService.handleEvent({EventType::kPresetBankLoaded, 0, {.bank=&bank}});
 
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPresetBank);
@@ -62,6 +73,9 @@ void test_preset_bank_change() {
 void test_wrap_around() {
   LogicalState logicalState;
   PresetService presetService(logicalState);
+
+  PresetBank bank;
+  presetService.handleEvent({EventType::kPresetBankLoaded, 0, {.bank=&bank}});
 
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPresetBank);
