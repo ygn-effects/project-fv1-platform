@@ -21,20 +21,19 @@ void MemoryService::loadPresetBank(uint8_t t_bankIndex) {
 
   uint8_t buffer[info.m_length];
   m_eeprom.read(info.m_address, buffer, info.m_length);
-  m_handler.deserializePresetBank(m_presetBank, buffer, t_bankIndex, 0);
+  m_handler.deserializePresetBank(m_loadedBank, buffer, t_bankIndex, 0);
 }
 
 void MemoryService::savePreset(uint8_t t_bankIndex, uint8_t t_presetIndex) {
   RegionInfo info = m_handler.calculateRegionInfo(MemoryRegion::kPreset, t_bankIndex, t_presetIndex);
 
   uint8_t buffer[info.m_length];
-  m_handler.serializePreset(m_presetBank.m_presets[t_presetIndex], buffer, t_bankIndex, t_presetIndex, 0);
+  m_handler.serializePreset(m_loadedBank.m_presets[t_presetIndex], buffer, t_bankIndex, t_presetIndex, 0);
   m_eeprom.write(info.m_address, buffer, info.m_length);
 }
 
-MemoryService::MemoryService(LogicalState& t_lState, PresetBank& t_presetBank, EEPROM& t_eeprom)
+MemoryService::MemoryService(LogicalState& t_lState, EEPROM& t_eeprom)
   : m_logicalState(t_lState),
-    m_presetBank(t_presetBank),
     m_eeprom(t_eeprom) {}
 
 void MemoryService::init() {
@@ -93,7 +92,7 @@ void MemoryService::handleEvent(const Event& t_event) {
 
     case EventType::kLoadPresetBank:
       loadPresetBank(t_event.m_data.value);
-      EventBus::publish({EventType::kPresetBankLoaded, t_event.m_timestamp /*millis()*/, {.value=t_event.m_data.value}});
+      EventBus::publish({EventType::kPresetBankLoaded, t_event.m_timestamp /*millis()*/, {.bank=&m_loadedBank}});
       break;
 
     case EventType::kSavePreset: {
