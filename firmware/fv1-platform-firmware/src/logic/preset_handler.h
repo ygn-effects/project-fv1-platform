@@ -5,7 +5,7 @@
 #include "logic/preset.h"
 
 struct PresetHandler {
-  PresetBank m_currentPresetBank;
+  PresetBank* m_currentPresetBank;
   Preset m_snapshot;
 
   void snapshotFromState(const LogicalState& t_lState);

@@ -36,6 +36,7 @@ void PresetService::handleEvent(const Event& t_event) {
       break;
 
     case EventType::kPresetBankLoaded:
+      m_handler.m_currentPresetBank = t_event.m_data.bank;
       applyPreset();
       break;
 
