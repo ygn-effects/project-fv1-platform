@@ -5,6 +5,7 @@
 #include "services/fsm_service.h"
 #include "services/bypass_service.h"
 #include "services/menu_service.h"
+#include "mock/mock_bypass.h"
 
 #include "../src/services/fsm_service.cpp"
 #include "../src/services/bypass_service.cpp"
@@ -40,7 +41,8 @@ void test_boot_transition() {
 void test_switch_bypass() {
   LogicalState logicalState;
   FsmService fsmService(logicalState);
-  BypassService bypassService(logicalState);
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
 
   Event bootCompletedEvent{EventType::kBootCompleted, 1, {}};
   fsmService.handleEvent(bootCompletedEvent);
