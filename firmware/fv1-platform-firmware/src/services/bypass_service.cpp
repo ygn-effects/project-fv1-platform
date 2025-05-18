@@ -1,7 +1,11 @@
 #include "services/bypass_service.h"
 
 void BypassService::init() {
+  m_bypass.init();
 
+  m_logicalState.m_bypassState == BypassState::kActive
+    ? m_bypass.on()
+    : m_bypass.off();
 }
 
 void BypassService::handleEvent(const Event& t_event) {
@@ -11,14 +15,17 @@ void BypassService::handleEvent(const Event& t_event) {
         ? BypassState::kBypassed
         : BypassState::kActive;
 
+      m_bypass.toggle();
       break;
 
     case EventType::kMidiBypassPressed:
       if (t_event.m_data.value == MidiCCValues::c_bypassDisable) {
         m_logicalState.m_bypassState = BypassState::kBypassed;
+        m_bypass.off();
       }
       else if (t_event.m_data.value == MidiCCValues::c_bypassEnable) {
         m_logicalState.m_bypassState = BypassState::kActive;
+        m_bypass.on();
       }
 
       break;
@@ -26,9 +33,6 @@ void BypassService::handleEvent(const Event& t_event) {
     default:
       break;
   }
-
-  // Switch bypass relay
-  // Switch bypass LED
 
   EventBus::publish({m_logicalState.m_bypassState == BypassState::kActive
     ? EventType::kBypassEnabled

@@ -2,6 +2,7 @@
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
 #include "services/bypass_service.h"
+#include "mock/mock_bypass.h"
 
 #include "../src/services/bypass_service.cpp"
 
@@ -19,7 +20,8 @@ void tearDown() {
 
 void test_bypass() {
   LogicalState logicalState;
-  BypassService bypassService(logicalState);
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
 
   TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
 
@@ -42,7 +44,8 @@ void test_bypass() {
 
 void test_interested_in() {
   LogicalState logicalState;
-  BypassService bypassService(logicalState);
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
 
   Event e{EventType::kBypassPressed, 500, {}};
   TEST_ASSERT_TRUE(bypassService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
