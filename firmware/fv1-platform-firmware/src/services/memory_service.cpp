@@ -37,7 +37,11 @@ MemoryService::MemoryService(LogicalState& t_lState, EEPROM& t_eeprom)
     m_eeprom(t_eeprom) {}
 
 void MemoryService::init() {
+  m_eeprom.init();
 
+  loadRegion(MemoryRegion::kLogicalState);
+  loadPresetBank(m_logicalState.m_currentPresetBank);
+  EventBus::publish({EventType::kPresetBankLoaded, 0 /*millis()*/, {.bank=&m_loadedBank}});
 }
 
 void MemoryService::handleEvent(const Event& t_event) {
