@@ -10,6 +10,7 @@
 #include "services/tap_service.h"
 #include "services/tempo_service.h"
 #include "services/midi_service.h"
+#include "mock/mock_bypass.h"
 
 #include "../src/logic/pot_handler.cpp"
 #include "../src/logic/tap_handler.cpp"
@@ -61,7 +62,8 @@ void test() {
   LogicalState logicalState;
 
   FsmService fsmService(logicalState);
-  BypassService bypassService(logicalState);
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
   ProgramService programService(logicalState);
   PotService potService(logicalState);
   ExprService exprService(logicalState);
@@ -294,7 +296,8 @@ void test_midi() {
 
   FsmService fsmService(logicalState);
   MidiService midiService(logicalState);
-  BypassService bypassService(logicalState);
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
   ProgramService programService(logicalState);
   PotService potService(logicalState);
   ExprService exprService(logicalState);
