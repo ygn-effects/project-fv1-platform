@@ -163,6 +163,6 @@ void FsmService::update() {
 }
 
 bool FsmService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return (t_category == EventCategory::kRawPhysicalEvent || t_category == EventCategory::kBootEvent)
+  return t_category == EventCategory::kRawPhysicalEvent || t_category == EventCategory::kBootEvent
       || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuLockEvent);
 }
