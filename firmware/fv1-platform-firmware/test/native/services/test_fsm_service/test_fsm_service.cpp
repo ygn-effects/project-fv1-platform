@@ -10,6 +10,7 @@
 #include "../src/services/fsm_service.cpp"
 #include "../src/services/bypass_service.cpp"
 #include "../src/services/menu_service.cpp"
+#include "../src/ui/menu_model.cpp"
 
 void setUp() {
   Event event;

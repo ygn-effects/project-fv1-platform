@@ -29,6 +29,7 @@
 #include "../src/services/program_service.cpp"
 #include "../src/services/tap_service.cpp"
 #include "../src/services/tempo_service.cpp"
+#include "../src/ui/menu_model.cpp"
 
 
 void setUp() {

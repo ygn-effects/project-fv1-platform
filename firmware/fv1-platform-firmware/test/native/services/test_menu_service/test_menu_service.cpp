@@ -5,6 +5,7 @@
 #include "ui/menu_model.h"
 
 #include "../src/services/menu_service.cpp"
+#include "../src/ui/menu_model.cpp"
 
 void setUp() {
   Event event;

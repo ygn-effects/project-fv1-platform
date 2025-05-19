@@ -3,6 +3,7 @@
 #include "logic/logical_state.h"
 #include "logic/fv1_handler.h"
 #include "services/program_service.h"
+#include "mock/mock_fv1.h"
 
 #include "../src/logic/fv1_handler.cpp"
 #include "../src/services/fv1_service.cpp"
