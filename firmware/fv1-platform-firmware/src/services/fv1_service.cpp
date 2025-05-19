@@ -1,6 +1,6 @@
 #include "services/fv1_service.h"
 
-Fv1Service::Fv1Service(const LogicalState& t_lState, MockFv1& t_fv1)
+Fv1Service::Fv1Service(const LogicalState& t_lState, Fv1& t_fv1)
   : m_logicalState(t_lState), m_fv1(t_fv1) {}
 
 void Fv1Service::init() {
@@ -54,6 +54,9 @@ void Fv1Service::handleEvent(const Event& t_event) {
     case EventType::kMenuPot2Moved:
     case EventType::kMidiPot2Moved:
       m_fv1.sendPotValue(Fv1Pot::Pot2, m_logicalState.m_potParams[2]->m_value);
+      break;
+
+    default:
       break;
   }
 }
