@@ -88,6 +88,7 @@ enum class EventType : uint8_t {
   kSaveProgramMode,
   kSaveCurrentProgram,
   kSaveCurrentPreset,
+  kSaveCurrentPresetBank,
   kSaveMidiChannel,
   kSaveDeviceState,
   kSaveLogicalState,
@@ -217,6 +218,7 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kSaveEvent,          // kSaveProgramMode
   EventCategory::kSaveEvent,          // kSaveCurrentProgram
   EventCategory::kSaveEvent,          // kSaveCurrentPreset
+  EventCategory::kSaveEvent,          // kSaveCurrentPresetBank
   EventCategory::kSaveEvent,          // kSaveMidiChannel
   EventCategory::kSaveEvent,          // kSaveDeviceState
   EventCategory::kSaveEvent,          // kSaveLogicalState
@@ -293,6 +295,7 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kSaveEvent,                   // kSaveProgramMode
   EventSubCategory::kSaveEvent,                   // kSaveCurrentProgram
   EventSubCategory::kSaveEvent,                   // kSaveCurrentPreset
+  EventSubCategory::kSaveEvent,                   // kSaveCurrentPresetBank
   EventSubCategory::kSaveEvent,                   // kSaveMidiChannel
   EventSubCategory::kSaveEvent,                   // kSaveDeviceState
   EventSubCategory::kSaveEvent,                   // kSaveLogicalState
