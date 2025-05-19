@@ -29,6 +29,9 @@ void MenuService::handleUnlocked(const Event& t_event) {
       case EventType::kMixPotMoved:
         handlePotsMoving(t_event);
         break;
+
+      default:
+        break;
     }
   }
   else {
@@ -43,7 +46,7 @@ void MenuService::lockUi(const Event& t_event) {
   m_mode = UiMode::kLocked;
 
   m_menuStack.clear();
-  m_menuStack.push(&ui::LockScreenMenu);
+  m_menuStack.push(&ui::LockScreenMenuPage);
 
   m_cursor = 0;
   m_first = 0;
@@ -122,6 +125,9 @@ void MenuService::handlePotsMoving(const Event& t_event) {
 
     case EventType::kMixPotMoved:
       m_menuStack.push(&ui::MixPotValueMenuPage);
+      break;
+
+    default:
       break;
   }
 
@@ -272,11 +278,15 @@ void MenuService::publishView() {
 
   }
 
-  EventBus::publish({EventType::kMenuViewUpdated, 0 /*millis()*/, {.view=&m_view}});
+  Event e;
+  e.m_type = EventType::kMenuViewUpdated;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.view = &m_view;
+  EventBus::publish(e);
 }
 
 void MenuService::init() {
-  m_menuStack.push(&ui::LockScreenMenu);
+  m_menuStack.push(&ui::LockScreenMenuPage);
   publishView();
 }
 
@@ -335,6 +345,6 @@ const ui::MenuView* MenuService::getMenuView() const {
 }
 
 bool MenuService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kEncoderEvent
-      || t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent;
+  return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kEncoderEvent)
+      || (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent);
 }

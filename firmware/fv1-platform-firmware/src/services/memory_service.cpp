@@ -41,7 +41,12 @@ void MemoryService::init() {
 
   loadRegion(MemoryRegion::kLogicalState);
   loadPresetBank(m_logicalState.m_currentPresetBank);
-  EventBus::publish({EventType::kPresetBankLoaded, 0 /*millis()*/, {.bank=&m_loadedBank}});
+
+  Event e;
+  e.m_type = EventType::kPresetBankLoaded;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.bank = &m_loadedBank;
+  EventBus::publish(e);
 }
 
 void MemoryService::handleEvent(const Event& t_event) {
@@ -96,7 +101,12 @@ void MemoryService::handleEvent(const Event& t_event) {
 
     case EventType::kLoadPresetBank:
       loadPresetBank(t_event.m_data.value);
-      EventBus::publish({EventType::kPresetBankLoaded, t_event.m_timestamp /*millis()*/, {.bank=&m_loadedBank}});
+
+      Event e;
+      e.m_type = EventType::kPresetBankLoaded;
+      e.m_timestamp = 0; /*millis()*/
+      e.m_data.bank = &m_loadedBank;
+      EventBus::publish(e);
       break;
 
     case EventType::kSavePreset: {

@@ -33,7 +33,7 @@ void TapService::handleEvent(const Event& t_event) {
 
   if (! m_logicalState.m_activeProgram->m_supportsTap) return;
 
-  if (t_event.m_type == EventType::kTapPressed || t_event.m_type == EventType::kMidiTapPressed && t_event.m_data.value == MidiCCValues::c_tapShortPress) {
+  if (t_event.m_type == EventType::kTapPressed || (t_event.m_type == EventType::kMidiTapPressed && t_event.m_data.value == MidiCCValues::c_tapShortPress)) {
     m_tapHandler.registerTap(t_event.m_timestamp);
 
     if (m_tapHandler.m_isNewIntervalSet) {
@@ -44,8 +44,8 @@ void TapService::handleEvent(const Event& t_event) {
 
     m_logicalState.m_tapState = m_tapHandler.m_tapState;
   }
-  else if (t_event.m_type == EventType::kTapLongPressed && m_logicalState.m_tapState == TapState::kEnabled
-        || t_event.m_type == EventType::kMidiTapPressed && t_event.m_data.value == MidiCCValues::c_tapLongPress && m_logicalState.m_tapState == TapState::kEnabled) {
+  else if ((t_event.m_type == EventType::kTapLongPressed && m_logicalState.m_tapState == TapState::kEnabled)
+        || (t_event.m_type == EventType::kMidiTapPressed && t_event.m_data.value == MidiCCValues::c_tapLongPress && m_logicalState.m_tapState == TapState::kEnabled)) {
     m_tapHandler.setNextDivValue();
 
     m_logicalState.m_divState = m_tapHandler.m_divState;
@@ -54,8 +54,8 @@ void TapService::handleEvent(const Event& t_event) {
 
     publishTapIntervalEvent(t_event);
   }
-  else if (t_event.m_type == EventType::kPot0Moved && m_logicalState.m_tapState == TapState::kEnabled
-        || t_event.m_type == EventType::kMenuTempoChanged && m_logicalState.m_tapState == TapState::kEnabled) {
+  else if ((t_event.m_type == EventType::kPot0Moved && m_logicalState.m_tapState == TapState::kEnabled)
+        || (t_event.m_type == EventType::kMenuTempoChanged && m_logicalState.m_tapState == TapState::kEnabled)) {
     m_logicalState.m_tapState = TapState::kDisabled;
     m_logicalState.m_divState = DivState::kDisabled;
     m_logicalState.m_divValue = DivValue::kQuarter;
