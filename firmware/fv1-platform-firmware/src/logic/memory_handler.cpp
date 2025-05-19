@@ -16,6 +16,10 @@ void MemoryHandler::serializeCurrentPreset(const LogicalState& t_lState, uint8_t
   t_buffer[t_startIndex] = static_cast<uint8_t>(t_lState.m_currentPreset);
 }
 
+void MemoryHandler::serializeCurrentPresetBank(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex) {
+  t_buffer[t_startIndex] = static_cast<uint8_t>(t_lState.m_currentPresetBank);
+}
+
 void MemoryHandler::serializeMidiChannel(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex) {
   t_buffer[t_startIndex] = static_cast<uint8_t>(t_lState.m_midiChannel);
 }
@@ -25,7 +29,8 @@ void MemoryHandler::serializeDeviceState(const LogicalState& t_lState, uint8_t* 
   serializeProgramMode(t_lState, t_buffer, t_startIndex + 1);
   serializeCurrentProgram(t_lState, t_buffer, t_startIndex + 2);
   serializeCurrentPreset(t_lState, t_buffer, t_startIndex + 3);
-  serializeMidiChannel(t_lState, t_buffer, t_startIndex + 4);
+  serializeCurrentPresetBank(t_lState, t_buffer, t_startIndex + 4);
+  serializeMidiChannel(t_lState, t_buffer, t_startIndex + 5);
 }
 
 void MemoryHandler::serializeTap(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex) {
@@ -119,6 +124,10 @@ void MemoryHandler::deserializeCurrentPreset(LogicalState& t_lState, const uint8
   t_lState.m_currentPreset = Utils::clamp<uint8_t>(t_buffer[t_startIndex], 0, PresetConstants::c_maxPreset);
 }
 
+void MemoryHandler::deserializeCurrentPresetBank(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex) {
+  t_lState.m_currentPresetBank = Utils::clamp<uint8_t>(t_buffer[t_startIndex], 0, PresetConstants::c_presetBankCount);
+}
+
 void MemoryHandler::deserializeMidiChannel(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex) {
   t_lState.m_midiChannel = Utils::clamp<uint8_t>(t_buffer[t_startIndex], 0, 7);
 }
@@ -128,7 +137,8 @@ void MemoryHandler::deserializeDeviceState(LogicalState& t_lState, const uint8_t
   deserializeProgramMode(t_lState, t_buffer, t_startIndex + 1);
   deserializeCurrentProgram(t_lState, t_buffer, t_startIndex + 2);
   deserializeCurrentPreset(t_lState, t_buffer, t_startIndex + 3);
-  deserializeMidiChannel(t_lState, t_buffer, t_startIndex + 4);
+  deserializeCurrentPresetBank(t_lState, t_buffer, t_startIndex + 4);
+  deserializeMidiChannel(t_lState, t_buffer, t_startIndex + 5);
 }
 
 void MemoryHandler::deserializeTap(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex) {
@@ -239,6 +249,13 @@ RegionInfo MemoryHandler::calculateRegionInfo(MemoryRegion t_region, uint8_t t_p
       };
       break;
 
+    case MemoryRegion::kCurrentPresetBank:
+      info = {
+        .m_address = MemoryLayout::c_currentPresetBank,
+        .m_length = 1
+      };
+      break;
+
     case MemoryRegion::kMidiChannel:
       info = {
         .m_address = MemoryLayout::c_midiChannel,
@@ -327,6 +344,10 @@ void MemoryHandler::serializeRegion(MemoryRegion t_region, const LogicalState& t
       serializeCurrentPreset(t_lState, t_buffer, 0);
       break;
 
+    case MemoryRegion::kCurrentPresetBank:
+      serializeCurrentPresetBank(t_lState, t_buffer, 0);
+      break;
+
     case MemoryRegion::kMidiChannel:
       serializeMidiChannel(t_lState, t_buffer, 0);
       break;
@@ -376,6 +397,10 @@ void MemoryHandler::deserializeRegion(MemoryRegion t_region, LogicalState& t_lSt
 
     case MemoryRegion::kCurrentPreset:
       deserializeCurrentPreset(t_lState, t_buffer, 0);
+      break;
+
+    case MemoryRegion::kCurrentPresetBank:
+      deserializeCurrentPresetBank(t_lState, t_buffer, 0);
       break;
 
     case MemoryRegion::kMidiChannel:

@@ -72,9 +72,21 @@ void test_serialize() {
   memoryHandler.serializeRegion(MemoryRegion::kCurrentPreset, logicalState, buffer);
   TEST_ASSERT_EQUAL(3, buffer[0]);
 
+  // Current preset bank
+  info = memoryHandler.calculateRegionInfo(MemoryRegion::kCurrentPresetBank);
+  TEST_ASSERT_EQUAL(info.m_address, 4);
+  TEST_ASSERT_EQUAL(info.m_length, 1);
+
+  memoryHandler.serializeRegion(MemoryRegion::kCurrentPresetBank, logicalState, buffer);
+  TEST_ASSERT_EQUAL(0, buffer[0]);
+
+  logicalState.m_currentPresetBank = 4;
+  memoryHandler.serializeRegion(MemoryRegion::kCurrentPresetBank, logicalState, buffer);
+  TEST_ASSERT_EQUAL(4, buffer[0]);
+
   // MIDI channel
   info = memoryHandler.calculateRegionInfo(MemoryRegion::kMidiChannel);
-  TEST_ASSERT_EQUAL(info.m_address, 4);
+  TEST_ASSERT_EQUAL(info.m_address, 5);
   TEST_ASSERT_EQUAL(info.m_length, 1);
 
   memoryHandler.serializeRegion(MemoryRegion::kMidiChannel, logicalState, buffer);
@@ -86,7 +98,7 @@ void test_serialize() {
 
   // Tap
   info = memoryHandler.calculateRegionInfo(MemoryRegion::kTap);
-  TEST_ASSERT_EQUAL(info.m_address, 5);
+  TEST_ASSERT_EQUAL(info.m_address, 6);
   TEST_ASSERT_EQUAL(info.m_length, 7);
 
   uint8_t tapBuffer[info.m_length];
@@ -117,7 +129,7 @@ void test_serialize() {
 
   // Tempo
   info = memoryHandler.calculateRegionInfo(MemoryRegion::kTempo);
-  TEST_ASSERT_EQUAL(info.m_address, 12);
+  TEST_ASSERT_EQUAL(info.m_address, 13);
   TEST_ASSERT_EQUAL(info.m_length, 2);
 
   uint8_t tempoBuffer[info.m_length];
@@ -133,7 +145,7 @@ void test_serialize() {
 
   // Expr
   info = memoryHandler.calculateRegionInfo(MemoryRegion::kExpr, 2);
-  TEST_ASSERT_EQUAL(info.m_address, 28);
+  TEST_ASSERT_EQUAL(info.m_address, 29);
   TEST_ASSERT_EQUAL(info.m_length, 7);
 
   uint8_t exprBuffer[info.m_length];
@@ -164,7 +176,7 @@ void test_serialize() {
 
   // Pot
   info = memoryHandler.calculateRegionInfo(MemoryRegion::kPot, 3, 2);
-  TEST_ASSERT_EQUAL(168, info.m_address);
+  TEST_ASSERT_EQUAL(169, info.m_address);
   TEST_ASSERT_EQUAL(7, info.m_length);
 
   uint8_t potBuffer[info.m_length];
@@ -267,26 +279,30 @@ void test_deserialize() {
   deviceStateBuffer[1] = static_cast<uint8_t>(ProgramMode::kProgram);
   deviceStateBuffer[2] = 3;
   deviceStateBuffer[3] = 0;
-  deviceStateBuffer[4] = 7;
+  deviceStateBuffer[4] = 4;
+  deviceStateBuffer[5] = 7;
   memoryHandler.deserializeRegion(MemoryRegion::kDeviceState, logicalState, deviceStateBuffer);
 
   TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
   TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
   TEST_ASSERT_EQUAL(3, logicalState.m_currentProgram);
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
+  TEST_ASSERT_EQUAL(4, logicalState.m_currentPresetBank);
   TEST_ASSERT_EQUAL(7, logicalState.m_midiChannel);
 
   deviceStateBuffer[0] = static_cast<uint8_t>(BypassState::kBypassed);
   deviceStateBuffer[1] = static_cast<uint8_t>(ProgramMode::kPreset);
   deviceStateBuffer[2] = 0;
   deviceStateBuffer[3] = 5;
-  deviceStateBuffer[4] = 2;
+  deviceStateBuffer[4] = 3;
+  deviceStateBuffer[5] = 2;
   memoryHandler.deserializeRegion(MemoryRegion::kDeviceState, logicalState, deviceStateBuffer);
 
   TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
   TEST_ASSERT_EQUAL(ProgramMode::kPreset, logicalState.m_programMode);
   TEST_ASSERT_EQUAL(0, logicalState.m_currentProgram);
   TEST_ASSERT_EQUAL(5, logicalState.m_currentPreset);
+  TEST_ASSERT_EQUAL(3, logicalState.m_currentPresetBank);
   TEST_ASSERT_EQUAL(2, logicalState.m_midiChannel);
 
   // Tap
@@ -414,6 +430,7 @@ void test_serialize_logical_state() {
 
   logicalState.m_currentProgram = 2;
   logicalState.m_currentPreset = 3;
+  logicalState.m_currentPresetBank = 4;
   logicalState.m_midiChannel = 7;
   logicalState.m_tapState = TapState::kEnabled;
   logicalState.m_divState = DivState::kEnabled;
@@ -433,13 +450,14 @@ void test_serialize_logical_state() {
 
   RegionInfo info = memoryHandler.calculateRegionInfo(MemoryRegion::kLogicalState);
   TEST_ASSERT_EQUAL(0, info.m_address);
-  TEST_ASSERT_EQUAL(294, info.m_length);
+  TEST_ASSERT_EQUAL(295, info.m_length);
 
   uint8_t buffer[info.m_length];
   memoryHandler.serializeRegion(MemoryRegion::kLogicalState, logicalState, buffer);
 
   TEST_ASSERT_EQUAL(2, buffer[MemoryLayout::c_currentProgram]);
   TEST_ASSERT_EQUAL(3, buffer[MemoryLayout::c_currentPreset]);
+  TEST_ASSERT_EQUAL(4, buffer[MemoryLayout::c_currentPresetBank]);
   TEST_ASSERT_EQUAL(7, buffer[MemoryLayout::c_midiChannel]);
   TEST_ASSERT_EQUAL(1, buffer[MemoryLayout::c_tapState]);
   TEST_ASSERT_EQUAL(1, buffer[MemoryLayout::c_divState]);
@@ -583,7 +601,7 @@ void test_serialize_preset() {
   MemoryHandler memoryHandler;
 
   RegionInfo info = memoryHandler.calculateRegionInfo(MemoryRegion::kPreset, 2, 2);
-  TEST_ASSERT_EQUAL(758, info.m_address);
+  TEST_ASSERT_EQUAL(759, info.m_address);
   TEST_ASSERT_EQUAL(46, info.m_length);
 
   uint8_t buffer[info.m_length];
@@ -639,7 +657,7 @@ void test_deserialize_preset() {
   MemoryHandler memoryHandler;
 
   RegionInfo info = memoryHandler.calculateRegionInfo(MemoryRegion::kPreset, 2, 2);
-  TEST_ASSERT_EQUAL(758, info.m_address);
+  TEST_ASSERT_EQUAL(759, info.m_address);
   TEST_ASSERT_EQUAL(46, info.m_length);
 
   uint8_t buffer[info.m_length];
@@ -699,7 +717,7 @@ void test_serialize_preset_bank() {
   PresetHandler presetHandler;
 
   RegionInfo info = memoryHandler.calculateRegionInfo(MemoryRegion::kPresetBank, 2);
-  TEST_ASSERT_EQUAL(665, info.m_address);
+  TEST_ASSERT_EQUAL(666, info.m_address);
   TEST_ASSERT_EQUAL(185, info.m_length);
 
   uint8_t buffer[info.m_length];
@@ -756,7 +774,7 @@ void test_deserialize_preset_bank() {
   PresetHandler presetHandler;
 
   RegionInfo info = memoryHandler.calculateRegionInfo(MemoryRegion::kPresetBank, 2);
-  TEST_ASSERT_EQUAL(665, info.m_address);
+  TEST_ASSERT_EQUAL(666, info.m_address);
   TEST_ASSERT_EQUAL(185, info.m_length);
 
   uint8_t buffer[info.m_length];

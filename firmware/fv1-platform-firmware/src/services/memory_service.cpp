@@ -67,6 +67,10 @@ void MemoryService::handleEvent(const Event& t_event) {
       saveRegion(MemoryRegion::kCurrentPreset);
       break;
 
+    case EventType::kSaveCurrentPresetBank:
+      saveRegion(MemoryRegion::kCurrentPresetBank);
+      break;
+
     case EventType::kSaveMidiChannel:
       saveRegion(MemoryRegion::kMidiChannel);
       break;

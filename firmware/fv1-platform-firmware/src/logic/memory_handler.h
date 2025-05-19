@@ -14,8 +14,9 @@
  * 1                programMode        Program/Preset mode
  * 2                currentProgram     Last used program
  * 3                currentPreset      Last used preset
- * 4                midiChannel        MIDI channel of the device
- * 5-11             tapHandler         Tap handler data
+ * 4                currentPresetBank  Last used preset bank
+ * 5                midiChannel        MIDI channel of the device
+ * 6-12             tapHandler         Tap handler data
  *                   | tapState        Tap state
  *                   | divState        Div state
  *                   | divValue        Div value
@@ -23,9 +24,9 @@
  *                   | interval        Interval high byte
  *                   | divInterval     Div interval low byte
  *                   | divinterval     Div interval high byte
- * 12               tempo              Current tempo low byte
- * 13               tempo              Current tempo high byte
- * 14-69            exprParam          Expr handler data x8
+ * 13               tempo              Current tempo low byte
+ * 14               tempo              Current tempo high byte
+ * 15-70            exprParam          Expr handler data x8
  *                   | state           Expr state
  *                   | mappedPot       Expr mapped pot
  *                   | direction       Expr direction
@@ -33,7 +34,7 @@
  *                   | heelValue       Heel value high byte
  *                   | toeValue        Toe value low byte
  *                   | toeValue        Toe value high byte
- * 70-293           potParam           Pot param data
+ * 71-294           potParam           Pot param data
  *                   | state           Pot state
  *                   | value           Pot value low byte
  *                   | value           Pot value high byte
@@ -94,6 +95,7 @@ enum class MemoryRegion : uint8_t {
   kProgramMode,
   kCurrentProgram,
   kCurrentPreset,
+  kCurrentPresetBank,
   kMidiChannel,
   kState,
   kTap,
@@ -106,12 +108,13 @@ enum class MemoryRegion : uint8_t {
 
 namespace MemoryLayout {
   constexpr uint16_t c_deviceStateStart = 0;
-  constexpr uint8_t c_deviceStateSize = 5;
+  constexpr uint8_t c_deviceStateSize = 6;
   constexpr uint16_t c_bypassState = c_deviceStateStart;
   constexpr uint16_t c_programMode = c_deviceStateStart + 1;
   constexpr uint16_t c_currentProgram = c_deviceStateStart + 2;
   constexpr uint16_t c_currentPreset = c_deviceStateStart + 3;
-  constexpr uint16_t c_midiChannel = c_deviceStateStart + 4;
+  constexpr uint16_t c_currentPresetBank = c_deviceStateStart + 4;
+  constexpr uint16_t c_midiChannel = c_deviceStateStart + 5;
 
   constexpr uint16_t c_tapStart = c_deviceStateSize;
   constexpr uint8_t c_tapSize = 7;
@@ -238,6 +241,7 @@ struct MemoryHandler {
     void serializeProgramMode(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
     void serializeCurrentProgram(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
     void serializeCurrentPreset(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
+    void serializeCurrentPresetBank(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
     void serializeMidiChannel(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
     void serializeDeviceState(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
     void serializeTap(const LogicalState& t_lState, uint8_t* t_buffer, uint16_t t_startIndex);
@@ -250,6 +254,7 @@ struct MemoryHandler {
     void deserializeProgramMode(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
     void deserializeCurrentProgram(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
     void deserializeCurrentPreset(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
+    void deserializeCurrentPresetBank(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
     void deserializeMidiChannel(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
     void deserializeDeviceState(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
     void deserializeTap(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex);
