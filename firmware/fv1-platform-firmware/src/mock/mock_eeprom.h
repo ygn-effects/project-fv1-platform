@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <algorithm>
 #include <array>
-#include "hal/eeprom.h"
+#include "periphs/eeprom.h"
 
 class MockEEPROM : public EEPROM {
   public:

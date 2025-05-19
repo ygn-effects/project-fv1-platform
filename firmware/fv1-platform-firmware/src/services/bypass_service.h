@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "core/event_bus.h"
 #include "core/service.h"
-#include "hal/bypass.h"
+#include "periphs/bypass.h"
 #include "logic/logical_state.h"
 #include "services/midi_service.h"
 

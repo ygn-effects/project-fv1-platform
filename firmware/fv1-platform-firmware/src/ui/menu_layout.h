@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include "logic/logical_state.h"
-#include "hal/display.h"
+#include "periphs/display.h"
 #include "ui/menu_model.h"
 
 namespace ui {

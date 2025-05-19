@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "core/service.h"
 #include "core/event_bus.h"
-#include "hal/eeprom.h"
+#include "periphs/eeprom.h"
 #include "logic/logical_state.h"
 #include "logic/memory_handler.h"
 #include "logic/preset_handler.h"

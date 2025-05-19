@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "hal/dac.h"
+#include "periphs/dac.h"
 #include "logic/pot_handler.h"
 #include "utils/utils.h"
 

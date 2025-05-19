@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "core/service.h"
 #include "core/event_bus.h"
-#include "hal/fv1.h"
+#include "periphs/fv1.h"
 #include "logic/logical_state.h"
 #include "logic/fv1_handler.h"
 #include "mock/mock_fv1.h"

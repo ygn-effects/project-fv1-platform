@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <vector>
 #include <tuple>
-#include "hal/fv1.h"
+#include "periphs/fv1.h"
 
 class MockFv1 : public Fv1 {
   public:

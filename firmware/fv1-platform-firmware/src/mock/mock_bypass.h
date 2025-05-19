@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hal/bypass.h"
+#include "periphs/bypass.h"
 
 class MockBypass : public Bypass {
   public :
