@@ -4,6 +4,8 @@
 #include "services/bypass_service.h"
 #include "services/expr_service.h"
 #include "services/fsm_service.h"
+#include "services/fv1_service.h"
+#include "services/memory_service.h"
 #include "services/menu_service.h"
 #include "services/midi_service.h"
 #include "services/pot_service.h"
@@ -11,6 +13,9 @@
 #include "services/program_service.h"
 #include "services/tap_service.h"
 #include "services/tempo_service.h"
+#include "mock/mock_eeprom.h"
+#include "mock/mock_fv1.h"
+#include "mock/mock_bypass.h"
 
 #include "../src/logic/expr_handler.cpp"
 #include "../src/logic/fv1_handler.cpp"
@@ -22,6 +27,8 @@
 #include "../src/services/bypass_service.cpp"
 #include "../src/services/expr_service.cpp"
 #include "../src/services/fsm_service.cpp"
+#include "../src/services/fv1_service.cpp"
+#include "../src/services/memory_service.cpp"
 #include "../src/services/menu_service.cpp"
 #include "../src/services/midi_service.cpp"
 #include "../src/services/pot_service.cpp"
@@ -30,7 +37,6 @@
 #include "../src/services/tap_service.cpp"
 #include "../src/services/tempo_service.cpp"
 #include "../src/ui/menu_model.cpp"
-
 
 void setUp() {
   Event event;
@@ -44,34 +50,180 @@ void tearDown() {
 
 }
 
+void fillMockEeprom() {
+  LogicalState logicalState;
+  MockEEPROM mockEeprom;
+  MemoryService memoryService(logicalState, mockEeprom);
+
+  mockEeprom.reset();
+
+  logicalState.m_bypassState = BypassState::kActive;
+  logicalState.m_programMode = ProgramMode::kProgram;
+  logicalState.m_currentProgram = 2;
+  logicalState.m_currentPreset = 2;
+  logicalState.m_currentPresetBank = 5;
+  logicalState.m_midiChannel = 7;
+  logicalState.m_tapState = TapState::kEnabled;
+  logicalState.m_divState = DivState::kEnabled;
+  logicalState.m_divValue = DivValue::kEight;
+  logicalState.m_interval = 512;
+  logicalState.m_divInterval = 256;
+  logicalState.m_tempo = 256;
+  logicalState.m_exprParams[1].m_state = ExprState::kInactive;
+  logicalState.m_exprParams[1].m_mappedPot = MappedPot::kPot1;
+  logicalState.m_exprParams[1].m_direction = Direction::kInverted;
+  logicalState.m_exprParams[1].m_heelValue = 256;
+  logicalState.m_exprParams[1].m_toeValue = 512;
+  logicalState.m_exprParams[2].m_state = ExprState::kActive;
+  logicalState.m_exprParams[2].m_mappedPot = MappedPot::kPot2;
+  logicalState.m_exprParams[2].m_direction = Direction::kNormal;
+  logicalState.m_exprParams[2].m_heelValue = 256;
+  logicalState.m_exprParams[2].m_toeValue = 512;
+  logicalState.m_potParams[1][0].m_state = PotState::kActive;
+  logicalState.m_potParams[1][0].m_value = 350;
+  logicalState.m_potParams[1][0].m_minValue = 0;
+  logicalState.m_potParams[1][0].m_maxValue = 512;
+  logicalState.m_potParams[1][1].m_state = PotState::kActive;
+  logicalState.m_potParams[1][1].m_value = 300;
+  logicalState.m_potParams[1][1].m_minValue = 256;
+  logicalState.m_potParams[1][1].m_maxValue = 1023;
+  logicalState.m_potParams[1][2].m_state = PotState::kActive;
+  logicalState.m_potParams[1][2].m_value = 512;
+  logicalState.m_potParams[1][2].m_minValue = 0;
+  logicalState.m_potParams[1][2].m_maxValue = 512;
+  logicalState.m_potParams[1][3].m_state = PotState::kActive;
+  logicalState.m_potParams[1][3].m_value = 256;
+  logicalState.m_potParams[1][3].m_minValue = 0;
+  logicalState.m_potParams[1][3].m_maxValue = 256;
+  logicalState.m_potParams[2][0].m_state = PotState::kActive;
+  logicalState.m_potParams[2][0].m_value = 300;
+  logicalState.m_potParams[2][0].m_minValue = 256;
+  logicalState.m_potParams[2][0].m_maxValue = 512;
+  logicalState.m_potParams[2][1].m_state = PotState::kActive;
+  logicalState.m_potParams[2][1].m_value = 300;
+  logicalState.m_potParams[2][1].m_minValue = 0;
+  logicalState.m_potParams[2][1].m_maxValue = 1023;
+  logicalState.m_potParams[2][2].m_state = PotState::kActive;
+  logicalState.m_potParams[2][2].m_value = 512;
+  logicalState.m_potParams[2][2].m_minValue = 0;
+  logicalState.m_potParams[2][2].m_maxValue = 1023;
+  logicalState.m_potParams[2][3].m_state = PotState::kActive;
+  logicalState.m_potParams[2][3].m_value = 256;
+  logicalState.m_potParams[2][3].m_minValue = 0;
+  logicalState.m_potParams[2][3].m_maxValue = 1023;
+
+  memoryService.handleEvent({EventType::kSaveLogicalState, 0, {}});
+}
+
+void runEventChain(Service* services[], size_t count) {
+  while (EventBus::hasEvent()) {
+    Event e;
+    EventBus::recall(e);
+
+    for (size_t i = 0; i < count; ++i) {
+      if (services[i]->interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type))) {
+        services[i]->handleEvent(e);
+      }
+    }
+  }
+}
+
+void runUpdateChain(Service* services[], size_t count) {
+  for (size_t i = 0; i < count; ++i) {
+    services[i]->update();
+  }
+}
+
 void test_program_change() {
+  fillMockEeprom();
+
   LogicalState logicalState;
 
+  MockEEPROM mockEeprom;
+  MockFv1 mockFv1;
+  MockBypass mockBypass;
+
   FsmService fsmService(logicalState);
+  MemoryService memoryService(logicalState, mockEeprom);
+  PresetService presetService(logicalState);
   ProgramService programService(logicalState);
+  BypassService bypassService(logicalState, mockBypass);
   PotService potService(logicalState);
   ExprService exprService(logicalState);
   TapService tapService(logicalState);
   TempoService tempoService(logicalState);
+  Fv1Service fv1Service(logicalState, mockFv1);
   MenuService menuService(logicalState);
 
   Service* services[] = {
+    &memoryService,
     &fsmService,
+    &presetService,
     &programService,
+    &bypassService,
+    &tapService,
     &potService,
     &exprService,
-    &tapService,
     &tempoService,
+    &fv1Service,
     &menuService
   };
+
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
 
   for (auto* service: services) {
     service->init();
   }
+
+  uint8_t servicesCount = sizeof(services) / sizeof(services[0]);
+
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  // Bypass is on
+  TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
+
+  // On program 2
+  TEST_ASSERT_EQUAL(2, logicalState.m_currentProgram);
+
+  // Scroll -1
+  EventBus::publish({EventType::kMenuProgramChanged, 0, {.delta=-1}});
+
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  // On program 1
+  TEST_ASSERT_EQUAL(1, logicalState.m_currentProgram);
+
+  // LogicalState values
+  TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
+  TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
+  TEST_ASSERT_EQUAL(1, logicalState.m_currentProgram);
+  TEST_ASSERT_EQUAL(2, logicalState.m_currentPreset);
+  TEST_ASSERT_EQUAL(5, logicalState.m_currentPresetBank);
+  TEST_ASSERT_EQUAL(TapState::kEnabled, logicalState.m_tapState);
+  TEST_ASSERT_EQUAL(DivState::kEnabled, logicalState.m_divState);
+  TEST_ASSERT_EQUAL(DivValue::kEight, logicalState.m_divValue);
+  TEST_ASSERT_EQUAL(512, logicalState.m_interval);
+  TEST_ASSERT_EQUAL(256, logicalState.m_divInterval);
+  TEST_ASSERT_EQUAL(256, logicalState.m_tempo);
+  TEST_ASSERT_EQUAL(ExprState::kInactive, logicalState.m_exprParams[logicalState.m_currentProgram].m_state);
+  TEST_ASSERT_EQUAL(MappedPot::kPot1, logicalState.m_exprParams[logicalState.m_currentProgram].m_mappedPot);
+  TEST_ASSERT_EQUAL(Direction::kInverted, logicalState.m_exprParams[logicalState.m_currentProgram].m_direction);
+  TEST_ASSERT_EQUAL(256, logicalState.m_exprParams[logicalState.m_currentProgram].m_heelValue);
+  TEST_ASSERT_EQUAL(512, logicalState.m_exprParams[logicalState.m_currentProgram].m_toeValue);
+
+  // ProgramService sets the pointer to the active program
+  TEST_ASSERT_EQUAL("Analog delay", logicalState.m_activeProgram->m_name);
+
+  // Fv1Service sets the S0/1/2 pins
+  TEST_ASSERT_EQUAL(0, mockFv1.m_s0);
+  TEST_ASSERT_EQUAL(1, mockFv1.m_s1);
+  TEST_ASSERT_EQUAL(0, mockFv1.m_s2);
 }
 
 int main() {
   UNITY_BEGIN();
-
+  RUN_TEST(test_program_change);
   UNITY_END();
 }
