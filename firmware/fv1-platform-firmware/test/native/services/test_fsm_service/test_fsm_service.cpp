@@ -103,6 +103,40 @@ void test_menu_idle_edit_transition() {
   TEST_ASSERT_EQUAL(EventType::kMenuLocked, stateChanged.m_type);
 }
 
+void test_program_mode_switch() {
+  LogicalState logicalState;
+  FsmService fsmService(logicalState);
+
+  fsmService.handleEvent({EventType::kBootCompleted, 0, {}});
+  Event e;
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
+  fsmService.handleEvent({EventType::kRawProgramModeSwitchLongPress, 0, {}});
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kStateChanged, e.m_type);
+  TEST_ASSERT_EQUAL(AppState::kPresetIdle, e.m_data.value);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kProgramModeChanged, e.m_type);
+
+  fsmService.handleEvent({EventType::kRawProgramModeSwitchLongPress, 0, {}});
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kStateChanged, e.m_type);
+  TEST_ASSERT_EQUAL(AppState::kProgramIdle, e.m_data.value);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+
+  TEST_ASSERT_EQUAL(EventType::kProgramModeChanged, e.m_type);
+}
+
 void test_interested_in() {
   LogicalState logicalState;
   FsmService fsmService(logicalState);
@@ -128,6 +162,7 @@ int main() {
   RUN_TEST(test_boot_transition);
   RUN_TEST(test_switch_bypass);
   RUN_TEST(test_menu_idle_edit_transition);
+  RUN_TEST(test_program_mode_switch);
   RUN_TEST(test_interested_in);
   UNITY_END();
 }
