@@ -10,6 +10,7 @@ class ProgramService : public Service {
     LogicalState& m_logicState;
 
     void syncActiveProgram();
+    void publishProgramChangeEvent(const Event& t_event);
 
   public:
     ProgramService(LogicalState& t_lState) :

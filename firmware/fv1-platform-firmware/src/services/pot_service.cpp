@@ -74,6 +74,10 @@ void PotService::handleEvent(const Event& t_event) {
       m_logicalState.m_potParams[m_logicalState.m_currentProgram][3].m_value = m_handler.mapMidiValue(t_event.m_data.value, 3);
       break;
 
+    case EventType::kProgramChanged:
+      init();
+      break;
+
     default:
       break;
   }
@@ -86,5 +90,6 @@ void PotService::update() {
 bool PotService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
   return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent)
       || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPotEvent)
-      || (t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiPotMovedEvent);
+      || (t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiPotMovedEvent)
+      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent);
 }
