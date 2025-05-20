@@ -12,6 +12,8 @@ enum class EventType : uint8_t {
   kBootCompleted,
 
   // Raw physical events
+  kRawProgramModeSwitchPress,
+  kRawProgramModeSwitchLongPress,
   kRawBypassPressed,
   kRawTapPressed,
   kRawTapLongPressed,
@@ -60,6 +62,7 @@ enum class EventType : uint8_t {
   kMenuViewUpdated,
 
   // Program events
+  kProgramModeChanged,
   kProgramChanged,
   kPresetChanged,
   kPresetBankChanged,
@@ -117,6 +120,7 @@ enum class EventCategory : uint8_t {
 
 enum class EventSubCategory : uint8_t {
   kBootEvent,
+  kRawProgramModeEvent,
   kRawBypassEvent,
   kRawTapEvent,
   kRawEncoderEvent,
@@ -137,6 +141,7 @@ enum class EventSubCategory : uint8_t {
   kMenuTempoEvent,
   kMenuExprEvent,
   kMenuViewEvent,
+  kProgramModeChangedEvent,
   kProgramChangedEvent,
   kPresetChangedEvent,
   kPresetBankChangedEvent,
@@ -158,6 +163,8 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kBootEvent,          // Boot
   EventCategory::kBootEvent,          // kRestoreState
   EventCategory::kBootEvent,          // kBootCompleted
+  EventCategory::kRawPhysicalEvent,   // kRawProgramModeSwitchPress
+  EventCategory::kRawPhysicalEvent,   // kRawProgramModeSwitchLongPress
   EventCategory::kRawPhysicalEvent,   // kRawBypassPressed
   EventCategory::kRawPhysicalEvent,   // kRawTapPressed
   EventCategory::kRawPhysicalEvent,   // kRawTapLongPressed
@@ -198,6 +205,7 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kMenuEvent,          // kMenuExprHeelValueMoved
   EventCategory::kMenuEvent,          // kMenuExprToeValueMoved
   EventCategory::kMenuEvent,          // kMenuViewUpdated
+  EventCategory::kProgramEvent,       // kProgramModeChanged
   EventCategory::kProgramEvent,       // kProgramChanged
   EventCategory::kProgramEvent,       // kPresetChanged
   EventCategory::kProgramEvent,       // kPresetBankChanged
@@ -235,6 +243,8 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kBootEvent,                   // Boot
   EventSubCategory::kBootEvent,                   // kRestoreState
   EventSubCategory::kBootEvent,                   // kBootCompleted
+  EventSubCategory::kRawProgramModeEvent,         // kRawProgramModeSwitchPress
+  EventSubCategory::kRawProgramModeEvent,         // kRawProgramModeSwitchPress
   EventSubCategory::kRawBypassEvent,              // kRawBypassPressed
   EventSubCategory::kRawTapEvent,                 // kRawTapPressed
   EventSubCategory::kRawTapEvent,                 // kRawTapLongPressed
@@ -275,6 +285,7 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kMenuExprEvent,               // kMenuExprHeelValueMoved
   EventSubCategory::kMenuExprEvent,               // kMenuExprToeValueMoved
   EventSubCategory::kMenuViewEvent,               // kMenuViewUpdated
+  EventSubCategory::kProgramChangedEvent,         // kProgramModeChanged
   EventSubCategory::kProgramChangedEvent,         // kProgramChanged
   EventSubCategory::kPresetChangedEvent,          // kPresetChanged
   EventSubCategory::kPresetBankChangedEvent,      // kPresetBankChanged
