@@ -180,6 +180,8 @@ void test_program_change() {
   runEventChain(services, servicesCount);
   runUpdateChain(services, servicesCount);
 
+  mockFv1.m_potValues.clear();
+
   // Bypass is on
   TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
 
@@ -217,9 +219,38 @@ void test_program_change() {
   TEST_ASSERT_EQUAL("Analog delay", logicalState.m_activeProgram->m_name);
 
   // Fv1Service sets the S0/1/2 pins
-  TEST_ASSERT_EQUAL(0, mockFv1.m_s0);
-  TEST_ASSERT_EQUAL(1, mockFv1.m_s1);
+  TEST_ASSERT_EQUAL(1, mockFv1.m_s0);
+  TEST_ASSERT_EQUAL(0, mockFv1.m_s1);
   TEST_ASSERT_EQUAL(0, mockFv1.m_s2);
+
+  // And P0/1/2, the order is 0/2/1/0 because on program change init will set P0
+  // And TempoService will trigger a TempoChange event that Fv1Service will also handle
+  std::tuple test = mockFv1.m_potValues.back();
+  TEST_ASSERT_FALSE(mockFv1.m_potValues.empty());
+  auto [pot0, val0] = mockFv1.m_potValues.back();
+  TEST_ASSERT_EQUAL(Fv1Pot::Pot0, pot0);
+  TEST_ASSERT_EQUAL(227, val0);
+  mockFv1.m_potValues.pop_back();
+
+  TEST_ASSERT_FALSE(mockFv1.m_potValues.empty());
+  auto [pot2, val2] = mockFv1.m_potValues.back();
+  TEST_ASSERT_EQUAL(Fv1Pot::Pot2, pot2);
+  TEST_ASSERT_EQUAL(300, val2);
+  mockFv1.m_potValues.pop_back();
+
+  TEST_ASSERT_FALSE(mockFv1.m_potValues.empty());
+  auto [pot1, val1] = mockFv1.m_potValues.back();
+  TEST_ASSERT_EQUAL(Fv1Pot::Pot1, pot1);
+  TEST_ASSERT_EQUAL(350, val1);
+  mockFv1.m_potValues.pop_back();
+
+  TEST_ASSERT_FALSE(mockFv1.m_potValues.empty());
+  auto [pot01, val01] = mockFv1.m_potValues.back();
+  TEST_ASSERT_EQUAL(Fv1Pot::Pot0, pot01);
+  TEST_ASSERT_EQUAL(227, val01);
+  mockFv1.m_potValues.pop_back();
+
+  TEST_ASSERT_TRUE(mockFv1.m_potValues.empty());
 }
 
 int main() {
