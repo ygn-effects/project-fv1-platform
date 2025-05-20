@@ -78,6 +78,12 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
+      if (t_event.m_type == EventType::kRawProgramModeSwitchLongPress) {
+        transitionTo(AppState::kPresetIdle, t_event.m_timestamp);
+        EventBus::publish({EventType::kProgramModeChanged, t_event.m_timestamp /*millis*/, {}});
+        return;
+      }
+
       break;
 
     case AppState::kProgramEdit:
@@ -152,6 +158,11 @@ void FsmService::handleEvent(const Event& t_event) {
       break;
 
     case AppState::kPresetIdle:
+      if (t_event.m_type == EventType::kRawProgramModeSwitchLongPress) {
+        transitionTo(AppState::kProgramIdle, t_event.m_timestamp);
+        EventBus::publish({EventType::kProgramModeChanged, t_event.m_timestamp /*millis*/, {}});
+        return;
+      }
 
     default:
       break;
