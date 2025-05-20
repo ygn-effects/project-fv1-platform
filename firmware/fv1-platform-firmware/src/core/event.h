@@ -244,7 +244,7 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kBootEvent,                   // kRestoreState
   EventSubCategory::kBootEvent,                   // kBootCompleted
   EventSubCategory::kRawProgramModeEvent,         // kRawProgramModeSwitchPress
-  EventSubCategory::kRawProgramModeEvent,         // kRawProgramModeSwitchPress
+  EventSubCategory::kRawProgramModeEvent,         // kRawProgramModeSwitchLongPress
   EventSubCategory::kRawBypassEvent,              // kRawBypassPressed
   EventSubCategory::kRawTapEvent,                 // kRawTapPressed
   EventSubCategory::kRawTapEvent,                 // kRawTapLongPressed
@@ -285,7 +285,7 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kMenuExprEvent,               // kMenuExprHeelValueMoved
   EventSubCategory::kMenuExprEvent,               // kMenuExprToeValueMoved
   EventSubCategory::kMenuViewEvent,               // kMenuViewUpdated
-  EventSubCategory::kProgramChangedEvent,         // kProgramModeChanged
+  EventSubCategory::kProgramModeChangedEvent,     // kProgramModeChanged
   EventSubCategory::kProgramChangedEvent,         // kProgramChanged
   EventSubCategory::kPresetChangedEvent,          // kPresetChanged
   EventSubCategory::kPresetBankChangedEvent,      // kPresetBankChanged
@@ -338,4 +338,3 @@ struct Event {
     PresetBank* bank;
   } m_data;
 };
-
