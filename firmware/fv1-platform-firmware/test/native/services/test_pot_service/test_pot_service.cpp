@@ -42,7 +42,7 @@ void test_interested_in() {
   Event e{EventType::kPot0Moved, 500, {.value=100}};
   TEST_ASSERT_TRUE(potService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
 
-  e = {EventType::kProgramChanged, 500, {.delta=1}};
+  e = {EventType::kMenuProgramChanged, 500, {.delta=1}};
   TEST_ASSERT_FALSE(potService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
 
   e = {EventType::kMenuExprMappedPotMoved, 500, {.delta=1}};
