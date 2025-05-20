@@ -110,7 +110,7 @@ void test_program_change() {
 
   TEST_ASSERT_EQUAL(1000, logicalState.m_tempo);
 
-  programService.handleEvent({EventType::kProgramChanged, 1000, {.delta = 1}});
+  programService.handleEvent({EventType::kMenuProgramChanged, 1000, {.delta = 1}});
   TEST_ASSERT_EQUAL(1, logicalState.m_currentProgram);
 
   tempoService.handleEvent({EventType::kProgramChanged, 1000, {.delta = 1}});
