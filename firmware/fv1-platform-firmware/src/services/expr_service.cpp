@@ -15,7 +15,11 @@ void ExprService::init() {
 }
 
 void ExprService::handleEvent(const Event& t_event) {
-  if (t_event.m_type == EventType::kProgramChanged) { syncHandler(); return; }
+  if (t_event.m_type == EventType::kProgramChanged || t_event.m_type == EventType::kProgramModeChanged) {
+    syncHandler();
+    return;
+  }
+
   if (m_exprHandler.m_state != ExprState::kActive) return;
 
   Event e;
@@ -53,5 +57,6 @@ void ExprService::update() {
 
 bool ExprService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
   return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kExprEvent)
-      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent);
+      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent)
+      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramModeChangedEvent);
 }

@@ -37,7 +37,11 @@ void PresetService::handleEvent(const Event& t_event) {
 
     case EventType::kPresetBankLoaded:
       m_handler.m_currentPresetBank = t_event.m_data.bank;
-      applyPreset();
+      if (m_logicalState.m_programMode == ProgramMode::kPreset) { applyPreset(); }
+      break;
+
+    case EventType::kProgramModeChanged:
+      if (m_logicalState.m_programMode == ProgramMode::kPreset) { applyPreset(); }
       break;
 
     default:
@@ -52,7 +56,9 @@ void PresetService::update() {
 bool PresetService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
   return (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kPresetChangedEvent)
       || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kPresetBankChangedEvent)
+      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramModeChangedEvent)
       || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetChangedEvent)
       || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetBankChangedEvent)
-      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetSaveEvent);
+      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetSaveEvent)
+      || (t_category == EventCategory::kLoadEvent && t_subCategory == EventSubCategory::kBankLoadEvent);
 }

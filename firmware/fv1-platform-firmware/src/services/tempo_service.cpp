@@ -46,7 +46,7 @@ void TempoService::handleEvent(const Event& t_event) {
       if (m_logicState.m_activeProgram->m_isDelayEffect) {
         m_minInterval = m_logicState.m_activeProgram->m_minDelayMs;
         m_maxInterval = m_logicState.m_activeProgram->m_maxDelayMs;
-        m_interval = Utils::clamp<uint16_t>(m_interval, m_minInterval, m_maxInterval);
+        m_interval = Utils::clamp<uint16_t>(m_logicState.m_tempo, m_minInterval, m_maxInterval);
 
         m_logicState.m_tempo = m_interval;
         publishTempoEvent(t_event);

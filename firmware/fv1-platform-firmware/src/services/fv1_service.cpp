@@ -27,6 +27,7 @@ void Fv1Service::init() {
 void Fv1Service::handleEvent(const Event& t_event) {
   switch(t_event.m_type) {
     case EventType::kProgramChanged:
+    case EventType::kProgramModeChanged:
     case EventType::kPresetBankChanged:
     case EventType::kPresetChanged:
       init();

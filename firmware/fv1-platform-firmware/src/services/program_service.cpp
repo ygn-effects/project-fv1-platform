@@ -17,18 +17,30 @@ void ProgramService::init() {
 }
 
 void ProgramService::handleEvent(const Event& t_event) {
-  int max = static_cast<int>(ProgramConstants::c_maxPrograms);
-  int delta = static_cast<int>(t_event.m_data.delta);
-  if (delta < -max || delta > max) return;
+  switch (t_event.m_type) {
+    case EventType::kMenuProgramChanged: {
+      int16_t max = static_cast<int16_t>(ProgramConstants::c_maxPrograms);
+      int16_t delta = static_cast<int16_t>(t_event.m_data.delta);
+      if (delta < -max || delta > max) return;
 
-  int curr = static_cast<int>(m_logicState.m_currentProgram);
-  int next = (curr + delta) % max;
-  if (next < 0) next += max;
+      int16_t curr = static_cast<int16_t>(m_logicState.m_currentProgram);
+      int16_t next = (curr + delta) % max;
+      if (next < 0) next += max;
 
-  m_logicState.m_currentProgram = static_cast<uint8_t>(next);
+      m_logicState.m_currentProgram = static_cast<uint8_t>(next);
 
-  syncActiveProgram();
-  publishProgramChangeEvent(t_event);
+      syncActiveProgram();
+      publishProgramChangeEvent(t_event);
+      break;
+    }
+
+    case EventType::kProgramModeChanged:
+      syncActiveProgram();
+      break;
+
+    default:
+      break;
+  }
 }
 
 void ProgramService::update() {
@@ -36,6 +48,7 @@ void ProgramService::update() {
 }
 
 bool ProgramService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuProgramChangedEvent;
+  return (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuProgramChangedEvent)
+      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent)
+      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramModeChangedEvent);
 }
-

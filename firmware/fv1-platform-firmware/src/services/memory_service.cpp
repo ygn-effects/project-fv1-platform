@@ -95,6 +95,7 @@ void MemoryService::handleEvent(const Event& t_event) {
       saveRegion(MemoryRegion::kExpr, m_logicalState.m_currentProgram);
       break;
 
+    case EventType::kRawProgramModeSwitchLongPress:
     case EventType::kSaveLogicalState:
       saveRegion(MemoryRegion::kLogicalState);
       break;
@@ -120,6 +121,17 @@ void MemoryService::handleEvent(const Event& t_event) {
       break;
     }
 
+    case EventType::kProgramModeChanged:
+      if (m_logicalState.m_programMode == ProgramMode::kProgram) {
+        saveRegion(MemoryRegion::kLogicalState);
+      }
+      else {
+        loadRegion(MemoryRegion::kLogicalState);
+        // Hackish, loadRegion will restore program mode while technically it should still be preset at this point
+        m_logicalState.m_programMode = ProgramMode::kPreset;
+      }
+      break;
+
     default:
       break;
   }
@@ -133,5 +145,6 @@ bool MemoryService::interestedIn(EventCategory t_category, EventSubCategory t_su
   return t_category == EventCategory::kSaveEvent
       || t_category == EventCategory::kLoadEvent
       || t_category == EventCategory::kBootEvent
-      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetBankChangedEvent);
+      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetBankChangedEvent)
+      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramModeChangedEvent);
 }
