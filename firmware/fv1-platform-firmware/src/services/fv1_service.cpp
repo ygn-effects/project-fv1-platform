@@ -29,7 +29,6 @@ void Fv1Service::handleEvent(const Event& t_event) {
     case EventType::kProgramChanged:
     case EventType::kPresetBankChanged:
     case EventType::kPresetChanged:
-      m_fv1.sendProgramChange(m_logicalState.m_currentProgram);
       init();
       break;
 
