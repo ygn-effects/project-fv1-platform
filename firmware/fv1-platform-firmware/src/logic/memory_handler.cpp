@@ -491,7 +491,7 @@ void MemoryHandler::serializePreset(const Preset& t_preset, uint8_t* t_buffer, u
 
 void MemoryHandler::deserializePreset(Preset& t_preset, const uint8_t* t_buffer, uint8_t t_bankIndex, uint8_t t_presetIndex, uint8_t t_startIndex) {
   t_preset.m_id = t_presetIndex;
-  t_preset.m_programIndex = Utils::clamp<uint8_t>(t_buffer[t_startIndex + 1], 0, PresetConstants::c_presetPerBank);
+  t_preset.m_programIndex = Utils::clamp<uint8_t>(t_buffer[t_startIndex + 1], 0, ProgramConstants::c_maxPrograms);
   t_preset.m_tapState = LogicalStateValidator::setSafeTapState(t_buffer[t_startIndex + 2]);
   t_preset.m_divState = LogicalStateValidator::setSafeDivState(t_buffer[t_startIndex + 3]);
   t_preset.m_divValue = LogicalStateValidator::setSafeDivValue(t_buffer[t_startIndex + 4]);
