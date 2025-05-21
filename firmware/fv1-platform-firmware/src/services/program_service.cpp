@@ -34,8 +34,11 @@ void ProgramService::handleEvent(const Event& t_event) {
       break;
     }
 
+    case EventType::kMenuPresetChanged:
+    case EventType::kPresetBankLoaded:
     case EventType::kProgramModeChanged:
       syncActiveProgram();
+      publishProgramChangeEvent(t_event);
       break;
 
     default:
@@ -49,6 +52,8 @@ void ProgramService::update() {
 
 bool ProgramService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
   return (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuProgramChangedEvent)
+      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetChangedEvent)
       || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent)
+      || (t_category == EventCategory::kLoadEvent && t_subCategory == EventSubCategory::kBankLoadEvent)
       || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramModeChangedEvent);
 }

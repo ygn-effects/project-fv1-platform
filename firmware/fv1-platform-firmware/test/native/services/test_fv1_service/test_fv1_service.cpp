@@ -34,14 +34,14 @@ void test_program_change() {
   TEST_ASSERT_EQUAL(0, mockFv1.m_s2);
 
   logicalState.m_currentProgram = 4;
-  fv1service.handleEvent({EventType::kPresetChanged, 0, {}});
+  fv1service.handleEvent({EventType::kProgramChanged, 0, {}});
 
   TEST_ASSERT_EQUAL(0, mockFv1.m_s0);
   TEST_ASSERT_EQUAL(0, mockFv1.m_s1);
   TEST_ASSERT_EQUAL(1, mockFv1.m_s2);
 
   logicalState.m_currentProgram = 7;
-  fv1service.handleEvent({EventType::kPresetBankChanged, 0, {}});
+  fv1service.handleEvent({EventType::kProgramChanged, 0, {}});
 
   TEST_ASSERT_EQUAL(1, mockFv1.m_s0);
   TEST_ASSERT_EQUAL(1, mockFv1.m_s1);

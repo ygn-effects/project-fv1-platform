@@ -75,7 +75,6 @@ void PotService::handleEvent(const Event& t_event) {
       break;
 
     case EventType::kProgramChanged:
-    case EventType::kProgramModeChanged:
       init();
       break;
 
@@ -92,6 +91,5 @@ bool PotService::interestedIn(EventCategory t_category, EventSubCategory t_subCa
   return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent)
       || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPotEvent)
       || (t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiPotMovedEvent)
-      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent)
-      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramModeChangedEvent);
+      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent);
 }

@@ -20,7 +20,7 @@ void TapService::init() {
 }
 
 void TapService::handleEvent(const Event& t_event) {
-  if (t_event.m_type == EventType::kProgramChanged || t_event.m_type == EventType::kProgramModeChanged) {
+  if (t_event.m_type == EventType::kProgramChanged) {
     if (! m_logicalState.m_activeProgram->m_isDelayEffect || ! m_logicalState.m_activeProgram->m_supportsTap) {
       m_logicalState.m_tapState = TapState::kDisabled;
       m_logicalState.m_divState = DivState::kDisabled;
@@ -31,6 +31,8 @@ void TapService::handleEvent(const Event& t_event) {
     }
     else {
       init();
+
+      return;
     }
   }
 
@@ -76,6 +78,5 @@ bool TapService::interestedIn(EventCategory t_category, EventSubCategory t_subCa
       || (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent)
       || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuTempoEvent)
       || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent)
-      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramModeChangedEvent)
       || (t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiTapPressedEvent);
 }

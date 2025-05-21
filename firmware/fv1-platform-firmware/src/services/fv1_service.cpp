@@ -27,10 +27,6 @@ void Fv1Service::init() {
 void Fv1Service::handleEvent(const Event& t_event) {
   switch(t_event.m_type) {
     case EventType::kProgramChanged:
-    case EventType::kProgramModeChanged:
-    case EventType::kPresetBankChanged:
-    case EventType::kPresetChanged:
-    case EventType::kMenuPresetChanged:
       init();
       break;
 
@@ -71,7 +67,5 @@ bool Fv1Service::interestedIn(EventCategory t_category, EventSubCategory t_subCa
       || (t_category == EventCategory::kTempoEvent && t_subCategory == EventSubCategory::kTempoChangedEvent)
       || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent)
       || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPotEvent)
-      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetChangedEvent)
-      || (t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiPotMovedEvent)
-      || t_category == EventCategory::kProgramEvent;
+      || (t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiPotMovedEvent);
 }
