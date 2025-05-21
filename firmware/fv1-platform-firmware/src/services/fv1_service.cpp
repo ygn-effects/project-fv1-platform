@@ -5,8 +5,8 @@ Fv1Service::Fv1Service(const LogicalState& t_lState, Fv1& t_fv1)
 
 void Fv1Service::init() {
   for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
-    m_handler.m_potConfigs[i].m_minLogical = m_logicalState.m_potParams[i]->m_minValue;
-    m_handler.m_potConfigs[i].m_maxLogical = m_logicalState.m_potParams[i]->m_maxValue;
+    m_handler.m_potConfigs[i].m_minLogical = m_logicalState.m_potParams[m_logicalState.m_currentProgram][i].m_minValue;
+    m_handler.m_potConfigs[i].m_maxLogical = m_logicalState.m_potParams[m_logicalState.m_currentProgram][i].m_maxValue;
   }
 
   m_fv1.sendProgramChange(m_logicalState.m_currentProgram);
@@ -17,11 +17,11 @@ void Fv1Service::init() {
     m_fv1.sendPotValue(Fv1Pot::Pot0, m_handler.mapTempoValue(m_logicalState.m_tempo));
   }
   else {
-    m_fv1.sendPotValue(Fv1Pot::Pot0, m_logicalState.m_potParams[0]->m_value);
+    m_fv1.sendPotValue(Fv1Pot::Pot0, m_logicalState.m_potParams[m_logicalState.m_currentProgram][0].m_value);
   }
 
-  m_fv1.sendPotValue(Fv1Pot::Pot1, m_logicalState.m_potParams[1]->m_value);
-  m_fv1.sendPotValue(Fv1Pot::Pot2, m_logicalState.m_potParams[2]->m_value);
+  m_fv1.sendPotValue(Fv1Pot::Pot1, m_logicalState.m_potParams[m_logicalState.m_currentProgram][1].m_value);
+  m_fv1.sendPotValue(Fv1Pot::Pot2, m_logicalState.m_potParams[m_logicalState.m_currentProgram][2].m_value);
 }
 
 void Fv1Service::handleEvent(const Event& t_event) {
@@ -30,6 +30,7 @@ void Fv1Service::handleEvent(const Event& t_event) {
     case EventType::kProgramModeChanged:
     case EventType::kPresetBankChanged:
     case EventType::kPresetChanged:
+    case EventType::kMenuPresetChanged:
       init();
       break;
 
@@ -70,6 +71,7 @@ bool Fv1Service::interestedIn(EventCategory t_category, EventSubCategory t_subCa
       || (t_category == EventCategory::kTempoEvent && t_subCategory == EventSubCategory::kTempoChangedEvent)
       || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent)
       || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPotEvent)
+      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetChangedEvent)
       || (t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiPotMovedEvent)
       || t_category == EventCategory::kProgramEvent;
 }
