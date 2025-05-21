@@ -52,6 +52,7 @@ void test_tap_4_taps() {
 
   tapService.handleEvent({EventType::kTapPressed, 200, {}});
   TEST_ASSERT_EQUAL(TapState::kDisabled, logicalState.m_tapState);
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
 
   tapService.handleEvent({EventType::kTapPressed, 450, {}});
   TEST_ASSERT_EQUAL(TapState::kEnabled, logicalState.m_tapState);
@@ -59,16 +60,21 @@ void test_tap_4_taps() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   Event tempoChangedEvent;
   EventBus::recall(tempoChangedEvent);
+  TEST_ASSERT_TRUE(EventBus::hasEvent()); // Save tap
+  EventBus::recall(tempoChangedEvent);
 
   tapService.handleEvent({EventType::kTapPressed, 580, {}});
   TEST_ASSERT_EQUAL(TapState::kEnabled, logicalState.m_tapState);
   TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(tempoChangedEvent);
+  TEST_ASSERT_TRUE(EventBus::hasEvent()); // Save tap
   EventBus::recall(tempoChangedEvent);
 
   tapService.handleEvent({EventType::kTapPressed, 800, {}});
   TEST_ASSERT_EQUAL(TapState::kEnabled, logicalState.m_tapState);
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(tempoChangedEvent);
+
 
   TEST_ASSERT_EQUAL(EventType::kTapIntervalChanged, tempoChangedEvent.m_type);
   TEST_ASSERT_EQUAL(200, logicalState.m_interval);
@@ -97,6 +103,9 @@ void test_div() {
   Event tempoChangedEvent;
   EventBus::recall(tempoChangedEvent);
 
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(tempoChangedEvent);
+
   tapService.handleEvent({EventType::kTapLongPressed, 1000, {}}); // Eight
 
   TEST_ASSERT_TRUE(EventBus::hasEvent());
@@ -108,6 +117,9 @@ void test_div() {
   TEST_ASSERT_EQUAL(100, tempoChangedEvent.m_data.value);
   TEST_ASSERT_EQUAL(DivState::kEnabled, logicalState.m_divState);
   TEST_ASSERT_EQUAL(DivValue::kEight, logicalState.m_divValue);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(tempoChangedEvent);
 
   tapService.handleEvent({EventType::kTapLongPressed, 2000, {}}); // Sixteenth
 
@@ -121,6 +133,9 @@ void test_div() {
   TEST_ASSERT_EQUAL(DivState::kEnabled, logicalState.m_divState);
   TEST_ASSERT_EQUAL(DivValue::kSixteenth, logicalState.m_divValue);
 
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(tempoChangedEvent);
+
   tapService.handleEvent({EventType::kTapLongPressed, 2000, {}}); // Dotted Eight
 
   TEST_ASSERT_TRUE(EventBus::hasEvent());
@@ -133,6 +148,9 @@ void test_div() {
   TEST_ASSERT_EQUAL(DivState::kEnabled, logicalState.m_divState);
   TEST_ASSERT_EQUAL(DivValue::kDottedEight, logicalState.m_divValue);
 
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(tempoChangedEvent);
+
   tapService.handleEvent({EventType::kTapLongPressed, 2000, {}}); // Eight Triplet
 
   TEST_ASSERT_TRUE(EventBus::hasEvent());
@@ -144,6 +162,9 @@ void test_div() {
   TEST_ASSERT_EQUAL(66, tempoChangedEvent.m_data.value);
   TEST_ASSERT_EQUAL(DivState::kEnabled, logicalState.m_divState);
   TEST_ASSERT_EQUAL(DivValue::kEightTriplet, logicalState.m_divValue);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(tempoChangedEvent);
 
   tapService.handleEvent({EventType::kTapLongPressed, 2000, {}}); // Wrap around to quarter
 
@@ -178,6 +199,9 @@ void test_event_order() {
   TEST_ASSERT_EQUAL(EventType::kTapIntervalChanged, tempoChangedEvent.m_type);
   TEST_ASSERT_EQUAL(200, logicalState.m_interval);
   TEST_ASSERT_EQUAL(200, tempoChangedEvent.m_data.value);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(tempoChangedEvent);
 
   tapService.handleEvent({EventType::kTapLongPressed, 1000, {}}); // Eight
 

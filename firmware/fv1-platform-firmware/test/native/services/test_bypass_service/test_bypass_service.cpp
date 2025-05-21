@@ -30,11 +30,19 @@ void test_bypass() {
 
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventType::kSaveBypass, e.m_type);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
   TEST_ASSERT_EQUAL(EventType::kBypassDisabled, e.m_type);
   TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
 
   e = {EventType::kBypassPressed, 600, {}};
   bypassService.handleEvent(e);
+
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventType::kSaveBypass, e.m_type);
 
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(e);

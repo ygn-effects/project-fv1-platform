@@ -44,6 +44,8 @@ void test_tap_tempo() {
   TEST_ASSERT_EQUAL(200, logicalState.m_tempo);
 
   TEST_ASSERT_TRUE(EventBus::hasEvent());
+  EventBus::recall(event); // Savetap
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(event);
 
   TEST_ASSERT_EQUAL(EventType::kTempoChanged, event.m_type);
