@@ -12,6 +12,7 @@ class TapService : public Service {
     TapHandler m_tapHandler;
 
     void publishTapIntervalEvent(const Event& t_event) const;
+    void publishSaveTapEvent(const Event& t_event) const;
 
   public:
     TapService(LogicalState& t_lState) :

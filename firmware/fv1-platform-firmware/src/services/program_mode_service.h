@@ -9,6 +9,8 @@ class ProgramModeService : public Service {
   private:
     LogicalState& m_logicalState;
 
+    void publishSaveProgramModeEvent(const Event& t_event);
+
   public:
     ProgramModeService(LogicalState& t_lState);
 

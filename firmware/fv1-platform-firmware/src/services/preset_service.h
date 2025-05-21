@@ -13,7 +13,9 @@ class PresetService : public Service {
     PresetHandler m_handler;
 
     void applyPreset();
-    void emitLoadBankEvent(const Event& t_event);
+    void publishLoadBankEvent(const Event& t_event);
+    void publishSaveCurrentPresetBank(const Event& t_event);
+    void publishSaveCurrentPreset(const Event& t_event);
 
   public:
     PresetService(LogicalState& t_lState);

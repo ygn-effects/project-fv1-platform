@@ -4,12 +4,26 @@ void MidiService::syncHandler() {
   m_midiHandler.setMidiChannel(m_logicalState.m_midiChannel);
 }
 
+void MidiService::publishSaveMidiChannelEvent(const Event& t_event) {
+  EventBus::publish({EventType::kSaveMidiChannel, t_event.m_timestamp /*millis()*/, {}});
+}
+
 void MidiService::init() {
   syncHandler();
 }
 
 void MidiService::handleEvent(const Event& t_event) {
-  syncHandler();
+  switch (t_event.m_type) {
+    case EventType::kProgramChanged:
+      syncHandler();
+      break;
+
+    case EventType::kMenuMidiChannelChanged:
+      m_logicalState.m_midiChannel = Utils::wrappedAdd(m_logicalState.m_midiChannel, t_event.m_data.delta, MidiHandlerConstants::c_maxMidiChannels);
+      syncHandler();
+      publishSaveMidiChannelEvent(t_event);
+      break;
+  }
 }
 
 void MidiService::update() {
@@ -50,6 +64,7 @@ void MidiService::update() {
 }
 
 bool MidiService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent;
+  return (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent)
+      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuMidiChannelEvent);
 }
 

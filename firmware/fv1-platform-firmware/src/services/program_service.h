@@ -11,6 +11,7 @@ class ProgramService : public Service {
 
     void syncActiveProgram();
     void publishProgramChangeEvent(const Event& t_event);
+    void publishSaveCurrentProgram(const Event& t_event);
 
   public:
     ProgramService(LogicalState& t_lState) :

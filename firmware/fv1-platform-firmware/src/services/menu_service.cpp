@@ -291,6 +291,8 @@ void MenuService::init() {
 }
 
 void MenuService::handleEvent(const Event& t_event) {
+  if (t_event.m_type == EventType::kProgramChanged) { publishView(); return; }
+
   switch (m_mode) {
     case UiMode::kLocked:
       handleLocked(t_event);
@@ -346,5 +348,6 @@ const ui::MenuView* MenuService::getMenuView() const {
 
 bool MenuService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
   return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kEncoderEvent)
-      || (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent);
+      || (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent)
+      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent);
 }

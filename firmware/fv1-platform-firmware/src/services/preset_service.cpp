@@ -4,8 +4,16 @@ void PresetService::applyPreset() {
   m_handler.applyToState(m_logicalState, m_logicalState.m_currentPreset);
 }
 
-void PresetService::emitLoadBankEvent(const Event& t_event) {
+void PresetService::publishLoadBankEvent(const Event& t_event) {
   EventBus::publish({EventType::kLoadPresetBank, t_event.m_timestamp /*millis()*/, {.value=m_logicalState.m_currentPresetBank}});
+}
+
+void PresetService::publishSaveCurrentPresetBank(const Event& t_event) {
+  EventBus::publish({EventType::kSaveCurrentPresetBank, t_event.m_timestamp /*millis()*/, {}});
+}
+
+void PresetService::publishSaveCurrentPreset(const Event& t_event) {
+  EventBus::publish({EventType::kSaveCurrentPreset, t_event.m_timestamp /*millis()*/, {}});
 }
 
 void PresetService::init() {
@@ -21,13 +29,16 @@ void PresetService::handleEvent(const Event& t_event) {
     case EventType::kMenuPresetChanged:
       m_logicalState.m_currentPreset = Utils::wrappedAdd(m_logicalState.m_currentPreset, t_event.m_data.delta, PresetConstants::c_presetPerBank);
       applyPreset();
+      publishSaveCurrentPreset(t_event);
       break;
 
     case EventType::kPresetBankChanged:
     case EventType::kMenuPresetBankChanged:
       m_logicalState.m_currentPresetBank = Utils::wrappedAdd(m_logicalState.m_currentPresetBank, t_event.m_data.delta, PresetConstants::c_presetBankCount);
       m_logicalState.m_currentPreset = 0;
-      emitLoadBankEvent(t_event);
+      publishLoadBankEvent(t_event);
+      publishSaveCurrentPresetBank(t_event);
+      publishSaveCurrentPreset(t_event);
       break;
 
     case EventType::kMenuSavePreset:

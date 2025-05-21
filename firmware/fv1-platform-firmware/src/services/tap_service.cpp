@@ -11,6 +11,10 @@ void TapService::publishTapIntervalEvent(const Event& t_event) const {
   EventBus::publish(e);
 }
 
+void TapService::publishSaveTapEvent(const Event& t_event) const {
+  EventBus::publish({EventType::kSaveTap, t_event.m_timestamp /*millis()*/, {}});
+}
+
 void TapService::init() {
   m_tapHandler.m_tapState = m_logicalState.m_tapState;
   m_tapHandler.m_divState = m_logicalState.m_divState;
@@ -25,6 +29,8 @@ void TapService::handleEvent(const Event& t_event) {
       m_logicalState.m_tapState = TapState::kDisabled;
       m_logicalState.m_divState = DivState::kDisabled;
       m_logicalState.m_divValue = DivValue::kQuarter;
+
+      publishSaveTapEvent(t_event);
       init();
 
       return;
@@ -45,6 +51,7 @@ void TapService::handleEvent(const Event& t_event) {
       m_logicalState.m_interval = m_tapHandler.m_interval;
 
       publishTapIntervalEvent(t_event);
+      publishSaveTapEvent(t_event);
     }
 
     m_logicalState.m_tapState = m_tapHandler.m_tapState;
@@ -58,6 +65,7 @@ void TapService::handleEvent(const Event& t_event) {
     m_logicalState.m_divInterval = m_tapHandler.m_divInterval;
 
     publishTapIntervalEvent(t_event);
+    publishSaveTapEvent(t_event);
   }
   else if ((t_event.m_type == EventType::kPot0Moved && m_logicalState.m_tapState == TapState::kEnabled)
         || (t_event.m_type == EventType::kMenuTempoChanged && m_logicalState.m_tapState == TapState::kEnabled)) {
@@ -65,6 +73,7 @@ void TapService::handleEvent(const Event& t_event) {
     m_logicalState.m_divState = DivState::kDisabled;
     m_logicalState.m_divValue = DivValue::kQuarter;
 
+    publishSaveTapEvent(t_event);
     init();
   }
 }

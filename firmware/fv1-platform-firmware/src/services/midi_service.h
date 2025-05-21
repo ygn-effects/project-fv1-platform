@@ -5,6 +5,7 @@
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
 #include "logic/midi_handler.h"
+#include "utils/utils.h"
 
 constexpr EventType ccParamEventMap[] = {
   EventType::kMidiPot0Moved,
@@ -35,6 +36,7 @@ class MidiService : public Service {
     MidiHandler m_midiHandler;
 
     void syncHandler();
+    void publishSaveMidiChannelEvent(const Event& t_event);
 
   public:
     MidiService(LogicalState& t_lState) :

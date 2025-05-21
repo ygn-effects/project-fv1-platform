@@ -8,6 +8,10 @@ void TempoService::publishTempoEvent(const Event& t_event) const {
   EventBus::publish({EventType::kTempoChanged, t_event.m_timestamp, {.value = m_interval}});
 }
 
+void TempoService::publishSaveTempoEvent(const Event& t_event) const {
+  EventBus::publish({EventType::kSaveTempo, t_event.m_timestamp /*millis()*/, {.value = m_interval}});
+}
+
 void TempoService::init() {
   m_interval = m_logicState.m_tempo;
   m_minInterval = m_logicState.m_activeProgram->m_minDelayMs;
@@ -24,6 +28,7 @@ void TempoService::handleEvent(const Event& t_event) {
 
       m_logicState.m_tempo = m_interval;
       publishTempoEvent(t_event);
+      publishSaveTempoEvent(t_event);
       break;
 
     case EventType::kPot0Moved:
@@ -32,6 +37,7 @@ void TempoService::handleEvent(const Event& t_event) {
 
       m_logicState.m_tempo = m_interval;
       publishTempoEvent(t_event);
+      publishSaveTempoEvent(t_event);
       break;
 
     case EventType::kMenuTempoChanged:
@@ -40,6 +46,7 @@ void TempoService::handleEvent(const Event& t_event) {
       m_source = TempoSource::kMenu;
 
       publishTempoEvent(t_event);
+      publishSaveTempoEvent(t_event);
       break;
 
     case EventType::kProgramChanged:

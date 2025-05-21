@@ -1,5 +1,9 @@
 #include "services/bypass_service.h"
 
+void BypassService::publishSaveBypassEvent(const Event& t_event) {
+  EventBus::publish({EventType::kSaveBypass, t_event.m_timestamp /*millis()*/, {}});
+}
+
 void BypassService::init() {
   m_bypass.init();
 
@@ -16,6 +20,7 @@ void BypassService::handleEvent(const Event& t_event) {
         : BypassState::kActive;
 
       m_bypass.toggle();
+      publishSaveBypassEvent(t_event);
       break;
 
     case EventType::kMidiBypassPressed:

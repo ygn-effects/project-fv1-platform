@@ -12,6 +12,10 @@ void ProgramService::publishProgramChangeEvent(const Event& t_event) {
   EventBus::publish(e);
 }
 
+void ProgramService::publishSaveCurrentProgram(const Event& t_event) {
+  EventBus::publish({EventType::kSaveCurrentProgram, t_event.m_timestamp /*millis()*/, {}});
+}
+
 void ProgramService::init() {
   syncActiveProgram();
 }
@@ -31,6 +35,7 @@ void ProgramService::handleEvent(const Event& t_event) {
 
       syncActiveProgram();
       publishProgramChangeEvent(t_event);
+      publishSaveCurrentProgram(t_event);
       break;
     }
 

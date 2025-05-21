@@ -21,6 +21,7 @@ class TempoService : public Service {
     TempoSource m_source;
 
     void publishTempoEvent(const Event& t_event) const;
+    void publishSaveTempoEvent(const Event& t_event) const;
 
   public:
     TempoService(LogicalState& t_lState);

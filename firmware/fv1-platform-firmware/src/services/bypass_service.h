@@ -12,6 +12,8 @@ class BypassService : public Service {
     LogicalState& m_logicalState;
     Bypass& m_bypass;
 
+    void publishSaveBypassEvent(const Event& t_event);
+
   public:
     BypassService(LogicalState& t_lState, Bypass& t_bypass) :
       m_logicalState(t_lState), m_bypass(t_bypass) {}
