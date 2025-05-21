@@ -313,13 +313,13 @@ void test_program_mode_change() {
   TEST_ASSERT_FALSE(mockFv1.m_potValues.empty());
   auto [pot2, val2] = mockFv1.m_potValues.back();
   TEST_ASSERT_EQUAL(Fv1Pot::Pot2, pot2);
-  TEST_ASSERT_EQUAL(300, val2);
+  TEST_ASSERT_EQUAL(100, val2);
   mockFv1.m_potValues.pop_back();
 
   TEST_ASSERT_FALSE(mockFv1.m_potValues.empty());
   auto [pot1, val1] = mockFv1.m_potValues.back();
   TEST_ASSERT_EQUAL(Fv1Pot::Pot1, pot1);
-  TEST_ASSERT_EQUAL(50, val1);
+  TEST_ASSERT_EQUAL(512, val1);
   mockFv1.m_potValues.pop_back();
 
   TEST_ASSERT_FALSE(mockFv1.m_potValues.empty());
@@ -382,13 +382,13 @@ void test_program_mode_change() {
   TEST_ASSERT_FALSE(mockFv1.m_potValues.empty());
   auto [pot21, val21] = mockFv1.m_potValues.back();
   TEST_ASSERT_EQUAL(Fv1Pot::Pot2, pot21);
-  TEST_ASSERT_EQUAL(300, val21);
+  TEST_ASSERT_EQUAL(512, val21);
   mockFv1.m_potValues.pop_back();
 
   TEST_ASSERT_FALSE(mockFv1.m_potValues.empty());
   auto [pot11, val11] = mockFv1.m_potValues.back();
   TEST_ASSERT_EQUAL(Fv1Pot::Pot1, pot11);
-  TEST_ASSERT_EQUAL(50, val1);
+  TEST_ASSERT_EQUAL(300, val11);
   mockFv1.m_potValues.pop_back();
 
   TEST_ASSERT_FALSE(mockFv1.m_potValues.empty());

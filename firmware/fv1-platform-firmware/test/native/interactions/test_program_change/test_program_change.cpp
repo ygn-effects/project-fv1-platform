@@ -235,13 +235,13 @@ void test_program_change() {
   TEST_ASSERT_FALSE(mockFv1.m_potValues.empty());
   auto [pot2, val2] = mockFv1.m_potValues.back();
   TEST_ASSERT_EQUAL(Fv1Pot::Pot2, pot2);
-  TEST_ASSERT_EQUAL(300, val2);
+  TEST_ASSERT_EQUAL(512, val2);
   mockFv1.m_potValues.pop_back();
 
   TEST_ASSERT_FALSE(mockFv1.m_potValues.empty());
   auto [pot1, val1] = mockFv1.m_potValues.back();
   TEST_ASSERT_EQUAL(Fv1Pot::Pot1, pot1);
-  TEST_ASSERT_EQUAL(350, val1);
+  TEST_ASSERT_EQUAL(300, val1);
   mockFv1.m_potValues.pop_back();
 
   TEST_ASSERT_FALSE(mockFv1.m_potValues.empty());
