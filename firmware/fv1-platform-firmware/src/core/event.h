@@ -53,6 +53,18 @@ enum class EventType : uint8_t {
   kMenuPot1Moved,
   kMenuPot2Moved,
   kMenuMixPotMoved,
+  kMenuPot0StateToggled,
+  kMenuPot1StateToggled,
+  kMenuPot2StateToggled,
+  kMenuMixPotStateToggled,
+  kMenuPot0MinValueMoved,
+  kMenuPot1MinValueMoved,
+  kMenuPot2MinValueMoved,
+  kMenuMixPotMinValueMoved,
+  kMenuPot0MaxValueMoved,
+  kMenuPot1MaxValueMoved,
+  kMenuPot2MaxValueMoved,
+  kMenuMixPotMaxValueMoved,
   kMenuTempoChanged,
   kMenuMidiChannelChanged,
   kMenuExprStateToggled,
@@ -75,6 +87,12 @@ enum class EventType : uint8_t {
   // Bypass events
   kBypassEnabled,
   kBypassDisabled,
+
+  // Expr events
+  kExprPot0Moved,
+  kExprPot1Moved,
+  kExprPot2Moved,
+  kExprMixPotMoved,
 
   // MIDI events
   kMidiBypassPressed,
@@ -114,6 +132,7 @@ enum class EventCategory : uint8_t {
   kProgramEvent,
   kTempoEvent,
   kBypassEvent,
+  kExprEvent,
   kMidiEvent,
   kSaveEvent,
   kLoadEvent
@@ -139,6 +158,7 @@ enum class EventSubCategory : uint8_t {
   kMenuPresetBankChangedEvent,
   kMenuPresetSaveEvent,
   kMenuPotEvent,
+  kMenuPotSettingsEvent,
   kMenuTempoEvent,
   kMenuMidiChannelEvent,
   kMenuExprEvent,
@@ -151,6 +171,7 @@ enum class EventSubCategory : uint8_t {
   kTempoChangedEvent,
   kBypassEnabledEvent,
   kBypassDisabledEvent,
+  kExprPotEvent,
   kMidiBypassPressedEvent,
   kMidiTapPressedEvent,
   kMidiPotMovedEvent,
@@ -200,6 +221,18 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kMenuEvent,          // kMenuPot1Moved
   EventCategory::kMenuEvent,          // kMenuPot2Moved
   EventCategory::kMenuEvent,          // kMenuMixPotMoved
+  EventCategory::kMenuEvent,          // kMenuPot0StateToggled,
+  EventCategory::kMenuEvent,          // kMenuPot1StateToggled,
+  EventCategory::kMenuEvent,          // kMenuPot2StateToggled,
+  EventCategory::kMenuEvent,          // kMenuMixPotStateToggled,
+  EventCategory::kMenuEvent,          // kMenuPot0MinValueMoved,
+  EventCategory::kMenuEvent,          // kMenuPot1MinValueMoved,
+  EventCategory::kMenuEvent,          // kMenuPot2MinValueMoved,
+  EventCategory::kMenuEvent,          // kMenuMixPotMinValueMoved,
+  EventCategory::kMenuEvent,          // kMenuPot0MaxValueMoved,
+  EventCategory::kMenuEvent,          // kMenuPot1MaxValueMoved,
+  EventCategory::kMenuEvent,          // kMenuPot2MaxValueMoved,
+  EventCategory::kMenuEvent,          // kMenuMixPotMaxValueMoved,
   EventCategory::kMenuEvent,          // kMenuTempoChanged
   EventCategory::kMenuEvent,          // kMenuMidiChannelChanged
   EventCategory::kMenuEvent,          // kMenuExprStateToggled
@@ -216,6 +249,10 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kTempoEvent,         // kTempoChanged
   EventCategory::kBypassEvent,        // kBypassEnabled
   EventCategory::kBypassEvent,        // kBypassDisabled
+  EventCategory::kExprEvent,          // kExprPot0Event
+  EventCategory::kExprEvent,          // kExprPot1Event
+  EventCategory::kExprEvent,          // kExprPot2Event
+  EventCategory::kExprEvent,          // kExprMixPotEvent
   EventCategory::kMidiEvent,          // kMidiBypassPressed
   EventCategory::kMidiEvent,          // kMidiTapPressed
   EventCategory::kMidiEvent,          // kMidiPot0Moved
@@ -281,6 +318,18 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kMenuPotEvent,                // kMenuPot1Moved
   EventSubCategory::kMenuPotEvent,                // kMenuPot2Moved
   EventSubCategory::kMenuPotEvent,                // kMenuMixPotMoved
+  EventSubCategory::kMenuPotSettingsEvent,        // kMenuPot0StateToggled,
+  EventSubCategory::kMenuPotSettingsEvent,        // kMenuPot1StateToggled,
+  EventSubCategory::kMenuPotSettingsEvent,        // kMenuPot2StateToggled,
+  EventSubCategory::kMenuPotSettingsEvent,        // kMenuMixPotStateToggled,
+  EventSubCategory::kMenuPotSettingsEvent,        // kMenuPot0MinValueMoved,
+  EventSubCategory::kMenuPotSettingsEvent,        // kMenuPot1MinValueMoved,
+  EventSubCategory::kMenuPotSettingsEvent,        // kMenuPot2MinValueMoved,
+  EventSubCategory::kMenuPotSettingsEvent,        // kMenuMixPotMinValueMoved,
+  EventSubCategory::kMenuPotSettingsEvent,        // kMenuPot0MaxValueMoved,
+  EventSubCategory::kMenuPotSettingsEvent,        // kMenuPot1MaxValueMoved,
+  EventSubCategory::kMenuPotSettingsEvent,        // kMenuPot2MaxValueMoved,
+  EventSubCategory::kMenuPotSettingsEvent,        // kMenuMixPotMaxValueMoved,
   EventSubCategory::kMenuTempoEvent,              // kMenuTempoChanged
   EventSubCategory::kMenuMidiChannelEvent,        // kMenuMidiChannelChanged
   EventSubCategory::kMenuExprEvent,               // kMenuExprStateToggled
@@ -297,6 +346,10 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kTempoChangedEvent,           // kTempoChanged
   EventSubCategory::kBypassEnabledEvent,          // kBypassEnabled
   EventSubCategory::kBypassDisabledEvent,         // kBypassDisabled
+  EventSubCategory::kExprPotEvent,                // kExprPot0Event
+  EventSubCategory::kExprPotEvent,                // kExprPot1Event
+  EventSubCategory::kExprPotEvent,                // kExprPot2Event
+  EventSubCategory::kExprPotEvent,                // kExprMixPotEvent
   EventSubCategory::kMidiBypassPressedEvent,      // kMidiBypassPressed
   EventSubCategory::kMidiTapPressedEvent,         // kMidiTapPressed
   EventSubCategory::kMidiPotMovedEvent,           // kMidiPot0Moved
