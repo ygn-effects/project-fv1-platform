@@ -20,3 +20,37 @@ uint16_t ExprHandler::mapAdcValue(uint16_t t_adcValue) const {
   // 5) Return heel + delta
   return m_heelValue + delta;
 }
+
+ExprState ExprHandler::toggleExprState() {
+  m_state == ExprState::kActive
+    ? m_state = ExprState::kInactive
+    : m_state = ExprState::kActive;
+
+  return m_state;
+}
+
+MappedPot ExprHandler::changeMappedPot(int8_t t_delta) {
+  m_mappedPot = EnumUtils::wrappedEnumAdd<MappedPot, ExprHandlerConstants::kMappedPotCount>(m_mappedPot, t_delta);
+
+  return m_mappedPot;
+}
+
+Direction ExprHandler::toggleDirection() {
+  m_direction == Direction::kNormal
+    ? m_direction = Direction::kInverted
+    : m_direction = Direction::kNormal;
+
+  return m_direction;
+}
+
+uint16_t ExprHandler::changeHeelValue(int8_t t_delta) {
+  m_heelValue = Utils::clampedAdd(m_heelValue, t_delta, ExprHandlerConstants::kMaxExprValue);
+
+  return m_heelValue;
+}
+
+uint16_t ExprHandler::changeToeValue(int8_t t_delta) {
+  m_toeValue = Utils::clampedAdd(m_toeValue, t_delta, ExprHandlerConstants::kMaxExprValue);
+
+  return m_toeValue;
+}

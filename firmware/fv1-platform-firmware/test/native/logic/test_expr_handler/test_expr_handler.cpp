@@ -78,6 +78,52 @@ void test_heel_toe() {
   TEST_ASSERT_EQUAL(800, exprHandler.mapAdcValue(1023));
 }
 
+void test_toggle_expr_state() {
+  ExprHandler exprHandler;
+
+  exprHandler.toggleExprState();
+  TEST_ASSERT_EQUAL(ExprState::kActive, exprHandler.m_state);
+
+  exprHandler.toggleExprState();
+  TEST_ASSERT_EQUAL(ExprState::kInactive, exprHandler.m_state);
+}
+
+void test_change_mapped_pot() {
+  ExprHandler exprHandler;
+
+  exprHandler.changeMappedPot(-1);
+  TEST_ASSERT_EQUAL(MappedPot::kMixPot, exprHandler.m_mappedPot);
+
+  exprHandler.changeMappedPot(1);
+  TEST_ASSERT_EQUAL(MappedPot::kPot0,exprHandler.m_mappedPot);
+
+  exprHandler.changeMappedPot(1);
+  TEST_ASSERT_EQUAL(MappedPot::kPot1,exprHandler.m_mappedPot);
+}
+
+void test_toggle_direction() {
+  ExprHandler exprHandler;
+
+  exprHandler.toggleDirection();
+  TEST_ASSERT_EQUAL(Direction::kInverted, exprHandler.m_direction);
+
+  exprHandler.toggleDirection();
+  TEST_ASSERT_EQUAL(Direction::kNormal, exprHandler.m_direction);
+}
+
+void test_change_heel_value() {
+  ExprHandler exprHandler;
+
+  exprHandler.changeHeelValue(1);
+  TEST_ASSERT_EQUAL(1, exprHandler.m_heelValue);
+
+  exprHandler.changeHeelValue(-1);
+  TEST_ASSERT_EQUAL(0, exprHandler.m_heelValue);
+
+  exprHandler.changeHeelValue(-1);
+  TEST_ASSERT_EQUAL(0, exprHandler.m_heelValue);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_expr_state_validation);
@@ -85,5 +131,9 @@ int main() {
   RUN_TEST(test_map);
   RUN_TEST(test_map_inverted);
   RUN_TEST(test_heel_toe);
+  RUN_TEST(test_toggle_expr_state);
+  RUN_TEST(test_change_mapped_pot);
+  RUN_TEST(test_toggle_direction);
+  RUN_TEST(test_change_heel_value);
   UNITY_END();
 }

@@ -41,7 +41,7 @@ void test_expr_active() {
   EventBus::recall(potMovedEvent);
 
   TEST_ASSERT_EQUAL(512, potMovedEvent.m_data.value);
-  TEST_ASSERT_EQUAL(EventType::kPot0Moved, potMovedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kExprPot0Moved, potMovedEvent.m_type);
 }
 
 void test_expr_mapped_pots() {
@@ -63,28 +63,34 @@ void test_expr_mapped_pots() {
   exprService.handleEvent({EventType::kExprMoved, 1000, {.value = 512}});
   Event potMovedEvent;
   EventBus::recall(potMovedEvent);
-  TEST_ASSERT_EQUAL(EventType::kPot0Moved, potMovedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kExprPot0Moved, potMovedEvent.m_type);
 
-  programService.handleEvent({EventType::kProgramChanged, 1100, {.delta = 1}});
+  programService.handleEvent({EventType::kMenuProgramChanged, 1100, {.delta = 1}});
+  EventBus::recall(potMovedEvent); // Program change
+  EventBus::recall(potMovedEvent); // Program change
   exprService.handleEvent({EventType::kProgramChanged, 1100, {.delta = 1}});
 
   exprService.handleEvent({EventType::kExprMoved, 1000, {.value = 512}});
   EventBus::recall(potMovedEvent);
-  TEST_ASSERT_EQUAL(EventType::kPot1Moved, potMovedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kExprPot1Moved, potMovedEvent.m_type);
 
-  programService.handleEvent({EventType::kProgramChanged, 1100, {.delta = 1}});
+  programService.handleEvent({EventType::kMenuProgramChanged, 1100, {.delta = 1}});
+  EventBus::recall(potMovedEvent); // Program change
+  EventBus::recall(potMovedEvent); // Program change
   exprService.handleEvent({EventType::kProgramChanged, 1100, {.delta = 1}});
 
   exprService.handleEvent({EventType::kExprMoved, 1000, {.value = 512}});
   EventBus::recall(potMovedEvent);
-  TEST_ASSERT_EQUAL(EventType::kPot2Moved, potMovedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kExprPot2Moved, potMovedEvent.m_type);
 
-  programService.handleEvent({EventType::kProgramChanged, 1100, {.delta = 1}});
+  programService.handleEvent({EventType::kMenuProgramChanged, 1100, {.delta = 1}});
+  EventBus::recall(potMovedEvent); // Program change
+  EventBus::recall(potMovedEvent); // Program change
   exprService.handleEvent({EventType::kProgramChanged, 1100, {.delta = 1}});
 
   exprService.handleEvent({EventType::kExprMoved, 1000, {.value = 512}});
   EventBus::recall(potMovedEvent);
-  TEST_ASSERT_EQUAL(EventType::kMixPotMoved, potMovedEvent.m_type);
+  TEST_ASSERT_EQUAL(EventType::kExprMixPotMoved, potMovedEvent.m_type);
 }
 
 void test_expr_direction() {
@@ -142,7 +148,7 @@ void test_interested_in() {
   e = {EventType::kPot0Moved, 500, {.delta=1}};
   TEST_ASSERT_FALSE(bypassService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
 
-  e = {EventType::kMenuExprMappedPotMoved, 500, {.delta=1}};
+  e = {EventType::kMenuEncoderMoved, 500, {.delta=1}};
   TEST_ASSERT_FALSE(bypassService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
 }
 

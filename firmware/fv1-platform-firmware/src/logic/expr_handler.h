@@ -36,6 +36,12 @@ enum class Direction : uint8_t {
 
 using DirectionValidator = EnumUtils::EnumValidator<Direction, Direction::kNormal, Direction::kInverted>;
 
+namespace ExprHandlerConstants {
+  static constexpr uint8_t kMappedPotCount = static_cast<uint8_t>(MappedPot::kMixPot) + 1;
+  static constexpr uint16_t kMinExprValue = 0;
+  static constexpr uint16_t kMaxExprValue = 1023;
+}
+
 /**
  * @brief Handles mapping and logic for expression pedal input.
  */
@@ -47,4 +53,9 @@ struct ExprHandler {
   uint16_t m_toeValue = 1023;
 
   uint16_t mapAdcValue(uint16_t t_adcValue) const;
+  ExprState toggleExprState();
+  MappedPot changeMappedPot(int8_t t_delta);
+  Direction toggleDirection();
+  uint16_t changeHeelValue(int8_t t_delta);
+  uint16_t changeToeValue(int8_t t_delta);
 };

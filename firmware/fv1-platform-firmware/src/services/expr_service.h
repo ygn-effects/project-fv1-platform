@@ -12,6 +12,7 @@ class ExprService : public Service {
     ExprHandler m_exprHandler;
 
     void syncHandler();
+    void publishSaveExprEvent(const Event& t_event);
 
   public:
     ExprService(LogicalState& t_lState) :
