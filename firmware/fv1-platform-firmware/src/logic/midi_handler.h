@@ -4,6 +4,7 @@
 #include "utils/circular_buffer.h"
 
 namespace MidiHandlerConstants {
+  constexpr uint8_t c_maxMidiChannels = 15;
   constexpr uint8_t c_maxMidiMessages = 5;
 }
 
