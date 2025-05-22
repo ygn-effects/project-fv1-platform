@@ -12,6 +12,16 @@ class PotService : public Service {
     PotHandler m_handler;
 
     void syncHandler(uint8_t t_potIndex);
+    void publishSavePotEvent(uint8_t t_potIndex);
+
+    void handlePhysicalEvent(const Event& t_event);
+    void handleMenuEvent(const Event& t_event);
+    void handleMidiEvent(const Event& t_event);
+    void handleExprEvent(const Event& t_event);
+
+    void handleMenuPotStateToggleEvent(const Event& t_event);
+    void handleMenuPotMinValueMove(const Event& t_event);
+    void handleMenuPotMaxValueMove(const Event& t_event);
 
   public:
   PotService(LogicalState& t_lState) :
