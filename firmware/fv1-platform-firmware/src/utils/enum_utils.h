@@ -20,4 +20,12 @@ constexpr E nextEnumValue(E value) {
   return static_cast<E>((static_cast<uint8_t>(value) + 1) % Count);
 }
 
+template<typename E, uint8_t Count>
+constexpr E wrappedEnumAdd(E value, int8_t delta) {
+    int next = static_cast<int>(static_cast<uint8_t>(value)) + static_cast<int>(delta);
+    next %= Count;
+    if (next < 0) next += Count;
+    return static_cast<E>(next);
+}
+
 }
