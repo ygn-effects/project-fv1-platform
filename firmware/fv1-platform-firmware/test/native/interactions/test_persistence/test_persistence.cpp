@@ -810,6 +810,109 @@ void test_tempo() {
   TEST_ASSERT_EQUAL(1, std::get<MemoryLayout::c_tempoH>(mockEeprom.m_memory));
 }
 
+void test_expr() {
+  fillMockEeprom();
+
+  LogicalState logicalState;
+
+  MockEEPROM mockEeprom;
+  MockFv1 mockFv1;
+  MockBypass mockBypass;
+
+  FsmService fsmService(logicalState);
+  MemoryService memoryService(logicalState, mockEeprom);
+  ProgramModeService programModeService(logicalState);
+  ProgramService programService(logicalState);
+  PresetService presetService(logicalState);
+  BypassService bypassService(logicalState, mockBypass);
+  PotService potService(logicalState);
+  ExprService exprService(logicalState);
+  TapService tapService(logicalState);
+  TempoService tempoService(logicalState);
+  Fv1Service fv1Service(logicalState, mockFv1);
+  MidiService midiService(logicalState);
+  MenuService menuService(logicalState);
+
+  Service* services[] = {
+    &memoryService,
+    &fsmService,
+    &programModeService,
+    &presetService,
+    &programService,
+    &bypassService,
+    &tapService,
+    &potService,
+    &exprService,
+    &tempoService,
+    &fv1Service,
+    &midiService,
+    &menuService
+  };
+
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+
+  for (auto* service: services) {
+    service->init();
+  }
+
+  uint8_t servicesCount = sizeof(services) / sizeof(services[0]);
+
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  EventBus::publish({EventType::kBootCompleted});
+
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  mockFv1.m_potValues.clear();
+
+  TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
+
+  EventBus::publish({EventType::kMenuExprStateToggled, 0, {}});
+
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  TEST_ASSERT_EQUAL(ExprState::kInactive, logicalState.m_exprParams[logicalState.m_currentProgram].m_state);
+  constexpr uint16_t exprAddress = MemoryLayout::c_exprStart + (MemoryLayout::c_exprSize * 3);
+  TEST_ASSERT_EQUAL(0, std::get<exprAddress>(mockEeprom.m_memory));
+
+  EventBus::publish({EventType::kMenuExprMappedPotMoved, 0, {.delta=1}});
+
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  TEST_ASSERT_EQUAL(MappedPot::kPot1, logicalState.m_exprParams[logicalState.m_currentProgram].m_mappedPot);
+  TEST_ASSERT_EQUAL(1, std::get<exprAddress+1>(mockEeprom.m_memory));
+
+  EventBus::publish({EventType::kMenuExprDirectionToggled, 0, {}});
+
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  TEST_ASSERT_EQUAL(Direction::kNormal, logicalState.m_exprParams[logicalState.m_currentProgram].m_direction);
+  TEST_ASSERT_EQUAL(0, std::get<exprAddress+2>(mockEeprom.m_memory));
+
+  EventBus::publish({EventType::kMenuExprHeelValueMoved, 0, {.delta=1}});
+
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  TEST_ASSERT_EQUAL(1, logicalState.m_exprParams[logicalState.m_currentProgram].m_heelValue);
+  TEST_ASSERT_EQUAL(1, std::get<exprAddress+3>(mockEeprom.m_memory));
+  TEST_ASSERT_EQUAL(0, std::get<exprAddress+4>(mockEeprom.m_memory));
+
+  EventBus::publish({EventType::kMenuExprToeValueMoved, 0, {.delta=-1}});
+
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  TEST_ASSERT_EQUAL(1022, logicalState.m_exprParams[logicalState.m_currentProgram].m_toeValue);
+  TEST_ASSERT_EQUAL(254, std::get<exprAddress+5>(mockEeprom.m_memory));
+  TEST_ASSERT_EQUAL(3, std::get<exprAddress+6>(mockEeprom.m_memory));
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_bypass);
@@ -819,5 +922,6 @@ int main() {
   RUN_TEST(test_midi_channel);
   RUN_TEST(test_tap);
   RUN_TEST(test_tempo);
+  RUN_TEST(test_expr);
   UNITY_END();
 }
