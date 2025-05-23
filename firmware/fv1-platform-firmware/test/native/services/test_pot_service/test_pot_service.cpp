@@ -118,6 +118,22 @@ void test_pot_expr() {
   TEST_ASSERT_EQUAL(1023, logicalState.m_potParams[logicalState.m_currentProgram][3].m_value);
 }
 
+void test_menu_state_toggle() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  potService.init();
+
+  auto& param = logicalState.m_potParams[logicalState.m_currentProgram];
+
+  for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
+    EventType event = static_cast<EventType>(static_cast<uint8_t>(EventType::kMenuPot0StateToggled) + i);
+    potService.handleEvent({event, 0, {}});
+
+    TEST_ASSERT_EQUAL(PotState::kDisabled, param[i].m_state);
+  }
+}
+
 void test_interested_in() {
   LogicalState logicalState;
   PotService potService(logicalState);
@@ -140,5 +156,6 @@ int main() {
   RUN_TEST(test_pot_midi);
   RUN_TEST(test_pot_expr);
   RUN_TEST(test_interested_in);
+  RUN_TEST(test_menu_state_toggle);
   UNITY_END();
 }
