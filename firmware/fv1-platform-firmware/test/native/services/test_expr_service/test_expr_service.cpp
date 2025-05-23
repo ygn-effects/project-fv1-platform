@@ -152,6 +152,51 @@ void test_interested_in() {
   TEST_ASSERT_FALSE(bypassService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
 }
 
+void test_menu() {
+  LogicalState logicalState;
+  ExprService exprService(logicalState);
+
+  auto& param = logicalState.m_exprParams[logicalState.m_currentProgram];
+
+  param.m_state = ExprState::kInactive;
+  param.m_mappedPot = MappedPot::kPot1;
+  param.m_direction = Direction::kInverted;
+  param.m_heelValue = 256;
+  param.m_toeValue = 512;
+
+  exprService.init();
+
+  exprService.handleEvent({EventType::kMenuExprStateToggled, 0, {}});
+  TEST_ASSERT_EQUAL(ExprState::kActive, param.m_state);
+
+  exprService.handleEvent({EventType::kMenuExprStateToggled, 0, {}});
+  TEST_ASSERT_EQUAL(ExprState::kInactive, param.m_state);
+
+  exprService.handleEvent({EventType::kMenuExprMappedPotMoved, 0, {.delta=1}});
+  TEST_ASSERT_EQUAL(MappedPot::kPot2, param.m_mappedPot);
+
+  exprService.handleEvent({EventType::kMenuExprMappedPotMoved, 0, {.delta=-1}});
+  TEST_ASSERT_EQUAL(MappedPot::kPot1, param.m_mappedPot);
+
+  exprService.handleEvent({EventType::kMenuExprDirectionToggled, 0, {}});
+  TEST_ASSERT_EQUAL(Direction::kNormal, param.m_direction);
+
+  exprService.handleEvent({EventType::kMenuExprDirectionToggled, 0, {}});
+  TEST_ASSERT_EQUAL(Direction::kInverted, param.m_direction);
+
+  exprService.handleEvent({EventType::kMenuExprHeelValueMoved, 0, {.delta=1}});
+  TEST_ASSERT_EQUAL(257, param.m_heelValue);
+
+  exprService.handleEvent({EventType::kMenuExprHeelValueMoved, 0, {.delta=-1}});
+  TEST_ASSERT_EQUAL(256, param.m_heelValue);
+
+  exprService.handleEvent({EventType::kMenuExprToeValueMoved, 0, {.delta=1}});
+  TEST_ASSERT_EQUAL(513, param.m_toeValue);
+
+  exprService.handleEvent({EventType::kMenuExprToeValueMoved, 0, {.delta=-1}});
+  TEST_ASSERT_EQUAL(512, param.m_toeValue);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_expr_inactive);
@@ -160,6 +205,7 @@ int main() {
   RUN_TEST(test_expr_direction);
   RUN_TEST(test_expr_heel_toe_value);
   RUN_TEST(test_expr_clamping);
+  RUN_TEST(test_menu);
   RUN_TEST(test_interested_in);
   UNITY_END();
 }
