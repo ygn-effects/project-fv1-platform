@@ -913,6 +913,106 @@ void test_expr() {
   TEST_ASSERT_EQUAL(3, std::get<exprAddress+6>(mockEeprom.m_memory));
 }
 
+void test_pot() {
+  fillMockEeprom();
+
+  LogicalState logicalState;
+
+  MockEEPROM mockEeprom;
+  MockFv1 mockFv1;
+  MockBypass mockBypass;
+
+  FsmService fsmService(logicalState);
+  MemoryService memoryService(logicalState, mockEeprom);
+  ProgramModeService programModeService(logicalState);
+  ProgramService programService(logicalState);
+  PresetService presetService(logicalState);
+  BypassService bypassService(logicalState, mockBypass);
+  PotService potService(logicalState);
+  ExprService exprService(logicalState);
+  TapService tapService(logicalState);
+  TempoService tempoService(logicalState);
+  Fv1Service fv1Service(logicalState, mockFv1);
+  MidiService midiService(logicalState);
+  MenuService menuService(logicalState);
+
+  Service* services[] = {
+    &memoryService,
+    &fsmService,
+    &programModeService,
+    &presetService,
+    &programService,
+    &bypassService,
+    &tapService,
+    &potService,
+    &exprService,
+    &tempoService,
+    &fv1Service,
+    &midiService,
+    &menuService
+  };
+
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+
+  for (auto* service: services) {
+    service->init();
+  }
+
+  uint8_t servicesCount = sizeof(services) / sizeof(services[0]);
+
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  EventBus::publish({EventType::kBootCompleted});
+
+  runEventChain(services, servicesCount);
+  runUpdateChain(services, servicesCount);
+
+  mockFv1.m_potValues.clear();
+
+  for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
+    EventType event = static_cast<EventType>(static_cast<uint8_t>(EventType::kMenuPot0StateToggled) + i);
+    EventBus::publish({event, 0, {}});
+
+    runEventChain(services, servicesCount);
+    runUpdateChain(services, servicesCount);
+
+    TEST_ASSERT_EQUAL(PotState::kDisabled, logicalState.m_potParams[logicalState.m_currentProgram][i].m_state);
+    size_t address = MemoryLayout::getPotParamOffset(logicalState.m_currentProgram, i);
+    TEST_ASSERT_EQUAL(0, mockEeprom.m_memory.at(address));
+  }
+
+  for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
+    EventType event = static_cast<EventType>(static_cast<uint8_t>(EventType::kMenuPot0MinValueMoved) + i);
+    uint16_t value = logicalState.m_potParams[logicalState.m_currentProgram][i].m_minValue + 1;
+    EventBus::publish({event, 0, {.delta=1}});
+
+    runEventChain(services, servicesCount);
+    runUpdateChain(services, servicesCount);
+
+    size_t address = MemoryLayout::getPotParamOffset(logicalState.m_currentProgram, i);
+    uint16_t newvalue = 0;
+    Utils::unpack16(mockEeprom.m_memory.at(address + 3), mockEeprom.m_memory.at(address + 4), newvalue);
+
+    TEST_ASSERT_EQUAL(value, newvalue);
+  }
+
+  for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
+    EventType event = static_cast<EventType>(static_cast<uint8_t>(EventType::kMenuPot0MaxValueMoved) + i);
+    uint16_t value = logicalState.m_potParams[logicalState.m_currentProgram][i].m_maxValue - 1;
+    EventBus::publish({event, 0, {.delta=-1}});
+
+    runEventChain(services, servicesCount);
+    runUpdateChain(services, servicesCount);
+
+    size_t address = MemoryLayout::getPotParamOffset(logicalState.m_currentProgram, i);
+    uint16_t newvalue = 0;
+    Utils::unpack16(mockEeprom.m_memory.at(address + 5), mockEeprom.m_memory.at(address + 6), newvalue);
+
+    TEST_ASSERT_EQUAL(value, newvalue);
+  }
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_bypass);
@@ -923,5 +1023,6 @@ int main() {
   RUN_TEST(test_tap);
   RUN_TEST(test_tempo);
   RUN_TEST(test_expr);
+  RUN_TEST(test_pot);
   UNITY_END();
 }
