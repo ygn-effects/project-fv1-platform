@@ -134,6 +134,50 @@ void test_menu_state_toggle() {
   }
 }
 
+void test_menu_change_min_value() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  potService.init();
+
+  auto& param = logicalState.m_potParams[logicalState.m_currentProgram];
+
+  for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
+    EventType event = static_cast<EventType>(static_cast<uint8_t>(EventType::kMenuPot0MinValueMoved) + i);
+    uint16_t value = param[i].m_minValue + 1;
+    potService.handleEvent({event, 0, {.delta=1}});
+
+    TEST_ASSERT_EQUAL(value, param[i].m_minValue);
+
+    value = param[i].m_minValue - 1;
+    potService.handleEvent({event, 0, {.delta=-1}});
+
+    TEST_ASSERT_EQUAL(value, param[i].m_minValue);
+  }
+}
+
+void test_menu_change_max_value() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  potService.init();
+
+  auto& param = logicalState.m_potParams[logicalState.m_currentProgram];
+
+  for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
+    EventType event = static_cast<EventType>(static_cast<uint8_t>(EventType::kMenuPot0MaxValueMoved) + i);
+    uint16_t value = param[i].m_maxValue - 1;
+    potService.handleEvent({event, 0, {.delta=-1}});
+
+    TEST_ASSERT_EQUAL(value, param[i].m_maxValue);
+
+    value = param[i].m_maxValue + 1;
+    potService.handleEvent({event, 0, {.delta=1}});
+
+    TEST_ASSERT_EQUAL(value, param[i].m_maxValue);
+  }
+}
+
 void test_interested_in() {
   LogicalState logicalState;
   PotService potService(logicalState);
@@ -157,5 +201,7 @@ int main() {
   RUN_TEST(test_pot_expr);
   RUN_TEST(test_interested_in);
   RUN_TEST(test_menu_state_toggle);
+  RUN_TEST(test_menu_change_min_value);
+  RUN_TEST(test_menu_change_max_value);
   UNITY_END();
 }
