@@ -11,6 +11,13 @@ enum class EventType : uint8_t {
   kRestoreState,
   kBootCompleted,
 
+  // HAL events
+  kSwitchPressed,
+  kSwitchLongPressed,
+  kSwitchReleased,
+  kEncoderMoved,
+  kPotMoved,
+
   // Raw physical events
   kRawProgramModeSwitchPress,
   kRawProgramModeSwitchLongPress,
@@ -125,6 +132,7 @@ enum class EventType : uint8_t {
 
 enum class EventCategory : uint8_t {
   kBootEvent,
+  kHalEvent,
   kRawPhysicalEvent,
   kPhysicalEvent,
   kStateEvent,
@@ -140,6 +148,7 @@ enum class EventCategory : uint8_t {
 
 enum class EventSubCategory : uint8_t {
   kBootEvent,
+  kHalEvent,
   kRawProgramModeEvent,
   kRawBypassEvent,
   kRawTapEvent,
@@ -186,6 +195,11 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kBootEvent,          // Boot
   EventCategory::kBootEvent,          // kRestoreState
   EventCategory::kBootEvent,          // kBootCompleted
+  EventCategory::kHalEvent,           // kSwitchPressed
+  EventCategory::kHalEvent,           // kSwitchLongPressed
+  EventCategory::kHalEvent,           // kSwitchReleased
+  EventCategory::kHalEvent,           // kEncoderMoved
+  EventCategory::kHalEvent,           // kPotMoved
   EventCategory::kRawPhysicalEvent,   // kRawProgramModeSwitchPress
   EventCategory::kRawPhysicalEvent,   // kRawProgramModeSwitchLongPress
   EventCategory::kRawPhysicalEvent,   // kRawBypassPressed
@@ -283,6 +297,11 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kBootEvent,                   // Boot
   EventSubCategory::kBootEvent,                   // kRestoreState
   EventSubCategory::kBootEvent,                   // kBootCompleted
+  EventSubCategory::kHalEvent,                    // kSwitchPressed
+  EventSubCategory::kHalEvent,                    // kSwitchLongPressed
+  EventSubCategory::kHalEvent,                    // kSwitchReleased
+  EventSubCategory::kHalEvent,                    // kEncoderMoved
+  EventSubCategory::kHalEvent,                    // kPotMoved
   EventSubCategory::kRawProgramModeEvent,         // kRawProgramModeSwitchPress
   EventSubCategory::kRawProgramModeEvent,         // kRawProgramModeSwitchLongPress
   EventSubCategory::kRawBypassEvent,              // kRawBypassPressed
@@ -388,7 +407,8 @@ struct Event {
   EventType m_type;
   uint32_t m_timestamp;
 
-  union {
+  struct Payload {
+    uint8_t id;
     uint16_t value;
     int8_t delta;
     const ui::MenuView* view;
