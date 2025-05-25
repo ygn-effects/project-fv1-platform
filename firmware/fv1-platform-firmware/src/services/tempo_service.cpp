@@ -5,11 +5,19 @@ TempoService::TempoService(LogicalState& t_lState) :
     m_minInterval(0), m_maxInterval(0), m_source(TempoSource::kPot) {}
 
 void TempoService::publishTempoEvent(const Event& t_event) const {
-  EventBus::publish({EventType::kTempoChanged, t_event.m_timestamp, {.value = m_interval}});
+  Event e;
+  e.m_type = EventType::kTempoChanged;
+  e.m_timestamp = t_event.m_timestamp; /*millis*/
+  e.m_data.value = m_interval;
+  EventBus::publish(e);
 }
 
 void TempoService::publishSaveTempoEvent(const Event& t_event) const {
-  EventBus::publish({EventType::kSaveTempo, t_event.m_timestamp /*millis()*/, {.value = m_interval}});
+  Event e;
+  e.m_type = EventType::kSaveTempo;
+  e.m_timestamp = t_event.m_timestamp; /*millis*/
+  e.m_data.value = m_interval;
+  EventBus::publish(e);
 }
 
 void TempoService::init() {

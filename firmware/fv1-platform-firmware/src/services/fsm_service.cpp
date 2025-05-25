@@ -3,7 +3,10 @@
 void FsmService::transitionTo(AppState t_state, uint32_t t_timestamp) {
   m_state = t_state;
 
-  Event e{ EventType::kStateChanged, t_timestamp, {.value = static_cast<uint16_t>(t_state)} };
+  Event e;
+  e.m_type = EventType::kStateChanged;
+  e.m_timestamp = t_timestamp; /*millis*/
+  e.m_data.value = static_cast<uint16_t>(t_state);
   EventBus::publish(e);
 }
 

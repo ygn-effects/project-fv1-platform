@@ -23,6 +23,9 @@ void MidiService::handleEvent(const Event& t_event) {
       syncHandler();
       publishSaveMidiChannelEvent(t_event);
       break;
+
+    default:
+      break;
   }
 }
 
@@ -36,25 +39,46 @@ void MidiService::update() {
         EventType eventType = ccParamToEvent(message.m_param);
 
         switch (eventType) {
-          case EventType::kMidiBypassPressed:
+          case EventType::kMidiBypassPressed: {
             if (message.m_value != MidiCCValues::c_bypassEnable && message.m_value != MidiCCValues::c_bypassDisable) { return; }
-            EventBus::publish({eventType, 0 /*millis()*/, {.value=message.m_value}});
-            break;
 
-          case EventType::kMidiTapPressed:
+            Event e;
+            e.m_type = eventType;
+            e.m_timestamp = 0; /*millis*/
+            e.m_data.value = message.m_value;
+            EventBus::publish(e);
+            break;
+          }
+
+          case EventType::kMidiTapPressed: {
             if (message.m_value != MidiCCValues::c_tapShortPress && message.m_value != MidiCCValues::c_tapLongPress) { return; }
-            EventBus::publish({eventType, 0 /*millis()*/, {.value=message.m_value}});
-            break;
 
-          default:
-            EventBus::publish({eventType, 0 /*millis()*/, {.value=message.m_value}});
+            Event e;
+            e.m_type = eventType;
+            e.m_timestamp = 0; /*millis*/
+            e.m_data.value = message.m_value;
+            EventBus::publish(e);
             break;
+          }
+
+          default: {
+            Event e;
+            e.m_type = eventType;
+            e.m_timestamp = 0; /*millis*/
+            e.m_data.value = message.m_value;
+            EventBus::publish(e);
+            break;
+          }
         }
         break;
       }
 
       case MidiMessageType::kProgramChange:
-        EventBus::publish({EventType::kMidiProgramChanged, 0 /*millis()*/, {.value=message.m_param}});
+        Event e;
+        e.m_type = EventType::kMidiProgramChanged;
+        e.m_timestamp = 0; /*millis*/
+        e.m_data.value = message.m_param;
+        EventBus::publish(e);
         break;
 
       default:

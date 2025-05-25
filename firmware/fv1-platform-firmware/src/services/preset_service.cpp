@@ -5,7 +5,11 @@ void PresetService::applyPreset() {
 }
 
 void PresetService::publishLoadBankEvent(const Event& t_event) {
-  EventBus::publish({EventType::kLoadPresetBank, t_event.m_timestamp /*millis()*/, {.value=m_logicalState.m_currentPresetBank}});
+  Event e;
+  e.m_type = EventType::kLoadPresetBank;
+  e.m_timestamp = t_event.m_timestamp; /*millis*/
+  e.m_data.value = m_logicalState.m_currentPresetBank;
+  EventBus::publish(e);
 }
 
 void PresetService::publishSaveCurrentPresetBank(const Event& t_event) {
@@ -43,7 +47,11 @@ void PresetService::handleEvent(const Event& t_event) {
 
     case EventType::kMenuSavePreset:
       m_handler.snapshotFromState(m_logicalState);
-      EventBus::publish({EventType::kSavePreset, t_event.m_timestamp /*millis()*/, {.value=t_event.m_data.value}});
+      Event e;
+      e.m_type = EventType::kSavePreset;
+      e.m_timestamp = t_event.m_timestamp; /*millis*/
+      e.m_data.value = t_event.m_data.value;
+      EventBus::publish(e);
       break;
 
     case EventType::kPresetBankLoaded:
