@@ -4,17 +4,40 @@
 #include <Arduino.h>
 #include "periphs/gpio.h"
 
+namespace hal {
+
+enum class GpioConfig : uint8_t {
+  kInput,
+  kInputPullup,
+  kOutput
+};
+
 class DigitalGpioDriver : public DigitalGpio {
   private:
       uint8_t m_pin;
-      bool m_pullup;
+      GpioConfig m_config;
 
   public:
-    DigitalGpioDriver(uint8_t t_pin, bool t_pullup = false)
-      : m_pin(t_pin), m_pullup(t_pullup) {}
+    DigitalGpioDriver(uint8_t t_pin, GpioConfig t_config)
+      : m_pin(t_pin), m_config(t_config) {}
 
     void init() override {
-      pinMode(m_pin, m_pullup ? INPUT_PULLUP : INPUT);
+      switch (m_config) {
+        case GpioConfig::kInput:
+          pinMode(m_pin, INPUT);
+          break;
+
+        case GpioConfig::kInputPullup:
+          pinMode(m_pin, INPUT_PULLUP);
+          break;
+
+        case GpioConfig::kOutput:
+          pinMode(m_pin, OUTPUT);
+          break;
+
+        default:
+          break;
+      }
     }
 
     bool read() override {
@@ -22,7 +45,6 @@ class DigitalGpioDriver : public DigitalGpio {
     }
 
     void write(bool t_value) override {
-      pinMode(m_pin, OUTPUT);
       digitalWrite(m_pin, t_value);
     }
 };
@@ -30,12 +52,25 @@ class DigitalGpioDriver : public DigitalGpio {
 class AnalogGpioDriver : public AnalogGpio {
   private:
     uint8_t m_pin;
+    GpioConfig m_config;
 
   public:
-    AnalogGpioDriver(uint8_t t_pin) : m_pin(t_pin) {}
+    AnalogGpioDriver(uint8_t t_pin, GpioConfig t_config)
+      : m_pin(t_pin), m_config(t_config) {}
 
     void init() override {
-      pinMode(m_pin, INPUT);
+      switch (m_config) {
+        case GpioConfig::kInput:
+          pinMode(m_pin, INPUT);
+          break;
+
+        case GpioConfig::kOutput:
+          pinMode(m_pin, OUTPUT);
+          break;
+
+        default:
+          break;
+      }
     }
 
     uint16_t read() override {
@@ -43,8 +78,8 @@ class AnalogGpioDriver : public AnalogGpio {
     }
 
     void write(uint16_t t_value) override {
-      pinMode(m_pin, OUTPUT);
       analogWrite(m_pin, t_value);
     }
 };
 
+}
