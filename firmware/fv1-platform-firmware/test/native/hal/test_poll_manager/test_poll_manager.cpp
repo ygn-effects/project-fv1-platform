@@ -11,6 +11,10 @@ void setUp() {
   }
 }
 
+void tearDown() {
+
+}
+
 void test_register() {
   hal::PollManager pollManager;
 

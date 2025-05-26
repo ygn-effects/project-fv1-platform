@@ -29,14 +29,14 @@ class PollManager {
     }
 
     void init() {
-      for (auto* device : m_devices) {
-        device->init();
+      for (uint8_t i = 0; i < m_devicesCount; i++) {
+        m_devices[i]->init();
       }
     }
 
     void poll() {
-      for (auto* device : m_devices) {
-        size_t eventCount = device->poll(m_buffer, PollManagerConstants::c_maxEventsPerDevice);
+      for (uint8_t i = 0; i < m_devicesCount; i++) {
+        size_t eventCount = m_devices[i]->poll(m_buffer, PollManagerConstants::c_maxEventsPerDevice);
 
         for (uint8_t i = 0; i < eventCount; i++) {
           EventBus::publish(m_buffer[i]);
