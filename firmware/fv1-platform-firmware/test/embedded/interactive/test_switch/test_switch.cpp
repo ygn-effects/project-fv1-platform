@@ -1,7 +1,8 @@
 #include "hal/poll_manager.h"
 #include "drivers/switch.h"
 
-hal::SwitchDriver testSwitch(1, SwitchId::kBypass);
+hal::DigitalGpioDriver testSwitchGpio(1, hal::GpioConfig::kInputPullup);
+hal::SwitchDriver testSwitch(testSwitchGpio, SwitchId::kBypass);
 
 void setup() {
   Serial.begin(31250);

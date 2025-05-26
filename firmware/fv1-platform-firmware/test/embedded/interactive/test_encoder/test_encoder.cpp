@@ -1,7 +1,9 @@
 #include "hal/poll_manager.h"
 #include "drivers/encoder.h"
 
-hal::EncoderDriver testEncoder(2, 3, EncoderId::kMenuEncoder);
+hal::DigitalGpioDriver testEncoderGpioA(2, hal::GpioConfig::kInputPullup);
+hal::DigitalGpioDriver testEncoderGpioB(3, hal::GpioConfig::kInputPullup);
+hal::EncoderDriver testEncoder(testEncoderGpioA, testEncoderGpioB, EncoderId::kMenuEncoder);
 
 void setup() {
   Serial.begin(31250);

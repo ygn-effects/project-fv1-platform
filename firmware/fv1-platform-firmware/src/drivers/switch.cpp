@@ -2,17 +2,17 @@
 
 namespace hal {
 
-SwitchDriver::SwitchDriver(uint8_t t_pin, SwitchId t_id, uint32_t t_debounceMs, uint32_t t_longPressMs)
-  : m_pin(t_pin), m_switchId(t_id), m_debounceMs(t_debounceMs),
+SwitchDriver::SwitchDriver(DigitalGpioDriver t_gpio, SwitchId t_id, uint32_t t_debounceMs, uint32_t t_longPressMs)
+  : m_gpio(t_gpio), m_switchId(t_id), m_debounceMs(t_debounceMs),
     m_longPressMs(t_longPressMs), m_stateMs(0), m_state(SwitchState::kIdle) {}
 
 void SwitchDriver::init() {
-  pinMode(m_pin, INPUT_PULLUP);
+  m_gpio.init();
 }
 
 size_t SwitchDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
   size_t eventCount = 0;
-  bool switchEvent = !digitalRead(m_pin);
+  bool switchEvent = !m_gpio.read();
 
   uint32_t now = millis();
   uint32_t elapsed = now - m_stateMs;

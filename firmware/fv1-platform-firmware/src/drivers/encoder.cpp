@@ -2,16 +2,16 @@
 
 namespace hal {
 
-uint8_t EncoderDriver::readState() const {
-  return (digitalRead(m_pinA) ? 2 : 0) | (digitalRead(m_pinB) ? 1 : 0);
+uint8_t EncoderDriver::readState() {
+  return (m_gpioA.read() ? 2 : 0) | (m_gpioB.read() ? 1 : 0);
 }
 
-EncoderDriver::EncoderDriver(uint8_t t_pinA, uint8_t t_pinB, EncoderId t_id)
-  : m_pinA(t_pinA), m_pinB(t_pinB), m_prevState(0), m_accumulator(0), m_encoderId(t_id) {}
+EncoderDriver::EncoderDriver(DigitalGpioDriver t_gpioA, DigitalGpioDriver t_gpioB, EncoderId t_id)
+  : m_gpioA(t_gpioA), m_gpioB(t_gpioB), m_prevState(0), m_accumulator(0), m_encoderId(t_id) {}
 
 void EncoderDriver::init() {
-  pinMode(m_pinA, INPUT_PULLUP);
-  pinMode(m_pinB, INPUT_PULLUP);
+  m_gpioA.init();
+  m_gpioB.init();
   m_prevState = readState();
 }
 

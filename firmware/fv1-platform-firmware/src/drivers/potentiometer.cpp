@@ -6,18 +6,18 @@ uint16_t PotDriver::readRaw() {
   uint32_t total = 0;
 
   for (uint8_t i = 0; i < c_sampleSize; i++) {
-    total += analogRead(m_pin);
+    total += m_gpio.read();
     delayMicroseconds(200);
   }
 
   return total / c_sampleSize;
 }
 
-PotDriver::PotDriver(uint8_t t_pin, PotId t_id, uint16_t t_threshold)
-  : m_pin(t_pin), m_potId(t_id), m_threshold(t_threshold), m_lastValue(0) {}
+PotDriver::PotDriver(AnalogGpioDriver t_gpio, PotId t_id, uint16_t t_threshold)
+  : m_gpio(t_gpio), m_potId(t_id), m_threshold(t_threshold), m_lastValue(0) {}
 
 void PotDriver::init() {
-  pinMode(m_pin, INPUT);
+  m_gpio.init();
   m_lastValue = readRaw();
 }
 

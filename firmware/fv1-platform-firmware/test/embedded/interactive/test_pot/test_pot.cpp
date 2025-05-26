@@ -1,7 +1,8 @@
 #include "hal/poll_manager.h"
 #include "drivers/potentiometer.h"
 
-hal::PotDriver testPot(24, PotId::kPot0);
+hal::AnalogGpioDriver testPotGpio(24, hal::GpioConfig::kInput);
+hal::PotDriver testPot(testPotGpio, PotId::kPot0);
 
 void setup() {
   Serial.begin(31250);
