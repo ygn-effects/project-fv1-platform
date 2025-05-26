@@ -24,8 +24,10 @@ enum class EventType : uint8_t {
   kRawBypassPressed,
   kRawTapPressed,
   kRawTapLongPressed,
+  kRawTapReleased,
   kRawMenuEncoderPressed,
   kRawMenuEncoderLongPressed,
+  kRawMenuEncoderReleased,
   kRawMenuEncoderMoved,
   kRawPot0Moved,
   kRawPot1Moved,
@@ -148,7 +150,9 @@ enum class EventCategory : uint8_t {
 
 enum class EventSubCategory : uint8_t {
   kBootEvent,
-  kHalEvent,
+  kHalSwitchEvent,
+  kHalEncoderEvent,
+  kHalPotEvent,
   kRawProgramModeEvent,
   kRawBypassEvent,
   kRawTapEvent,
@@ -205,8 +209,10 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kRawPhysicalEvent,   // kRawBypassPressed
   EventCategory::kRawPhysicalEvent,   // kRawTapPressed
   EventCategory::kRawPhysicalEvent,   // kRawTapLongPressed
+  EventCategory::kRawPhysicalEvent,   // kRawTapReleased
   EventCategory::kRawPhysicalEvent,   // kRawMenuEncoderPressed
   EventCategory::kRawPhysicalEvent,   // kRawMenuEncoderLongPressed
+  EventCategory::kRawPhysicalEvent,   // kRawMenuEncoderReleased
   EventCategory::kRawPhysicalEvent,   // kRawMenuEncoderMoved
   EventCategory::kRawPhysicalEvent,   // kRawPot0Moved
   EventCategory::kRawPhysicalEvent,   // kRawPot1Moved
@@ -297,18 +303,20 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kBootEvent,                   // Boot
   EventSubCategory::kBootEvent,                   // kRestoreState
   EventSubCategory::kBootEvent,                   // kBootCompleted
-  EventSubCategory::kHalEvent,                    // kSwitchPressed
-  EventSubCategory::kHalEvent,                    // kSwitchLongPressed
-  EventSubCategory::kHalEvent,                    // kSwitchReleased
-  EventSubCategory::kHalEvent,                    // kEncoderMoved
-  EventSubCategory::kHalEvent,                    // kPotMoved
+  EventSubCategory::kHalSwitchEvent,              // kSwitchPressed
+  EventSubCategory::kHalSwitchEvent,              // kSwitchLongPressed
+  EventSubCategory::kHalSwitchEvent,              // kSwitchReleased
+  EventSubCategory::kHalEncoderEvent,             // kEncoderMoved
+  EventSubCategory::kHalPotEvent,                 // kPotMoved
   EventSubCategory::kRawProgramModeEvent,         // kRawProgramModeSwitchPress
   EventSubCategory::kRawProgramModeEvent,         // kRawProgramModeSwitchLongPress
   EventSubCategory::kRawBypassEvent,              // kRawBypassPressed
   EventSubCategory::kRawTapEvent,                 // kRawTapPressed
   EventSubCategory::kRawTapEvent,                 // kRawTapLongPressed
+  EventSubCategory::kRawTapEvent,                 // kRawTapReleased
   EventSubCategory::kRawEncoderEvent,             // kRawMenuEncoderPressed
   EventSubCategory::kRawEncoderEvent,             // kRawMenuEncoderLongPressed
+  EventSubCategory::kRawEncoderEvent,             // kRawMenuEncoderReleased
   EventSubCategory::kRawEncoderEvent,             // kRawMenuEncoderMoved
   EventSubCategory::kRawPotEvent,                 // kRawPot0Moved
   EventSubCategory::kRawPotEvent,                 // kRawPot1Moved
