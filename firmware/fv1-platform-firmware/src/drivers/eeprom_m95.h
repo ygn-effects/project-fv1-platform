@@ -10,7 +10,7 @@
 
 namespace hal {
 
-class M95Driver : EEPROM {
+class M95Driver : public EEPROM {
   private:
     DigitalGpioDriver m_csPin;
 
@@ -18,6 +18,7 @@ class M95Driver : EEPROM {
     void deselect();
 
     uint8_t readStatusRegister();
+    void writeStatusRegister();
     void waitUntilReady();
 
     void sendAddress(uint16_t t_address);
@@ -25,12 +26,13 @@ class M95Driver : EEPROM {
     static constexpr uint8_t c_OpCodeWRITE = 0x02; // 0000 0010
     static constexpr uint8_t c_OpCodeREAD = 0x03; // 0000 0011
     static constexpr uint8_t c_OpCodeRDSR = 0x05; // 0000 0101
+    static constexpr uint8_t c_OpCodeWRSR = 0x01; // 0000 0001
     static constexpr uint8_t c_OpCodeWREN = 0x06; // 0000 0110
     static constexpr uint8_t c_OpCodeWIP = 0x01; // 0000 0001
     static constexpr uint8_t c_pageSize = 64;
 
   public:
-  M95Driver(DigitalGpioDriver t_csPin);
+    explicit M95Driver(DigitalGpioDriver t_csPin);
 
     void init() override;
     virtual void read(uint16_t t_address, uint8_t* t_data, size_t t_length) override;
