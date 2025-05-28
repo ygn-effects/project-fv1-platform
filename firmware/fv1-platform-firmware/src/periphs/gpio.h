@@ -1,3 +1,5 @@
+#pragma once
+
 class DigitalGpio {
   public:
     virtual void init() = 0;
