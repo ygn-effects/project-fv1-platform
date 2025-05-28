@@ -11,7 +11,7 @@ namespace hal {
 
 class PotDriver : public Pollable {
   private:
-    AnalogGpioDriver m_gpio;
+    AnalogGpio& m_gpio;
     PotId m_potId;
     uint16_t m_threshold;
     uint16_t m_lastValue;
@@ -21,7 +21,7 @@ class PotDriver : public Pollable {
     uint16_t readRaw();
 
   public:
-    PotDriver(AnalogGpioDriver t_gpio, PotId t_id, uint16_t t_threshold = 4);
+    PotDriver(AnalogGpio& t_gpio, PotId t_id, uint16_t t_threshold = 4);
 
     void init() override;
     size_t poll(Event* t_outEvents, size_t t_maxEvents) override;

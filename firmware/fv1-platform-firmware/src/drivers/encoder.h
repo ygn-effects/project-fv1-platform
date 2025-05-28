@@ -11,8 +11,8 @@ namespace hal {
 
 class EncoderDriver : public Pollable {
   private:
-    DigitalGpioDriver m_gpioA;
-    DigitalGpioDriver m_gpioB;
+    DigitalGpio& m_gpioA;
+    DigitalGpio& m_gpioB;
     uint8_t m_prevState;
     int8_t m_accumulator;
     EncoderId m_encoderId;
@@ -28,7 +28,7 @@ class EncoderDriver : public Pollable {
     uint8_t readState();
 
   public:
-    EncoderDriver(DigitalGpioDriver t_gpioA, DigitalGpioDriver t_gpioB, EncoderId t_id);
+    EncoderDriver(DigitalGpio& t_gpioA, DigitalGpio& t_gpioB, EncoderId t_id);
 
     void init() override;
     size_t poll(Event* t_outEvents, size_t t_maxEvents) override;

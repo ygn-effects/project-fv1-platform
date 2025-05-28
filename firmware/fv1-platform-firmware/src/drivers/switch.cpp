@@ -2,7 +2,7 @@
 
 namespace hal {
 
-SwitchDriver::SwitchDriver(DigitalGpioDriver t_gpio, SwitchId t_id, uint32_t t_debounceMs, uint32_t t_longPressMs)
+SwitchDriver::SwitchDriver(DigitalGpio& t_gpio, SwitchId t_id, uint32_t t_debounceMs, uint32_t t_longPressMs)
   : m_gpio(t_gpio), m_switchId(t_id), m_debounceMs(t_debounceMs),
     m_longPressMs(t_longPressMs), m_stateMs(0), m_state(SwitchState::kIdle) {}
 

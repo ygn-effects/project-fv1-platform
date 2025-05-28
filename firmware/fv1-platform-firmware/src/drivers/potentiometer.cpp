@@ -13,7 +13,7 @@ uint16_t PotDriver::readRaw() {
   return total / c_sampleSize;
 }
 
-PotDriver::PotDriver(AnalogGpioDriver t_gpio, PotId t_id, uint16_t t_threshold)
+PotDriver::PotDriver(AnalogGpio& t_gpio, PotId t_id, uint16_t t_threshold)
   : m_gpio(t_gpio), m_potId(t_id), m_threshold(t_threshold), m_lastValue(0) {}
 
 void PotDriver::init() {

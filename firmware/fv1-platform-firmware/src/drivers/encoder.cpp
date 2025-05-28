@@ -6,7 +6,7 @@ uint8_t EncoderDriver::readState() {
   return (m_gpioA.read() ? 2 : 0) | (m_gpioB.read() ? 1 : 0);
 }
 
-EncoderDriver::EncoderDriver(DigitalGpioDriver t_gpioA, DigitalGpioDriver t_gpioB, EncoderId t_id)
+EncoderDriver::EncoderDriver(DigitalGpio& t_gpioA, DigitalGpio& t_gpioB, EncoderId t_id)
   : m_gpioA(t_gpioA), m_gpioB(t_gpioB), m_prevState(0), m_accumulator(0), m_encoderId(t_id) {}
 
 void EncoderDriver::init() {

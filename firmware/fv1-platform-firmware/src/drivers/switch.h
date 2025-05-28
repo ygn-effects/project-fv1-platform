@@ -19,7 +19,7 @@ enum class SwitchState : uint8_t {
 
 class SwitchDriver : public Pollable {
   private:
-    DigitalGpioDriver m_gpio;
+    DigitalGpio& m_gpio;
     SwitchId m_switchId;
     uint16_t m_debounceMs;
     uint16_t m_longPressMs;
@@ -27,7 +27,7 @@ class SwitchDriver : public Pollable {
     SwitchState m_state;
 
   public:
-    SwitchDriver(DigitalGpioDriver t_gpio, SwitchId t_id, uint32_t t_debounceMs = 20, uint32_t t_longPressMs = 500);
+    SwitchDriver(DigitalGpio& t_gpio, SwitchId t_id, uint32_t t_debounceMs = 20, uint32_t t_longPressMs = 500);
 
     void init() override;
     size_t poll(Event* t_outEvents, size_t t_maxEvents) override;
