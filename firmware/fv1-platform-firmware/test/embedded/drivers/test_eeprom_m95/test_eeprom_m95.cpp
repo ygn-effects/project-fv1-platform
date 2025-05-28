@@ -23,6 +23,7 @@ void setUp() {
 void tearDown() {
 
 }
+
 void test_logical_state() {
   LogicalState logicalState;
   hal::DigitalGpioDriver eepromCsPin(0, hal::GpioConfig::kOutput);
