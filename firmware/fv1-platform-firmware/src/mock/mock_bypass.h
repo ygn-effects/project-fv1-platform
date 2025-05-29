@@ -1,8 +1,9 @@
 #pragma once
 
-#include "periphs/bypass.h"
+#include <stdint.h>
+#include "periphs/toggleable.h"
 
-class MockBypass : public Bypass {
+class MockBypass : public Toggleable {
   public :
     uint8_t m_kState = 0;
     uint8_t m_okState = 0;

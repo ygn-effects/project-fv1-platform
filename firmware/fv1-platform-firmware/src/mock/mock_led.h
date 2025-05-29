@@ -1,9 +1,9 @@
 #pragma once
 
 #include <stdint.h>
-#include "periphs/digital_output.h"
+#include "periphs/toggleable.h"
 
-class Led : public DigitalOutput {
+class Led : public Toggleable {
   uint8_t m_pinState = 0;
 
   void init() override {
