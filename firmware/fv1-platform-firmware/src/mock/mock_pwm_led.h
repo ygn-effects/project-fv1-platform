@@ -1,9 +1,9 @@
 #pragma once
 
 #include <stdint.h>
-#include "periphs/pwm_output.h"
+#include "periphs/adjustable.h"
 
-class PwmLed : public PwmOutput {
+class PwmLed : public Adjustable {
   uint16_t m_pintState = 0;
 
   void init() override {
