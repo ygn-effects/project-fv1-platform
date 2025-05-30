@@ -47,7 +47,7 @@ void M95Driver::sendAddress(uint16_t t_address) {
   SPI.transfer(uint8_t(t_address & 0xFF));
 }
 
-M95Driver::M95Driver(DigitalGpioDriver t_csPin)
+M95Driver::M95Driver(DigitalGpio& t_csPin)
   : m_csPin(t_csPin) {}
 
 void M95Driver::init() {

@@ -12,7 +12,7 @@ namespace hal {
 
 class M95Driver : public EEPROM {
   private:
-    DigitalGpioDriver m_csPin;
+    DigitalGpio& m_csPin;
 
     void select();
     void deselect();
@@ -32,7 +32,7 @@ class M95Driver : public EEPROM {
     static constexpr uint8_t c_pageSize = 64;
 
   public:
-    explicit M95Driver(DigitalGpioDriver t_csPin);
+    explicit M95Driver(DigitalGpio& t_csPin);
 
     void init() override;
     virtual void read(uint16_t t_address, uint8_t* t_data, size_t t_length) override;
