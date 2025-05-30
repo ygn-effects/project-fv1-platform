@@ -47,6 +47,9 @@ void ExprService::handleEvent(const Event& t_event) {
       case EventType::kMenuExprToeValueMoved:
         params.m_toeValue = m_exprHandler.changeToeValue(t_event.m_data.delta);
         break;
+
+      default:
+        break;
     }
 
     publishSaveExprEvent(t_event);
