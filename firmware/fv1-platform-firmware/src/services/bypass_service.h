@@ -3,19 +3,19 @@
 #include <stdint.h>
 #include "core/event_bus.h"
 #include "core/service.h"
-#include "periphs/bypass.h"
+#include "periphs/toggleable.h"
 #include "logic/logical_state.h"
 #include "services/midi_service.h"
 
 class BypassService : public Service {
   private:
     LogicalState& m_logicalState;
-    Bypass& m_bypass;
+    Toggleable& m_bypass;
 
     void publishSaveBypassEvent(const Event& t_event);
 
   public:
-    BypassService(LogicalState& t_lState, Bypass& t_bypass) :
+    BypassService(LogicalState& t_lState, Toggleable& t_bypass) :
       m_logicalState(t_lState), m_bypass(t_bypass) {}
 
     void init() override;
