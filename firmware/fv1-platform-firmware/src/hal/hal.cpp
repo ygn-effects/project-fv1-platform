@@ -2,6 +2,14 @@
 
 namespace hal {
 
+DigitalGpioDriver eepromCsPin(0, GpioConfig::kOutput);
+M95Driver eeprom(eepromCsPin);
+
+DigitalGpioDriver bypassRelayPin(23, GpioConfig::kOutput);
+DigitalGpioDriver bypassOptoCouplerPin(22, GpioConfig::kOutput);
+DigitalGpioDriver bypassLedPin(2, GpioConfig::kOutput);
+Bypass bypass(bypassRelayPin, bypassOptoCouplerPin, bypassLedPin);
+
 Pcf8574Expander expander(0x20);
 
 ExpanderGpioDriver menuEncoderPinA(1, GpioConfig::kInputPullup, expander);
@@ -20,24 +28,37 @@ LedDriver programModeLed(programModeLedPin);
 DigitalGpioDriver bypassSwitchPin(1, GpioConfig::kInputPullup);
 SwitchDriver bypassSwitch(bypassSwitchPin, SwitchId::kBypass);
 
-DigitalGpioDriver bypassSwitchLedPin(2, GpioConfig::kOutput);
-LedDriver bypassSwitchLed(bypassSwitchLedPin);
-
 DigitalGpioDriver tapSwitchPin(3, GpioConfig::kInputPullup);
 SwitchDriver tapSwitch(tapSwitchPin, SwitchId::kTap);
 
 AnalogGpioDriver tapSwitchLedPin(12, GpioConfig::kOutput);
 BreathingLedDriver tapSwithLed(tapSwitchLedPin, 0);
 
+AnalogGpioDriver pot0Pin(24, GpioConfig::kInput);
+PotDriver pot0(pot0Pin, PotId::kPot0);
+
+AnalogGpioDriver pot1Pin(25, GpioConfig::kInput);
+PotDriver pot1(pot1Pin, PotId::kPot1);
+
+AnalogGpioDriver pot2Pin(26, GpioConfig::kInput);
+PotDriver pot2(pot2Pin, PotId::kPot2);
+
+AnalogGpioDriver mixPotPin(27, GpioConfig::kInput);
+PotDriver mixPot(mixPotPin, PotId::kMixPot);
+
 PollManager pollManager;
 
 void init() {
-  expander.init();
+  pollManager.registerDevice(&expander);
   pollManager.registerDevice(&menuEncoder);
   pollManager.registerDevice(&menuEncoderSwitch);
   pollManager.registerDevice(&programModeSwitch);
   pollManager.registerDevice(&bypassSwitch);
   pollManager.registerDevice(&tapSwitch);
+  pollManager.registerDevice(&pot0);
+  pollManager.registerDevice(&pot1);
+  pollManager.registerDevice(&pot2);
+  pollManager.registerDevice(&mixPot);
 
   pollManager.init();
   delay(100);
