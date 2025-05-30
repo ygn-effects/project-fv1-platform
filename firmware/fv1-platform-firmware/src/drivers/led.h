@@ -73,7 +73,7 @@ class BreathingLedDriver : public Adjustable {
         }
       }
 
-      setDutyCycle(Utils::mapValue<uint8_t>(m_duty, 0, 255, 32, 255));
+      setDutyCycle(Utils::mapValue<uint8_t>(m_duty, 0, 255, 48, 255));
     }
 };
 
