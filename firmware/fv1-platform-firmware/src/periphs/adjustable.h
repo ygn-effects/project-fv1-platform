@@ -3,10 +3,8 @@
 #include <stdint.h>
 
 class Adjustable {
-  private:
-    virtual void setDutyCycle(uint16_t t_cycle) = 0;
-
   public:
     virtual void init() = 0;
-    virtual void update() = 0;
+    virtual void off() = 0;
+    virtual void setValue(uint8_t t_value) = 0;
 };
