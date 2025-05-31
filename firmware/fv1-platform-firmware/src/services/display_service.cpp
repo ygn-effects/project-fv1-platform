@@ -1,20 +1,20 @@
 #include "services/display_service.h"
 
-DisplayService::DisplayService(const LogicalState& t_state, DisplayDriver& t_driver)
+DisplayService::DisplayService(const LogicalState& t_state, Display& t_display)
   : m_logicalState(t_state),
-    m_driver(t_driver),
-    m_renderer(t_driver) {}
+    m_display(t_display),
+    m_renderer(t_display) {}
 
 void DisplayService::init() {
-  m_driver.init();
+  m_display.init();
 }
 
 void DisplayService::handleEvent(const Event& t_event) {
   if (t_event.m_type == EventType::kMenuViewUpdated) {
     const auto& view = *t_event.m_data.view;
     m_renderer.drawMenu(view, m_logicalState);
-    m_driver.clear();
-    m_driver.display();
+    m_display.clear();
+    m_display.display();
   }
 }
 

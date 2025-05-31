@@ -4,14 +4,14 @@
 #include "Adafruit_SSD1306.h"
 #include "Adafruit_GFX.h"
 #include "Wire.h"
-#include "hal/display.h"
+#include "periphs/display.h"
 
-class SSD1306 : public DisplayDriver {
+class SSD1306Driver : public Display {
   private:
     Adafruit_SSD1306 m_ssd1306;
 
   public:
-    SSD1306() :
+    SSD1306Driver() :
       m_ssd1306(128, 64, &Wire, -1) {}
 
     void init() override {

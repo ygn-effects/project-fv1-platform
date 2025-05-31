@@ -13,10 +13,10 @@ class MenuRenderer {
     ui::LabelValueLayout m_labelValueLayout;
 
   public:
-    MenuRenderer(DisplayDriver& t_driver)
-      : m_listLayout(t_driver),
-        m_twoColumnsLayout(t_driver),
-        m_labelValueLayout(t_driver) {}
+    MenuRenderer(Display& t_display)
+      : m_listLayout(t_display),
+        m_twoColumnsLayout(t_display),
+        m_labelValueLayout(t_display) {}
 
     void drawMenu(const ui::MenuView& t_view, const LogicalState& t_lState) {
       switch (t_view.m_layout) {

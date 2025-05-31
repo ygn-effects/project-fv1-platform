@@ -10,11 +10,11 @@
 class DisplayService : public Service {
   private:
     const LogicalState& m_logicalState;
-    DisplayDriver& m_driver;
+    Display& m_display;
     ui::MenuRenderer m_renderer;
 
   public:
-    DisplayService(const LogicalState& t_lState, DisplayDriver& t_driver);
+    DisplayService(const LogicalState& t_lState, Display& t_display);
 
     void init() override;
     void handleEvent(const Event& t_event) override;

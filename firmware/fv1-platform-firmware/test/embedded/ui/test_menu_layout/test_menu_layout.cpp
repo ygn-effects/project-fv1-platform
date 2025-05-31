@@ -2,9 +2,11 @@
 #include <unity.h>
 
 #include "logic/logical_state.h"
-#include "hal/display_ssd1306.h"
+#include "drivers/display_ssd1306.h"
 #include "ui/menu_model.h"
 #include "ui/menu_layout.h"
+
+#include "ui/menu_model.cpp"
 
 void setUp(void) {
 
@@ -12,7 +14,7 @@ void setUp(void) {
 
 void test_list_layout() {
   LogicalState state;
-  SSD1306 driver;
+  SSD1306Driver driver;
   ui::ListLayout layout(driver);
   ui::MenuView view;
 
@@ -34,7 +36,7 @@ void test_list_layout() {
 
 void test_label_value() {
   LogicalState state;
-  SSD1306 driver;
+  SSD1306Driver driver;
   ui::LabelValueLayout layout(driver);
   ui::MenuView view;
 
@@ -77,22 +79,22 @@ void test_label_value() {
 
 void test_two_columns() {
   LogicalState state;
-  SSD1306 driver;
+  SSD1306Driver driver;
   ui::TwoColumnsLayout layout(driver);
   ui::MenuView view;
 
   uint8_t offset = 0;
 
-  for (uint8_t i = 0; i < ui::LockScreenMenu.m_count; i++) {
-    if (ui::LockScreenMenu.m_items[i].m_visible(&state)) {
-      view.m_items[offset] = &ui::LockScreenMenu.m_items[i];
+  for (uint8_t i = 0; i < ui::LockScreenMenuPage.m_count; i++) {
+    if (ui::LockScreenMenuPage.m_items[i].m_visible(&state)) {
+      view.m_items[offset] = &ui::LockScreenMenuPage.m_items[i];
       offset++;
     }
   }
 
-  view.m_header = ui::LockScreenMenu.m_header;
+  view.m_header = ui::LockScreenMenuPage.m_header;
   view.m_count = offset;
-  view.m_layout = ui::LockScreenMenu.m_layout;
+  view.m_layout = ui::LockScreenMenuPage.m_layout;
   view.m_editing = false;
   view.m_selected = 0;
 

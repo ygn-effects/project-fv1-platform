@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-class DisplayDriver {
+class Display {
   public:
     virtual void init() = 0;
     virtual void clear() = 0;

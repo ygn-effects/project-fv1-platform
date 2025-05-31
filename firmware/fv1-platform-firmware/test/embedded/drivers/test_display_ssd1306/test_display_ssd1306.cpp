@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <unity.h>
 
-#include "hal/display_ssd1306.h"
+#include "drivers/display_ssd1306.h"
 
 void setUp(void) {
 
@@ -12,7 +12,7 @@ void tearDown() {
 }
 
 void test_text() {
-  SSD1306 m_ssd1306;
+  SSD1306Driver m_ssd1306;
   m_ssd1306.init();
   m_ssd1306.clear();
 
@@ -25,7 +25,7 @@ void test_text() {
 }
 
 void test_rect() {
-  SSD1306 m_ssd1306;
+  SSD1306Driver m_ssd1306;
   m_ssd1306.init();
   m_ssd1306.clear();
 
