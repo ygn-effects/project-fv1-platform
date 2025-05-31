@@ -57,7 +57,7 @@ class ListLayout : public BaseLayout {
         if (auto valueF = t_view.m_items[i]->m_value) {
           int16_t x = m_display.getTextWidth(label) + m_tab;
           m_display.drawText(x, y, ":");
-          if (t_view.m_editing) {
+          if (t_view.m_editing && t_view.m_selected == i) {
             m_display.drawText(x + m_tab, y, valueF(&t_lState), true);
           }
           else {
