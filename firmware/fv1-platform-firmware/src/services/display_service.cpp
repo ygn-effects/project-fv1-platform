@@ -7,13 +7,14 @@ DisplayService::DisplayService(const LogicalState& t_state, Display& t_display)
 
 void DisplayService::init() {
   m_display.init();
+  m_renderer.init();
 }
 
 void DisplayService::handleEvent(const Event& t_event) {
   if (t_event.m_type == EventType::kMenuViewUpdated) {
     const auto& view = *t_event.m_data.view;
-    m_renderer.drawMenu(view, m_logicalState);
     m_display.clear();
+    m_renderer.drawMenu(view, m_logicalState);
     m_display.display();
   }
 }

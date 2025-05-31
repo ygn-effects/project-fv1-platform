@@ -21,12 +21,19 @@ class BaseLayout {
   public:
     BaseLayout(Display& t_display)
       : m_display(t_display),
-        m_width(t_display.getWidth()),
-        m_height(t_display.getHeight()),
-        m_lineHeight(t_display.getLineHeight()),
+        m_width(0),
+        m_height(0),
+        m_lineHeight(0),
         m_space(2),
-        m_tab(t_display.getTextWidth(">") + m_space),
+        m_tab(0),
         m_lineMargin(1) {}
+
+    void init() {
+      m_width = m_display.getWidth();
+      m_height = m_display.getHeight();
+      m_lineHeight = m_display.getLineHeight();
+      m_tab = m_display.getTextWidth(">") + m_space;
+    }
 
     virtual void draw(const ui::MenuView& t_view, const LogicalState& t_lState) = 0;
 };
