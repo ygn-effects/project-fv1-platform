@@ -17,6 +17,7 @@
 #include "mock/mock_eeprom.h"
 #include "mock/mock_fv1.h"
 #include "mock/mock_bypass.h"
+#include "mock/mock_clock.h"
 
 #include "../src/logic/expr_handler.cpp"
 #include "../src/logic/fv1_handler.cpp"
@@ -234,6 +235,7 @@ void test_bypass() {
   MockEEPROM mockEeprom;
   MockFv1 mockFv1;
   MockBypass mockBypass;
+  MockedClock clock;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -246,7 +248,7 @@ void test_bypass() {
   TapService tapService(logicalState);
   TempoService tempoService(logicalState);
   Fv1Service fv1Service(logicalState, mockFv1);
-  MenuService menuService(logicalState);
+  MenuService menuService(logicalState, clock);
 
   Service* services[] = {
     &memoryService,
@@ -306,6 +308,7 @@ void test_program_mode() {
   MockEEPROM mockEeprom;
   MockFv1 mockFv1;
   MockBypass mockBypass;
+  MockedClock clock;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -318,7 +321,7 @@ void test_program_mode() {
   TapService tapService(logicalState);
   TempoService tempoService(logicalState);
   Fv1Service fv1Service(logicalState, mockFv1);
-  MenuService menuService(logicalState);
+  MenuService menuService(logicalState, clock);
 
   Service* services[] = {
     &memoryService,
@@ -380,6 +383,7 @@ void test_current_program() {
   MockEEPROM mockEeprom;
   MockFv1 mockFv1;
   MockBypass mockBypass;
+  MockedClock clock;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -392,7 +396,7 @@ void test_current_program() {
   TapService tapService(logicalState);
   TempoService tempoService(logicalState);
   Fv1Service fv1Service(logicalState, mockFv1);
-  MenuService menuService(logicalState);
+  MenuService menuService(logicalState, clock);
 
   Service* services[] = {
     &memoryService,
@@ -463,6 +467,7 @@ void test_current_preset_preset_bank() {
   MockEEPROM mockEeprom;
   MockFv1 mockFv1;
   MockBypass mockBypass;
+  MockedClock clock;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -475,7 +480,7 @@ void test_current_preset_preset_bank() {
   TapService tapService(logicalState);
   TempoService tempoService(logicalState);
   Fv1Service fv1Service(logicalState, mockFv1);
-  MenuService menuService(logicalState);
+  MenuService menuService(logicalState, clock);
 
   Service* services[] = {
     &memoryService,
@@ -547,6 +552,7 @@ void test_midi_channel() {
   MockEEPROM mockEeprom;
   MockFv1 mockFv1;
   MockBypass mockBypass;
+  MockedClock clock;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -560,7 +566,7 @@ void test_midi_channel() {
   TempoService tempoService(logicalState);
   Fv1Service fv1Service(logicalState, mockFv1);
   MidiService midiService(logicalState);
-  MenuService menuService(logicalState);
+  MenuService menuService(logicalState, clock);
 
   Service* services[] = {
     &memoryService,
@@ -615,6 +621,7 @@ void test_tap() {
   MockEEPROM mockEeprom;
   MockFv1 mockFv1;
   MockBypass mockBypass;
+  MockedClock clock;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -628,7 +635,7 @@ void test_tap() {
   TempoService tempoService(logicalState);
   Fv1Service fv1Service(logicalState, mockFv1);
   MidiService midiService(logicalState);
-  MenuService menuService(logicalState);
+  MenuService menuService(logicalState, clock);
 
   std::get<MemoryLayout::c_divValue>(mockEeprom.m_memory) = 0; // Reset divvalue
 
@@ -739,6 +746,7 @@ void test_tempo() {
   MockEEPROM mockEeprom;
   MockFv1 mockFv1;
   MockBypass mockBypass;
+  MockedClock clock;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -752,7 +760,7 @@ void test_tempo() {
   TempoService tempoService(logicalState);
   Fv1Service fv1Service(logicalState, mockFv1);
   MidiService midiService(logicalState);
-  MenuService menuService(logicalState);
+  MenuService menuService(logicalState, clock);
 
   std::get<MemoryLayout::c_divValue>(mockEeprom.m_memory) = 0; // Reset divvalue
 
@@ -818,6 +826,7 @@ void test_expr() {
   MockEEPROM mockEeprom;
   MockFv1 mockFv1;
   MockBypass mockBypass;
+  MockedClock clock;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -831,7 +840,7 @@ void test_expr() {
   TempoService tempoService(logicalState);
   Fv1Service fv1Service(logicalState, mockFv1);
   MidiService midiService(logicalState);
-  MenuService menuService(logicalState);
+  MenuService menuService(logicalState, clock);
 
   Service* services[] = {
     &memoryService,
@@ -921,6 +930,7 @@ void test_pot() {
   MockEEPROM mockEeprom;
   MockFv1 mockFv1;
   MockBypass mockBypass;
+  MockedClock clock;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -934,7 +944,7 @@ void test_pot() {
   TempoService tempoService(logicalState);
   Fv1Service fv1Service(logicalState, mockFv1);
   MidiService midiService(logicalState);
-  MenuService menuService(logicalState);
+  MenuService menuService(logicalState, clock);
 
   Service* services[] = {
     &memoryService,

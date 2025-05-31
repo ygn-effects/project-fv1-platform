@@ -16,6 +16,7 @@
 #include "mock/mock_eeprom.h"
 #include "mock/mock_fv1.h"
 #include "mock/mock_bypass.h"
+#include "mock/mock_clock.h"
 
 #include "../src/logic/expr_handler.cpp"
 #include "../src/logic/fv1_handler.cpp"
@@ -142,6 +143,7 @@ void test_program_change() {
   MockEEPROM mockEeprom;
   MockFv1 mockFv1;
   MockBypass mockBypass;
+  MockedClock clock;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -153,7 +155,7 @@ void test_program_change() {
   TapService tapService(logicalState);
   TempoService tempoService(logicalState);
   Fv1Service fv1Service(logicalState, mockFv1);
-  MenuService menuService(logicalState);
+  MenuService menuService(logicalState, clock);
 
   Service* services[] = {
     &memoryService,

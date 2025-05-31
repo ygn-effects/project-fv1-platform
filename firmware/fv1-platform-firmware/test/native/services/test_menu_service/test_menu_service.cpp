@@ -3,6 +3,7 @@
 #include "logic/logical_state.h"
 #include "services/menu_service.h"
 #include "ui/menu_model.h"
+#include "mock/mock_clock.h"
 
 #include "../src/services/menu_service.cpp"
 #include "../src/ui/menu_model.cpp"
@@ -21,7 +22,8 @@ void tearDown() {
 
 void test_unlock_lock() {
   LogicalState logicalState;
-  MenuService menuService(logicalState);
+  MockedClock clock;
+  MenuService menuService(logicalState, clock);
 
   menuService.init();
   TEST_ASSERT_TRUE(EventBus::hasEvent());
@@ -57,7 +59,8 @@ void test_unlock_lock() {
 
 void test_menu_lock_timeout() {
   LogicalState logicalState;
-  MenuService menuService(logicalState);
+  MockedClock clock;
+  MenuService menuService(logicalState, clock);
 
   menuService.init();
 
@@ -77,6 +80,7 @@ void test_menu_lock_timeout() {
   TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, e.m_type);
   TEST_ASSERT_EQUAL("Program mode", menuService.getcurrentMenuPage().m_header);
 
+  clock.setClock(31000);
   menuService.update();
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(e);
@@ -92,7 +96,8 @@ void test_menu_lock_timeout() {
 
 void test_scroll() {
   LogicalState logicalState;
-  MenuService menuService(logicalState);
+  MockedClock clock;
+  MenuService menuService(logicalState, clock);
 
   menuService.init();
 
@@ -120,7 +125,8 @@ void test_scroll() {
 
 void test_wrap_around() {
   LogicalState logicalState;
-  MenuService menuService(logicalState);
+  MockedClock clock;
+  MenuService menuService(logicalState, clock);
 
   menuService.init();
 
@@ -139,7 +145,8 @@ void test_wrap_around() {
 
 void test_edit_begin_end() {
   LogicalState logicalState;
-  MenuService menuService(logicalState);
+  MockedClock clock;
+  MenuService menuService(logicalState, clock);
 
   menuService.init();
 
@@ -159,7 +166,8 @@ void test_edit_begin_end() {
 
 void test_edit_begin_move_end() {
   LogicalState logicalState;
-  MenuService menuService(logicalState);
+  MockedClock clock;
+  MenuService menuService(logicalState, clock);
 
   menuService.init();
   Event e;
@@ -283,7 +291,8 @@ void test_edit_begin_move_end() {
 
 void test_sub_menu() {
   LogicalState logicalState;
-  MenuService menuService(logicalState);
+  MockedClock clock;
+  MenuService menuService(logicalState, clock);
 
   menuService.init();
 
@@ -302,7 +311,8 @@ void test_sub_menu() {
 
 void test_not_visible() {
   LogicalState logicalState;
-  MenuService menuService(logicalState);
+  MockedClock clock;
+  MenuService menuService(logicalState, clock);
 
   menuService.init();
 
@@ -329,7 +339,8 @@ void test_not_visible() {
 
 void test_publish_list_menu() {
   LogicalState logicalState;
-  MenuService menuService(logicalState);
+  MockedClock clock;
+  MenuService menuService(logicalState, clock);
 
   menuService.init();
   TEST_ASSERT_TRUE(EventBus::hasEvent());
@@ -372,7 +383,8 @@ void test_publish_list_menu() {
 
 void test_pot_menu() {
   LogicalState logicalState;
-  MenuService menuService(logicalState);
+  MockedClock clock;
+  MenuService menuService(logicalState, clock);
 
   menuService.init();
 
@@ -399,7 +411,8 @@ void test_pot_menu() {
 
 void test_pot_menu_timeout() {
   LogicalState logicalState;
-  MenuService menuService(logicalState);
+  MockedClock clock;
+  MenuService menuService(logicalState, clock);
 
   menuService.init();
 
@@ -414,6 +427,7 @@ void test_pot_menu_timeout() {
   TEST_ASSERT_EQUAL("P0 Setting", menuService.getcurrentMenuPage().m_header);
   TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
 
+  clock.setClock(31000);
   menuService.update();
 
   TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
@@ -429,7 +443,8 @@ void test_pot_menu_timeout() {
 
 void test_lock_screen() {
   LogicalState logicalState;
-  MenuService menuService(logicalState);
+  MockedClock clock;
+  MenuService menuService(logicalState, clock);
 
   menuService.init();
 
@@ -450,7 +465,8 @@ void test_lock_screen() {
 
 void test_publish_lock_screen() {
   LogicalState logicalState;
-  MenuService menuService(logicalState);
+  MockedClock clock;
+  MenuService menuService(logicalState, clock);
 
   menuService.init();
   TEST_ASSERT_TRUE(EventBus::hasEvent());

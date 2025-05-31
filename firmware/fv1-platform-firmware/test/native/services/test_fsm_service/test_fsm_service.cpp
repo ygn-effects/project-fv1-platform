@@ -6,6 +6,7 @@
 #include "services/bypass_service.h"
 #include "services/menu_service.h"
 #include "mock/mock_bypass.h"
+#include "mock/mock_clock.h"
 
 #include "../src/services/fsm_service.cpp"
 #include "../src/services/bypass_service.cpp"
@@ -68,8 +69,9 @@ void test_switch_bypass() {
 
 void test_menu_idle_edit_transition() {
   LogicalState logicalState;
+  MockedClock clock;
   FsmService fsmService(logicalState);
-  MenuService menuservice(logicalState);
+  MenuService menuservice(logicalState, clock);
 
   fsmService.handleEvent({EventType::kBootCompleted, 0, {}});
   Event stateChanged;
