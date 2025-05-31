@@ -25,6 +25,14 @@ void PollService::handleEvent(const Event& t_event) {
           EventBus::publish({EventType::kRawMenuEncoderPressed, t_event.m_timestamp, {}});
           break;
 
+        case SwitchId::kProgramMode:
+          EventBus::publish({EventType::kRawProgramModeSwitchPress, t_event.m_timestamp, {}});
+          break;
+
+        case SwitchId::kMenuLock:
+          EventBus::publish({EventType::kRawMenuLockPressed, t_event.m_timestamp, {}});
+          break;
+
         default:
           break;
       }
@@ -41,6 +49,14 @@ void PollService::handleEvent(const Event& t_event) {
           EventBus::publish({EventType::kRawMenuEncoderLongPressed, t_event.m_timestamp, {}});
           break;
 
+        case SwitchId::kProgramMode:
+          EventBus::publish({EventType::kRawProgramModeSwitchLongPress, t_event.m_timestamp, {}});
+          break;
+
+        case SwitchId::kMenuLock:
+          EventBus::publish({EventType::kRawMenuLockLongPressed, t_event.m_timestamp, {}});
+          break;
+
         default:
           break;
       }
@@ -55,6 +71,14 @@ void PollService::handleEvent(const Event& t_event) {
 
         case SwitchId::kMenuEncoder:
           EventBus::publish({EventType::kRawMenuEncoderReleased, t_event.m_timestamp, {}});
+          break;
+
+        case SwitchId::kProgramMode:
+          EventBus::publish({EventType::kRawProgramModeSwitchReleased, t_event.m_timestamp, {}});
+          break;
+
+        case SwitchId::kMenuLock:
+          EventBus::publish({EventType::kRawMenuLockReleased, t_event.m_timestamp, {}});
           break;
 
         default:

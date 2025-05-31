@@ -6,7 +6,8 @@ enum class SwitchId : uint8_t {
   kBypass = 0,
   kTap = 1,
   kMenuEncoder = 2,
-  kProgramMode = 3
+  kProgramMode = 3,
+  kMenuLock = 4,
 };
 
 enum class EncoderId : uint8_t {

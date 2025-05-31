@@ -110,7 +110,7 @@ void test() {
   TEST_ASSERT_EQUAL("Lock screen", menuService.getMenuView()->m_header);
 
   // Unlock menu
-  EventBus::publish({EventType::kRawMenuEncoderLongPressed, 2000, {}});
+  EventBus::publish({EventType::kRawMenuLockLongPressed, 2000, {}});
   runEventChain(services, servicesCount);
   runUpdateChain(services, servicesCount);
 

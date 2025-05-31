@@ -76,11 +76,11 @@ void test_menu_idle_edit_transition() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(stateChanged);
 
-  fsmService.handleEvent({EventType::kRawMenuEncoderLongPressed, 0, {}});
+  fsmService.handleEvent({EventType::kRawMenuLockLongPressed, 0, {}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(stateChanged);
 
-  TEST_ASSERT_EQUAL(EventType::kMenuEncoderLongPressed, stateChanged.m_type);
+  TEST_ASSERT_EQUAL(EventType::kMenuLockLongPressed, stateChanged.m_type);
   menuservice.handleEvent(stateChanged);
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(stateChanged);
@@ -91,11 +91,11 @@ void test_menu_idle_edit_transition() {
   EventBus::recall(stateChanged);
   TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, stateChanged.m_type);
 
-  fsmService.handleEvent({EventType::kRawMenuEncoderLongPressed, 1000, {}});
+  fsmService.handleEvent({EventType::kRawMenuLockLongPressed, 1000, {}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(stateChanged);
 
-  TEST_ASSERT_EQUAL(EventType::kMenuEncoderLongPressed, stateChanged.m_type);
+  TEST_ASSERT_EQUAL(EventType::kMenuLockLongPressed, stateChanged.m_type);
   menuservice.handleEvent(stateChanged);
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(stateChanged);

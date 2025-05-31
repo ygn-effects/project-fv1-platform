@@ -30,7 +30,7 @@ void test_unlock_lock() {
 
   TEST_ASSERT_EQUAL("Lock screen", menuService.getcurrentMenuPage().m_header);
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 100, {}});
+  menuService.handleEvent({EventType::kMenuLockLongPressed, 100, {}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(event);
 
@@ -42,7 +42,7 @@ void test_unlock_lock() {
 
   TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, event.m_type);
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 100, {}});
+  menuService.handleEvent({EventType::kMenuLockLongPressed, 100, {}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(event);
 
@@ -65,7 +65,7 @@ void test_menu_lock_timeout() {
   Event e;
   EventBus::recall(e);
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  menuService.handleEvent({EventType::kMenuLockLongPressed, 500, {}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(e);
 
@@ -96,7 +96,7 @@ void test_scroll() {
 
   menuService.init();
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  menuService.handleEvent({EventType::kMenuLockLongPressed, 500, {}});
   Event e;
   EventBus::recall(e);
 
@@ -124,7 +124,7 @@ void test_wrap_around() {
 
   menuService.init();
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  menuService.handleEvent({EventType::kMenuLockLongPressed, 500, {}});
   Event e;
   EventBus::recall(e);
 
@@ -143,7 +143,7 @@ void test_edit_begin_end() {
 
   menuService.init();
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  menuService.handleEvent({EventType::kMenuLockLongPressed, 500, {}});
   Event e;
   EventBus::recall(e);
 
@@ -165,7 +165,7 @@ void test_edit_begin_move_end() {
   Event e;
   EventBus::recall(e);
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  menuService.handleEvent({EventType::kMenuLockLongPressed, 500, {}});
 
   while (EventBus::hasEvent()) {
     EventBus::recall(e);
@@ -287,7 +287,7 @@ void test_sub_menu() {
 
   menuService.init();
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  menuService.handleEvent({EventType::kMenuLockLongPressed, 500, {}});
   Event e;
   EventBus::recall(e);
 
@@ -306,7 +306,7 @@ void test_not_visible() {
 
   menuService.init();
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  menuService.handleEvent({EventType::kMenuLockLongPressed, 500, {}});
   Event e;
   EventBus::recall(e);
 
@@ -338,7 +338,7 @@ void test_publish_list_menu() {
 
   TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, e.m_type);
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 30000, {}});
+  menuService.handleEvent({EventType::kMenuLockLongPressed, 30000, {}});
   EventBus::recall(e);
 
   TEST_ASSERT_EQUAL(EventType::kMenuUnlocked, e.m_type);
@@ -376,7 +376,7 @@ void test_pot_menu() {
 
   menuService.init();
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 500, {}});
+  menuService.handleEvent({EventType::kMenuLockLongPressed, 500, {}});
   Event e;
   EventBus::recall(e);
 
@@ -403,7 +403,7 @@ void test_pot_menu_timeout() {
 
   menuService.init();
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 23000, {}});
+  menuService.handleEvent({EventType::kMenuLockLongPressed, 23000, {}});
   Event e;
   EventBus::recall(e);
 
