@@ -50,14 +50,14 @@ namespace Utils {
   inline uint16_t clampedAdd(uint16_t current, int16_t delta, uint16_t max) {
     int next = static_cast<int>(current) + static_cast<int>(delta);
     if (next < 0) next = 0;
-    if (next > max) next = max;
+    if (next > static_cast<int16_t>(max)) next = max;
     return static_cast<uint16_t>(next);
   }
 
   inline uint16_t clampedAdd(uint16_t current, int16_t delta, uint16_t min, uint16_t max) {
-    int next = static_cast<int>(current) + static_cast<int>(delta);
-    if (next < min) next = min;
-    if (next > max) next = max;
+    int next = static_cast<int16_t>(current) + static_cast<int16_t>(delta);
+    if (next < static_cast<int16_t>(min)) next = min;
+    if (next > static_cast<int16_t>(max)) next = max;
     return static_cast<uint16_t>(next);
   }
 } // namespace utils
