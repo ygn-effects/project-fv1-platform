@@ -1,29 +1,33 @@
 #include "services/tempo_service.h"
 
-TempoService::TempoService(LogicalState& t_lState) :
-    m_logicState(t_lState), m_interval(0),
-    m_minInterval(0), m_maxInterval(0), m_source(TempoSource::kPot) {}
+TempoService::TempoService(LogicalState& t_lState, Adjustable& t_led, Clock& t_clock) :
+    m_logicState(t_lState), m_tempoLed(t_led), m_clock(t_clock) {}
 
-void TempoService::publishTempoEvent(const Event& t_event) const {
+void TempoService::syncHandler() {
+  m_handler.m_interval = m_logicState.m_tempo;
+  m_handler.m_minInterval = m_logicState.m_activeProgram->m_minDelayMs;
+  m_handler.m_maxInterval = m_logicState.m_activeProgram->m_maxDelayMs;
+}
+
+void TempoService::publishTempoEvent(uint16_t t_interval) const {
   Event e;
   e.m_type = EventType::kTempoChanged;
-  e.m_timestamp = t_event.m_timestamp; /*millis*/
-  e.m_data.value = m_interval;
+  e.m_timestamp = 0; /*millis*/
+  e.m_data.value = t_interval;
   EventBus::publish(e);
 }
 
-void TempoService::publishSaveTempoEvent(const Event& t_event) const {
+void TempoService::publishSaveTempoEvent(uint16_t t_interval) const {
   Event e;
   e.m_type = EventType::kSaveTempo;
-  e.m_timestamp = t_event.m_timestamp; /*millis*/
-  e.m_data.value = m_interval;
+  e.m_timestamp = 0; /*millis*/
+  e.m_data.value = t_interval;
   EventBus::publish(e);
 }
 
 void TempoService::init() {
-  m_interval = m_logicState.m_tempo;
-  m_minInterval = m_logicState.m_activeProgram->m_minDelayMs;
-  m_maxInterval = m_logicState.m_activeProgram->m_maxDelayMs;
+  syncHandler();
+  m_tempoLed.init();
 }
 
 void TempoService::handleEvent(const Event& t_event) {
@@ -31,40 +35,40 @@ void TempoService::handleEvent(const Event& t_event) {
 
   switch (t_event.m_type) {
     case EventType::kTapIntervalChanged:
-      m_interval = Utils::clamp<uint16_t>(t_event.m_data.value, m_minInterval, m_maxInterval);
-      m_source = TempoSource::kTap;
+      m_handler.m_source = TempoSource::kTap;
+      m_logicState.m_tempo = m_handler.mapInterval(t_event.m_data.value);
 
-      m_logicState.m_tempo = m_interval;
-      publishTempoEvent(t_event);
-      publishSaveTempoEvent(t_event);
+      publishTempoEvent(m_logicState.m_tempo);
+      publishSaveTempoEvent(m_logicState.m_tempo);
       break;
 
     case EventType::kPot0Moved:
-      m_interval = Utils::mapValue<uint16_t>(t_event.m_data.value, 0, 1023, m_minInterval, m_maxInterval);
-      m_source = TempoSource::kPot;
+      m_handler.m_source = TempoSource::kPot;
+      m_logicState.m_tempo = m_handler.mapInterval(t_event.m_data.value);
 
-      m_logicState.m_tempo = m_interval;
-      publishTempoEvent(t_event);
-      publishSaveTempoEvent(t_event);
+      publishTempoEvent(m_logicState.m_tempo);
+      publishSaveTempoEvent(m_logicState.m_tempo);
       break;
 
     case EventType::kMenuTempoChanged:
-      m_interval = Utils::clamp<uint16_t>(m_interval + t_event.m_data.delta, m_minInterval, m_maxInterval);
-      m_logicState.m_tempo = m_interval;
-      m_source = TempoSource::kMenu;
+      m_handler.m_source = TempoSource::kMenu;
+      m_logicState.m_tempo = m_handler.mapInterval(t_event.m_data.delta);
 
-      publishTempoEvent(t_event);
-      publishSaveTempoEvent(t_event);
+      publishTempoEvent(m_logicState.m_tempo);
+      publishSaveTempoEvent(m_logicState.m_tempo);
       break;
 
     case EventType::kProgramChanged:
       if (m_logicState.m_activeProgram->m_isDelayEffect) {
-        m_minInterval = m_logicState.m_activeProgram->m_minDelayMs;
-        m_maxInterval = m_logicState.m_activeProgram->m_maxDelayMs;
-        m_interval = Utils::clamp<uint16_t>(m_logicState.m_tempo, m_minInterval, m_maxInterval);
+        syncHandler();
+        m_handler.m_source = TempoSource::kTap;
+        m_logicState.m_tempo = m_handler.mapInterval(m_handler.m_interval);
 
-        m_logicState.m_tempo = m_interval;
-        publishTempoEvent(t_event);
+        publishTempoEvent(m_logicState.m_tempo);
+        publishSaveTempoEvent(m_logicState.m_tempo);
+      }
+      else {
+        m_tempoLed.off();
       }
       break;
 
@@ -74,7 +78,9 @@ void TempoService::handleEvent(const Event& t_event) {
 }
 
 void TempoService::update() {
-
+  if (m_logicState.m_activeProgram->m_isDelayEffect && m_logicState.m_tempo > 0) {
+    m_tempoLed.setValue(m_handler.calculateTempoLedValue(m_clock.now()));
+  }
 }
 
 bool TempoService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {

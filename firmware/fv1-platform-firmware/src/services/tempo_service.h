@@ -4,27 +4,25 @@
 #include "core/service.h"
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
+#include "logic/tempo_handler.h"
+#include "periphs/adjustable.h"
+#include "periphs/clock.h"
 #include "utils/utils.h"
-
-enum class TempoSource : uint8_t {
-  kTap,
-  kPot,
-  kMenu
-};
 
 class TempoService : public Service {
   private:
     LogicalState& m_logicState;
-    uint16_t m_interval;
-    uint16_t m_minInterval;
-    uint16_t m_maxInterval;
-    TempoSource m_source;
+    Adjustable& m_tempoLed;
+    Clock& m_clock;
+    TempoHandler m_handler;
 
-    void publishTempoEvent(const Event& t_event) const;
-    void publishSaveTempoEvent(const Event& t_event) const;
+    void syncHandler();
+
+    void publishTempoEvent(uint16_t t_interval) const;
+    void publishSaveTempoEvent(uint16_t t_interval) const;
 
   public:
-    TempoService(LogicalState& t_lState);
+    TempoService(LogicalState& t_lState, Adjustable& t_led, Clock& t_clock);
 
     void init() override;
     void handleEvent(const Event& t_event) override;
