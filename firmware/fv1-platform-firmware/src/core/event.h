@@ -12,6 +12,8 @@ enum class EventType : uint8_t {
   kBootCompleted,
 
   // HAL events
+  kSwitchDebounced,
+  kSwitchLongDebounced,
   kSwitchPressed,
   kSwitchLongPressed,
   kSwitchReleased,
@@ -207,6 +209,8 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kBootEvent,          // Boot
   EventCategory::kBootEvent,          // kRestoreState
   EventCategory::kBootEvent,          // kBootCompleted
+  EventCategory::kHalEvent,           // kSwitchDebounced
+  EventCategory::kHalEvent,           // kSwitchLongDebounced
   EventCategory::kHalEvent,           // kSwitchPressed
   EventCategory::kHalEvent,           // kSwitchLongPressed
   EventCategory::kHalEvent,           // kRawProgramModeSwitchReleased
@@ -317,6 +321,8 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kBootEvent,                   // Boot
   EventSubCategory::kBootEvent,                   // kRestoreState
   EventSubCategory::kBootEvent,                   // kBootCompleted
+  EventSubCategory::kHalSwitchEvent,              // kSwitchDebounced
+  EventSubCategory::kHalSwitchEvent,              // kSwitchLongDebounced
   EventSubCategory::kHalSwitchEvent,              // kSwitchPressed
   EventSubCategory::kHalSwitchEvent,              // kSwitchLongPressed
   EventSubCategory::kHalSwitchEvent,              // kSwitchReleased
