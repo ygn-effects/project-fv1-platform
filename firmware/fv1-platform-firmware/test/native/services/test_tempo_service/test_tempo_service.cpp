@@ -4,8 +4,11 @@
 #include "services/tempo_service.h"
 #include "services/tap_service.h"
 #include "services/program_service.h"
+#include "mock/mock_clock.h"
+#include "mock/mock_led.h"
 
 #include "../src/services/tempo_service.cpp"
+#include "../src/logic/tempo_handler.cpp"
 #include "../src/services/tap_service.cpp"
 #include "../src/logic/tap_handler.cpp"
 #include "../src/services/program_service.cpp"
@@ -24,8 +27,10 @@ void tearDown() {
 
 void test_tap_tempo() {
   LogicalState logicalState;
+  MockedClock clock;
+  MackAdjustbleLed led;
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
 
   tapService.init();
   tempoService.init();
@@ -54,8 +59,10 @@ void test_tap_tempo() {
 
 void test_pot() {
   LogicalState logicalState;
+  MockedClock clock;
+  MackAdjustbleLed led;
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
 
   tapService.init();
   tempoService.init();
@@ -73,8 +80,10 @@ void test_pot() {
 
 void test_pot_map() {
   LogicalState logicalState;
+  MockedClock clock;
+  MackAdjustbleLed led;
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
 
   tapService.init();
   tempoService.init();
@@ -97,8 +106,10 @@ void test_pot_map() {
 
 void test_program_change() {
   LogicalState logicalState;
+  MockedClock clock;
+  MackAdjustbleLed led;
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
   ProgramService programService(logicalState);
 
   tapService.init();
@@ -125,7 +136,10 @@ void test_program_change() {
 
 void test_interested_in() {
   LogicalState logicalState;
-  TempoService tempoService(logicalState);
+  MockedClock clock;
+  MackAdjustbleLed led;
+  TapService tapService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
 
   Event e{EventType::kTapIntervalChanged, 500, {.value=100}};
   TEST_ASSERT_TRUE(tempoService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));

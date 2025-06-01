@@ -12,8 +12,10 @@
 #include "services/midi_service.h"
 #include "mock/mock_bypass.h"
 #include "mock/mock_clock.h"
+#include "mock/mock_led.h"
 
 #include "../src/logic/pot_handler.cpp"
+#include "../src/logic/tempo_handler.cpp"
 #include "../src/logic/tap_handler.cpp"
 #include "../src/logic/expr_handler.cpp"
 #include "../src/logic/midi_handler.cpp"
@@ -63,15 +65,17 @@ void runUpdateChain(Service* services[], size_t count) {
 void test() {
   LogicalState logicalState;
   MockedClock clock;
+  MackAdjustbleLed led;
 
   FsmService fsmService(logicalState);
+  MidiService midiService(logicalState);
   MockBypass mockBypass;
   BypassService bypassService(logicalState, mockBypass);
   ProgramService programService(logicalState);
   PotService potService(logicalState);
   ExprService exprService(logicalState);
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
   MenuService menuService(logicalState, clock);
 
   Service* services[] = {
@@ -90,6 +94,8 @@ void test() {
   }
 
   uint8_t servicesCount = sizeof(services) / sizeof(services[0]);
+
+  clock.setClock(1000);
 
   EventBus::publish({EventType::kBootCompleted, 10, {}});
 
@@ -298,6 +304,7 @@ void test() {
 void test_midi() {
   LogicalState logicalState;
   MockedClock clock;
+  MackAdjustbleLed led;
 
   FsmService fsmService(logicalState);
   MidiService midiService(logicalState);
@@ -307,7 +314,7 @@ void test_midi() {
   PotService potService(logicalState);
   ExprService exprService(logicalState);
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
   MenuService menuService(logicalState, clock);
 
   MidiHandler* midiHandler = midiService.getMidiHandler();

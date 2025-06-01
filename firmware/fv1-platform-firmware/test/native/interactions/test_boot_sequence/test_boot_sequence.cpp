@@ -17,6 +17,7 @@
 #include "mock/mock_fv1.h"
 #include "mock/mock_bypass.h"
 #include "mock/mock_clock.h"
+#include "mock/mock_led.h"
 
 #include "../src/logic/expr_handler.cpp"
 #include "../src/logic/fv1_handler.cpp"
@@ -24,6 +25,7 @@
 #include "../src/logic/midi_handler.cpp"
 #include "../src/logic/pot_handler.cpp"
 #include "../src/logic/preset_handler.cpp"
+#include "../src/logic/tempo_handler.cpp"
 #include "../src/logic/tap_handler.cpp"
 #include "../src/services/bypass_service.cpp"
 #include "../src/services/expr_service.cpp"
@@ -105,6 +107,7 @@ void test_boot_sequence() {
   MockFv1 mockFv1;
   MockBypass mockBypass;
   MockedClock clock;
+  MackAdjustbleLed led;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -114,7 +117,7 @@ void test_boot_sequence() {
   PotService potService(logicalState);
   ExprService exprService(logicalState);
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
   Fv1Service fv1Service(logicalState, mockFv1);
   MenuService menuService(logicalState, clock);
 

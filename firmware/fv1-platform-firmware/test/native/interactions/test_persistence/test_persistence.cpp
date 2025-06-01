@@ -18,6 +18,7 @@
 #include "mock/mock_fv1.h"
 #include "mock/mock_bypass.h"
 #include "mock/mock_clock.h"
+#include "mock/mock_led.h"
 
 #include "../src/logic/expr_handler.cpp"
 #include "../src/logic/fv1_handler.cpp"
@@ -26,6 +27,7 @@
 #include "../src/logic/pot_handler.cpp"
 #include "../src/logic/preset_handler.cpp"
 #include "../src/logic/tap_handler.cpp"
+#include "../src/logic/tempo_handler.cpp"
 #include "../src/services/bypass_service.cpp"
 #include "../src/services/expr_service.cpp"
 #include "../src/services/fsm_service.cpp"
@@ -236,6 +238,7 @@ void test_bypass() {
   MockFv1 mockFv1;
   MockBypass mockBypass;
   MockedClock clock;
+  MackAdjustbleLed led;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -246,7 +249,7 @@ void test_bypass() {
   PotService potService(logicalState);
   ExprService exprService(logicalState);
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
   Fv1Service fv1Service(logicalState, mockFv1);
   MenuService menuService(logicalState, clock);
 
@@ -309,6 +312,7 @@ void test_program_mode() {
   MockFv1 mockFv1;
   MockBypass mockBypass;
   MockedClock clock;
+  MackAdjustbleLed led;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -319,7 +323,7 @@ void test_program_mode() {
   PotService potService(logicalState);
   ExprService exprService(logicalState);
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
   Fv1Service fv1Service(logicalState, mockFv1);
   MenuService menuService(logicalState, clock);
 
@@ -384,6 +388,7 @@ void test_current_program() {
   MockFv1 mockFv1;
   MockBypass mockBypass;
   MockedClock clock;
+  MackAdjustbleLed led;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -394,7 +399,7 @@ void test_current_program() {
   PotService potService(logicalState);
   ExprService exprService(logicalState);
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
   Fv1Service fv1Service(logicalState, mockFv1);
   MenuService menuService(logicalState, clock);
 
@@ -468,6 +473,7 @@ void test_current_preset_preset_bank() {
   MockFv1 mockFv1;
   MockBypass mockBypass;
   MockedClock clock;
+  MackAdjustbleLed led;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -478,7 +484,7 @@ void test_current_preset_preset_bank() {
   PotService potService(logicalState);
   ExprService exprService(logicalState);
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
   Fv1Service fv1Service(logicalState, mockFv1);
   MenuService menuService(logicalState, clock);
 
@@ -553,6 +559,7 @@ void test_midi_channel() {
   MockFv1 mockFv1;
   MockBypass mockBypass;
   MockedClock clock;
+  MackAdjustbleLed led;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -563,7 +570,7 @@ void test_midi_channel() {
   PotService potService(logicalState);
   ExprService exprService(logicalState);
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
   Fv1Service fv1Service(logicalState, mockFv1);
   MidiService midiService(logicalState);
   MenuService menuService(logicalState, clock);
@@ -622,6 +629,7 @@ void test_tap() {
   MockFv1 mockFv1;
   MockBypass mockBypass;
   MockedClock clock;
+  MackAdjustbleLed led;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -632,7 +640,7 @@ void test_tap() {
   PotService potService(logicalState);
   ExprService exprService(logicalState);
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
   Fv1Service fv1Service(logicalState, mockFv1);
   MidiService midiService(logicalState);
   MenuService menuService(logicalState, clock);
@@ -747,6 +755,7 @@ void test_tempo() {
   MockFv1 mockFv1;
   MockBypass mockBypass;
   MockedClock clock;
+  MackAdjustbleLed led;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -757,7 +766,7 @@ void test_tempo() {
   PotService potService(logicalState);
   ExprService exprService(logicalState);
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
   Fv1Service fv1Service(logicalState, mockFv1);
   MidiService midiService(logicalState);
   MenuService menuService(logicalState, clock);
@@ -827,6 +836,7 @@ void test_expr() {
   MockFv1 mockFv1;
   MockBypass mockBypass;
   MockedClock clock;
+  MackAdjustbleLed led;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -837,7 +847,7 @@ void test_expr() {
   PotService potService(logicalState);
   ExprService exprService(logicalState);
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
   Fv1Service fv1Service(logicalState, mockFv1);
   MidiService midiService(logicalState);
   MenuService menuService(logicalState, clock);
@@ -931,6 +941,7 @@ void test_pot() {
   MockFv1 mockFv1;
   MockBypass mockBypass;
   MockedClock clock;
+  MackAdjustbleLed led;
 
   FsmService fsmService(logicalState);
   MemoryService memoryService(logicalState, mockEeprom);
@@ -941,7 +952,7 @@ void test_pot() {
   PotService potService(logicalState);
   ExprService exprService(logicalState);
   TapService tapService(logicalState);
-  TempoService tempoService(logicalState);
+  TempoService tempoService(logicalState, led, clock);
   Fv1Service fv1Service(logicalState, mockFv1);
   MidiService midiService(logicalState);
   MenuService menuService(logicalState, clock);
