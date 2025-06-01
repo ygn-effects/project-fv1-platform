@@ -89,6 +89,7 @@ enum class EventType : uint8_t {
   kMenuExprDirectionToggled,
   kMenuExprHeelValueMoved,
   kMenuExprToeValueMoved,
+  kMenuDivValueMoved,
   kMenuViewUpdated,
 
   // Program events
@@ -185,6 +186,7 @@ enum class EventSubCategory : uint8_t {
   kMenuTempoEvent,
   kMenuMidiChannelEvent,
   kMenuExprEvent,
+  kMenuDivEvent,
   kMenuViewEvent,
   kProgramModeChangedEvent,
   kProgramChangedEvent,
@@ -278,6 +280,7 @@ constexpr EventCategory eventCategoryMap[] = {
   EventCategory::kMenuEvent,          // kMenuExprDirectionToggled
   EventCategory::kMenuEvent,          // kMenuExprHeelValueMoved
   EventCategory::kMenuEvent,          // kMenuExprToeValueMoved
+  EventCategory::kMenuEvent,          // kMenuDivValueMoved
   EventCategory::kMenuEvent,          // kMenuViewUpdated
   EventCategory::kProgramEvent,       // kProgramModeChanged
   EventCategory::kProgramEvent,       // kProgramChanged
@@ -390,6 +393,7 @@ constexpr EventSubCategory eventSubCategoryMap[] = {
   EventSubCategory::kMenuExprEvent,               // kMenuExprDirectionToggled
   EventSubCategory::kMenuExprEvent,               // kMenuExprHeelValueMoved
   EventSubCategory::kMenuExprEvent,               // kMenuExprToeValueMoved
+  EventSubCategory::kMenuDivEvent,               // kMenuDivValueMoved
   EventSubCategory::kMenuViewEvent,               // kMenuViewUpdated
   EventSubCategory::kProgramModeChangedEvent,     // kProgramModeChanged
   EventSubCategory::kProgramChangedEvent,         // kProgramChanged
