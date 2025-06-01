@@ -61,6 +61,7 @@ constexpr bool visibleIfProgramMode(const LogicalState* t_state);
 constexpr bool visibleIfDelayEffect(const LogicalState* t_state);
 constexpr bool notVisibleIfDelayEffect(const LogicalState* t_state);
 constexpr bool visibleIfExprActive(const LogicalState* t_state);
+constexpr bool visibleIfDivEnabled(const LogicalState* t_state);
 
 constexpr const char* labelProgram(const LogicalState*);
 constexpr const char* labelPresetBank(const LogicalState* t_state);
@@ -85,6 +86,8 @@ constexpr const char* labelExprMappedPot(const LogicalState* t_state);
 constexpr const char* labelExprDirection(const LogicalState* t_state);
 constexpr const char* labelExprHeelValue(const LogicalState* t_state);
 constexpr const char* labelExprToeValue(const LogicalState* t_state);
+constexpr const char* labelDivValue(const LogicalState* t_state);
+constexpr const char* labelDivValueLocked(const LogicalState* t_state);
 
 constexpr const char* valueProgram(const LogicalState* t_state);
 const char* valuePresetBank(const LogicalState* t_state);
@@ -100,6 +103,7 @@ constexpr const char* valueExprMappedPot(const LogicalState* t_state);
 constexpr const char* valueExprDirection(const LogicalState* t_state);
 const char* valueExprHeelValue(const LogicalState* t_state);
 const char* valueExprToeValue(const LogicalState* t_state);
+constexpr const char* valueDivValue(const LogicalState* t_state);
 
 void onMoveProgram(int8_t t_delta);
 void onMovePot0(int8_t t_delta);
@@ -110,6 +114,7 @@ void onMoveTempo(int8_t t_delta);
 void onMoveExprMappedPot(int8_t t_delta);
 void onMoveExprHeelValue(int8_t t_delta);
 void onMoveExprToeValue(int8_t t_delta);
+void onMoveDivValue(int8_t t_delta);
 
 void onClickExprState();
 void onClickExprDirection();

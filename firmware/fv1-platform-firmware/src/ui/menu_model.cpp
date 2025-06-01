@@ -26,6 +26,10 @@ inline constexpr bool visibleIfExprActive(const LogicalState* t_state) {
   return t_state->m_exprParams[t_state->m_currentProgram].m_state == ExprState::kActive;
 }
 
+inline constexpr bool visibleIfDivEnabled(const LogicalState* t_state) {
+  return t_state->m_divState == DivState::kEnabled;
+}
+
 inline constexpr const char* labelProgram(const LogicalState*) {
   return "Prog";
 }
@@ -120,6 +124,14 @@ inline constexpr const char* labelExprHeelValue(const LogicalState* t_state) {
 
 inline constexpr const char* labelExprToeValue(const LogicalState* t_state) {
   return "Toe value";
+}
+
+inline constexpr const char* labelDivValue(const LogicalState* t_state) {
+  return "Div";
+}
+
+inline constexpr const char* labelDivValueLocked(const LogicalState* t_state) {
+  return "D";
 }
 
 const char* valuePresetBank(const LogicalState* t_state) {
@@ -243,6 +255,25 @@ const char* valueExprToeValue(const LogicalState* t_state) {
   return buffer;
 }
 
+inline constexpr const char* valueDivValue(const LogicalState* t_state) {
+  switch (t_state->m_divValue) {
+    case DivValue::kEight:
+      return "/2";
+
+    case DivValue::kSixteenth:
+      return "/4";
+
+    case DivValue::kDottedEight:
+      return "*3/4";
+
+    case DivValue::kEightTriplet:
+      return "/3";
+
+    default:
+      return "/1";
+  }
+}
+
 void onMoveProgram(int8_t t_delta) {
   Event e;
   e.m_type = EventType::kMenuProgramChanged;
@@ -315,6 +346,14 @@ void onMoveExprToeValue(int8_t t_delta) {
   EventBus::publish(e);
 }
 
+void onMoveDivValue(int8_t t_delta) {
+  Event e;
+  e.m_type = EventType::kMenuDivValueMoved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
 void onClickExprState() {
   EventBus::publish({EventType::kMenuExprStateToggled, 0 /*millis()*/, {}});
 }
@@ -328,6 +367,7 @@ constexpr MenuItem lockScreenMenuItems[] = {
   { labelPresetBankLocked, visibleIfPresetMode, valuePresetBank, nullptr, nullptr, nullptr },
   { labelPresetLocked, visibleIfPresetMode, valuePreset, nullptr, nullptr, nullptr },
   { labelTempoLocked, visibleIfDelayEffect, valueTempo, nullptr, nullptr, nullptr },
+  { labelDivValueLocked, visibleIfDivEnabled, valueDivValue, nullptr, nullptr, nullptr },
   { labelPot0Locked, notVisibleIfDelayEffect, valuePot0, nullptr, nullptr, nullptr },
   { labelPot1Locked, isAlwaysVisible, valuePot1, nullptr, nullptr, nullptr },
   { labelPot2Locked, isAlwaysVisible, valuePot2, nullptr, nullptr, nullptr },
@@ -345,6 +385,7 @@ constexpr MenuPage LockScreenMenuPage = {
 constexpr MenuItem ProgramMenuItems[] = {
   { labelProgram, isAlwaysVisible, valueProgram, onMoveProgram, nullptr, nullptr },
   { labelTempo, visibleIfDelayEffect, valueTempo, onMoveTempo, nullptr, nullptr },
+  { labelDivValue, visibleIfDivEnabled, valueDivValue, onMoveDivValue, nullptr, nullptr },
   { labelPot0, notVisibleIfDelayEffect, valuePot0, onMovePot0, nullptr, nullptr },
   { labelPot1, isAlwaysVisible, valuePot1, onMovePot1, nullptr, nullptr },
   { labelPot2, isAlwaysVisible, valuePot2, onMovePot2, nullptr, nullptr },
