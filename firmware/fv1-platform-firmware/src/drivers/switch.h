@@ -14,7 +14,6 @@ enum class SwitchState : uint8_t {
   kDebouncingDown,
   kPressed,
   kDebouncingUp,
-  kLongPressed
 };
 
 class SwitchDriver : public Pollable {
@@ -22,6 +21,7 @@ class SwitchDriver : public Pollable {
     DigitalGpio& m_gpio;
     SwitchId m_switchId;
     uint16_t m_debounceMs;
+    bool m_longPress;
     uint16_t m_longPressMs;
     uint32_t m_stateMs;
     SwitchState m_state;

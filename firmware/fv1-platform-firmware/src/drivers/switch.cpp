@@ -3,7 +3,7 @@
 namespace hal {
 
 SwitchDriver::SwitchDriver(DigitalGpio& t_gpio, SwitchId t_id, uint32_t t_debounceMs, uint32_t t_longPressMs)
-  : m_gpio(t_gpio), m_switchId(t_id), m_debounceMs(t_debounceMs),
+  : m_gpio(t_gpio), m_switchId(t_id), m_debounceMs(t_debounceMs), m_longPress(false),
     m_longPressMs(t_longPressMs), m_stateMs(0), m_state(SwitchState::kIdle) {}
 
 void SwitchDriver::init() {
@@ -26,13 +26,17 @@ size_t SwitchDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
       break;
 
     case SwitchState::kDebouncingDown:
-      if (! switchEvent) { m_state = SwitchState::kIdle; }
+      if (! switchEvent) {
+        m_state = SwitchState::kIdle;
+        m_stateMs = now;
+      }
       else if (elapsed >= m_debounceMs) {
         m_state = SwitchState::kPressed;
         m_stateMs = now;
+        m_longPress = false;
 
         Event e;
-        e.m_type = EventType::kSwitchPressed;
+        e.m_type = EventType::kSwitchDebounced;
         e.m_timestamp = now;
         e.m_data.id = static_cast<uint8_t>(m_switchId);
         t_outEvents[eventCount++] = e;
@@ -41,22 +45,17 @@ size_t SwitchDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
 
     case SwitchState::kPressed:
       if (switchEvent && elapsed >= m_longPressMs) {
-        m_state = SwitchState::kLongPressed;
+        if (!m_longPress) {
+          Event e;
+          e.m_type = EventType::kSwitchLongDebounced;
+          e.m_timestamp = now;
+          e.m_data.id = static_cast<uint8_t>(m_switchId);
+          t_outEvents[eventCount++] = e;
+        }
 
-        Event e;
-        e.m_type = EventType::kSwitchLongPressed;
-        e.m_timestamp = now;
-        e.m_data.id = static_cast<uint8_t>(m_switchId);
-        t_outEvents[eventCount++] = e;
+        m_longPress = true;
       }
       else if (! switchEvent) {
-        m_state = SwitchState::kDebouncingUp;
-        m_stateMs = now;
-      }
-      break;
-
-    case SwitchState::kLongPressed:
-      if (! switchEvent) {
         m_state = SwitchState::kDebouncingUp;
         m_stateMs = now;
       }
@@ -66,16 +65,32 @@ size_t SwitchDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
       if (switchEvent) {
         m_state = SwitchState::kPressed;
         m_stateMs = now;
+        m_longPress = false;
       }
       else if (elapsed >= m_debounceMs) {
-        m_state = SwitchState::kIdle;
-        m_stateMs = now;
+        if (m_longPress) {
+          Event e;
+          e.m_type = EventType::kSwitchLongPressed;
+          e.m_timestamp = now;
+          e.m_data.id = static_cast<uint8_t>(m_switchId);
+          t_outEvents[eventCount++] = e;
+        }
+        else {
+          Event e;
+          e.m_type = EventType::kSwitchPressed;
+          e.m_timestamp = now;
+          e.m_data.id = static_cast<uint8_t>(m_switchId);
+          t_outEvents[eventCount++] = e;
+        }
 
         Event e;
         e.m_type = EventType::kSwitchReleased;
         e.m_timestamp = now;
         e.m_data.id = static_cast<uint8_t>(m_switchId);
         t_outEvents[eventCount++] = e;
+
+        m_state = SwitchState::kIdle;
+        m_stateMs = now;
       }
       break;
 
