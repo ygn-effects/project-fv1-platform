@@ -470,4 +470,15 @@ constexpr MenuPage MixPotValueMenuPage = {
   ui::MenuLayout::kLabelValue
 };
 
+constexpr MenuItem TempoMenuItems[] = {
+  { labelTempo, isAlwaysVisible, valueTempo, onMoveTempo, nullptr, nullptr }
+};
+
+constexpr MenuPage TempoMenuPage = {
+  "Tempo",
+  TempoMenuItems,
+  sizeof(TempoMenuItems) / sizeof(TempoMenuItems[0]),
+  ui::MenuLayout::kLabelValue
+};
+
 }

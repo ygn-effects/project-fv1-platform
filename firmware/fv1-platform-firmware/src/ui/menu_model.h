@@ -12,6 +12,7 @@ namespace ui {
 namespace MenuConstants {
   static constexpr uint32_t c_menuTimeout = 30000u;
   static constexpr uint32_t c_potMenuTimeout = 500u;
+  static constexpr uint32_t c_tempoMenuTimeout = 2000u;
   static constexpr uint8_t c_visibleItemsPerPage = 5;
   static constexpr uint8_t c_visibleItemsPerTwoColumns = 2 * MenuConstants::c_visibleItemsPerPage;
 }
@@ -127,5 +128,6 @@ extern const MenuPage Pot0ValueMenuPage;
 extern const MenuPage Pot1ValueMenuPage;
 extern const MenuPage Pot2ValueMenuPage;
 extern const MenuPage MixPotValueMenuPage;
+extern const MenuPage TempoMenuPage;
 
 } // namespace ui
