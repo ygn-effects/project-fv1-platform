@@ -5,6 +5,7 @@
 #include "services/display_service.h"
 #include "services/menu_service.h"
 #include "ui/menu_model.h"
+#include "drivers/clock_driver.h"
 
 #include "services/display_service.cpp"
 #include "services/menu_service.cpp"
@@ -21,8 +22,9 @@ void tearDown() {
 void test_menu_service_init() {
   LogicalState logicalState;
   SSD1306Driver driver;
+  hal::ArduinoClock clock;
 
-  MenuService menuService(logicalState);
+  MenuService menuService(logicalState, clock);
   DisplayService displayService(logicalState, driver);
 
   menuService.init();
@@ -37,7 +39,7 @@ void test_menu_service_init() {
 
   delay(2000);
 
-  menuService.handleEvent({EventType::kMenuEncoderLongPressed, 100, {}});
+  menuService.handleEvent({EventType::kMenuLockLongPressed, 100, {}});
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(e);
 
