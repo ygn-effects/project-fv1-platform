@@ -6,11 +6,12 @@
 #include "core/event_bus.h"
 #include "core/service.h"
 #include "logic/logical_state.h"
+#include "utils/utils.h"
 
 namespace ui {
 
 namespace MenuConstants {
-  static constexpr uint32_t c_menuTimeout = 30000u;
+  static constexpr uint32_t c_menuTimeout = 600000u;
   static constexpr uint32_t c_potMenuTimeout = 500u;
   static constexpr uint32_t c_tempoMenuTimeout = 2000u;
   static constexpr uint8_t c_visibleItemsPerPage = 5;
@@ -64,6 +65,7 @@ constexpr bool notVisibleIfDelayEffect(const LogicalState* t_state);
 constexpr bool visibleIfExprActive(const LogicalState* t_state);
 constexpr bool visibleIfDivEnabled(const LogicalState* t_state);
 
+constexpr const char* labelBack(const LogicalState* t_state);
 constexpr const char* labelProgram(const LogicalState*);
 constexpr const char* labelPresetBank(const LogicalState* t_state);
 constexpr const char* labelPresetBankLocked(const LogicalState* t_state);
@@ -142,10 +144,19 @@ void onMoveExprMappedPot(int8_t t_delta);
 void onMoveExprHeelValue(int8_t t_delta);
 void onMoveExprToeValue(int8_t t_delta);
 void onMoveDivValue(int8_t t_delta);
+void onMovePot0MinValue(int8_t t_delta);
+void onMovePot1MinValue(int8_t t_delta);
+void onMovePot2MinValue(int8_t t_delta);
+void onMoveMixPotMinValue(int8_t t_delta);
+void onMovePot0MaxValue(int8_t t_delta);
+void onMovePot1MaxValue(int8_t t_delta);
+void onMovePot2MaxValue(int8_t t_delta);
+void onMoveMixPotMaxValue(int8_t t_delta);
 
 void onClickExprState();
 void onClickExprDirection();
 
+extern const MenuPage BlankMenuPage;
 extern const MenuPage LockScreenMenuPage;
 extern const MenuPage ProgramMenuPage;
 extern const MenuPage PresetMenuPage;

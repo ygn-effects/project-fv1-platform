@@ -30,6 +30,10 @@ inline constexpr bool visibleIfDivEnabled(const LogicalState* t_state) {
   return t_state->m_divState == DivState::kEnabled;
 }
 
+inline constexpr const char* labelBack(const LogicalState* t_state) {
+  return "Back";
+}
+
 inline constexpr const char* labelProgram(const LogicalState*) {
   return "Prog";
 }
@@ -202,23 +206,24 @@ const char* valuePreset(const LogicalState* t_state) {
 
 void valuePot(const LogicalState* t_state, uint8_t t_potIndex, char* buffer, size_t bufferSize) {
   const ProgramParameter& param = t_state->m_activeProgram->m_params[t_potIndex];
+  const uint16_t value = t_state->m_potParams[t_state->m_currentProgram][t_potIndex].m_value;
 
   switch (param.m_unit) {
     case ParamUnit::kHz:
-      snprintf(buffer, bufferSize, "%u Hz", t_state->m_potParams[t_state->m_currentProgram][t_potIndex].m_value);
+      snprintf(buffer, bufferSize, "%u Hz", static_cast<uint16_t>(Utils::map(value, 0, 1023, param.m_min, param.m_max)));
       break;
 
     case ParamUnit::kMs:
-      snprintf(buffer, bufferSize, "%u ms", t_state->m_potParams[t_state->m_currentProgram][t_potIndex].m_value);
+      snprintf(buffer, bufferSize, "%u ms", value);
       break;
 
     case ParamUnit::kPercent:
-      snprintf(buffer, bufferSize, "%u %%", t_state->m_potParams[t_state->m_currentProgram][t_potIndex].m_value);
+      snprintf(buffer, bufferSize, "%u %%", static_cast<uint16_t>(Utils::map(value, 0, 1023, param.m_min, param.m_max)));
       break;
 
     case ParamUnit::kNone:
     case ParamUnit::kRaw:
-      snprintf(buffer, bufferSize, "%u", t_state->m_potParams[t_state->m_currentProgram][t_potIndex].m_value);
+      snprintf(buffer, bufferSize, "%u", value);
       break;
 
     default:
@@ -250,7 +255,7 @@ const char* valuePot2(const LogicalState* t_state) {
 
 const char* valueMixPot(const LogicalState* t_state) {
   static char valueMixPot[8];
-  snprintf(valueMixPot, sizeof(valueMixPot), "%u ms", t_state->m_potParams[t_state->m_currentProgram][3].m_maxValue);
+  valuePot(t_state, 3, valueMixPot, sizeof(valueMixPot));
 
   return valueMixPot;
 }
@@ -484,6 +489,70 @@ void onMoveDivValue(int8_t t_delta) {
   EventBus::publish(e);
 }
 
+void onMovePot0MinValue(int8_t t_delta) {
+  Event e;
+  e.m_type = EventType::kMenuPot0MinValueMoved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
+void onMovePot1MinValue(int8_t t_delta) {
+  Event e;
+  e.m_type = EventType::kMenuPot1MinValueMoved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
+void onMovePot2MinValue(int8_t t_delta) {
+  Event e;
+  e.m_type = EventType::kMenuPot2MinValueMoved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
+void onMoveMixPotMinValue(int8_t t_delta) {
+  Event e;
+  e.m_type = EventType::kMenuMixPotMinValueMoved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
+void onMovePot0MaxValue(int8_t t_delta) {
+  Event e;
+  e.m_type = EventType::kMenuPot0MaxValueMoved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
+void onMovePot1MaxValue(int8_t t_delta) {
+  Event e;
+  e.m_type = EventType::kMenuPot1MaxValueMoved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
+void onMovePot2MaxValue(int8_t t_delta) {
+  Event e;
+  e.m_type = EventType::kMenuPot2MaxValueMoved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
+void onMoveMixPotMaxValue(int8_t t_delta) {
+  Event e;
+  e.m_type = EventType::kMenuMixPotMaxValueMoved;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
 void onClickExprState() {
   EventBus::publish({EventType::kMenuExprStateToggled, 0 /*millis()*/, {}});
 }
@@ -491,6 +560,13 @@ void onClickExprState() {
 void onClickExprDirection() {
   EventBus::publish({EventType::kMenuExprDirectionToggled, 0 /*millis()*/, {}});
 }
+
+constexpr MenuPage BlankMenuPage = {
+  "Back",
+  nullptr,
+  0,
+  ui::MenuLayout::kList
+};
 
 constexpr MenuItem lockScreenMenuItems[] = {
   { labelProgram, isAlwaysVisible, valueProgram, nullptr, nullptr, nullptr },
@@ -546,7 +622,8 @@ constexpr MenuItem ExprSettingsMenuItems[] = {
   { labelExprMappedPot, visibleIfExprActive, valueExprMappedPot, onMoveExprMappedPot, nullptr, nullptr },
   { labelExprDirection, visibleIfExprActive, valueExprDirection, nullptr, onClickExprDirection, nullptr },
   { labelExprHeelValue, visibleIfExprActive, valueExprHeelValue, onMoveExprHeelValue, nullptr, nullptr },
-  { labelExprToeValue, visibleIfExprActive, valueExprToeValue, onMoveExprToeValue, nullptr, nullptr }
+  { labelExprToeValue, visibleIfExprActive, valueExprToeValue, onMoveExprToeValue, nullptr, nullptr },
+  { labelBack, isAlwaysVisible, nullptr, nullptr, nullptr, &BlankMenuPage }
 };
 
 constexpr MenuPage ExprSettingsMenuPage = {
@@ -569,7 +646,7 @@ constexpr MenuPage Pot0ValueMenuPage = {
 };
 
 constexpr MenuItem Pot1ValueMenuItems[] = {
-  { labelPot1, isAlwaysVisible, valuePot1, onMovePot1, nullptr, nullptr }
+  { labelPot1, isAlwaysVisible, valuePot1, nullptr, nullptr, nullptr }
 };
 
 constexpr MenuPage Pot1ValueMenuPage = {
@@ -580,7 +657,7 @@ constexpr MenuPage Pot1ValueMenuPage = {
 };
 
 constexpr MenuItem Pot2ValueMenuItems[] = {
-  { labelPot2, isAlwaysVisible, valuePot2, onMovePot2, nullptr, nullptr }
+  { labelPot2, isAlwaysVisible, valuePot2, nullptr, nullptr, nullptr }
 };
 
 constexpr MenuPage Pot2ValueMenuPage = {
@@ -591,7 +668,7 @@ constexpr MenuPage Pot2ValueMenuPage = {
 };
 
 constexpr MenuItem MixPotValueMenuItems[] = {
-  { labelMixPot, isAlwaysVisible, valueMixPot, onMoveMixPot, nullptr, nullptr }
+  { labelMixPot, isAlwaysVisible, valueMixPot, nullptr, nullptr, nullptr }
 };
 
 constexpr MenuPage MixPotValueMenuPage = {
@@ -602,7 +679,7 @@ constexpr MenuPage MixPotValueMenuPage = {
 };
 
 constexpr MenuItem TempoMenuItems[] = {
-  { labelTempo, isAlwaysVisible, valueTempo, onMoveTempo, nullptr, nullptr }
+  { labelTempo, isAlwaysVisible, valueTempo, nullptr, nullptr, nullptr }
 };
 
 constexpr MenuPage TempoMenuPage = {
@@ -614,17 +691,18 @@ constexpr MenuPage TempoMenuPage = {
 
 constexpr MenuItem PotSettingsMenuItems[] = {
   { labelPot0State, isAlwaysVisible, valuePot0State, nullptr, nullptr, nullptr },
-  { labelPot0MinValue, isAlwaysVisible, valuePot0MinValue, nullptr, nullptr, nullptr },
-  { labelPot0MaxValue, isAlwaysVisible, valuePot0MaxValue, nullptr, nullptr, nullptr },
+  { labelPot0MinValue, isAlwaysVisible, valuePot0MinValue, onMovePot0MinValue, nullptr, nullptr },
+  { labelPot0MaxValue, isAlwaysVisible, valuePot0MaxValue, onMovePot0MaxValue, nullptr, nullptr },
   { labelPot1State, isAlwaysVisible, valuePot1State, nullptr, nullptr, nullptr },
-  { labelPot1MinValue, isAlwaysVisible, valuePot1MinValue, nullptr, nullptr, nullptr },
-  { labelPot1MaxValue, isAlwaysVisible, valuePot1MaxValue, nullptr, nullptr, nullptr },
+  { labelPot1MinValue, isAlwaysVisible, valuePot1MinValue, onMovePot1MinValue, nullptr, nullptr },
+  { labelPot1MaxValue, isAlwaysVisible, valuePot1MaxValue, onMovePot1MaxValue, nullptr, nullptr },
   { labelPot2State, isAlwaysVisible, valuePot1State, nullptr, nullptr, nullptr },
-  { labelPot2MinValue, isAlwaysVisible, valuePot1MinValue, nullptr, nullptr, nullptr },
-  { labelPot2MaxValue, isAlwaysVisible, valuePot1MaxValue, nullptr, nullptr, nullptr },
+  { labelPot2MinValue, isAlwaysVisible, valuePot1MinValue, onMovePot2MinValue, nullptr, nullptr },
+  { labelPot2MaxValue, isAlwaysVisible, valuePot1MaxValue, onMovePot2MaxValue, nullptr, nullptr },
   { labelMixPotState, isAlwaysVisible, valueMixPotState, nullptr, nullptr, nullptr },
-  { labelMixPotMinValue, isAlwaysVisible, valueMixPotMinValue, nullptr, nullptr, nullptr },
-  { labelMixPotMaxValue, isAlwaysVisible, valueMixPotMaxValue, nullptr, nullptr, nullptr }
+  { labelMixPotMinValue, isAlwaysVisible, valueMixPotMinValue, onMoveMixPotMinValue, nullptr, nullptr },
+  { labelMixPotMaxValue, isAlwaysVisible, valueMixPotMaxValue, onMoveMixPotMaxValue, nullptr, nullptr },
+  { labelBack, isAlwaysVisible, nullptr, nullptr, nullptr, &BlankMenuPage }
 };
 
 constexpr MenuPage PotSettingsMenuPage = {
