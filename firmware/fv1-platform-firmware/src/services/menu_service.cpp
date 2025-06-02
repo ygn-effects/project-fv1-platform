@@ -1,13 +1,14 @@
 #include "services/menu_service.h"
 
-MenuService::MenuService(LogicalState& t_lState)
-    : m_logicState(t_lState), m_mode(UiMode::kLocked), m_cursor(0), m_first(0),
-      m_lastInputTime(0), m_lastPotMoveTime(0), m_potMenuActive(false),
-      m_subState(SubState::kSelecting), m_editRow(0), m_valueBackup(0) {}
+MenuService::MenuService(LogicalState& t_lState, Clock& t_clock)
+    : m_logicState(t_lState), m_clock(t_clock), m_mode(UiMode::kLocked),
+      m_cursor(0), m_first(0), m_lastInputTime(0), m_lastPotMoveTime(0),
+      m_potMenuActive(false), m_subState(SubState::kSelecting), m_editRow(0),
+      m_valueBackup(0), m_lastTempoChangeTime(0), m_tempoMenuActive(false) {}
 
 void MenuService::handleLocked(const Event& t_event) {
-  if (t_event.m_type == EventType::kMenuEncoderLongPressed) {
-    unlockUi(t_event);
+  if (t_event.m_type == EventType::kMenuLockLongPressed) {
+    unlockUi(t_event.m_timestamp);
     m_lastInputTime = t_event.m_timestamp;
 
     publishView();
@@ -15,11 +16,13 @@ void MenuService::handleLocked(const Event& t_event) {
 }
 
 void MenuService::handleUnlocked(const Event& t_event) {
+  if (t_event.m_type == EventType::kBypassDisabled) { lockUi(t_event.m_timestamp); publishView(); return; }
+
   if (m_subState == SubState::kSelecting) {
     switch (t_event.m_type) {
       case EventType::kMenuEncoderMoved:
       case EventType::kMenuEncoderPressed:
-      case EventType::kMenuEncoderLongPressed:
+      case EventType::kMenuLockLongPressed:
         handleSelecting(t_event);
         break;
 
@@ -28,6 +31,10 @@ void MenuService::handleUnlocked(const Event& t_event) {
       case EventType::kPot2Moved:
       case EventType::kMixPotMoved:
         handlePotsMoving(t_event);
+        break;
+
+      case EventType::kTempoChanged:
+        handleTempoChange(t_event);
         break;
 
       default:
@@ -42,8 +49,9 @@ void MenuService::handleUnlocked(const Event& t_event) {
   m_lastInputTime = t_event.m_timestamp;
 }
 
-void MenuService::lockUi(const Event& t_event) {
+void MenuService::lockUi(uint32_t t_now) {
   m_mode = UiMode::kLocked;
+  m_subState = SubState::kSelecting;
 
   m_menuStack.clear();
   m_menuStack.push(&ui::LockScreenMenuPage);
@@ -51,10 +59,10 @@ void MenuService::lockUi(const Event& t_event) {
   m_cursor = 0;
   m_first = 0;
 
-  EventBus::publish({EventType::kMenuLocked, t_event.m_timestamp, {}});
+  EventBus::publish({EventType::kMenuLocked, t_now, {}});
 }
 
-void MenuService::unlockUi(const Event& t_event) {
+void MenuService::unlockUi(uint32_t t_now) {
   m_mode = UiMode::kUnlocked;
 
   m_menuStack.clear();
@@ -62,12 +70,12 @@ void MenuService::unlockUi(const Event& t_event) {
     ? m_menuStack.push(&ui::ProgramMenuPage)
     : m_menuStack.push(&ui::PresetMenuPage);
 
-  EventBus::publish({EventType::kMenuUnlocked, t_event.m_timestamp, {}});
+  EventBus::publish({EventType::kMenuUnlocked, t_now, {}});
 }
 
 void MenuService::handleSelecting(const Event& t_event) {
-  if (t_event.m_type == EventType::kMenuEncoderLongPressed) {
-    lockUi(t_event);
+  if (t_event.m_type == EventType::kMenuLockLongPressed) {
+    lockUi(t_event.m_timestamp);
     return;
   }
 
@@ -108,32 +116,49 @@ void MenuService::handleEditing(const Event& t_event) {
 }
 
 void MenuService::handlePotsMoving(const Event& t_event) {
-  m_menuStack.clear();
+  if (m_potMenuActive) { m_menuStack.pop(); }
+  if (m_tempoMenuActive) { m_tempoMenuActive = false; m_menuStack.pop(); }
 
   switch (t_event.m_type) {
     case EventType::kPot0Moved:
-      m_menuStack.push(&ui::Pot0ValueMenuPage);
+      if (!m_logicState.m_activeProgram->m_isDelayEffect){
+        m_menuStack.push(&ui::Pot0ValueMenuPage);
+        m_potMenuActive = true;
+      }
       break;
 
     case EventType::kPot1Moved:
       m_menuStack.push(&ui::Pot1ValueMenuPage);
+      m_potMenuActive = true;
       break;
 
     case EventType::kPot2Moved:
       m_menuStack.push(&ui::Pot2ValueMenuPage);
+      m_potMenuActive = true;
       break;
 
     case EventType::kMixPotMoved:
       m_menuStack.push(&ui::MixPotValueMenuPage);
+      m_potMenuActive = true;
       break;
 
     default:
       break;
   }
 
-  m_potMenuActive = true;
   m_lastPotMoveTime = t_event.m_timestamp;
-  publishView();
+}
+
+void MenuService::handleTempoChange(const Event& t_event) {
+  if (m_potMenuActive ) { m_potMenuActive = false; m_menuStack.pop(); }
+
+  if (!m_tempoMenuActive) {
+    m_menuStack.push(&ui::TempoMenuPage);
+  }
+
+  m_tempoMenuActive = true;
+  m_lastTempoChangeTime = t_event.m_timestamp;
+  m_lastInputTime = t_event.m_timestamp;
 }
 
 void MenuService::moveCursor(int8_t t_delta) {
@@ -280,7 +305,7 @@ void MenuService::publishView() {
 
   Event e;
   e.m_type = EventType::kMenuViewUpdated;
-  e.m_timestamp = 0; /*millis()*/
+  e.m_timestamp = m_clock.now();
   e.m_data.view = &m_view;
   EventBus::publish(e);
 }
@@ -296,11 +321,11 @@ void MenuService::handleEvent(const Event& t_event) {
   switch (m_mode) {
     case UiMode::kLocked:
       handleLocked(t_event);
-      break;
+      return;
 
     case UiMode::kUnlocked:
       handleUnlocked(t_event);
-      break;
+      return;
 
     default:
       break;
@@ -310,9 +335,9 @@ void MenuService::handleEvent(const Event& t_event) {
 void MenuService::update() {
   if (m_mode == UiMode::kLocked) return;
 
-  uint32_t now = 31000; // Dummy value for testing
+  uint32_t now = m_clock.now();
   if ((now - m_lastInputTime) > ui::MenuConstants::c_menuTimeout) {
-    lockUi({EventType::kMenuEncoderMoved, 500, {}});
+    lockUi(now);
     publishView();
   }
 
@@ -320,11 +345,16 @@ void MenuService::update() {
     if ((now - m_lastPotMoveTime) > ui::MenuConstants::c_potMenuTimeout) {
       m_potMenuActive = false;
 
-      m_menuStack.clear();
-      m_logicState.m_programMode == ProgramMode::kProgram
-        ? m_menuStack.push(&ui::ProgramMenuPage)
-        : m_menuStack.push(&ui::PresetMenuPage);
+      m_menuStack.pop();
+      publishView();
+    }
+  }
 
+  if (m_tempoMenuActive) {
+    if ((now - m_lastTempoChangeTime) > ui::MenuConstants::c_tempoMenuTimeout) {
+      m_tempoMenuActive = false;
+
+      m_menuStack.pop();
       publishView();
     }
   }
@@ -348,6 +378,9 @@ const ui::MenuView* MenuService::getMenuView() const {
 
 bool MenuService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
   return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kEncoderEvent)
+      || (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kLockEvent)
       || (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent)
+      || (t_category == EventCategory::kTempoEvent && t_subCategory == EventSubCategory::kTempoChangedEvent)
+      || (t_category == EventCategory::kBypassEvent && t_subCategory == EventSubCategory::kBypassDisabledEvent)
       || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent);
 }

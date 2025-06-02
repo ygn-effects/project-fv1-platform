@@ -5,6 +5,7 @@
 #include "core/event.h"
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
+#include "periphs/clock.h"
 #include "ui/menu_model.h"
 #include "ui/menu_stack.h"
 
@@ -21,6 +22,7 @@ enum class SubState : uint8_t {
 class MenuService : public Service {
   private:
     LogicalState& m_logicState;
+    Clock& m_clock;
     MenuStack<4> m_menuStack;
     ui::MenuView m_view;
     UiMode m_mode;
@@ -32,17 +34,20 @@ class MenuService : public Service {
     SubState m_subState;
     uint8_t m_editRow;
     uint16_t m_valueBackup;
+    uint32_t m_lastTempoChangeTime;
+    bool m_tempoMenuActive;
 
     void handleLocked(const Event& t_event);
     void handleUnlocked(const Event& t_event);
 
-    void lockUi(const Event& t_event);
-    void unlockUi(const Event& t_event);
+    void lockUi(uint32_t t_now);
+    void unlockUi(uint32_t t_now);
 
     void handleSelecting(const Event& t_event);
     void handleEditing(const Event& t_event);
 
     void handlePotsMoving(const Event& t_event);
+    void handleTempoChange(const Event& t_event);
 
     void moveCursor(int8_t t_delta);
 
@@ -55,7 +60,7 @@ class MenuService : public Service {
     void publishView();
 
   public:
-    MenuService(LogicalState& t_lState);
+    MenuService(LogicalState& t_lState, Clock& t_clock);
 
     void init() override;
     void handleEvent(const Event& t_event) override;
