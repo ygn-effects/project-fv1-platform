@@ -12,7 +12,7 @@ void TempoService::syncHandler() {
 void TempoService::publishTempoEvent(uint16_t t_interval) const {
   Event e;
   e.m_type = EventType::kTempoChanged;
-  e.m_timestamp = 0; /*millis*/
+  e.m_timestamp = m_clock.now();
   e.m_data.value = t_interval;
   EventBus::publish(e);
 }
@@ -20,7 +20,7 @@ void TempoService::publishTempoEvent(uint16_t t_interval) const {
 void TempoService::publishSaveTempoEvent(uint16_t t_interval) const {
   Event e;
   e.m_type = EventType::kSaveTempo;
-  e.m_timestamp = 0; /*millis*/
+  e.m_timestamp = m_clock.now();
   e.m_data.value = t_interval;
   EventBus::publish(e);
 }
