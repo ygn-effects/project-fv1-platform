@@ -7,7 +7,7 @@ uint16_t TempoHandler::mapInterval(int16_t t_value) {
       break;
 
     case TempoSource::kPot:
-    m_interval = Utils::mapValue<uint16_t>(static_cast<uint16_t>(t_value), DACConstants::c_minDacValue, DACConstants::c_maxDacValue, m_minInterval, m_maxInterval);
+      m_interval = static_cast<uint16_t>(Utils::map(t_value, DACConstants::c_minDacValue, DACConstants::c_maxDacValue, m_minInterval, m_maxInterval));
       break;
 
     case TempoSource::kMenu:
@@ -46,5 +46,5 @@ uint8_t TempoHandler::calculateTempoLedValue(uint32_t t_now) {
     }
 
   }
-  return Utils::mapValue<uint8_t>(m_ledValue, 0, 255, 32, 255);
+  return static_cast<uint8_t>(Utils::map(m_ledValue, 0, 255, 32, 255));
 }

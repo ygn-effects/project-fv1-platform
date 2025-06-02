@@ -5,8 +5,7 @@ uint16_t PotHandler::mapMidiValue(uint8_t t_midiValue, uint8_t t_potIndex) {
 }
 
 uint16_t PotHandler::mapAdcValue(uint16_t t_adcValue, uint8_t t_potIndex) {
-  // Remove magic numbers after ADC is written
-  return Utils::mapClamped<uint16_t>(t_adcValue, 0, 1023, m_minValue[t_potIndex], m_maxValue[t_potIndex]);
+  return static_cast<uint16_t>(Utils::map(t_adcValue, DACConstants::c_minDacValue, DACConstants::c_maxDacValue, m_minValue[t_potIndex], m_maxValue[t_potIndex]));
 }
 
 uint16_t PotHandler::mapMenuValue(uint16_t t_currentValue, int8_t t_delta, uint8_t t_potIndex) {
