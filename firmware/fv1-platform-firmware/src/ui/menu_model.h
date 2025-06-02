@@ -89,6 +89,19 @@ constexpr const char* labelExprHeelValue(const LogicalState* t_state);
 constexpr const char* labelExprToeValue(const LogicalState* t_state);
 constexpr const char* labelDivValue(const LogicalState* t_state);
 constexpr const char* labelDivValueLocked(const LogicalState* t_state);
+constexpr const char* labelPot0State(const LogicalState* t_state);
+constexpr const char* labelPot1State(const LogicalState* t_state);
+constexpr const char* labelPot2State(const LogicalState* t_state);
+constexpr const char* labelMixPotState(const LogicalState* t_state);
+constexpr const char* labelPot0MinValue(const LogicalState* t_state);
+constexpr const char* labelPot1MinValue(const LogicalState* t_state);
+constexpr const char* labelPot2inValue(const LogicalState* t_state);
+constexpr const char* labelMixPotMinValue(const LogicalState* t_state);
+constexpr const char* labelPot0MaxValue(const LogicalState* t_state);
+constexpr const char* labelPot1MaxValue(const LogicalState* t_state);
+constexpr const char* labelPot2MaxValue(const LogicalState* t_state);
+constexpr const char* labelMixPotMaxValue(const LogicalState* t_state);
+constexpr const char* labelPotSettings(const LogicalState* t_state);
 
 constexpr const char* valueProgram(const LogicalState* t_state);
 const char* valuePresetBank(const LogicalState* t_state);
@@ -105,6 +118,19 @@ constexpr const char* valueExprDirection(const LogicalState* t_state);
 const char* valueExprHeelValue(const LogicalState* t_state);
 const char* valueExprToeValue(const LogicalState* t_state);
 constexpr const char* valueDivValue(const LogicalState* t_state);
+constexpr const char* valuePotState(const LogicalState* t_state, uint8_t t_potIndex);
+constexpr const char* valuePot0State(const LogicalState* t_state);
+constexpr const char* valuePot1State(const LogicalState* t_state);
+constexpr const char* valuePot2State(const LogicalState* t_state);
+constexpr const char* valueMixPotState(const LogicalState* t_state);
+const char* valuePot0MinValue(const LogicalState* t_state);
+const char* valuePot1MinValue(const LogicalState* t_state);
+const char* valuePot2MinValue(const LogicalState* t_state);
+const char* valueMixPotMinValue(const LogicalState* t_state);
+const char* valuePot0MaxValue(const LogicalState* t_state);
+const char* valuePot1MaxValue(const LogicalState* t_state);
+const char* valuePot2MaxValue(const LogicalState* t_state);
+const char* valueMixPotMaxValue(const LogicalState* t_state);
 
 void onMoveProgram(int8_t t_delta);
 void onMovePot0(int8_t t_delta);
@@ -129,5 +155,6 @@ extern const MenuPage Pot1ValueMenuPage;
 extern const MenuPage Pot2ValueMenuPage;
 extern const MenuPage MixPotValueMenuPage;
 extern const MenuPage TempoMenuPage;
+extern const MenuPage PotSettingsMenuPage;
 
 } // namespace ui

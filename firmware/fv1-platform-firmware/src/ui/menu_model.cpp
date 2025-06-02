@@ -134,6 +134,58 @@ inline constexpr const char* labelDivValueLocked(const LogicalState* t_state) {
   return "D";
 }
 
+inline constexpr const char* labelPot0State(const LogicalState* t_state) {
+  return "P0 State";
+}
+
+inline constexpr const char* labelPot1State(const LogicalState* t_state) {
+  return "P1 State";
+}
+
+inline constexpr const char* labelPot2State(const LogicalState* t_state) {
+  return "P2 State";
+}
+
+inline constexpr const char* labelMixPotState(const LogicalState* t_state) {
+  return "Mix State";
+}
+
+inline constexpr const char* labelPot0MinValue(const LogicalState* t_state) {
+  return "P0 Min";
+}
+
+inline constexpr const char* labelPot1MinValue(const LogicalState* t_state) {
+  return "P1 Min";
+}
+
+inline constexpr const char* labelPot2MinValue(const LogicalState* t_state) {
+  return "P2 Min";
+}
+
+inline constexpr const char* labelMixPotMinValue(const LogicalState* t_state) {
+  return "Mix Min";
+}
+
+inline constexpr const char* labelPot0MaxValue(const LogicalState* t_state) {
+  return "P0 Max";
+}
+
+inline constexpr const char* labelPot1MaxValue(const LogicalState* t_state) {
+  return "P1 Max";
+}
+
+inline constexpr const char* labelPot2MaxValue(const LogicalState* t_state) {
+  return "P2 Max";
+}
+
+inline constexpr const char* labelMixPotMaxValue(const LogicalState* t_state) {
+  return "Mix Max";
+}
+
+inline constexpr const char* labelPotSettings(const LogicalState* t_state) {
+  return "Pot settings";
+}
+
 const char* valuePresetBank(const LogicalState* t_state) {
   static char buffer[8];
   snprintf(buffer, sizeof(buffer), "%u", t_state->m_currentPresetBank);
@@ -177,28 +229,28 @@ void valuePot(const LogicalState* t_state, uint8_t t_potIndex, char* buffer, siz
 
 const char* valuePot0(const LogicalState* t_state) {
   static char valuePot0[8];
-  valuePot(t_state, 0, valuePot0, size_t(valuePot0));
+  valuePot(t_state, 0, valuePot0, sizeof(valuePot0));
 
   return valuePot0;
 }
 
 const char* valuePot1(const LogicalState* t_state) {
   static char valuePot1[8];
-  valuePot(t_state, 1, valuePot1, size_t(valuePot1));
+  valuePot(t_state, 1, valuePot1, sizeof(valuePot1));
 
   return valuePot1;
 }
 
 const char* valuePot2(const LogicalState* t_state) {
   static char valuePot2[8];
-  valuePot(t_state, 2, valuePot2, size_t(valuePot2));
+  valuePot(t_state, 2, valuePot2, sizeof(valuePot2));
 
   return valuePot2;
 }
 
 const char* valueMixPot(const LogicalState* t_state) {
   static char valueMixPot[8];
-  valuePot(t_state, 3, valueMixPot, size_t(valueMixPot));
+  snprintf(valueMixPot, sizeof(valueMixPot), "%u ms", t_state->m_potParams[t_state->m_currentProgram][3].m_maxValue);
 
   return valueMixPot;
 }
@@ -272,6 +324,84 @@ inline constexpr const char* valueDivValue(const LogicalState* t_state) {
     default:
       return "/1";
   }
+}
+
+inline constexpr const char* valuePotState(const LogicalState* t_state, uint8_t t_potIndex) {
+  return t_state->m_potParams[t_state->m_currentProgram][t_potIndex].m_state == PotState::kActive
+    ? "ON"
+    : "OFF";
+}
+
+inline constexpr const char* valuePot0State(const LogicalState* t_state) {
+  return valuePotState(t_state, 0);
+}
+
+inline constexpr const char* valuePot1State(const LogicalState* t_state) {
+  return valuePotState(t_state, 1);
+}
+
+inline constexpr const char* valuePot2State(const LogicalState* t_state) {
+  return valuePotState(t_state, 2);
+}
+
+inline constexpr const char* valueMixPotState(const LogicalState* t_state) {
+  return valuePotState(t_state, 3);
+}
+
+const char* valuePot0MinValue(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_potParams[t_state->m_currentProgram][0].m_minValue);
+
+  return buffer;
+}
+
+const char* valuePot1MinValue(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_potParams[t_state->m_currentProgram][1].m_minValue);
+
+  return buffer;
+}
+
+const char* valuePot2MinValue(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_potParams[t_state->m_currentProgram][2].m_minValue);
+
+  return buffer;
+}
+
+const char* valueMixPotMinValue(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_potParams[t_state->m_currentProgram][3].m_minValue);
+
+  return buffer;
+}
+
+const char* valuePot0MaxValue(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_potParams[t_state->m_currentProgram][0].m_maxValue);
+
+  return buffer;
+}
+
+const char* valuePot1MaxValue(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_potParams[t_state->m_currentProgram][1].m_maxValue);
+
+  return buffer;
+}
+
+const char* valuePot2MaxValue(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_potParams[t_state->m_currentProgram][2].m_maxValue);
+
+  return buffer;
+}
+
+const char* valueMixPotMaxValue(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_potParams[t_state->m_currentProgram][3].m_maxValue);
+
+  return buffer;
 }
 
 void onMoveProgram(int8_t t_delta) {
@@ -390,7 +520,8 @@ constexpr MenuItem ProgramMenuItems[] = {
   { labelPot1, isAlwaysVisible, valuePot1, onMovePot1, nullptr, nullptr },
   { labelPot2, isAlwaysVisible, valuePot2, onMovePot2, nullptr, nullptr },
   { labelMixPot, isAlwaysVisible, valueMixPot, onMoveMixPot, nullptr, nullptr },
-  { labelExprSettings, isAlwaysVisible, nullptr, nullptr, nullptr, &ExprSettingsMenuPage }
+  { labelExprSettings, isAlwaysVisible, nullptr, nullptr, nullptr, &ExprSettingsMenuPage },
+  { labelPotSettings, isAlwaysVisible, nullptr, nullptr, nullptr, &PotSettingsMenuPage }
 };
 
 constexpr MenuPage ProgramMenuPage = {
@@ -479,6 +610,28 @@ constexpr MenuPage TempoMenuPage = {
   TempoMenuItems,
   sizeof(TempoMenuItems) / sizeof(TempoMenuItems[0]),
   ui::MenuLayout::kLabelValue
+};
+
+constexpr MenuItem PotSettingsMenuItems[] = {
+  { labelPot0State, isAlwaysVisible, valuePot0State, nullptr, nullptr, nullptr },
+  { labelPot0MinValue, isAlwaysVisible, valuePot0MinValue, nullptr, nullptr, nullptr },
+  { labelPot0MaxValue, isAlwaysVisible, valuePot0MaxValue, nullptr, nullptr, nullptr },
+  { labelPot1State, isAlwaysVisible, valuePot1State, nullptr, nullptr, nullptr },
+  { labelPot1MinValue, isAlwaysVisible, valuePot1MinValue, nullptr, nullptr, nullptr },
+  { labelPot1MaxValue, isAlwaysVisible, valuePot1MaxValue, nullptr, nullptr, nullptr },
+  { labelPot2State, isAlwaysVisible, valuePot1State, nullptr, nullptr, nullptr },
+  { labelPot2MinValue, isAlwaysVisible, valuePot1MinValue, nullptr, nullptr, nullptr },
+  { labelPot2MaxValue, isAlwaysVisible, valuePot1MaxValue, nullptr, nullptr, nullptr },
+  { labelMixPotState, isAlwaysVisible, valueMixPotState, nullptr, nullptr, nullptr },
+  { labelMixPotMinValue, isAlwaysVisible, valueMixPotMinValue, nullptr, nullptr, nullptr },
+  { labelMixPotMaxValue, isAlwaysVisible, valueMixPotMaxValue, nullptr, nullptr, nullptr }
+};
+
+constexpr MenuPage PotSettingsMenuPage = {
+  "Pot settings",
+  PotSettingsMenuItems,
+  sizeof(PotSettingsMenuItems) / sizeof(PotSettingsMenuItems[0]),
+  ui::MenuLayout::kList
 };
 
 }
