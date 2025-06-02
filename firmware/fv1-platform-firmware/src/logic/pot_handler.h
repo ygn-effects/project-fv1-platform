@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "logic/midi_handler.h"
+#include "periphs/dac.h"
 #include "utils/enum_utils.h"
 #include "utils/utils.h"
 

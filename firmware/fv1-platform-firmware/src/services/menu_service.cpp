@@ -90,7 +90,13 @@ void MenuService::handleSelecting(const Event& t_event) {
       if (item.m_subMenu) {
         m_cursor = 0;
         m_first = 0;
-        m_menuStack.push(item.m_subMenu);
+
+        if (item.m_subMenu == &ui::BlankMenuPage) {
+          m_menuStack.pop();
+        }
+        else {
+          m_menuStack.push(item.m_subMenu);
+        }
       }
       else if (item.m_onClick) {
         item.m_onClick();
@@ -316,7 +322,7 @@ void MenuService::init() {
 }
 
 void MenuService::handleEvent(const Event& t_event) {
-  if (t_event.m_type == EventType::kProgramChanged) { publishView(); return; }
+  if (t_event.m_type == EventType::kProgramChanged || t_event.m_type == EventType::kMenuExprStateToggled) { publishView(); return; }
 
   switch (m_mode) {
     case UiMode::kLocked:
@@ -380,6 +386,7 @@ bool MenuService::interestedIn(EventCategory t_category, EventSubCategory t_subC
   return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kEncoderEvent)
       || (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kLockEvent)
       || (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent)
+      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuExprEvent)
       || (t_category == EventCategory::kTempoEvent && t_subCategory == EventSubCategory::kTempoChangedEvent)
       || (t_category == EventCategory::kBypassEvent && t_subCategory == EventSubCategory::kBypassDisabledEvent)
       || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent);
