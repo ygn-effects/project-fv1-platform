@@ -71,8 +71,8 @@ void FsmService::handleEvent(const Event& t_event) {
       }
 
       // Encoder‑switch long press
-      if (t_event.m_type == EventType::kRawMenuEncoderLongPressed) {
-        EventBus::publish({EventType::kMenuEncoderLongPressed, t_event.m_timestamp, {}});
+      if (t_event.m_type == EventType::kRawMenuLockLongPressed) {
+        EventBus::publish({EventType::kMenuLockLongPressed, t_event.m_timestamp, {}});
         return;
       }
 
@@ -90,6 +90,13 @@ void FsmService::handleEvent(const Event& t_event) {
       break;
 
     case AppState::kProgramEdit:
+
+      // Bypass
+      if (t_event.m_type == EventType::kRawBypassPressed) {
+        EventBus::publish({EventType::kBypassPressed, t_event.m_timestamp, {}});
+        return;
+      }
+
       if (t_event.m_type == EventType::kMenuLocked) {
         transitionTo(AppState::kProgramIdle, t_event.m_timestamp);
         return;
@@ -100,8 +107,8 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
-      if (t_event.m_type == EventType::kRawMenuEncoderLongPressed) {
-        EventBus::publish({EventType::kMenuEncoderLongPressed, t_event.m_timestamp, {}});
+      if (t_event.m_type == EventType::kRawMenuLockLongPressed) {
+        EventBus::publish({EventType::kMenuLockLongPressed, t_event.m_timestamp, {}});
         return;
       }
 
@@ -111,6 +118,18 @@ void FsmService::handleEvent(const Event& t_event) {
         e.m_timestamp = t_event.m_timestamp;
         e.m_data.delta = t_event.m_data.delta;
         EventBus::publish(e);
+      }
+
+      // Tap
+      if (t_event.m_type == EventType::kRawTapPressed) {
+        EventBus::publish({EventType::kTapPressed, t_event.m_timestamp, {}});
+        return;
+      }
+
+      // Long‑tap
+      if (t_event.m_type == EventType::kRawTapLongPressed) {
+        EventBus::publish({EventType::kTapLongPressed, t_event.m_timestamp, {}});
+        return;
       }
 
       // Pot 0 move
@@ -158,9 +177,19 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
+      if (t_event.m_type == EventType::kBypassDisabled) {
+        transitionTo(AppState::kProgramIdle, t_event.m_timestamp);
+      }
+
       break;
 
     case AppState::kPresetIdle:
+      // Bypass
+      if (t_event.m_type == EventType::kRawBypassPressed) {
+        EventBus::publish({EventType::kBypassPressed, t_event.m_timestamp, {}});
+        return;
+      }
+
       if (t_event.m_type == EventType::kRawProgramModeSwitchLongPress) {
         transitionTo(AppState::kProgramIdle, t_event.m_timestamp);
         EventBus::publish({EventType::kProgramModeChanged, t_event.m_timestamp /*millis*/, {}});
