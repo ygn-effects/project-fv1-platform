@@ -1,0 +1,60 @@
+{
+    "MPN": [
+        false,
+        "B4B-XH-A"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER XH MALE 1X4 PINS 2.5MM PITCH STRAIGHT"
+    ],
+    "entity": "278ef14c-9aa2-41af-8497-f29f96d294e5",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "JST"
+    ],
+    "model": "a7b1546c-ae44-43c3-bb57-c1101ef94617",
+    "package": "9c72b8ad-e148-49b1-ab1f-38d19d3b3518",
+    "pad_map": {
+        "04fdb0d4-7aa7-4e4b-be26-2c6590d99008": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "b683c934-469e-44df-9b3f-faa281710d00"
+        },
+        "161cd018-9503-43bb-a018-d9e5e0e86061": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "82a7e37c-9b1d-4930-b8da-fa8035e6a757"
+        },
+        "1a6dcd96-0318-44b9-8687-458424ca9562": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "c65dc90f-fb6a-4093-bc7c-586fbf00d8b5"
+        },
+        "975b989d-5af2-4716-abe1-952649bdc3a7": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "b787f728-bdd2-4890-a3c1-e9cbba66bb3d"
+        }
+    },
+    "parametric": {
+        "contact_material": "Tin",
+        "current_rating": "250",
+        "mounting_angle": "Straight",
+        "mounting_style": "Through Hole",
+        "pitch": "2.5",
+        "positions": "4",
+        "price": "0.117",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "3"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "88812761-ee2f-475d-8862-def0da892daf",
+    "value": [
+        false,
+        ""
+    ]
+}
