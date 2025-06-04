@@ -1,0 +1,18 @@
+{
+    "gates": {
+        "c4fa4e09-bc64-487e-abb1-f3014736cd7e": {
+            "name": "Main",
+            "suffix": "",
+            "swap_group": 0,
+            "unit": "93b800ac-8a4d-44a3-b240-ed36c4fb27d6"
+        }
+    },
+    "manufacturer": "Microchip",
+    "name": "MCP49x2",
+    "prefix": "IC",
+    "tags": [
+        "dac"
+    ],
+    "type": "entity",
+    "uuid": "0e8c9ff1-5dee-456b-a011-3dcb1c6ec1ef"
+}

@@ -1,0 +1,38 @@
+{
+    "manufacturer": "Microchip",
+    "name": "24LC SOT",
+    "pins": {
+        "045db54f-7ac9-4fc6-b138-3b50aac237f0": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "SCL",
+            "swap_group": 0
+        },
+        "10d570f7-4ea8-4acd-87fc-f754b69aa6cc": {
+            "direction": "bidirectional",
+            "names": [],
+            "primary_name": "SDA",
+            "swap_group": 0
+        },
+        "a35fc7cb-66b1-43bb-b681-add2b12acdc8": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "VCC",
+            "swap_group": 0
+        },
+        "b291c469-b84c-45fc-90ab-1e99322c5464": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "VSS",
+            "swap_group": 0
+        },
+        "ddf9f720-d4c9-4042-a2ce-6687f1dc0e63": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "WP",
+            "swap_group": 0
+        }
+    },
+    "type": "unit",
+    "uuid": "c7a69b50-08d5-47c0-be54-03acfa47f930"
+}

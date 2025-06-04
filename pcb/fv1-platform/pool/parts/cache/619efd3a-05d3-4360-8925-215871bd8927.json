@@ -1,0 +1,63 @@
+{
+    "MPN": [
+        false,
+        "24LC32AT-I/OT"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "EEPROM 32KBIT I2C"
+    ],
+    "entity": "c5a5a4c7-91dc-47d8-ae4d-32e3c86949d4",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Microchip"
+    ],
+    "model": "0424f9a5-2ca7-41d7-911a-359bf0f9a172",
+    "package": "742b0944-ec41-452f-a7d6-7b4c0bef8ca8",
+    "pad_map": {
+        "017f3f6e-af06-4d5f-a314-644011261ffe": {
+            "gate": "a14a8407-0b48-4656-a2f7-5cc11cec0eaf",
+            "pin": "a35fc7cb-66b1-43bb-b681-add2b12acdc8"
+        },
+        "02f8fb19-a1d6-4055-a4e1-9ddff38837d8": {
+            "gate": "a14a8407-0b48-4656-a2f7-5cc11cec0eaf",
+            "pin": "b291c469-b84c-45fc-90ab-1e99322c5464"
+        },
+        "2bdac2e1-bf40-4ece-b29f-c09c53f010a0": {
+            "gate": "a14a8407-0b48-4656-a2f7-5cc11cec0eaf",
+            "pin": "045db54f-7ac9-4fc6-b138-3b50aac237f0"
+        },
+        "ccea2f90-07aa-44c7-942e-61a4bbcc8de0": {
+            "gate": "a14a8407-0b48-4656-a2f7-5cc11cec0eaf",
+            "pin": "ddf9f720-d4c9-4042-a2ce-6687f1dc0e63"
+        },
+        "d002d1de-8557-46cb-9898-c43f775c95d7": {
+            "gate": "a14a8407-0b48-4656-a2f7-5cc11cec0eaf",
+            "pin": "10d570f7-4ea8-4acd-87fc-f754b69aa6cc"
+        }
+    },
+    "parametric": {
+        "data_retention": "200",
+        "endurance": "1e+06",
+        "interface": "I2C",
+        "memory_size": "32000",
+        "package": "SOT-23-5",
+        "price": "0.4",
+        "speed": "400000",
+        "table": "eeproms",
+        "voltage": "5.5"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "619efd3a-05d3-4360-8925-215871bd8927",
+    "value": [
+        false,
+        ""
+    ]
+}

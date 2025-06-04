@@ -1,0 +1,74 @@
+{
+    "manufacturer": "Microchip",
+    "name": "MCP49x2",
+    "pins": {
+        "2d3727dd-265d-4c9b-a720-59f9e4df5c47": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "VSS",
+            "swap_group": 0
+        },
+        "353fef11-f5ca-4187-88c9-4c459dfab491": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "VREFA",
+            "swap_group": 0
+        },
+        "42055ae7-d27e-4c68-b7d0-4e19a1d65794": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "CS",
+            "swap_group": 0
+        },
+        "8b3acf9e-9152-45cd-9258-b399c1655946": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "SDI",
+            "swap_group": 0
+        },
+        "9bdafec3-6eaa-4ab1-9399-717840c28952": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "SCK",
+            "swap_group": 0
+        },
+        "a5a0959c-7fa9-4e5e-b9fc-dcdde4eae25d": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "SHDN",
+            "swap_group": 0
+        },
+        "aad1f27a-1ec4-4184-a2fc-5b8162895123": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "VDD",
+            "swap_group": 0
+        },
+        "c8202fab-5dc1-44e6-bfdc-2bb88ceb72ef": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "LDAC",
+            "swap_group": 0
+        },
+        "ed62b23c-928b-4c0b-8d83-c96f9d8338b5": {
+            "direction": "output",
+            "names": [],
+            "primary_name": "VOUTA",
+            "swap_group": 0
+        },
+        "f5399145-8842-4a7d-bd94-e817fdd1c9d0": {
+            "direction": "output",
+            "names": [],
+            "primary_name": "VOUTB",
+            "swap_group": 0
+        },
+        "f726413c-a4cb-41e2-9aef-1d5e7f3a21f7": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "VREFB",
+            "swap_group": 0
+        }
+    },
+    "type": "unit",
+    "uuid": "93b800ac-8a4d-44a3-b240-ed36c4fb27d6"
+}

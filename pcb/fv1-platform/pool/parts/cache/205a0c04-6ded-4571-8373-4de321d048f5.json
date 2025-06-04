@@ -1,0 +1,74 @@
+{
+    "MPN": [
+        false,
+        "MCP4911-E/SN"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "DAC SINGLE 10-BIT SPI"
+    ],
+    "entity": "e87d0346-0307-4e4b-9e98-096184b74f45",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Microchip"
+    ],
+    "model": "3d35a336-4c7c-46f3-af0d-227cc9e8e286",
+    "package": "e9e193c1-ec21-46d7-842b-02266d06f4cb",
+    "pad_map": {
+        "3a5386ab-3e3f-4016-9a85-9c9c2315c9e9": {
+            "gate": "b855b9e1-bc7b-4b55-a960-22ca803d7e8d",
+            "pin": "9b1eaa17-9868-4603-a5b9-fc237839ae41"
+        },
+        "413d3e7a-addb-4a0f-a94d-c98779119ec6": {
+            "gate": "b855b9e1-bc7b-4b55-a960-22ca803d7e8d",
+            "pin": "d4a1e00b-c320-4d9b-8255-09f3c3a72c42"
+        },
+        "48bd9388-8520-406b-9d85-090d992c5a9e": {
+            "gate": "b855b9e1-bc7b-4b55-a960-22ca803d7e8d",
+            "pin": "b5068aeb-9f5c-475f-afc2-6d00aafe864d"
+        },
+        "820f4c6b-5a44-4bec-88f5-18a275096696": {
+            "gate": "b855b9e1-bc7b-4b55-a960-22ca803d7e8d",
+            "pin": "d462f426-06c6-4139-96df-421a0f492c3f"
+        },
+        "98100bd0-1066-4d26-9a56-75ff1afd842b": {
+            "gate": "b855b9e1-bc7b-4b55-a960-22ca803d7e8d",
+            "pin": "e386370d-a0b1-4c95-b3c3-6b28a73177e9"
+        },
+        "a6605fe8-fe10-4168-9790-5c82df7534cd": {
+            "gate": "b855b9e1-bc7b-4b55-a960-22ca803d7e8d",
+            "pin": "10cb2d7e-39e3-4220-8d29-5bd0ace87198"
+        },
+        "c7d96e1c-df84-4b5b-be8d-0144d9ba88ca": {
+            "gate": "b855b9e1-bc7b-4b55-a960-22ca803d7e8d",
+            "pin": "939c632b-df7e-462b-a4a3-a414b5a6b764"
+        },
+        "de9159bc-124a-4dd0-8254-1c965604ff86": {
+            "gate": "b855b9e1-bc7b-4b55-a960-22ca803d7e8d",
+            "pin": "b6b81415-5fff-4fae-af4c-8a6568756e0a"
+        }
+    },
+    "parametric": {
+        "channels": "1",
+        "interface": "SPI",
+        "output_type": "Buffered",
+        "package": "SOIC-8",
+        "price": "1.45",
+        "reference": "External",
+        "resolution": "10",
+        "table": "dacs_spi"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "205a0c04-6ded-4571-8373-4de321d048f5",
+    "value": [
+        false,
+        "MCP4911"
+    ]
+}
