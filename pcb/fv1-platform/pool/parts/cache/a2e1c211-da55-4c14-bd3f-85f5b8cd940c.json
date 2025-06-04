@@ -1,0 +1,86 @@
+{
+    "MPN": [
+        false,
+        "MCP4912-E/SL"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "DAC DUAL 10-BIT SPI"
+    ],
+    "entity": "0e8c9ff1-5dee-456b-a011-3dcb1c6ec1ef",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Microchip"
+    ],
+    "model": "80c30902-9e1d-45ff-97be-e0ef74d7e409",
+    "package": "01195426-2a6a-406e-aad5-51ed2c81bd4d",
+    "pad_map": {
+        "19368731-dea5-4375-a246-be47a7ab7e54": {
+            "gate": "c4fa4e09-bc64-487e-abb1-f3014736cd7e",
+            "pin": "a5a0959c-7fa9-4e5e-b9fc-dcdde4eae25d"
+        },
+        "432ac170-6e90-4312-ae0c-ba544baf9c4f": {
+            "gate": "c4fa4e09-bc64-487e-abb1-f3014736cd7e",
+            "pin": "353fef11-f5ca-4187-88c9-4c459dfab491"
+        },
+        "49d7d1d9-ef0c-482a-86a7-b48acc67cf77": {
+            "gate": "c4fa4e09-bc64-487e-abb1-f3014736cd7e",
+            "pin": "2d3727dd-265d-4c9b-a720-59f9e4df5c47"
+        },
+        "5d4f7144-f39f-4eac-ac5e-a57ffb2b41e2": {
+            "gate": "c4fa4e09-bc64-487e-abb1-f3014736cd7e",
+            "pin": "c8202fab-5dc1-44e6-bfdc-2bb88ceb72ef"
+        },
+        "77ac5fcc-8e07-4d86-aaf2-07d9c07d3374": {
+            "gate": "c4fa4e09-bc64-487e-abb1-f3014736cd7e",
+            "pin": "f726413c-a4cb-41e2-9aef-1d5e7f3a21f7"
+        },
+        "94d1cc77-26b5-4ca1-8a7e-45071f5eac72": {
+            "gate": "c4fa4e09-bc64-487e-abb1-f3014736cd7e",
+            "pin": "8b3acf9e-9152-45cd-9258-b399c1655946"
+        },
+        "c04ccf06-65e7-4145-b169-fbfcee59deec": {
+            "gate": "c4fa4e09-bc64-487e-abb1-f3014736cd7e",
+            "pin": "aad1f27a-1ec4-4184-a2fc-5b8162895123"
+        },
+        "d049f77d-eb17-4440-a828-628a68f9d28d": {
+            "gate": "c4fa4e09-bc64-487e-abb1-f3014736cd7e",
+            "pin": "f5399145-8842-4a7d-bd94-e817fdd1c9d0"
+        },
+        "d8406543-5e05-4f0e-b2f9-524bbf00a4c7": {
+            "gate": "c4fa4e09-bc64-487e-abb1-f3014736cd7e",
+            "pin": "ed62b23c-928b-4c0b-8d83-c96f9d8338b5"
+        },
+        "f04cb3ce-1438-4e9b-82ce-c258f20142d6": {
+            "gate": "c4fa4e09-bc64-487e-abb1-f3014736cd7e",
+            "pin": "9bdafec3-6eaa-4ab1-9399-717840c28952"
+        },
+        "f1f71540-6886-4900-8a13-2921006b46b9": {
+            "gate": "c4fa4e09-bc64-487e-abb1-f3014736cd7e",
+            "pin": "42055ae7-d27e-4c68-b7d0-4e19a1d65794"
+        }
+    },
+    "parametric": {
+        "channels": "2",
+        "interface": "SPI",
+        "output_type": "Buffered",
+        "package": "SOIC-14",
+        "price": "1.93",
+        "reference": "External",
+        "resolution": "10",
+        "table": "dacs_spi"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "a2e1c211-da55-4c14-bd3f-85f5b8cd940c",
+    "value": [
+        false,
+        "MCP4912"
+    ]
+}
