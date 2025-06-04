@@ -1,0 +1,52 @@
+{
+    "MPN": [
+        false,
+        "S2B-XH-A"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER XH MALE 1X2 PINS 2.5MM PITCH ANGLED"
+    ],
+    "entity": "c1078b42-f7fb-4b35-b7f1-f49d4b1a493c",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "KNOCKOFF"
+    ],
+    "model": "70640211-1433-4fca-9e33-fdc871370e48",
+    "package": "cf967e84-6dd3-4028-9b3a-c65141ea40ae",
+    "pad_map": {
+        "ab9b4b79-9cae-43ff-8293-10b293475b56": {
+            "gate": "151e7b18-1473-410b-9cc5-2a2bfc5a9662",
+            "pin": "81eb32d7-53c7-4b84-a640-15abb5bbae3e"
+        },
+        "e12f6337-92b7-4299-b840-b5b6030389ce": {
+            "gate": "151e7b18-1473-410b-9cc5-2a2bfc5a9662",
+            "pin": "390cf87a-5271-4c11-b8ad-abab12ba848f"
+        }
+    },
+    "parametric": {
+        "contact_material": "Tin",
+        "current_rating": "3",
+        "mounting_angle": "Right Angle",
+        "mounting_style": "Through Hole",
+        "pitch": "2.5",
+        "positions": "2",
+        "price": "0.009",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "250"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "424726a4-4203-4fa5-89e9-e204ceb6cd8a",
+    "value": [
+        false,
+        ""
+    ]
+}
