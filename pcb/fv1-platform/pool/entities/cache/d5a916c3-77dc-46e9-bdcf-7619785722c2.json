@@ -1,0 +1,18 @@
+{
+    "gates": {
+        "8046b835-531d-474b-b930-4cb749a5df7e": {
+            "name": "Main",
+            "suffix": "",
+            "swap_group": 0,
+            "unit": "0a173f82-7a62-4add-901d-62007d0a29db"
+        }
+    },
+    "manufacturer": "",
+    "name": "Connector 5 pins",
+    "prefix": "J",
+    "tags": [
+        "connector"
+    ],
+    "type": "entity",
+    "uuid": "d5a916c3-77dc-46e9-bdcf-7619785722c2"
+}

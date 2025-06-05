@@ -1,0 +1,64 @@
+{
+    "MPN": [
+        false,
+        "S5B-XH-A"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER XH MALE 1X5 PINS 2.5MM PITCH ANGLED"
+    ],
+    "entity": "d5a916c3-77dc-46e9-bdcf-7619785722c2",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "KNOCKOFF"
+    ],
+    "model": "4e81272c-e2ef-468b-b036-96041e805b10",
+    "package": "7367b248-72a8-4742-a256-5f7b3cce5f48",
+    "pad_map": {
+        "0ca578e8-0607-4687-a6e2-9d243bac000e": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "0e9faa10-b8a3-407f-987a-153cfe31f87b"
+        },
+        "21bf0e88-b66e-4b1c-afa4-57969202051a": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "ecc64fbf-8c2f-4221-afd3-050c7de56f7a"
+        },
+        "a15d77ce-77e1-4bb5-aad9-42bce7e3932f": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "013c9306-3b86-499c-98dd-458b52ad73b3"
+        },
+        "c9d53a39-345c-420e-a3ca-73f0c3d83681": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "e6ac0a44-63e0-4f23-8f57-4acaf5174dda"
+        },
+        "e2264143-3c2f-402d-89a5-cd787c23946f": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "b0b785dd-2675-450c-b81a-c5e8361a2864"
+        }
+    },
+    "parametric": {
+        "contact_material": "Tin",
+        "current_rating": "3",
+        "mounting_angle": "Right Angle",
+        "mounting_style": "Through Hole",
+        "pitch": "2.5",
+        "positions": "5",
+        "price": "0.169",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "250"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "36b64d33-613f-4b4d-91a4-75b0f6ac43cb",
+    "value": [
+        false,
+        ""
+    ]
+}

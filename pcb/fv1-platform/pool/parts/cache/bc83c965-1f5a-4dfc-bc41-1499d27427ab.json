@@ -1,0 +1,72 @@
+{
+    "MPN": [
+        false,
+        "M50-3630742"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER SMT 1x7 1.27MM MALE"
+    ],
+    "entity": "5de3300c-a58e-4850-9fa7-ae780a0be4b5",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Harwin"
+    ],
+    "model": "e34d65b9-32e3-4bce-be83-55e3a338dd72",
+    "package": "32ea2c0c-5071-4631-8e5c-f162f74cb9af",
+    "pad_map": {
+        "2741cf16-6037-4bb6-bca6-0ef201fd9e4a": {
+            "gate": "da0b64ae-07c4-430d-af80-e73f280e4084",
+            "pin": "0a6a2f1d-f1d0-415a-9b66-26b1e6dc8853"
+        },
+        "4bc76813-89f0-4abc-8f4e-bdd8f255d9d2": {
+            "gate": "da0b64ae-07c4-430d-af80-e73f280e4084",
+            "pin": "932d33ea-59f2-4513-9de5-4f1f1e144992"
+        },
+        "a521fb5a-95ed-4904-8c62-a329d5928e23": {
+            "gate": "da0b64ae-07c4-430d-af80-e73f280e4084",
+            "pin": "548e8454-0997-44a4-b81e-9dfbae247c4f"
+        },
+        "aa277485-efe8-41ab-8faf-692be3663d6f": {
+            "gate": "da0b64ae-07c4-430d-af80-e73f280e4084",
+            "pin": "e199d363-5bd5-407d-a933-7c68264cb529"
+        },
+        "bd51316d-84d1-4392-8a49-20883c52d169": {
+            "gate": "da0b64ae-07c4-430d-af80-e73f280e4084",
+            "pin": "6176dc64-5311-4c5d-941a-9e0b8ffddae8"
+        },
+        "dc887509-2497-467c-825b-ed3d7e31189d": {
+            "gate": "da0b64ae-07c4-430d-af80-e73f280e4084",
+            "pin": "01d54a24-1168-400d-8e7e-a39266dc80f5"
+        },
+        "fac011c7-4dca-406a-abf9-7be09ab127ef": {
+            "gate": "da0b64ae-07c4-430d-af80-e73f280e4084",
+            "pin": "e1475974-ae17-4b1a-ba6f-894a1f41aed5"
+        }
+    },
+    "parametric": {
+        "contact_material": "Gold",
+        "current_rating": "1",
+        "mounting_angle": "Straight",
+        "mounting_style": "SMD",
+        "pitch": "1.27",
+        "positions": "7",
+        "price": "0.455",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "250"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "bc83c965-1f5a-4dfc-bc41-1499d27427ab",
+    "value": [
+        false,
+        ""
+    ]
+}
