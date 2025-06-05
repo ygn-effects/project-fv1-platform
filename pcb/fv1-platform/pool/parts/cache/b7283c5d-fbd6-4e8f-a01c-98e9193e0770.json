@@ -1,0 +1,68 @@
+{
+    "MPN": [
+        false,
+        "M50-3630642"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER SMT 1x6 1.27MM MALE"
+    ],
+    "entity": "4969fd95-015a-41c7-b6e7-941856f99f5e",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Harwin"
+    ],
+    "model": "00000000-0000-0000-0000-000000000000",
+    "package": "d0368d2c-43c1-4fab-886a-a66bef8e8570",
+    "pad_map": {
+        "2452b34c-1c1a-4a21-9a20-15917936743b": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "df50d8b5-6e5c-4cd1-91c8-17f2783b8c26"
+        },
+        "65f93064-e1fd-411c-9bc3-14032956eddf": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "d0555739-abc7-4df1-a0c0-a1f0de57bb67"
+        },
+        "7946589a-f319-435d-9d04-59220742307b": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "8131c6bd-7bb6-4141-b43e-4a7ad56c5543"
+        },
+        "80a45e6e-c788-48ef-ac62-ee1b5eb80ac8": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "30f3e502-5732-4be1-a6c8-9e850a04deb0"
+        },
+        "d5d87c23-a80a-442f-a2a9-34ed4fff90a2": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "2c7b98b7-d657-4cf7-a33e-99d0f643d473"
+        },
+        "da0b49ec-3724-410c-baf9-a1f8ac01672a": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "33daec02-393c-49b1-8764-f58ebdb8bbbf"
+        }
+    },
+    "parametric": {
+        "contact_material": "Gold",
+        "current_rating": "1",
+        "mounting_angle": "Straight",
+        "mounting_style": "SMD",
+        "pitch": "1.27",
+        "positions": "6",
+        "price": "0.433",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "250"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "b7283c5d-fbd6-4e8f-a01c-98e9193e0770",
+    "value": [
+        false,
+        ""
+    ]
+}

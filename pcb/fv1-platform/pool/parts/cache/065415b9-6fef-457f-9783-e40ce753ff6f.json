@@ -1,0 +1,68 @@
+{
+    "MPN": [
+        false,
+        "S6B-PH-K-S"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER PH MALE 1X6 PINS 2MM PITCH ANGLED"
+    ],
+    "entity": "4969fd95-015a-41c7-b6e7-941856f99f5e",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "KNOCKOFF"
+    ],
+    "model": "9eb8beaf-ff48-4174-b019-c88b9b74df33",
+    "package": "defb8b12-b719-47f1-b765-cddad3b93af5",
+    "pad_map": {
+        "0b8758c7-6af0-4193-b54a-a0c90e1d867f": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "df50d8b5-6e5c-4cd1-91c8-17f2783b8c26"
+        },
+        "a944381a-b1ca-415f-94da-30d4b0ac2474": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "d0555739-abc7-4df1-a0c0-a1f0de57bb67"
+        },
+        "ba94a876-fef7-40a7-8584-4ebaeab1bdc3": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "33daec02-393c-49b1-8764-f58ebdb8bbbf"
+        },
+        "cd3f2213-a86e-4f5a-aacc-9cf8d0324a5e": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "2c7b98b7-d657-4cf7-a33e-99d0f643d473"
+        },
+        "f0e23457-65e5-47f1-bc6f-cf791df4827c": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "8131c6bd-7bb6-4141-b43e-4a7ad56c5543"
+        },
+        "f95941ee-7a68-4730-a2f7-e46ff622d2de": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "30f3e502-5732-4be1-a6c8-9e850a04deb0"
+        }
+    },
+    "parametric": {
+        "contact_material": "Tin",
+        "current_rating": "2",
+        "mounting_angle": "Right Angle",
+        "mounting_style": "Through Hole",
+        "pitch": "2",
+        "positions": "6",
+        "price": "0.16",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "100"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "065415b9-6fef-457f-9783-e40ce753ff6f",
+    "value": [
+        false,
+        ""
+    ]
+}
