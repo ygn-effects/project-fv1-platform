@@ -1,0 +1,64 @@
+{
+    "MPN": [
+        false,
+        "M50-3630542"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER SMT 1x5 1.27MM MALE"
+    ],
+    "entity": "d5a916c3-77dc-46e9-bdcf-7619785722c2",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Harwin"
+    ],
+    "model": "929b20c5-0c4f-45aa-8ec4-28afe31604b0",
+    "package": "4c7da436-ba4c-4811-93db-f47c726dbced",
+    "pad_map": {
+        "23f57a2e-4ac0-4008-8c7c-7a774e529f39": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "b0b785dd-2675-450c-b81a-c5e8361a2864"
+        },
+        "3ff29e1e-d3b9-424d-9b10-cd27055dff05": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "ecc64fbf-8c2f-4221-afd3-050c7de56f7a"
+        },
+        "754b6de5-b098-4a1c-9f1e-71c9b6c71092": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "e6ac0a44-63e0-4f23-8f57-4acaf5174dda"
+        },
+        "ceb0e9d8-0534-4e05-bbd0-bc6a3aa127f7": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "0e9faa10-b8a3-407f-987a-153cfe31f87b"
+        },
+        "da1652bc-db31-4452-a92b-59e740f96d66": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "013c9306-3b86-499c-98dd-458b52ad73b3"
+        }
+    },
+    "parametric": {
+        "contact_material": "Gold",
+        "current_rating": "1",
+        "mounting_angle": "Straight",
+        "mounting_style": "SMD",
+        "pitch": "1.27",
+        "positions": "5",
+        "price": "0.411",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "250"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "55bbf755-0af7-4e6e-96f4-8b10cd468607",
+    "value": [
+        false,
+        ""
+    ]
+}

@@ -1,0 +1,50 @@
+{
+    "manufacturer": "",
+    "name": "Connector 7 pins",
+    "pins": {
+        "01d54a24-1168-400d-8e7e-a39266dc80f5": {
+            "direction": "passive",
+            "names": [],
+            "primary_name": "4",
+            "swap_group": 0
+        },
+        "0a6a2f1d-f1d0-415a-9b66-26b1e6dc8853": {
+            "direction": "passive",
+            "names": [],
+            "primary_name": "2",
+            "swap_group": 0
+        },
+        "548e8454-0997-44a4-b81e-9dfbae247c4f": {
+            "direction": "passive",
+            "names": [],
+            "primary_name": "6",
+            "swap_group": 0
+        },
+        "6176dc64-5311-4c5d-941a-9e0b8ffddae8": {
+            "direction": "passive",
+            "names": [],
+            "primary_name": "3",
+            "swap_group": 0
+        },
+        "932d33ea-59f2-4513-9de5-4f1f1e144992": {
+            "direction": "passive",
+            "names": [],
+            "primary_name": "5",
+            "swap_group": 0
+        },
+        "e1475974-ae17-4b1a-ba6f-894a1f41aed5": {
+            "direction": "passive",
+            "names": [],
+            "primary_name": "1",
+            "swap_group": 0
+        },
+        "e199d363-5bd5-407d-a933-7c68264cb529": {
+            "direction": "passive",
+            "names": [],
+            "primary_name": "7",
+            "swap_group": 0
+        }
+    },
+    "type": "unit",
+    "uuid": "ef26b65d-9b27-4f0a-8b43-7afc286bedec"
+}
