@@ -1,0 +1,18 @@
+{
+    "gates": {
+        "13981606-2bf8-4098-ac63-1eb693f1f826": {
+            "name": "Main",
+            "suffix": "",
+            "swap_group": 0,
+            "unit": "e240f137-2240-4ec0-a884-c9083a2d1bf1"
+        }
+    },
+    "manufacturer": "",
+    "name": "Connector 10 pins",
+    "prefix": "J",
+    "tags": [
+        "connector"
+    ],
+    "type": "entity",
+    "uuid": "7abf55fb-0508-4cec-aabd-9b04e892cdb0"
+}
