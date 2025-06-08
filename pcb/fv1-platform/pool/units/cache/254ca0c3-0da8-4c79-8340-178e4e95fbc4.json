@@ -1,0 +1,26 @@
+{
+    "manufacturer": "",
+    "name": "Vca",
+    "pins": {
+        "04ac21f3-d212-41c7-96da-e08c30aa926a": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "IN",
+            "swap_group": 0
+        },
+        "7ff75d0c-0ecd-44c9-8b30-75eb8e8ce785": {
+            "direction": "output",
+            "names": [],
+            "primary_name": "OUT",
+            "swap_group": 0
+        },
+        "acac1a37-c896-4ea0-ac8b-9aac61811faa": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "VC",
+            "swap_group": 0
+        }
+    },
+    "type": "unit",
+    "uuid": "254ca0c3-0da8-4c79-8340-178e4e95fbc4"
+}
