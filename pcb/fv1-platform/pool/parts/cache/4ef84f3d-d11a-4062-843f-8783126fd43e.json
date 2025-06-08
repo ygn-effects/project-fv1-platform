@@ -1,0 +1,50 @@
+{
+    "MPN": [
+        false,
+        "CRCW0603110RFKEA"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "RESISTOR 110 OHM 1% 1/10W 0603"
+    ],
+    "entity": "3ce770af-7be0-4f72-b2af-2c8010911aaf",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Vishay"
+    ],
+    "model": "2a2f1c5a-6d33-4e42-a9b9-ffe9a4d22e4d",
+    "package": "84577000-0009-4e10-8205-c219f6f0cd89",
+    "pad_map": {
+        "289a856d-217c-4fe8-a60c-f093a0b1646a": {
+            "gate": "48af78e5-730e-44eb-977a-cf188e4fcb39",
+            "pin": "dda0ec99-5d70-4fbe-a8db-897542e7554e"
+        },
+        "cb2597f3-2004-489a-8b4b-eb3569ecde61": {
+            "gate": "48af78e5-730e-44eb-977a-cf188e4fcb39",
+            "pin": "6a44037c-65e2-4876-9359-42890048841d"
+        }
+    },
+    "parametric": {
+        "p_max": "0.1",
+        "package": "0603",
+        "price": "0.013",
+        "table": "resistors_film",
+        "tcr": "100",
+        "tolerance": "1",
+        "v_max": "75",
+        "value": "110"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "4ef84f3d-d11a-4062-843f-8783126fd43e",
+    "value": [
+        false,
+        "110R"
+    ]
+}

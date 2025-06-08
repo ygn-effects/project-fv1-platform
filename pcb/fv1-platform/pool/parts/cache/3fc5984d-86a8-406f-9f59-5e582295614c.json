@@ -1,0 +1,104 @@
+{
+    "MPN": [
+        false,
+        "SSI2164"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "QUAD VOLTAGE CONTROLLED AMPLIFIER"
+    ],
+    "entity": "f2679c45-d2a4-4905-818a-97f4d27fded0",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "SOUND SEMICONDUCTOR"
+    ],
+    "model": "874bee1f-dd21-4a16-b0f9-7402251d36b0",
+    "package": "e556d27d-abd7-4e70-a39e-a49f2944a857",
+    "pad_map": {
+        "051cb5bf-f26d-4541-a111-bd75f73f6ed6": {
+            "gate": "c7216f04-c4cf-4932-9544-d15f4d16b650",
+            "pin": "7ff75d0c-0ecd-44c9-8b30-75eb8e8ce785"
+        },
+        "20b89831-d9f2-4c38-a310-ce3d1ff05bcb": {
+            "gate": "1527e447-9fef-43e1-bbbb-9f5b69855f5b",
+            "pin": "7ff75d0c-0ecd-44c9-8b30-75eb8e8ce785"
+        },
+        "22acbda1-c8ae-4403-a0a1-f59665e7d6d6": {
+            "gate": "4954cccc-c7db-4fb6-bdcc-958cda27d255",
+            "pin": "7ff75d0c-0ecd-44c9-8b30-75eb8e8ce785"
+        },
+        "2587503b-57c2-4463-848d-a49a180d9a1d": {
+            "gate": "1527e447-9fef-43e1-bbbb-9f5b69855f5b",
+            "pin": "acac1a37-c896-4ea0-ac8b-9aac61811faa"
+        },
+        "30ad7763-5724-46f3-9506-5f7cc0af1800": {
+            "gate": "c7216f04-c4cf-4932-9544-d15f4d16b650",
+            "pin": "04ac21f3-d212-41c7-96da-e08c30aa926a"
+        },
+        "31675b40-bc35-4478-b4aa-09772736b61a": {
+            "gate": "1527e447-9fef-43e1-bbbb-9f5b69855f5b",
+            "pin": "04ac21f3-d212-41c7-96da-e08c30aa926a"
+        },
+        "795217ae-6792-4181-bb8d-676dbc2cc83d": {
+            "gate": "34bfbe9e-b081-49ea-a9e6-c7bfaec18d4b",
+            "pin": "9ac8546f-5494-4aa6-901d-8735016f4494"
+        },
+        "79abfcf6-0417-4b05-a255-8ac69a692c60": {
+            "gate": "21e9a079-e0ad-4533-b8e1-c2e9b1f71fd0",
+            "pin": "7ff75d0c-0ecd-44c9-8b30-75eb8e8ce785"
+        },
+        "7cf88371-211f-46c1-a257-7140ad51c467": {
+            "gate": "4954cccc-c7db-4fb6-bdcc-958cda27d255",
+            "pin": "04ac21f3-d212-41c7-96da-e08c30aa926a"
+        },
+        "895fd5d9-84da-4744-8abc-6c70f72076f6": {
+            "gate": "21e9a079-e0ad-4533-b8e1-c2e9b1f71fd0",
+            "pin": "04ac21f3-d212-41c7-96da-e08c30aa926a"
+        },
+        "8cc15a18-2b7b-406a-b981-fb22ee955d22": {
+            "gate": "c7216f04-c4cf-4932-9544-d15f4d16b650",
+            "pin": "acac1a37-c896-4ea0-ac8b-9aac61811faa"
+        },
+        "8e6184ed-6271-4a81-afee-e2deb92b031b": {
+            "gate": "4954cccc-c7db-4fb6-bdcc-958cda27d255",
+            "pin": "acac1a37-c896-4ea0-ac8b-9aac61811faa"
+        },
+        "a9ba47ff-602d-4215-b013-7af4deabdf8b": {
+            "gate": "34bfbe9e-b081-49ea-a9e6-c7bfaec18d4b",
+            "pin": "85f4fcc5-4663-4c2e-841f-8dcfb48d3ffc"
+        },
+        "ada62b0b-5772-42e6-a3f4-bf9f7bea24a6": {
+            "gate": "21e9a079-e0ad-4533-b8e1-c2e9b1f71fd0",
+            "pin": "acac1a37-c896-4ea0-ac8b-9aac61811faa"
+        },
+        "b3a91186-7606-4ab3-860c-f91f7b853547": {
+            "gate": "34bfbe9e-b081-49ea-a9e6-c7bfaec18d4b",
+            "pin": "7be953dc-8d35-4829-b696-7d3859b1450e"
+        },
+        "ca3db555-7846-43b2-8c94-8f0d1aecb345": {
+            "gate": "34bfbe9e-b081-49ea-a9e6-c7bfaec18d4b",
+            "pin": "5ae4b897-de22-49aa-9d6a-e7253a5a2ba4"
+        }
+    },
+    "parametric": {
+        "configuration": "Quad",
+        "control_type": "Linear",
+        "package": "SOIC-16",
+        "price": "4.7",
+        "supply_voltage_range": "18",
+        "table": "vcas"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "3fc5984d-86a8-406f-9f59-5e582295614c",
+    "value": [
+        false,
+        ""
+    ]
+}
