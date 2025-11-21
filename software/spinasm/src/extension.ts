@@ -93,7 +93,7 @@ async function pickBank(): Promise<number | undefined> {
 
 async function compileBank(bank: number): Promise<void> {
   await runOperation(async (project) => {
-    project.compileProgramToHex(bank);
+    await project.compileProgramToHex(bank);
 
     Logs.log(LogType.INFO, `Program ${bank} compilation successful`);
     vscode.window.showInformationMessage(`Program ${bank} compiled successfully!`);
@@ -111,7 +111,7 @@ async function uploadBank(bank: number): Promise<void> {
     const settings = loadSettings();
     const project = new Project(folder);
 
-    project.buildSetup(settings.compilerPath, settings.compilerArgs);
+    await project.buildSetup(settings.compilerPath, settings.compilerArgs);
     await performUpload(project, settings, bank);
 
     Logs.log(LogType.INFO, `Program ${bank} upload successful`);
@@ -133,8 +133,8 @@ async function compileAndUploadBank(bank: number): Promise<void> {
     const settings = loadSettings();
     const project = new Project(folder);
 
-    project.buildSetup(settings.compilerPath, settings.compilerArgs);
-    project.compileProgramToHex(bank);
+    await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+    await project.compileProgramToHex(bank);
     await performUpload(project, settings, bank);
 
     Logs.log(LogType.INFO, `Program ${bank} compiled and uploaded successfully`);
@@ -157,7 +157,7 @@ async function compileCurrentProgram(): Promise<void> {
       throw new Error("Current file is not a valid project program.");
     }
 
-    project.compileProgramToHex(currentProgram);
+    await project.compileProgramToHex(currentProgram);
 
     vscode.window.showInformationMessage(`Program ${currentProgram} compiled successfully!`);
   }, "Failed to compile current program");
@@ -174,7 +174,7 @@ async function uploadCurrentProgram(): Promise<void> {
     const settings = loadSettings();
     const project = new Project(folder);
 
-    project.buildSetup(settings.compilerPath, settings.compilerArgs);
+    await project.buildSetup(settings.compilerPath, settings.compilerArgs);
     const currentProgram = getCurrentBank(project);
 
     if (currentProgram === -1) {
@@ -201,14 +201,14 @@ async function compileAndUploadCurrentProgram(): Promise<void> {
     const settings = loadSettings();
     const project = new Project(folder);
 
-    project.buildSetup(settings.compilerPath, settings.compilerArgs);
+    await project.buildSetup(settings.compilerPath, settings.compilerArgs);
     const currentProgram = getCurrentBank(project);
 
     if (currentProgram === -1) {
       throw new Error("Current file is not a valid project program.");
     }
 
-    project.compileProgramToHex(currentProgram);
+    await project.compileProgramToHex(currentProgram);
     await performUpload(project, settings, currentProgram);
 
     vscode.window.showInformationMessage(`Program ${currentProgram} compiled and uploaded successfully!`);
@@ -228,8 +228,8 @@ async function compileAllPrograms(): Promise<void> {
       }
 
       const bank = project.getProgramBankByPath(programPath);
-      project.buildSetup(settings.compilerPath, settings.compilerArgs);
-      project.compileProgramToHex(bank);
+      await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+      await project.compileProgramToHex(bank);
     }
 
     vscode.window.showInformationMessage("All programs compiled successfully!");
@@ -246,8 +246,8 @@ async function compileAllProgramsToBin(): Promise<void> {
       }
 
       const bank = project.getProgramBankByPath(programPath);
-      project.buildSetup(settings.compilerPath, settings.compilerArgs);
-      project.compileProgramToBin(bank);
+      await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+      await project.compileProgramToBin(bank);
     }
 
     vscode.window.showInformationMessage("All programs compiled to BIN successfully!");
@@ -268,7 +268,7 @@ async function createProject(): Promise<void> {
   try {
     const project = new Project(folder);
 
-    project.createProjectStructure();
+    await project.createProjectStructure();
 
     Logs.log(LogType.INFO, "Project structure created successfully");
     vscode.window.showInformationMessage("Project created successfully!");
@@ -293,8 +293,8 @@ async function checkHardwareConnection(): Promise<void> {
     // Check compiler
     const project = new Project(folder);
 
-    project.buildSetup(settings.compilerPath, settings.compilerArgs);
-    project.checkCompiler();
+    await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+    await project.checkCompiler();
 
     // Check hardware
     programmer = new Programmer(settings.serialPort, settings.baudRate);
@@ -355,7 +355,7 @@ async function runOperation(
     const settings = loadSettings();
     const project = new Project(folder);
 
-    project.buildSetup(settings.compilerPath, settings.compilerArgs);
+    await project.buildSetup(settings.compilerPath, settings.compilerArgs);
     await operation(project, settings);
   }
   catch (error) {
