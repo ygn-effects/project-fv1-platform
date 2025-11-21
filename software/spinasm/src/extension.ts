@@ -381,7 +381,7 @@ async function performUpload(project: Project, settings: ProjectSettings, bank: 
       throw new Error(`No output file found for bank ${bank}`);
     }
 
-    const program = programmer.readIntelHexData(hexOutput);
+    const program = await programmer.readIntelHexData(hexOutput);
 
     await programmer.writeProgram(program.address, program.data);
     const programRead = await programmer.readProgram(program.address);
