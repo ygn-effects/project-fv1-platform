@@ -1,12 +1,10 @@
 import { DelimiterParser, SerialPort } from "serialport";
 import Logs, { LogType } from "./logs";
-import { randomBytes } from "crypto";
-import * as fs from 'fs';
+import * as fs from 'fs/promises';
 
 interface IntelHexData {
-  address: number;   // Start address from HEX file
-  offset: number;    // Current offset (for internal use)
-  data: Buffer;      // Data buffer (512 bytes)
+  address: number;   // Start address (Base address of the firmware)
+  data: Buffer;      // The program data
 }
 
 /**
@@ -26,13 +24,13 @@ enum OrderCode {
  * @brief Codes representing possible programmer responses.
  */
 enum ResponseCode {
-  Nok          = 0x06, ///< Operation failed
-  Ok           = 0x07, ///< Operation successful
-  Timeout      = 0x08, ///< Operation timed out
-  WriteError   = 0x09, ///< Write error
-  ReadError    = 0x0A, ///< Read error
-  ComError     = 0x0B, ///< Communication error
-  FramingError = 0x0C, ///< Framing error
+  Nok          = 0x06,
+  Ok           = 0x07,
+  Timeout      = 0x08,
+  WriteError   = 0x09,
+  ReadError    = 0x0A,
+  ComError     = 0x0B,
+  FramingError = 0x0C,
 }
 
 /**
@@ -46,19 +44,11 @@ export default class Programmer {
   private readonly endMarker = 0x1f;
   private lastCommandTimestamp = 0;
 
-  /**
-   * @brief Constructs a Programmer instance.
-   * @param port - Serial port name.
-   * @param baudRate - Communication baud rate.
-   */
   constructor(port: string, baudRate: number) {
     this.serialPort = new SerialPort({ path: port, baudRate, autoOpen: false });
     this.parser = this.serialPort.pipe(new DelimiterParser({ delimiter: Buffer.from([this.endMarker]) }));
   }
 
-    /**
-   * @brief Opens the serial port connection to the programmer.
-   */
   public async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.serialPort.open((err) => {
@@ -69,33 +59,25 @@ export default class Programmer {
 
         Logs.log(LogType.INFO, `Serial port ${this.serialPort.path} opened successfully.`);
 
-        // Allow 100 ms to discard initial noise from the serial buffer
-        const discardDuration = 100; // ms
-        const startTime = Date.now();
-
+        // Allow 100 ms to discard initial noise
+        const discardDuration = 100;
         const discardData = (data: Buffer) => {
-          Logs.log(LogType.INFO, `Discarding junk data during init: ${data.toString('hex')}`);
+          Logs.log(LogType.INFO, `Discarding junk data: ${data.toString('hex')}`);
         };
 
-        // Attach temporary listener to discard incoming junk data
         this.serialPort.on("data", discardData);
 
-        // After discard duration, remove the listener and proceed
         setTimeout(() => {
           this.serialPort.removeListener("data", discardData);
-          Logs.log(LogType.INFO, `Initial junk data discard completed (${Date.now() - startTime} ms).`);
           resolve();
         }, discardDuration);
       });
     });
   }
 
-  /**
-   * @brief Closes the serial port connection.
-   */
   public async disconnect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (!this.serialPort.isOpen) {
+      if (! this.serialPort.isOpen) {
         return resolve();
       }
 
@@ -104,87 +86,51 @@ export default class Programmer {
           Logs.log(LogType.ERROR, `Failed to close serial port: ${err.message}`);
           return reject(err);
         }
+
         Logs.log(LogType.INFO, `Serial port ${this.serialPort.path} closed successfully.`);
         resolve();
       });
     });
   }
 
-  /**
-   * @brief Sends a "RuThere" command to verify programmer connection.
-   * @returns True if programmer responds with OK.
-   */
   public async isProgrammerConnected(): Promise<boolean> {
     const response = await this.sendMessage(Buffer.from([OrderCode.RuThere]), 1);
-
-    switch (response[0]) {
-      case ResponseCode.Ok:
-        Logs.log(LogType.INFO, "Programmer is ready.");
-        return true;
-      case ResponseCode.Nok:
-        Logs.log(LogType.ERROR, "Programmer is not ready.");
-        return false;
-      default:
-        Logs.log(LogType.ERROR, `Unexpected response: ${response[0]}`);
-        return false;
-    }
+    return response[0] === ResponseCode.Ok;
   }
 
-  /**
-   * @brief Sends a "RuReady" command to check EEPROM readiness.
-   * @returns True if EEPROM responds with OK (ready).
-   */
   public async isEepromReady(): Promise<boolean> {
     const response = await this.sendMessage(Buffer.from([OrderCode.RuReady]), 1);
-
-    switch (response[0]) {
-      case ResponseCode.Ok:
-        Logs.log(LogType.INFO, "EEPROM is ready.");
-        return true;
-      case ResponseCode.Nok:
-        Logs.log(LogType.ERROR, "EEPROM is not ready.");
-        return false;
-      default:
-        Logs.log(LogType.ERROR, `Unexpected response: ${response[0]}`);
-        return false;
-    }
+    return response[0] === ResponseCode.Ok;
   }
 
-  /**
-   * @brief Reads a 512 bytes program at the given address
-   * @param address Program address
-   * @returns A 512 bytes buffer containing the program
-   */
   public async readProgram(address: number): Promise<Buffer> {
     let program = Buffer.alloc(512);
 
-    // Process the read by 32 bytes pages increment.
     for (let offset = 0; offset < 512; offset += 32) {
       const currentAddress = address + offset;
 
       if (! (await this.sendReadOrder())) {
-        throw new Error("Failed to send READ order to programmer.");
+        throw new Error("Failed to send READ order.");
       }
 
       if (! (await this.sendAddress(currentAddress))) {
-        throw new Error("Failed to send address 0 to programmer.");
+        throw new Error("Failed to send address.");
       }
 
-      let data = Buffer.alloc(32);
-      data = await this.readData();
+      let data = await this.readData();
       data.copy(program, offset, 0, 32);
     }
 
     return program;
   }
 
-  /**
-   * @brief Writes a 512 bytes program at the given address
-   * @param address Program address
-   * @param program A 512 bytes buffer containing the program to write
-   */
   public async writeProgram(address: number, program: Buffer): Promise<void> {
-    // Process the write by 32 bytes pages increment.
+    // Pad buffer to ensure we have full pages
+    if (program.length < 512) {
+        const padding = Buffer.alloc(512 - program.length, 0xFF); // 0xFF is standard EEPROM blank state
+        program = Buffer.concat([program, padding]);
+    }
+
     for (let offset = 0; offset < 512; offset += 32) {
       const currentAddress = address + offset;
 
@@ -192,15 +138,15 @@ export default class Programmer {
       program.copy(data, 0, offset, offset + 32);
 
       if (! (await this.sendWriteOrder())) {
-        throw new Error("Failed to send WRITE order to programmer.");
+        throw new Error("Failed to send WRITE order.");
       }
 
       if (! (await this.sendAddress(currentAddress))) {
-        throw new Error("Failed to send address 0 to programmer.");
+        throw new Error("Failed to send address.");
       }
 
       if (! (await this.sendWriteOrder())) {
-        throw new Error("Failed to send WRITE order to programmer.");
+        throw new Error("Failed to send WRITE order (2).");
       }
 
       if (! (await this.sendData(data))) {
@@ -208,165 +154,131 @@ export default class Programmer {
       }
 
       if (! (await this.sendWriteOrder())) {
-        throw new Error("Failed to send WRITE order to programmer.");
+        throw new Error("Failed to send WRITE order (3).");
       }
     }
   }
 
   /**
-   * @brief Reads a compiled Intel HEX program file and returns a 512-byte buffer to write to the EEPROM
-   * @param file Path of the HEX file to read
-   * @returns IntelHexData containing start address and data buffer
-   * @throws Error if file doesn't exist or parsing fails
+   * @brief Parses a standard Intel HEX file asynchronously.
+   * Validates checksums and handles variable record lengths.
    */
-  public readIntelHexData(file: any): IntelHexData {
-    if (!fs.existsSync(file)) {
+  public async readIntelHexData(file: string): Promise<IntelHexData> {
+    try {
+      await fs.access(file);
+    }
+    catch {
       throw new Error(`Unable to open file: ${file}`);
     }
 
-    try {
-      Logs.log(LogType.INFO, `Reading HEX file : ${file}.`);
+    Logs.log(LogType.INFO, `Reading HEX file: ${file}`);
+    const content = await fs.readFile(file, { encoding: 'utf8' });
+    const lines = content.split(/\r\n|\r|\n/);
 
-      const data = fs.readFileSync(file, { encoding: 'utf8' });
-      const lines = data.split(/\r\n|\r|\n/); // Split file contents by lines
+    const memoryMap = new Map<number, number>(); // Address -> Byte
+    let minAddress = Infinity;
+    let maxAddress = 0;
+    let lineNo = 0;
 
-      const result: IntelHexData = {
-        address: parseInt(lines[0].substr(3, 4), 16),
-        offset: 0,
-        data: Buffer.alloc(512),
-      };
+    for (const line of lines) {
+        lineNo++;
 
-      lines.forEach((line: string) => {
-        const startCode = line.charAt(0);
-        const byteCount = parseInt(line.substr(1, 2), 16);
-        const recordType = parseInt(line.substr(7, 2), 16);
-
-        if (startCode === ':' && byteCount === 4 && recordType === 0) { // Data record
-          for (let i = 9; i < 9 + byteCount * 2; i += 2) {
-            result.data[result.offset] = parseInt(line.substr(i, 2), 16);
-            result.offset++;
-          }
+        if (line.trim().length === 0) {
+          continue;
         }
-      });
 
-      return result;
+        if (line[0] !== ':') {
+          continue;
+        }
+
+        // Parse Record Structure: :LLAAAATT[DD...]CC
+        const byteCount = parseInt(line.substr(1, 2), 16);
+        const address = parseInt(line.substr(3, 4), 16);
+        const recordType = parseInt(line.substr(7, 2), 16);
+        const checksum = parseInt(line.substr(line.length - 2, 2), 16);
+
+        // 1. Checksum Validation
+        let calculatedChecksum = byteCount + (address >> 8) + (address & 0xFF) + recordType;
+
+        for (let i = 0; i < byteCount; i++) {
+          const byte = parseInt(line.substr(9 + (i * 2), 2), 16);
+          calculatedChecksum += byte;
+        }
+        // Checksum is two's complement of the LSB of the sum
+        if (((calculatedChecksum + checksum) & 0xFF) !== 0) {
+          throw new Error(`Checksum mismatch at line ${lineNo}`);
+        }
+
+        // 2. Handle Record Types
+        if (recordType === 0x00) { // Data Record
+          for (let i = 0; i < byteCount; i++) {
+            const byte = parseInt(line.substr(9 + (i * 2), 2), 16);
+            const absoluteAddress = address + i;
+            memoryMap.set(absoluteAddress, byte);
+
+            if (absoluteAddress < minAddress) {
+              minAddress = absoluteAddress;
+            }
+
+            if (absoluteAddress > maxAddress) {
+              maxAddress = absoluteAddress;
+            }
+          }
+        } else if (recordType === 0x01) { // EOF
+            break;
+        }
     }
-    catch (error) {
-      throw new Error(`Error reading Intel HEX file: ${(error as Error).message}`);
+
+    if (minAddress === Infinity) {
+      throw new Error("HEX file contained no valid data records.");
     }
+
+    // 3. Construct Buffer
+    // FV-1 Banks are typically fixed size, but we support variable for safety.
+    const size = maxAddress - minAddress + 1;
+    // Enforce 512 byte minimum for FV-1 bank size
+    const bufferSize = Math.max(512, size);
+    const buffer = Buffer.alloc(bufferSize, 0xFF); // Fill with 0xFF (Empty)
+
+    memoryMap.forEach((byte, addr) => {
+      buffer[addr - minAddress] = byte;
+    });
+
+    Logs.log(LogType.INFO, `Parsed HEX. Base Address: 0x${minAddress.toString(16)} | Size: ${size} bytes`);
+
+    return {
+      address: minAddress,
+      data: buffer
+    };
   }
 
-  /**
-   * @brief Sends a "Write" command to initiate a write operation.
-   * @returns True if the order is accepted.
-   */
+  // ... Serial Communication Helpers (SendWriteOrder, SendAddress, etc.) ...
+
   private async sendWriteOrder(): Promise<boolean> {
     const response = await this.sendMessage(Buffer.from([OrderCode.Write]), 1);
-
-    switch (response[0]) {
-      case ResponseCode.Ok:
-        Logs.log(LogType.INFO, "Write order accepted.");
-        return true;
-      case ResponseCode.Nok:
-        Logs.log(LogType.ERROR, "Write order rejected.");
-        return false;
-      default:
-        Logs.log(LogType.ERROR, `Unexpected response: ${response[0]}`);
-        return false;
-    }
+    return response[0] === ResponseCode.Ok;
   }
 
-  /**
-   * @brief Sends a "Read" command to initiate a read operation.
-   * @returns True if the order is accepted.
-   */
   private async sendReadOrder(): Promise<boolean> {
     const response = await this.sendMessage(Buffer.from([OrderCode.Read]), 1);
-
-    switch (response[0]) {
-      case ResponseCode.Ok:
-        Logs.log(LogType.INFO, "Read order accepted.");
-        return true;
-      case ResponseCode.Nok:
-        Logs.log(LogType.ERROR, "Read order rejected.");
-        return false;
-      default:
-        Logs.log(LogType.ERROR, `Unexpected response: ${response[0]}`);
-        return false;
-    }
+    return response[0] === ResponseCode.Ok;
   }
 
-  /**
-   * @brief Sends the address to write to or read from.
-   * @returns True if the address is accepted.
-   */
   private async sendAddress(address: number): Promise<boolean> {
     const response = await this.sendMessage(Buffer.from([(address >> 8) & 0xFF, address & 0xFF]), 1);
-
-    switch (response[0]) {
-      case ResponseCode.Ok:
-        Logs.log(LogType.INFO, "Address accepted.");
-        return true;
-      case ResponseCode.Nok:
-        Logs.log(LogType.ERROR, "Address rejected.");
-        return false;
-      default:
-        Logs.log(LogType.ERROR, `Unexpected response: ${response[0]}`);
-        return false;
-    }
+    return response[0] === ResponseCode.Ok;
   }
 
-  /**
-   * @brief Triggers a 32 bytes page read.
-   * @returns A 32 bytes buffer containing the data read.
-   */
   private async readData(): Promise<Buffer> {
     return await this.sendMessage(Buffer.from([OrderCode.Read]), 32);
   }
 
-  /**
-   * @brief Sends the data to write, typically a 32 bytes buffer
-   * @returns True if the write suceeded.
-   */
   private async sendData(data: Buffer): Promise<boolean> {
     const response = await this.sendMessage(data, 1);
-
-    switch (response[0]) {
-      case ResponseCode.Ok:
-        Logs.log(LogType.INFO, "Data accepted.");
-        return true;
-      case ResponseCode.Nok:
-        Logs.log(LogType.ERROR, "Data rejected.");
-        return false;
-      default:
-        Logs.log(LogType.ERROR, `Unexpected response: ${response[0]}`);
-        return false;
-    }
+    return response[0] === ResponseCode.Ok;
   }
 
-  private async sendEndOrder(): Promise<boolean> {
-    const message = Buffer.from([OrderCode.End]);
-    const response = await this.sendMessage(message, 1);
-
-    if (response[0] === ResponseCode.Ok) {
-      return true;
-    }
-    else if (response[0] === ResponseCode.Nok) {
-      return false;
-    }
-
-    return false;
-  }
-
-  /**
- * @brief Sends an arbitrary message to the programmer and awaits the response.
- * @param payload - Message payload without framing markers.
- * @param expectedResponseSize - Expected size of the response payload (excluding framing markers).
- * @param timeoutMs - Timeout in milliseconds for the response (default: 500ms).
- * @returns A Buffer containing the response payload.
- */
   private async sendMessage(payload: Buffer, expectedResponseSize: number, timeoutMs = 500): Promise<Buffer> {
-    // Ensure proper timing between commands
     const now = Date.now();
     const elapsed = now - this.lastCommandTimestamp;
     const requiredDelay = 10;
@@ -377,7 +289,6 @@ export default class Programmer {
 
     this.lastCommandTimestamp = Date.now();
 
-    // Prepare the complete message with start/end markers
     const message = Buffer.concat([
       Buffer.from([this.startMarker]),
       payload,
@@ -394,32 +305,29 @@ export default class Programmer {
       this.parser.once("data", (data: Buffer) => {
         clearTimeout(timeout);
 
-        // Note: DelimiterParser removes only the delimiter (endMarker),
-        // so data includes startMarker + payload. Thus expected length = payload + 1.
         if (data.length !== expectedResponseSize + 1 || data[0] !== this.startMarker) {
           Logs.log(LogType.ERROR,`Invalid response format: ${data.toString("hex")}`);
-
           return reject(new Error("Invalid response format from programmer."));
         }
-        else if (data.length === 2 && data[1] === ResponseCode.Timeout) {
-          Logs.log(LogType.ERROR, "Programmer timed out during operation.");
-          return reject(new Error("Programmer timed out during operation."));
-        }
-        else if (data.length === 2 && data[1] === ResponseCode.FramingError) {
-          Logs.log(LogType.ERROR, "Programmer reported a framing error on received message.");
-          return reject(new Error("Programmer reported a framing error on received message."));
-        }
-        else if (data.length === 2 && data[1] === ResponseCode.ComError) {
-          Logs.log(LogType.ERROR, "Programmer reported a communication error.");
-          return reject(new Error("Programmer reported a communication error."));
+
+        if (data.length === 2) {
+          const code = data[1];
+          if (code === ResponseCode.Timeout) {
+            return reject(new Error("Programmer timed out."));
+          }
+
+          if (code === ResponseCode.FramingError) {
+            return reject(new Error("Programmer framing error."));
+          }
+
+          if (code === ResponseCode.ComError) {
+            return reject(new Error("Programmer communication error."));
+          }
         }
 
-        // Extract the response payload (excluding markers)
-        const responsePayload = data.slice(1, data.length);
-        resolve(responsePayload);
+        resolve(data.slice(1));
       });
 
-      // Send message
       this.serialPort.write(message, (err) => {
         if (err) {
           clearTimeout(timeout);
@@ -431,38 +339,5 @@ export default class Programmer {
         }
       });
     });
-  }
-
-  /**
-   * @brief Generates a 512 bytes array with random bytes for testing purpose.
-   * @returns A 512 bytes array containing a random program.
-   */
-  private generateRandomProgram(): Buffer {
-    const buffer = randomBytes(512);
-
-    // Iterate through the buffer and replace unwanted values
-    for (let i = 0; i < buffer.length; i++) {
-      while (buffer[i] === 30 || buffer[i] === 31) {
-        buffer[i] = randomBytes(1)[0];
-      }
-    }
-
-    return buffer;
-  }
-
-  /**
-   * @brief Test method.
-   */
-  async test(): Promise<void> {
-    const programWrite = this.generateRandomProgram();
-    Logs.log(LogType.INFO, `Program to write : ${programWrite.toString("hex")}`);
-    await this.writeProgram(0, programWrite);
-
-    let programRead = Buffer.alloc(512);
-    programRead = await this.readProgram(0);
-    Logs.log(LogType.INFO, `Program read : ${programRead.toString("hex")}`);
-
-    const result = Buffer.compare(programWrite, programRead);
-    Logs.log(LogType.INFO, `Comparison result : ${result}`);
   }
 }
