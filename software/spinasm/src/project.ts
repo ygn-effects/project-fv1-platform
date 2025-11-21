@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as fsPromises from "fs/promises";
 import * as path from "path";
 import * as cp from "child_process";
 import Logs, { LogType } from "./logs";
@@ -29,22 +30,25 @@ export default class Project {
   /**
    * @brief Sets the compiler configuration for the build session.
    */
-  public buildSetup(compiler: string, compilerArgs: string[]): void {
+  public async buildSetup(compiler: string, compilerArgs: string[]): Promise<void> {
     this.compiler = compiler;
     this.compilerArguments = [...compilerArgs];
 
     Logs.log(LogType.INFO, `Compiler set to: ${compiler}`);
     Logs.log(LogType.INFO, `Compiler args: ${compilerArgs.join(" ")}`);
 
-    this.getAvailablePrograms();
+    await this.getAvailablePrograms();
   }
 
   /**
    * @brief Validates the compiler's functionality.
    */
-  public checkCompiler(): void {
-    if (!this.compiler || !fs.existsSync(this.compiler)) {
-      throw new Error(`Compiler path invalid or unset: ${this.compiler}`);
+  public async checkCompiler(): Promise<void> {
+    try {
+      await fsPromises.access(this.compiler, fs.constants.X_OK);
+    }
+    catch {
+      throw new Error(`Compiler path invalid or not executable: ${this.compiler}`);
     }
 
     Logs.log(LogType.INFO, `Compiler found at ${this.compiler}`);
@@ -53,7 +57,7 @@ export default class Project {
   /**
    * @brief Creates project bank structure (folders 0-7).
    */
-  public createProjectStructure(): void {
+  public async createProjectStructure(): Promise<void> {
     const programContent = "; Blank SpinASM program";
 
     // Create bank folders and default programs
@@ -62,14 +66,24 @@ export default class Project {
       const file = path.join(folder, `${i}_programName.spn`);
 
       try {
-        if (!fs.existsSync(folder)) {
+        // Check if folder exists
+        try {
+          await fsPromises.access(folder);
+        }
+        catch {
           Logs.log(LogType.INFO, `Creating folder: ${folder}`);
-          fs.mkdirSync(folder, { recursive: true });
+
+          await fsPromises.mkdir(folder, { recursive: true });
         }
 
-        if (!fs.existsSync(file)) {
+        // Check if file exists
+        try {
+          await fsPromises.access(file);
+        }
+        catch {
           Logs.log(LogType.INFO, `Creating file: ${file}`);
-          fs.writeFileSync(file, programContent);
+
+          await fsPromises.writeFile(file, programContent);
         }
       }
       catch (error) {
@@ -79,20 +93,20 @@ export default class Project {
 
     // Create output directory
     try {
-      if (!fs.existsSync(this.outputFolder)) {
-        fs.mkdirSync(this.outputFolder, { recursive: true });
-      }
+      await fsPromises.mkdir(this.outputFolder, { recursive: true });
     }
     catch (error) {
-      throw new Error(`Could not create output folder: ${(error as Error).message}`);
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') {
+        throw new Error(`Could not create output folder: ${(error as Error).message}`);
+      }
     }
   }
 
   /**
    * @brief Compiles the specified program index into a `.hex` file.
    */
-  public compileProgramToHex(program: number): void {
-    this.removeHexProgram(this.outputs[program]);
+  public async compileProgramToHex(program: number): Promise<void> {
+    await this.removeHexProgram(this.outputs[program]);
 
     if (!this.programs[program]) {
       throw new Error(`Program at index ${program} does not exist.`);
@@ -100,8 +114,7 @@ export default class Project {
 
     // Clone args to avoid mutating the class state permanently
     const args = [...this.compilerArguments, "-p", program.toString(), this.programs[program]!, this.outputs[program]];
-
-    const result = this.runCompiler(args);
+    const result = await this.runCompiler(args);
 
     if (result !== 0) {
       throw new Error(`Compilation failed for program ${program} with return code: ${result}`);
@@ -113,14 +126,14 @@ export default class Project {
   /**
    * @brief Compiles the specified program index into a `.bin` file.
    */
-  public compileProgramToBin(program: number): void {
+  public async compileProgramToBin(program: number): Promise<void> {
     if (!this.programs[program]) {
       throw new Error(`Program at index ${program} does not exist.`);
     }
 
     const args = [...this.compilerArguments, "-p", program.toString(), this.programs[program]!, this.outputBinFile];
+    const result = await this.runCompiler(args);
 
-    const result = this.runCompiler(args);
     if (result !== 0) {
       throw new Error(`Compilation failed for program ${program} with return code: ${result}`);
     }
@@ -129,46 +142,73 @@ export default class Project {
   }
 
   /**
-   * @brief Runs the compiler process synchronously.
+   * @brief Runs the compiler process asynchronously.
    */
-  private runCompiler(args: string[]): number {
+  private runCompiler(args: string[]): Promise<number> {
     Logs.log(LogType.INFO, `Running: ${this.compiler} ${args.join(" ")}`);
 
-    const output = cp.spawnSync(this.compiler, args, { encoding: "utf8" });
+    return new Promise((resolve, reject) => {
+      const process = cp.spawn(this.compiler, args);
 
-    if (output.stdout) {
-      Logs.log(LogType.INFO, `Compiler stdout: ${output.stdout}`);
-    }
+      let stderr = "";
+      let stdout = "";
 
-    if (output.stderr) {
-      // Differentiate between actual errors and warnings based on return code
-      if (output.status === 0) {
-        Logs.log(LogType.INFO, `Compiler warning: ${output.stderr}`);
+      if (process.stdout) {
+        process.stdout.on('data', (data) => {
+          stdout += data.toString();
+        });
       }
-      else {
-        Logs.log(LogType.ERROR, `Compiler stderr: ${output.stderr}`);
-      }
-    }
 
-    return output.status ?? 1;
+      if (process.stderr) {
+        process.stderr.on('data', (data) => {
+          stderr += data.toString();
+        });
+      }
+
+      process.on('error', (err) => {
+        Logs.log(LogType.ERROR, `Failed to start compiler: ${err.message}`);
+        reject(err);
+      });
+
+      process.on('close', (code) => {
+        if (stdout) {
+          Logs.log(LogType.INFO, `Compiler stdout: ${stdout}`);
+        }
+
+        if (stderr) {
+          if (code === 0) {
+            Logs.log(LogType.INFO, `Compiler warning: ${stderr}`);
+          }
+          else {
+            Logs.log(LogType.ERROR, `Compiler stderr: ${stderr}`);
+          }
+        }
+
+        resolve(code ?? 1);
+      });
+    });
   }
 
-  private getAvailablePrograms(): void {
+  private async getAvailablePrograms(): Promise<void> {
     this.programs = [];
     this.outputs = [];
 
     for (let i = 0; i < 8; i++) {
       const currentFolder = path.join(this.rootFolder, `bank_${i}`);
 
-      if(fs.existsSync(currentFolder)) {
-        const programFile = fs.readdirSync(currentFolder).find(file => /^[0-7].*\.spn$/.test(file));
+      try {
+        await fsPromises.access(currentFolder);
+        const files = await fsPromises.readdir(currentFolder);
+        const programFile = files.find(file => /^[0-7].*\.spn$/.test(file));
 
         if (programFile) {
           this.programs[i] = path.join(currentFolder, programFile);
           this.outputs[i] = path.join(this.outputFolder, `${path.parse(programFile).name}.hex`);
-
           continue;
         }
+      }
+      catch {
+        // Folder doesn't exist or can't be read
       }
 
       this.programs[i] = null;
@@ -176,9 +216,19 @@ export default class Project {
     }
   }
 
-  public removeHexProgram(path: any): void {
-    if (fs.existsSync(path)) {
-      fs.unlinkSync(path);
+  public async removeHexProgram(path: any): Promise<void> {
+    if (! path) {
+      return;
+    }
+
+    try {
+      await fsPromises.unlink(path);
+    }
+    catch (error) {
+      // Ignore if file missing
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw error;
+      }
     }
   }
 
