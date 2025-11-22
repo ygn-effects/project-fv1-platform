@@ -97,7 +97,7 @@ async function compileBank(bank: number): Promise<void> {
 
     Logs.log(LogType.INFO, `Program ${bank} compilation successful`);
     vscode.window.showInformationMessage(`Program ${bank} compiled successfully!`);
-  }, "Compilation Failed");
+  }, "Compilation Failed", `Compiling Bank ${bank}...`);
 }
 
 async function uploadBank(bank: number): Promise<void> {
@@ -107,42 +107,22 @@ async function uploadBank(bank: number): Promise<void> {
     return;
   }
 
-  try {
-    const settings = loadSettings();
-    const project = new Project(folder);
-
-    await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+  await runOperation(async (project, settings) => {
     await performUpload(project, settings, bank);
 
     Logs.log(LogType.INFO, `Program ${bank} upload successful`);
     vscode.window.showInformationMessage(`Program ${bank} uploaded successfully!`);
-  }
-  catch (error) {
-    handleError(error, `Failed to upload program ${bank}`);
-  }
+  }, `Failed to upload program ${bank}`, `Uploading Bank ${bank}...`);
 }
 
 async function compileAndUploadBank(bank: number): Promise<void> {
-  const folder = await getWorkspaceFolder();
-
-  if (!folder) {
-    return;
-  }
-
-  try {
-    const settings = loadSettings();
-    const project = new Project(folder);
-
-    await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+  await runOperation(async (project, settings) => {
     await project.compileProgramToHex(bank);
     await performUpload(project, settings, bank);
 
     Logs.log(LogType.INFO, `Program ${bank} compiled and uploaded successfully`);
     vscode.window.showInformationMessage(`Program ${bank} compiled and uploaded successfully!`);
-  }
-  catch (error) {
-    handleError(error, `Failed to compile and upload program ${bank}`);
-  }
+  }, `Failed to compile and upload program ${bank}`, `Compiling & Uploading Bank ${bank}...`);
 }
 
 // =============================================================================
@@ -160,21 +140,11 @@ async function compileCurrentProgram(): Promise<void> {
     await project.compileProgramToHex(currentProgram);
 
     vscode.window.showInformationMessage(`Program ${currentProgram} compiled successfully!`);
-  }, "Failed to compile current program");
+  }, "Failed to compile current program", "Compiling current program...");
 }
 
 async function uploadCurrentProgram(): Promise<void> {
-  const folder = await getWorkspaceFolder();
-
-  if (!folder) {
-    return;
-  }
-
-  try {
-    const settings = loadSettings();
-    const project = new Project(folder);
-
-    await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+  await runOperation(async (project, settings) => {
     const currentProgram = getCurrentBank(project);
 
     if (currentProgram === -1) {
@@ -182,26 +152,12 @@ async function uploadCurrentProgram(): Promise<void> {
     }
 
     await performUpload(project, settings, currentProgram);
-
     vscode.window.showInformationMessage(`Program ${currentProgram} uploaded successfully!`);
-  }
-  catch (error) {
-    handleError(error, "Failed to upload current program");
-  }
+  }, "Failed to upload current program", "Uploading Current Program...");
 }
 
 async function compileAndUploadCurrentProgram(): Promise<void> {
-  const folder = await getWorkspaceFolder();
-
-  if (!folder) {
-    return;
-  }
-
-  try {
-    const settings = loadSettings();
-    const project = new Project(folder);
-
-    await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+  await runOperation(async (project, settings) => {
     const currentProgram = getCurrentBank(project);
 
     if (currentProgram === -1) {
@@ -210,12 +166,8 @@ async function compileAndUploadCurrentProgram(): Promise<void> {
 
     await project.compileProgramToHex(currentProgram);
     await performUpload(project, settings, currentProgram);
-
     vscode.window.showInformationMessage(`Program ${currentProgram} compiled and uploaded successfully!`);
-  }
-  catch (error) {
-    handleError(error, "Failed to compile and upload current program");
-  }
+  }, "Failed to compile and upload current program", "Compiling & Uploading Current Program...");
 }
 
 async function compileAllPrograms(): Promise<void> {
@@ -233,7 +185,7 @@ async function compileAllPrograms(): Promise<void> {
     }
 
     vscode.window.showInformationMessage("All programs compiled successfully!");
-  }, "Failed to compile all programs");
+  }, "Failed to compile all programs", "Compiling all programs...");
 }
 
 async function compileAllProgramsToBin(): Promise<void> {
@@ -251,7 +203,7 @@ async function compileAllProgramsToBin(): Promise<void> {
     }
 
     vscode.window.showInformationMessage("All programs compiled to BIN successfully!");
-  }, "Failed to compile all programs");
+  }, "Failed to compile all programs", "Compiling all programs to BIN...");
 }
 
 // =============================================================================
@@ -343,24 +295,29 @@ async function showConfig(): Promise<void> {
 
 async function runOperation(
   operation: (project: Project, settings: ProjectSettings) => Promise<void>,
-  errorMessage: string
+  errorMessage: string,
+  progressTitle: string
 ): Promise<void> {
   const folder = await getWorkspaceFolder();
-
   if (!folder) {
     return;
   }
 
-  try {
-    const settings = loadSettings();
-    const project = new Project(folder);
-
-    await project.buildSetup(settings.compilerPath, settings.compilerArgs);
-    await operation(project, settings);
-  }
-  catch (error) {
-    handleError(error, errorMessage);
-  }
+  await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: progressTitle,
+    cancellable: false
+  }, async (progress) => {
+    try {
+        const settings = loadSettings();
+        const project = new Project(folder);
+        await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+        await operation(project, settings);
+    }
+    catch (error) {
+        handleError(error, errorMessage);
+    }
+  });
 }
 
 async function performUpload(project: Project, settings: ProjectSettings, bank: number): Promise<void> {
