@@ -260,6 +260,10 @@ void Hardware::processWriteMessage() {
 }
 
 void Hardware::processEndMessage() {
+  digitalWrite(m_fv1ResetPin, LOW);
+  delay(50);
+  digitalWrite(m_fv1ResetPin, HIGH);
+
   m_context.reset();
   sendOrder(Message::kOk);
 
@@ -269,6 +273,9 @@ void Hardware::processEndMessage() {
 void Hardware::setup() {
   eeprom.setup();
   programmer.setup();
+
+  portMode(m_fv1ResetPin, OUTPUT);
+  digitalWrite(m_fv1ResetPin, HIGH);
 }
 
 void Hardware::process() {
