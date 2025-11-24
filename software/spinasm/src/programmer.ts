@@ -157,6 +157,10 @@ export default class Programmer {
         throw new Error("Failed to send WRITE order (3).");
       }
     }
+
+    if (! (await this.sendEndOrder())) {
+      throw new Error("Failed to send END order.");
+    }
   }
 
   /**
@@ -266,6 +270,11 @@ export default class Programmer {
 
   private async sendAddress(address: number): Promise<boolean> {
     const response = await this.sendMessage(Buffer.from([(address >> 8) & 0xFF, address & 0xFF]), 1);
+    return response[0] === ResponseCode.Ok;
+  }
+
+  private async sendEndOrder(): Promise<boolean> {
+    const response = await this.sendMessage(Buffer.from([OrderCode.End]), 1);
     return response[0] === ResponseCode.Ok;
   }
 
