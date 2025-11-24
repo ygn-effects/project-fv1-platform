@@ -69,6 +69,16 @@ export default class Logs {
   }
 
   /**
+   * @brief Forces the output channel to come into focus.
+   * Useful when an error occurs so the user sees the logs immediately.
+   */
+  public static show(): void {
+    if (this.logChannel) {
+      this.logChannel.show(true); // true = preserve focus (don't steal keyboard focus)
+    }
+  }
+
+  /**
    * @brief Disposes the logging channel resources.
    *
    * Should be called during the extension deactivation phase to free resources.

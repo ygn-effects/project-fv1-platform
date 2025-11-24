@@ -390,6 +390,8 @@ function handleError(error: unknown, message: string): void {
 
   Logs.log(LogType.ERROR, `${message}: ${errorMessage}`);
   vscode.window.showErrorMessage(`${message}: ${errorMessage}`);
+
+  Logs.show();
 }
 
 async function getWorkspaceFolder(): Promise<string | null> {
