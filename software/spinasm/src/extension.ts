@@ -27,6 +27,8 @@ export function activate(context: vscode.ExtensionContext): void {
     // Batch Operations
     vscode.commands.registerCommand("spinasm.compileAllPrograms", compileAllPrograms),
     vscode.commands.registerCommand("spinasm.compileAllProgramsToBin", compileAllProgramsToBin),
+    vscode.commands.registerCommand("spinasm.uploadAllPrograms", uploadAllPrograms),
+    vscode.commands.registerCommand("spinasm.compileAndUploadAllPrograms", compileAndUploadAllPrograms),
 
     // Generic Bank Operations (Prompts user for bank 0-7)
     vscode.commands.registerCommand("spinasm.compileBank", async () => {
@@ -284,6 +286,109 @@ async function compileAllProgramsToBin(): Promise<void> {
 
     vscode.window.showInformationMessage("All programs compiled to BIN successfully!");
   }, "Failed to compile all programs", "Compiling all programs to BIN...");
+}
+
+async function uploadAllPrograms(): Promise<void> {
+  await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: "Uploading all programs...",
+    cancellable: false
+  }, async (progress) => {
+    const folder = await getWorkspaceFolder();
+    if (!folder) {
+      return;
+    }
+
+    try {
+      const settings = loadSettings();
+      const project = new Project(folder);
+      await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+
+      const programs = project.getAllPrograms();
+      const programsToUpload = programs.filter(p => p !== null);
+      const totalPrograms = programsToUpload.length;
+
+      let uploadedCount = 0;
+
+      for (const programPath of programs) {
+        if(!programPath) {
+          continue;
+        }
+
+        const bank = project.getProgramBankByPath(programPath);
+
+        progress.report({
+          increment: (100 / totalPrograms),
+          message: `Uploading bank ${bank}... (${uploadedCount + 1}/${totalPrograms})`
+        });
+
+        await performUpload(project, settings, bank);
+        uploadedCount++;
+
+        Logs.log(LogType.INFO, `Bank ${bank} uploaded successfully (${uploadedCount}/${totalPrograms})`);
+      }
+
+      vscode.window.showInformationMessage(`All programs uploaded successfully! (${uploadedCount} banks)`);
+    }
+    catch (error) {
+      handleError(error, "Failed to upload all programs");
+    }
+  });
+}
+
+async function compileAndUploadAllPrograms(): Promise<void> {
+  await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: "Compiling and uploading all programs...",
+    cancellable: false
+  }, async (progress) => {
+    const folder = await getWorkspaceFolder();
+    if (!folder) {
+      return;
+    }
+
+    try {
+      const settings = loadSettings();
+      const project = new Project(folder);
+      await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+
+      const programs = project.getAllPrograms();
+      const programsToProcess = programs.filter(p => p !== null);
+      const totalPrograms = programsToProcess.length;
+
+      let processedCount = 0;
+
+      for (const programPath of programs) {
+        if(!programPath) {
+          continue;
+        }
+
+        const bank = project.getProgramBankByPath(programPath);
+
+        progress.report({
+          increment: (100 / (totalPrograms * 2)),
+          message: `Compiling bank ${bank}... (${processedCount + 1}/${totalPrograms})`
+        });
+
+        await project.compileProgramToHex(bank);
+
+        progress.report({
+          increment: (100 / (totalPrograms * 2)),
+          message: `Uploading bank ${bank}... (${processedCount + 1}/${totalPrograms})`
+        });
+
+        await performUpload(project, settings, bank);
+        processedCount++;
+
+        Logs.log(LogType.INFO, `Bank ${bank} compiled and uploaded (${processedCount}/${totalPrograms})`);
+      }
+
+      vscode.window.showInformationMessage(`All programs compiled and uploaded successfully! (${processedCount} banks)`);
+    }
+    catch (error) {
+      handleError(error, "Failed to compile and upload all programs");
+    }
+  });
 }
 
 // =============================================================================

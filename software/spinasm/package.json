@@ -59,14 +59,6 @@
         "title": "SpinASM: Show Configuration"
       },
       {
-        "command": "spinasm.selectSerialPort",
-        "title": "SpinASM: Select Serial Port..."
-      },
-      {
-        "command": "spinasm.autoDetectProgrammer",
-        "title": "SpinASM: Auto-Detect Programmer"
-      },
-      {
         "command": "spinasm.compileBank",
         "title": "SpinASM: Compile Specific Bank..."
       },
@@ -89,6 +81,14 @@
       {
         "command": "spinasm.compileAllProgramsToBin",
         "title": "SpinASM: Compile all programs to .bin"
+      },
+      {
+        "command": "spinasm.uploadAllPrograms",
+        "title": "SpinASM: Upload all programs"
+      },
+      {
+        "command": "spinasm.compileAndUploadAllPrograms",
+        "title": "SpinASM: Compile & Upload all programs"
       },
       {
         "command": "spinasm.uploadCurrentProgram",
