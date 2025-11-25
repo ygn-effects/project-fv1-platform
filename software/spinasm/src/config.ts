@@ -47,6 +47,15 @@ export default class Config {
   }
 
   /**
+   * @brief Retrieves the compile-on-save setting.
+   */
+  public static getCompileOnSave(): boolean {
+    const config = vscode.workspace.getConfiguration("spinasm");
+
+    return config.get<boolean>("editor.compileOnSave", false);
+  }
+
+  /**
    * @brief Updates the serial port configuration.
    * @param port - The serial port path to save.
    * @param global - If true, saves to user settings; otherwise workspace settings.
