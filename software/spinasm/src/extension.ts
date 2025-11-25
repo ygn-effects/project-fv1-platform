@@ -4,16 +4,47 @@ import Config from "./config";
 import Logs, { LogType } from "./logs";
 import Utils from "./utils";
 import Programmer from "./programmer";
+import * as path from "path";
+import * as fs from "fs";
+
+// Global status bar item
+let bankStatusBar: vscode.StatusBarItem;
 
 export function activate(context: vscode.ExtensionContext): void {
   Logs.createChannel();
   Logs.log(LogType.INFO, "Extension activated");
+
+  // Create status bar item
+  bankStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+  bankStatusBar.command = "spinasm.showBankStatus";
+  context.subscriptions.push(bankStatusBar);
+
+  // Register file system watcher for compile-on-save
+  const watcher = vscode.workspace.createFileSystemWatcher("**/*.spn");
+  context.subscriptions.push(watcher);
+
+  watcher.onDidChange(async (uri) => {
+    if (Config.getCompileOnSave()) {
+      await handleCompileOnSave(uri);
+    }
+  });
+
+  // Update status bar when active editor changes
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(() => updateBankStatusBar())
+  );
+
+  // Update status bar when document changes (for initial load)
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument(() => updateBankStatusBar())
+  );
 
   context.subscriptions.push(
     // Global / Project Management
     vscode.commands.registerCommand("spinasm.createProject", createProject),
     vscode.commands.registerCommand("spinasm.checkProjectSettings", checkHardwareConnection),
     vscode.commands.registerCommand("spinasm.showSerialConfig", showConfig),
+    vscode.commands.registerCommand("spinasm.showBankStatus", showBankStatus),
 
     // Serial Port Detection
     vscode.commands.registerCommand("spinasm.selectSerialPort", selectSerialPort),
@@ -66,6 +97,175 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {
   Logs.disposeChannel();
+}
+
+// =============================================================================
+// STATUS BAR MANAGEMENT
+// =============================================================================
+
+/**
+ * @brief Updates the status bar with current bank compilation status.
+ */
+async function updateBankStatusBar(): Promise<void> {
+  const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+  if (!folder) {
+    bankStatusBar.hide();
+    return;
+  }
+
+  try {
+    const project = new Project(folder);
+    const compilerPath = Config.getCompilerPath();
+    const compilerArgs = Config.getCompilerArgs();
+
+    if (!compilerPath) {
+      bankStatusBar.hide();
+      return;
+    }
+
+    await project.buildSetup(compilerPath, compilerArgs);
+    const programs = project.getAllPrograms();
+
+    let statusText = "SpinASM: ";
+
+    for (let i = 0; i < 8; i++) {
+      if (programs[i]) {
+        // Check if hex file exists
+        const hexFile = project.getOutput(i);
+        const isCompiled = hexFile && fs.existsSync(hexFile);
+        statusText += isCompiled ? `[${i}✓]` : `[${i}✗]`;
+      } else {
+        statusText += `[${i}-]`;
+      }
+    }
+
+    bankStatusBar.text = statusText;
+    bankStatusBar.tooltip = "Click to view bank details";
+    bankStatusBar.show();
+  }
+  catch (error) {
+    // If there's an error, just hide the status bar
+    bankStatusBar.hide();
+  }
+}
+
+/**
+ * @brief Shows detailed information about bank compilation status.
+ */
+async function showBankStatus(): Promise<void> {
+  const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+  if (!folder) {
+    vscode.window.showInformationMessage("No workspace folder open.");
+    return;
+  }
+
+  try {
+    const project = new Project(folder);
+    const compilerPath = Config.getCompilerPath();
+    const compilerArgs = Config.getCompilerArgs();
+
+    if (!compilerPath) {
+      vscode.window.showWarningMessage("Compiler path not configured.");
+      return;
+    }
+
+    await project.buildSetup(compilerPath, compilerArgs);
+    const programs = project.getAllPrograms();
+
+    const items = [];
+
+    for (let i = 0; i < 8; i++) {
+      let status = "";
+      let detail = "";
+
+      if (programs[i]) {
+        const hexFile = project.getOutput(i);
+        const isCompiled = hexFile && fs.existsSync(hexFile);
+        const fileName = path.basename(programs[i]!);
+
+        if (isCompiled) {
+          status = `✓ Bank ${i}: ${fileName}`;
+          detail = "Compiled and ready to upload";
+        }
+        else {
+          status = `✗ Bank ${i}: ${fileName}`;
+          detail = "Not compiled yet";
+        }
+      }
+      else {
+        status = `- Bank ${i}: Empty`;
+        detail = "No program file";
+      }
+
+      items.push({
+        label: status,
+        detail: detail,
+        bank: i,
+        hasProgram: !!programs[i]
+      });
+    }
+
+    const selection = await vscode.window.showQuickPick(items, {
+      placeHolder: "Bank Status - Select a bank to open its file"
+    });
+
+    if (selection && selection.hasProgram) {
+      const programPath = programs[selection.bank];
+
+      if (programPath) {
+        const doc = await vscode.workspace.openTextDocument(programPath);
+        await vscode.window.showTextDocument(doc);
+      }
+    }
+  }
+  catch (error) {
+    handleError(error, "Failed to show bank status");
+  }
+}
+
+// =============================================================================
+// COMPILE ON SAVE
+// =============================================================================
+
+/**
+ * @brief Handles automatic compilation when a .spn file is saved.
+ */
+async function handleCompileOnSave(uri: vscode.Uri): Promise<void> {
+  const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
+
+  if (!folder) {
+    return;
+  }
+
+  try {
+    const project = new Project(folder);
+    const compilerPath = Config.getCompilerPath();
+    const compilerArgs = Config.getCompilerArgs();
+
+    if (!compilerPath) {
+      return; // Silently skip if compiler not configured
+    }
+
+    await project.buildSetup(compilerPath, compilerArgs);
+    const bank = project.getProgramBankByPath(uri.fsPath);
+
+    if (bank === -1) {
+      return; // Not a valid project program
+    }
+
+    Logs.log(LogType.INFO, `Compile-on-save: Compiling bank ${bank}...`);
+    await project.compileProgramToHex(bank);
+    Logs.log(LogType.INFO, `Compile-on-save: Bank ${bank} compiled successfully`);
+
+    // Update status bar after successful compilation
+    await updateBankStatusBar();
+
+  } catch (error) {
+    // Log error but don't show intrusive notifications for auto-compile
+    Logs.log(LogType.ERROR, `Compile-on-save failed: ${(error as Error).message}`);
+  }
 }
 
 // =============================================================================
