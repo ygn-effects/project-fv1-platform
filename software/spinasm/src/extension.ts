@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import Project from "./project";
 import Config from "./config";
 import Logs, { LogType } from "./logs";
+import Utils from "./utils";
 import Programmer from "./programmer";
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -13,6 +14,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("spinasm.createProject", createProject),
     vscode.commands.registerCommand("spinasm.checkProjectSettings", checkHardwareConnection),
     vscode.commands.registerCommand("spinasm.showSerialConfig", showConfig),
+
+    // Serial Port Detection
+    vscode.commands.registerCommand("spinasm.selectSerialPort", selectSerialPort),
+    vscode.commands.registerCommand("spinasm.autoDetectProgrammer", autoDetectProgrammer),
 
     // Current File Operations
     vscode.commands.registerCommand("spinasm.compileCurrentProgram", compileCurrentProgram),
@@ -85,6 +90,81 @@ async function pickBank(): Promise<number | undefined> {
   });
 
   return selection ? selection.bankId : undefined;
+}
+
+// =============================================================================
+// SERIAL PORT DETECTION
+// =============================================================================
+
+/**
+ * @brief Presents a list of available serial ports for manual selection.
+ */
+async function selectSerialPort(): Promise<void> {
+  try {
+    const ports = await Utils.listSerialPorts();
+
+    if (ports.length === 0) {
+      vscode.window.showErrorMessage("No serial ports detected on this system.");
+      return;
+    }
+
+    const items = ports.map((port: any) => ({
+      label: port.path,
+      description: port.manufacturer || "",
+      detail: `VID: ${port.vendorId || 'N/A'} | PID: ${port.productId || 'N/A'}`,
+      path: port.path
+    }));
+
+    const selection = await vscode.window.showQuickPick(items, {
+      placeHolder: "Select serial port for FV-1 programmer"
+    });
+
+    if (selection) {
+      await Config.setSerialPort(selection.path);
+
+      Logs.log(LogType.INFO, `Serial port set to: ${selection.path}`);
+      vscode.window.showInformationMessage(`Serial port set to: ${selection.path}`);
+    }
+  }
+  catch (error) {
+    handleError(error, "Failed to list serial ports");
+  }
+}
+
+/**
+ * @brief Automatically detects the FV-1 programmer by probing available ports.
+ */
+async function autoDetectProgrammer(): Promise<void> {
+  await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: "Detecting FV-1 programmer...",
+    cancellable: false
+  }, async () => {
+    try {
+      const baudRate = Config.getBaudRate();
+      const detectedPort = await require('./utils').default.detectProgrammer(baudRate);
+
+      if (detectedPort) {
+        await Config.setSerialPort(detectedPort);
+
+        Logs.log(LogType.INFO, `Programmer detected at: ${detectedPort}`);
+        vscode.window.showInformationMessage(`Programmer detected and configured: ${detectedPort}`);
+      }
+      else {
+        vscode.window.showWarningMessage(
+          "Could not auto-detect programmer. Please select port manually.",
+          "Select Port"
+        ).then(action => {
+          if (action === "Select Port") {
+            vscode.commands.executeCommand("spinasm.selectSerialPort");
+          }
+        });
+      }
+    }
+    catch (error) {
+      handleError(error, "Failed to detect programmer");
+    }
+  });
 }
 
 // =============================================================================
