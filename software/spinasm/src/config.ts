@@ -47,6 +47,16 @@ export default class Config {
   }
 
   /**
+   * @brief Updates the serial port configuration.
+   * @param port - The serial port path to save.
+   * @param global - If true, saves to user settings; otherwise workspace settings.
+   */
+  public static async setSerialPort(port: string, global: boolean = false): Promise<void> {
+    const config = vscode.workspace.getConfiguration("spinasm");
+    await config.update("programmer.serialPort", port, global);
+  }
+
+  /**
    * @brief Checks if the essential configuration is missing.
    * @returns True if compiler path or serial port is unset.
    */
