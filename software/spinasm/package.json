@@ -64,6 +64,10 @@
         "title": "SpinASM: Show Configuration"
       },
       {
+        "command": "spinasm.showBankStatus",
+        "title": "SpinASM: Show Bank Status"
+      },
+      {
         "command": "spinasm.compileBank",
         "title": "SpinASM: Compile Specific Bank..."
       },
@@ -129,7 +133,55 @@
         "language": "spinasm",
         "path": "./snippets/spinasm.json"
       }
-    ]
+    ],
+    "semanticTokenTypes": [
+    {
+      "id": "variable",
+      "superType": "variable",
+      "description": "User-defined register aliases"
+    },
+    {
+      "id": "property",
+      "superType": "property",
+      "description": "Memory buffer names"
+    },
+    {
+      "id": "function",
+      "superType": "function",
+      "description": "Jump labels"
+    },
+    {
+      "id": "parameter",
+      "superType": "parameter",
+      "description": "Constant values"
+    }
+  ],
+  "semanticTokenModifiers": [
+    {
+      "id": "declaration",
+      "description": "Symbol definition site"
+    },
+    {
+      "id": "readonly",
+      "description": "Constant value"
+    }
+  ],
+  "semanticTokenScopes": [
+    {
+      "language": "spinasm",
+      "scopes": {
+        "variable": ["variable.other.spinasm.register"],
+        "property": ["variable.other.spinasm.memory"],
+        "function": ["entity.name.function.spinasm"],
+        "parameter": ["variable.other.constant.spinasm"]
+      }
+    }
+  ],
+  "configurationDefaults": {
+    "[spinasm]": {
+      "editor.semanticHighlighting.enabled": true
+    }
+  }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
