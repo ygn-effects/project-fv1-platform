@@ -4,6 +4,7 @@ import Config from "./config";
 import Logs, { LogType } from "./logs";
 import Utils from "./utils";
 import Programmer from "./programmer";
+import { SpinASMSemanticTokensProvider, SpinASMHoverProvider } from "./spinasmSemanticTokens";
 import * as path from "path";
 import * as fs from "fs";
 
@@ -38,6 +39,25 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument(() => updateBankStatusBar())
   );
+
+  // Register SpinASM semantic token provider
+  context.subscriptions.push(
+    vscode.languages.registerDocumentSemanticTokensProvider(
+      { language: 'spinasm' },
+      new SpinASMSemanticTokensProvider(),
+      SpinASMSemanticTokensProvider.legend
+    )
+  );
+
+  // Register SpinASM hover provider
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(
+      { language: 'spinasm' },
+      new SpinASMHoverProvider()
+    )
+  );
+
+  Logs.log(LogType.INFO, "SpinASM semantic highlighting enabled");
 
   context.subscriptions.push(
     // Global / Project Management
