@@ -5,8 +5,7 @@ import Logs, { LogType } from "./logs";
 import Utils from "./utils";
 import Programmer from "./programmer";
 import { SpinASMSemanticTokensProvider, SpinASMHoverProvider } from "./spinasmSemanticTokens";
-import * as path from "path";
-import * as fs from "fs";
+import { initializeBankStatusBar, disposeBankStatusBar, updateBankStatusBar, showBankStatus } from "./statusBar";
 
 // Global status bar item
 let bankStatusBar: vscode.StatusBarItem;
@@ -16,9 +15,7 @@ export function activate(context: vscode.ExtensionContext): void {
   Logs.log(LogType.INFO, "Extension activated");
 
   // Create status bar item
-  bankStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-  bankStatusBar.command = "spinasm.showBankStatus";
-  context.subscriptions.push(bankStatusBar);
+  initializeBankStatusBar(context);
 
   // Register file system watcher for compile-on-save
   const watcher = vscode.workspace.createFileSystemWatcher("**/*.spn");
@@ -28,6 +25,9 @@ export function activate(context: vscode.ExtensionContext): void {
     if (Config.getCompileOnSave()) {
       await handleCompileOnSave(uri);
     }
+
+    // Update status bar after save (in case file timestamps changed)
+    await updateBankStatusBar();
   });
 
   // Update status bar when active editor changes
@@ -117,132 +117,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {
   Logs.disposeChannel();
-}
-
-// =============================================================================
-// STATUS BAR MANAGEMENT
-// =============================================================================
-
-/**
- * @brief Updates the status bar with current bank compilation status.
- */
-async function updateBankStatusBar(): Promise<void> {
-  const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-
-  if (!folder) {
-    bankStatusBar.hide();
-    return;
-  }
-
-  try {
-    const project = new Project(folder);
-    const compilerPath = Config.getCompilerPath();
-    const compilerArgs = Config.getCompilerArgs();
-
-    if (!compilerPath) {
-      bankStatusBar.hide();
-      return;
-    }
-
-    await project.buildSetup(compilerPath, compilerArgs);
-    const programs = project.getAllPrograms();
-
-    let statusText = "SpinASM: ";
-
-    for (let i = 0; i < 8; i++) {
-      if (programs[i]) {
-        // Check if hex file exists
-        const hexFile = project.getOutput(i);
-        const isCompiled = hexFile && fs.existsSync(hexFile);
-        statusText += isCompiled ? `[${i}✓]` : `[${i}✗]`;
-      } else {
-        statusText += `[${i}-]`;
-      }
-    }
-
-    bankStatusBar.text = statusText;
-    bankStatusBar.tooltip = "Click to view bank details";
-    bankStatusBar.show();
-  }
-  catch (error) {
-    // If there's an error, just hide the status bar
-    bankStatusBar.hide();
-  }
-}
-
-/**
- * @brief Shows detailed information about bank compilation status.
- */
-async function showBankStatus(): Promise<void> {
-  const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-
-  if (!folder) {
-    vscode.window.showInformationMessage("No workspace folder open.");
-    return;
-  }
-
-  try {
-    const project = new Project(folder);
-    const compilerPath = Config.getCompilerPath();
-    const compilerArgs = Config.getCompilerArgs();
-
-    if (!compilerPath) {
-      vscode.window.showWarningMessage("Compiler path not configured.");
-      return;
-    }
-
-    await project.buildSetup(compilerPath, compilerArgs);
-    const programs = project.getAllPrograms();
-
-    const items = [];
-
-    for (let i = 0; i < 8; i++) {
-      let status = "";
-      let detail = "";
-
-      if (programs[i]) {
-        const hexFile = project.getOutput(i);
-        const isCompiled = hexFile && fs.existsSync(hexFile);
-        const fileName = path.basename(programs[i]!);
-
-        if (isCompiled) {
-          status = `✓ Bank ${i}: ${fileName}`;
-          detail = "Compiled and ready to upload";
-        }
-        else {
-          status = `✗ Bank ${i}: ${fileName}`;
-          detail = "Not compiled yet";
-        }
-      }
-      else {
-        status = `- Bank ${i}: Empty`;
-        detail = "No program file";
-      }
-
-      items.push({
-        label: status,
-        detail: detail,
-        bank: i,
-        hasProgram: !!programs[i]
-      });
-    }
-
-    const selection = await vscode.window.showQuickPick(items, {
-      placeHolder: "Bank Status - Select a bank to open its file"
-    });
-
-    if (selection && selection.hasProgram) {
-      const programPath = programs[selection.bank];
-
-      if (programPath) {
-        const doc = await vscode.workspace.openTextDocument(programPath);
-        await vscode.window.showTextDocument(doc);
-      }
-    }
-  }
-  catch (error) {
-    handleError(error, "Failed to show bank status");
-  }
+  disposeBankStatusBar();
 }
 
 // =============================================================================
@@ -399,6 +274,9 @@ async function compileBank(bank: number): Promise<void> {
 
     Logs.log(LogType.INFO, `Program ${bank} compilation successful`);
     vscode.window.showInformationMessage(`Program ${bank} compiled successfully!`);
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
   }, "Compilation Failed", `Compiling Bank ${bank}...`);
 }
 
@@ -414,6 +292,9 @@ async function uploadBank(bank: number): Promise<void> {
 
     Logs.log(LogType.INFO, `Program ${bank} upload successful`);
     vscode.window.showInformationMessage(`Program ${bank} uploaded successfully!`);
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
   }, `Failed to upload program ${bank}`, `Uploading Bank ${bank}...`);
 }
 
@@ -424,6 +305,9 @@ async function compileAndUploadBank(bank: number): Promise<void> {
 
     Logs.log(LogType.INFO, `Program ${bank} compiled and uploaded successfully`);
     vscode.window.showInformationMessage(`Program ${bank} compiled and uploaded successfully!`);
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
   }, `Failed to compile and upload program ${bank}`, `Compiling & Uploading Bank ${bank}...`);
 }
 
@@ -442,6 +326,9 @@ async function compileCurrentProgram(): Promise<void> {
     await project.compileProgramToHex(currentProgram);
 
     vscode.window.showInformationMessage(`Program ${currentProgram} compiled successfully!`);
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
   }, "Failed to compile current program", "Compiling current program...");
 }
 
@@ -469,6 +356,9 @@ async function compileAndUploadCurrentProgram(): Promise<void> {
     await project.compileProgramToHex(currentProgram);
     await performUpload(project, settings, currentProgram);
     vscode.window.showInformationMessage(`Program ${currentProgram} compiled and uploaded successfully!`);
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
   }, "Failed to compile and upload current program", "Compiling & Uploading Current Program...");
 }
 
@@ -487,6 +377,9 @@ async function compileAllPrograms(): Promise<void> {
     }
 
     vscode.window.showInformationMessage("All programs compiled successfully!");
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
   }, "Failed to compile all programs", "Compiling all programs...");
 }
 
@@ -505,6 +398,9 @@ async function compileAllProgramsToBin(): Promise<void> {
     }
 
     vscode.window.showInformationMessage("All programs compiled to BIN successfully!");
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
   }, "Failed to compile all programs", "Compiling all programs to BIN...");
 }
 
@@ -601,6 +497,9 @@ async function compileAndUploadAllPrograms(): Promise<void> {
         processedCount++;
 
         Logs.log(LogType.INFO, `Bank ${bank} compiled and uploaded (${processedCount}/${totalPrograms})`);
+
+        // Update status bar after compilation
+        await updateBankStatusBar();
       }
 
       vscode.window.showInformationMessage(`All programs compiled and uploaded successfully! (${processedCount} banks)`);
@@ -629,6 +528,9 @@ async function createProject(): Promise<void> {
 
     Logs.log(LogType.INFO, "Project structure created successfully");
     vscode.window.showInformationMessage("Project created successfully!");
+
+    // Update status bar
+    await updateBankStatusBar();
   }
   catch (error) {
     handleError(error, "Failed to create project structure");
