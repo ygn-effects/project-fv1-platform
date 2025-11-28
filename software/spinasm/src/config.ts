@@ -56,6 +56,15 @@ export default class Config {
   }
 
   /**
+   * @brief Retrieves the status bar enabled setting.
+   */
+  public static getStatusBarEnabled(): boolean {
+    const config = vscode.workspace.getConfiguration("spinasm");
+
+    return config.get<boolean>("statusBar.enabled", true);
+  }
+
+  /**
    * @brief Updates the serial port configuration.
    * @param port - The serial port path to save.
    * @param global - If true, saves to user settings; otherwise workspace settings.

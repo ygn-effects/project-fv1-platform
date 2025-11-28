@@ -47,6 +47,11 @@
           "type": "boolean",
           "default": false,
           "description": "Automatically compile SpinASM programs when saving .spn files."
+        },
+        "spinasm.statusBar.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show compilation status in the status bar. Useful to disable when batch-compiling EEPROMs."
         }
       }
     },
