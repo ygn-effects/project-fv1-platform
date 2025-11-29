@@ -6,9 +6,7 @@ import Utils from "./utils";
 import Programmer from "./programmer";
 import { SpinASMSemanticTokensProvider, SpinASMHoverProvider } from "./spinasmSemanticTokens";
 import { initializeBankStatusBar, disposeBankStatusBar, updateBankStatusBar, showBankStatus } from "./statusBar";
-
-// Global status bar item
-let bankStatusBar: vscode.StatusBarItem;
+import { initializeResourceStatusBar, disposeResourceStatusBar, showResourceUsage, forceUpdateResourceStatusBar } from "./resourceStatusBar";
 
 export function activate(context: vscode.ExtensionContext): void {
   Logs.createChannel();
@@ -16,6 +14,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Create status bar item
   initializeBankStatusBar(context);
+
+  // Create resource bar
+  initializeResourceStatusBar(context);
 
   // Register file system watcher for compile-on-save
   const watcher = vscode.workspace.createFileSystemWatcher("**/*.spn");
@@ -65,6 +66,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("spinasm.checkProjectSettings", checkHardwareConnection),
     vscode.commands.registerCommand("spinasm.showSerialConfig", showConfig),
     vscode.commands.registerCommand("spinasm.showBankStatus", showBankStatus),
+    vscode.commands.registerCommand("spinasm.showResourceUsage", showResourceUsage),
 
     // Serial Port Detection
     vscode.commands.registerCommand("spinasm.selectSerialPort", selectSerialPort),
@@ -118,6 +120,7 @@ export function activate(context: vscode.ExtensionContext): void {
 export function deactivate(): void {
   Logs.disposeChannel();
   disposeBankStatusBar();
+  disposeResourceStatusBar();
 }
 
 // =============================================================================

@@ -81,6 +81,10 @@
         "title": "SpinASM: Show Bank Status"
       },
       {
+        "command": "spinasm.showResourceUsage",
+        "title": "SpinASM: Show Resource Usage"
+      },
+      {
         "command": "spinasm.compileBank",
         "title": "SpinASM: Compile Specific Bank..."
       },
