@@ -7,10 +7,51 @@ import Programmer from "./programmer";
 import { SpinASMSemanticTokensProvider, SpinASMHoverProvider } from "./spinasmSemanticTokens";
 import { initializeBankStatusBar, disposeBankStatusBar, updateBankStatusBar, showBankStatus } from "./statusBar";
 import { initializeResourceStatusBar, disposeResourceStatusBar, showResourceUsage, forceUpdateResourceStatusBar } from "./resourceStatusBar";
+import { SpinASMValidator } from "./spinasmValidator";
+
+let validator: SpinASMValidator;
 
 export function activate(context: vscode.ExtensionContext): void {
   Logs.createChannel();
   Logs.log(LogType.INFO, "Extension activated");
+
+  validator = new SpinASMValidator();
+  context.subscriptions.push(validator);
+
+  // Validate on document open
+  vscode.workspace.onDidOpenTextDocument((doc) => {
+    if (doc.languageId === 'spinasm') {
+      validator.validateDocument(doc);
+    }
+  });
+
+  // Validate on change (debounced)
+  let validationTimer: NodeJS.Timeout | null = null;
+  vscode.workspace.onDidChangeTextDocument((event) => {
+    if (event.document.languageId === 'spinasm') {
+      if (validationTimer) {
+        clearTimeout(validationTimer);
+      }
+
+      validationTimer = setTimeout(() => {
+        validator.validateDocument(event.document);
+      }, 500);
+    }
+  });
+
+  // Validate on save
+  vscode.workspace.onDidSaveTextDocument((doc) => {
+    if (doc.languageId === 'spinasm') {
+      validator.validateDocument(doc);
+    }
+  });
+
+  // Clear on close
+  vscode.workspace.onDidCloseTextDocument((doc) => {
+    if (doc.languageId === 'spinasm') {
+      validator.clearDocument(doc);
+    }
+  });
 
   // Create status bar item
   initializeBankStatusBar(context);
