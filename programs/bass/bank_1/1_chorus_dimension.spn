@@ -1,0 +1,43 @@
+mem chorus_del1 2048
+mem chorus_del2 2048
+
+equ mono_in reg0
+equ tone_level reg1
+equ lpf1_state reg2
+equ lpf2_state reg3
+equ hpf_state reg4
+
+equ pre_hpf 0.5
+
+skp run, main
+wlds 0, 20, 1000
+
+main:
+  ; --- CONTROLS ---
+  ; Rate (POT0)
+  rdax pot0, 1.0
+  mulx pot0
+  wrax sin0_rate, 0
+
+  ; Depth (POT1)
+  rdax pot1, 1.0
+  sof 0.03, 0
+  wrax sin0_range, 0
+
+  ; Tone (POT2)
+  rdax pot2, 1.0
+  wrax tone_level, 0
+
+  ; --- AUDIO ---
+  ; Input sum
+  rdax adcl, 0.5
+  rdax adcr, 0.5
+
+  ; Pre-tone shaping (HPF at ~300Hz)
+  rdfx hpf_state, pre_hpf
+  wrhx hpf_state, -1.0
+  wrax mono_in, 1.0
+
+  ; Write into delay lines
+  wra chorus_del1, 1.0
+  wra chorus_del2, 0
