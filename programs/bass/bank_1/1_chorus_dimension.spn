@@ -1,11 +1,12 @@
-mem chorus_del1 2048
-mem chorus_del2 2048
+mem chorus_del1 4096
+mem chorus_del2 4096
 
 equ mono_in reg0
 equ tone_level reg1
 equ lpf1_state reg2
 equ lpf2_state reg3
 equ hpf_state reg4
+equ wet_temp reg5
 
 equ pre_hpf 0.5
 
@@ -16,7 +17,7 @@ main:
   ; --- CONTROLS ---
   ; Rate (POT0)
   rdax pot0, 1.0
-  mulx pot0
+  sof 0.20, 0.005
   wrax sin0_rate, 0
 
   ; Depth (POT1)
@@ -41,3 +42,31 @@ main:
   ; Write into delay lines
   wra chorus_del1, 1.0
   wra chorus_del2, 0
+
+  ; Read the left wxoobly wobly
+  cho rda, sin0, sin|reg|compc, chorus_del1^
+  cho rda, sin0, sin, chorus_del1^ + 1
+
+  ; LPF
+  rdax lpf1_state, -1.0
+  mulx tone_level
+  rdax lpf1_state, 1.0
+  wrax lpf1_state, 1.0
+
+  ; Output
+  wrax wet_temp, 0
+
+  ; Read the right woobly wobly
+  cho rda, sin0, sin|compc|compa, chorus_del2^
+  cho rda, sin0, sin|compa, chorus_del2^ + 1
+
+  ; LPF
+  rdax lpf2_state, -1.0
+  mulx tone_level
+  rdax lpf2_state, 1.0
+  wrax lpf2_state, 1.0
+
+  ; SCale wet R and L
+  sof 0.8, 0            ; Attenuate Right Channel
+  rdax wet_temp, 0.8    ; Add Attenuated Left Channel
+  wrax dacl, 0          ; Output
