@@ -3,12 +3,11 @@ mem chorus_del2 4096
 
 equ mono_in reg0
 equ tone_level reg1
-equ lpf1_state reg2
-equ lpf2_state reg3
-equ hpf_state reg4
-equ wet_temp reg5
+equ lpf_state reg2
+equ hpf_state reg3
+equ wet_temp reg4
 
-equ pre_hpf 0.5
+equ pre_hpf 0.4
 
 skp run, main
 wlds 0, 20, 1000
@@ -27,6 +26,7 @@ main:
 
   ; Tone (POT2)
   rdax pot2, 1.0
+  sof 0.5, 0.2
   wrax tone_level, 0
 
   ; --- AUDIO ---
@@ -43,30 +43,28 @@ main:
   wra chorus_del1, 1.0
   wra chorus_del2, 0
 
-  ; Read the left wxoobly wobly
+  ; Read the first wxoobly wobly
   cho rda, sin0, sin|reg|compc, chorus_del1^
   cho rda, sin0, sin, chorus_del1^ + 1
 
-  ; LPF
-  rdax lpf1_state, -1.0
-  mulx tone_level
-  rdax lpf1_state, 1.0
-  wrax lpf1_state, 1.0
-
-  ; Output
-  wrax wet_temp, 0
-
-  ; Read the right woobly wobly
+  ; Read the inverted woobly wobly
   cho rda, sin0, sin|compc|compa, chorus_del2^
   cho rda, sin0, sin|compa, chorus_del2^ + 1
 
   ; LPF
-  rdax lpf2_state, -1.0
+  rdax lpf_state, -1.0
   mulx tone_level
-  rdax lpf2_state, 1.0
-  wrax lpf2_state, 1.0
+  rdax lpf_state, 1.0
+  wrax lpf_state, 1.0
 
-  ; SCale wet R and L
-  sof 0.8, 0            ; Attenuate Right Channel
-  rdax wet_temp, 0.8    ; Add Attenuated Left Channel
-  wrax dacl, 0          ; Output
+  ; Soft clip
+  wrax wet_temp, -0.3333
+  mulx wet_temp
+  mulx wet_temp
+  rdax wet_temp, 1.0
+
+  ; Boost the signal
+  sof 1.5, 0
+
+  ; Output
+  wrax dacl, 0
