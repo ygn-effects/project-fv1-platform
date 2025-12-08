@@ -1,0 +1,57 @@
+equ mono_in reg0
+equ lpf_state reg1
+equ hpf_state reg2
+equ lfo reg3
+equ lfo_inv reg4
+equ wet_temp reg5
+
+equ lpf_value 0.05
+equ hpf_value 0.12
+
+skp run, main
+wlds 0, 10, 32767
+
+main:
+  ; --- CONTROLS ---
+  ; Rate (POT0)
+  rdax pot0, 1.0
+  sof 0.1, 0
+  wrax sin0_rate, 0
+
+  ; Depth (POT1)
+  rdax pot1, 1.0
+  wrax sin0_range, 0
+
+  ; --- LFO ---
+  ; Read the current LFO value
+  cho rdal, sin0
+  ; Normalize to 0-1
+  sof 0.5, 0.5
+  wrax lfo, 1.0
+  ; Invert and offset to 0-1
+  sof -1.0, 0.999
+  wrax lfo_inv, 0
+
+  ; --- AUDIO ---
+  rdax adcl, 0.5
+  rdax adcr, 0.5
+  wrax mono_in, 1.0
+
+  ; LPF
+  rdfx lpf_state, lpf_value
+  wrax lpf_state, 1.0
+  ; Gain adjustment
+  mulx lfo
+  ; Store
+  wrax wet_temp, 0
+
+  ; HPF
+  rdax mono_in, 1.0
+  rdfx hpf_state, hpf_value
+  wrhx hpf_state, -1.0
+  ; Gain adjustment
+  mulx lfo_inv
+
+  ; Mix and output
+  rdax wet_temp, 1.0
+  wrax dacl, 0
