@@ -4,9 +4,8 @@ equ hpf_state reg2
 equ lfo reg3
 equ lfo_inv reg4
 equ wet_temp reg5
-
-equ lpf_value 0.05
-equ hpf_value 0.12
+equ lpf_freq reg6
+equ hpf_freq reg7
 
 skp run, main
 wlds 0, 10, 32767
@@ -15,12 +14,24 @@ main:
   ; --- CONTROLS ---
   ; Rate (POT0)
   rdax pot0, 1.0
-  sof 0.1, 0
+  sof 0.10, 0.04
   wrax sin0_rate, 0
 
   ; Depth (POT1)
   rdax pot1, 1.0
+  sof 0.8, 0.2
   wrax sin0_range, 0
+
+  ; Frequency (POT2)
+  ; Low band
+  rdax pot2, 1.0
+  sof 0.1, 0.05
+  wrax lpf_freq, 0
+
+  ; High band
+  rdax pot2, 1.0
+  sof 0.1, 0.1
+  wrax hpf_freq, 0    ; Store and Clear
 
   ; --- LFO ---
   ; Read the current LFO value
@@ -37,18 +48,26 @@ main:
   rdax adcr, 0.5
   wrax mono_in, 1.0
 
-  ; LPF
-  rdfx lpf_state, lpf_value
+  ; LPF for the low band
+  rdax lpf_state, -1.0
+  mulx lpf_freq
+  rdax lpf_state, 1.0
   wrax lpf_state, 1.0
   ; Gain adjustment
   mulx lfo
   ; Store
   wrax wet_temp, 0
 
+  ; Temporary LPF for the high band
+  rdax mono_in, 1.0
+  rdax hpf_state, -1.0
+  mulx hpf_freq
+  rdax hpf_state, 1.0
+  wrax hpf_state, 0.0
+
   ; HPF
   rdax mono_in, 1.0
-  rdfx hpf_state, hpf_value
-  wrhx hpf_state, -1.0
+  rdax hpf_state, -1.0
   ; Gain adjustment
   mulx lfo_inv
 
