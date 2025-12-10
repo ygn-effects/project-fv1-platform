@@ -1,6 +1,7 @@
 equ trem_sig reg0
 equ shape_gain reg1
 equ intensity reg2
+equ mono_in reg3
 
 skp run, main
 wlds 0, 0, 32767
@@ -20,6 +21,7 @@ main:
   rdax pot2, 1.0
   sof 1.99, 0
   sof 1.99, 0
+  sof 1.99, 0
   sof 1.0, 0.999
   wrax shape_gain, 0
 
@@ -27,5 +29,20 @@ main:
   ; Read the current LFO value
   cho rdal, sin0
   mulx shape_gain
+  sof 0.5, 0.5
   mulx intensity
   wrax trem_sig, 0
+
+  ; --- AUDIO ---
+  ; Sum inputs
+  rdax adcl, 0.5
+  rdax adcr, 0.5
+  wrax mono_in, 0
+
+  ; VCA
+  rdax trem_sig, 1
+  sof -1, 0.999
+  mulx mono_in
+
+  ; Output
+  wrax dacl, 0
