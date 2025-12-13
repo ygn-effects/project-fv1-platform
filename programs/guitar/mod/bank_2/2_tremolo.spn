@@ -1,7 +1,12 @@
-equ trem_sig reg0
-equ shape_gain reg1
-equ intensity reg2
-equ mono_in reg3
+equ lfo reg0
+equ lfo_raw reg1
+equ lfo_squared reg2
+equ intensity reg3
+equ mono_in reg4
+equ lfo_lag reg5
+equ crossfade reg6
+
+equ lag_coeff 0.2
 
 skp run, main
 wlds 0, 0, 32767
@@ -10,28 +15,41 @@ main:
   ; --- CONTROLS ---
   ; Rate (POT0)
   rdax pot0, 1.0
-  sof 0.5, 0
+  sof 0.3, 0.05
   wrax sin0_rate, 0
 
   ; Depth (POT1)
   rdax pot1, 1.0
+  sof 0.45, 0.55
   wrax intensity, 0
 
   ; Wave shape (POT2)
   rdax pot2, 1.0
-  sof 1.99, 0
-  sof 1.99, 0
-  sof 1.99, 0
-  sof 1.0, 0.999
-  wrax shape_gain, 0
+  wrax crossfade, 0
 
   ; --- LFO ---
-  ; Read the current LFO value
+  ; Raw LFO
   cho rdal, sin0
-  mulx shape_gain
   sof 0.5, 0.5
+  wrax lfo_raw, 0
+
+  ; Squared LFO
+  rdax lfo_raw, 1.0
+  sof 1.5, 0
+  sof 1.5, 0
+  wrax lfo_squared, 0
+
+  ; Crassfade the LFOs
+  rdax lfo_raw, -1.0
+  rdax lfo_squared, 1.0
+  mulx crossfade
+  rdax lfo_raw, 1.0
+  ; Slow it down
+  rdfx lfo_lag, lag_coeff
+  wrax lfo_lag, 1.0
+  ; Depth
   mulx intensity
-  wrax trem_sig, 0
+  wrax lfo, 0
 
   ; --- AUDIO ---
   ; Sum inputs
@@ -40,7 +58,7 @@ main:
   wrax mono_in, 0
 
   ; VCA
-  rdax trem_sig, 1
+  rdax lfo, 1
   sof -1, 0.999
   mulx mono_in
 
