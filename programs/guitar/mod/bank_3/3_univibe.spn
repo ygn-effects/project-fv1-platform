@@ -1,0 +1,93 @@
+equ mono_in reg0
+equ prev_in reg1
+equ prev_in2 reg2
+equ prev_in3 reg3
+equ prev_in4 reg4
+equ ap_state reg5
+equ ap_state2 reg6
+equ ap_state3 reg7
+equ ap_state4 reg8
+equ ap_freq1 reg9
+equ ap_freq2 reg10
+equ ap_freq3 reg11
+equ ap_freq4 reg12
+equ lpf_state reg13
+equ lfo_lag reg14
+
+skp run, main
+  wlds 0, 50, 32767
+
+main:
+  ; --- CONTROLS ---
+  ; Rate (POT0)
+  rdax pot0, 1.0
+  sof 0.3, 0.05
+  wrax sin0_rate, 0
+
+  ; Depth (POT1)
+  rdax pot1, 1.0
+  sof 0.45, 0.55
+  wrax sin0_range, 0
+
+  ; --- LFO ---
+  cho rdal, sin0
+  rdfx lfo_lag, 0.2
+  wrax lfo_lag, 1.0
+
+  sof 0.7, 0.15
+  wrax ap_freq1, 0
+
+  rdax lfo_lag, 1.0
+  sof 0.75, 0.12
+  wrax ap_freq2, 0
+
+  rdax lfo_lag, 1.0
+  sof 0.65, 0.2
+  wrax ap_freq3, 0
+
+  rdax lfo_lag, 1.0
+  sof 0.8, 0.08
+  wrax ap_freq4, 0
+
+  ; --- AUDIO ---
+  ; Sum inputs
+  rdax adcl, 0.5
+  rdax adcr, 0.5
+  wrax mono_in, 1.0
+
+  rdax ap_state, -1.0
+  mulx ap_freq1
+  rdax prev_in, 1.0
+  wrax ap_state, 1.0
+  ldax mono_in
+  wrax prev_in, 0
+
+  rdax ap_state, 1.0
+  rdax ap_state2, -1.0
+  mulx ap_freq2
+  rdax prev_in2, 1.0
+  wrax ap_state2, 1.0
+  ldax ap_state
+  wrax prev_in2, 0
+
+  rdax ap_state2, 1.0
+  rdax ap_state3, -1.0
+  mulx ap_freq3
+  rdax prev_in3, 1.0
+  wrax ap_state3, 1.0
+  ldax ap_state2
+  wrax prev_in3, 0
+
+  rdax ap_state3, 1.0
+  rdax ap_state4, -1.0
+  mulx ap_freq4
+  rdax prev_in4, 1.0
+  wrax ap_state4, 1.0
+  ldax ap_state3
+  wrax prev_in4, 0
+
+  rdax ap_state4, 1.0
+  rdfx lpf_state, 0.3
+  wrax lpf_state, 1.0
+
+  wrax dacl, 0
