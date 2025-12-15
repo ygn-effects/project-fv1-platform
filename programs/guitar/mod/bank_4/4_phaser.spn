@@ -1,0 +1,23 @@
+equ dry reg0
+equ lfo reg1
+equ ap1_state reg2
+equ ap2_state reg3
+equ ap3_state reg4
+equ ap4_state reg5
+equ temp reg6
+
+skp run, main
+  wldr 0, 20, 4096
+
+main:
+  ;--- LFO ---
+  cho rdal, rmp0
+  ; -0.25 to 0.25
+  sof 1.0, -0.25
+  ; 0.25 to 0 to 0.25
+  absa
+  ; -0.5 to 0
+  sof -2.0, 0
+  ; 0.05 to 0.95
+  sof -1.8, 0.05
+  wrax lfo, 0
