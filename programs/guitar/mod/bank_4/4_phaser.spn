@@ -1,3 +1,10 @@
+; "Ain't Talkin' 'Bout Love" Phaser
+; 4-Stage All-Pass with Triangle LFO
+; ------------------------------------
+; POT0 = Speed
+; POT1 = Depth (Width)
+; POT2 = Feedback (Resonance)
+
 equ dry reg0
 equ lfo reg1
 equ ap1_state reg2
@@ -5,19 +12,89 @@ equ ap2_state reg3
 equ ap3_state reg4
 equ ap4_state reg5
 equ temp reg6
+equ hpf_state reg7
+equ intensity reg8
+equ feedback reg9
+equ hpf_coeff 0.03
 
 skp run, main
-  wldr 0, 20, 4096
+  wldr 0, 0, 4096
 
 main:
-  ;--- LFO ---
-  cho rdal, rmp0
-  ; -0.25 to 0.25
-  sof 1.0, -0.25
-  ; 0.25 to 0 to 0.25
+  ; --- CONTROLS ---
+  ; --- POT0 (Rate) ---
+  rdax pot0, 1.0
+  sof 0.2, 0.01
+  wrax rmp0_rate, 0
+
+  ; --- POT1 (Depth)
+  rdax pot1, 1.0
+  wrax intensity, 0
+
+  ; --- POT2 (feedback) ---
+  rdax pot2, 1.0
+  wrax feedback, 0
+
+  ; --- LFO ---
+  ; Raw LFO
+  cho rdal,rmp0
+  ; -0.25 (o 0.25)
+  sof 1,-0.25
+  ; 0 to 0.25
   absa
-  ; -0.5 to 0
-  sof -2.0, 0
-  ; 0.05 to 0.95
-  sof -1.8, 0.05
+
+  ; 0 to 0.4
+  sof 1.6, 0
+  mulx intensity
+  ; 0.12 to 0.52
+  sof 1.0, 0.12
   wrax lfo, 0
+
+  ; --- AUDIO ---
+  ; Feedback
+  rdax ap4_state, 1.0
+  ; HPF on feedback
+  rdfx hpf_state, hpf_coeff
+  wrhx hpf_state, -1.0
+  mulx feedback
+  ; Mix dry
+  rdax adcl, 1.0
+  wrax temp, 1.0
+
+  ; --- Stage 1 --
+  rdax ap1_state, -1.0
+  mulx lfo
+  rdax ap1_state, 1.0
+  wrax ap1_state, 1.0
+  sof -2.0, 0
+  rdax temp, 1.0
+
+  ; --- Stage 2 ---
+  wrax temp, 1.0
+  rdax ap2_state, -1.0
+  mulx lfo
+  rdax ap2_state, 1.0
+  wrax ap2_state, 1.0
+  sof -2.0, 0
+  rdax temp, 1.0
+
+  ; --- Stage 3 ---
+  wrax temp, 1.0
+  rdax ap3_state, -1.0
+  mulx lfo
+  rdax ap3_state, 1.0
+  wrax ap3_state, 1.0
+  sof -2.0, 0
+  rdax temp, 1.0
+
+  ; --- Stage 4 ---
+  wrax temp, 1.0
+  rdax ap4_state, -1.0
+  mulx lfo
+  rdax ap4_state, 1.0
+  wrax ap4_state, 1.0
+  sof -2.0, 0
+  rdax temp, 1.0
+
+; --- Output Mixer ---
+  wrax dacl, 0
