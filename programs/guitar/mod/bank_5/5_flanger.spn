@@ -3,11 +3,12 @@ mem fdel 512
 equ dry reg0
 equ fdbk_val reg1
 equ feedback reg2
+equ hpf_state reg4
 
 skp run, main
   wlds sin0, 12, 0
 
-  main:
+main:
   ; --- CONTROLS ---
   ; Rate (POT0)
   rdax pot0, 1.0
@@ -30,8 +31,12 @@ skp run, main
   rdax adcr, 0.5
   wrax dry, 0
 
-  ; Add feedback
+  ; Load feedback
   rdax feedback, 1.0
+  ; HPF
+  rdfx hpf_state, 0.15
+  wrhx hpf_state, -1
+  ; Scale
   mulx fdbk_val
   rdax dry, 1.0
 
