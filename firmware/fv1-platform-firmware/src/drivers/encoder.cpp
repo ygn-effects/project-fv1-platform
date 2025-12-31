@@ -30,8 +30,8 @@ size_t EncoderDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
 
       Event e;
       e.m_domain = EventDomain::kPhysical;
-      e.m_subject = EventSUbject::kEncoder;
-      e.m_action = EventACtion::kDeltaChanged;
+      e.m_subject = EventSubject::kEncoder;
+      e.m_action = EventAction::kDeltaChanged;
       e.m_id = static_cast<uint8_t>(m_encoderId);
       e.m_timestamp = millis();
       e.m_data.delta = +1;
@@ -43,8 +43,8 @@ size_t EncoderDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
 
       Event e;
       e.m_domain = EventDomain::kPhysical;
-      e.m_subject = EventSUbject::kEncoder;
-      e.m_action = EventACtion::kDeltaChanged;
+      e.m_subject = EventSubject::kEncoder;
+      e.m_action = EventAction::kDeltaChanged;
       e.m_id = static_cast<uint8_t>(m_encoderId);
       e.m_timestamp = millis();
       e.m_data.delta = -1;

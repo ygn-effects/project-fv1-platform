@@ -57,8 +57,8 @@ size_t SwitchDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
         if (m_longPress) {
           Event e;
           e.m_domain = EventDomain::kPhysical;
-          e.m_subject = EventSUbject::kSwitch;
-          e.m_action = EventACtion::kLongPressed;
+          e.m_subject = EventSubject::kSwitch;
+          e.m_action = EventAction::kLongPressed;
           e.m_id = static_cast<uint8_t>(m_switchId);
           e.m_timestamp = now;
           t_outEvents[eventCount++] = e;
@@ -66,8 +66,8 @@ size_t SwitchDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
         else {
           Event e;
           e.m_domain = EventDomain::kPhysical;
-          e.m_subject = EventSUbject::kSwitch;
-          e.m_action = EventACtion::kPressed;
+          e.m_subject = EventSubject::kSwitch;
+          e.m_action = EventAction::kPressed;
           e.m_id = static_cast<uint8_t>(m_switchId);
           e.m_timestamp = now;
           t_outEvents[eventCount++] = e;
@@ -75,8 +75,8 @@ size_t SwitchDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
 
         Event e;
         e.m_domain = EventDomain::kPhysical;
-        e.m_subject = EventSUbject::kSwitch;
-        e.m_action = EventACtion::kReleased;
+        e.m_subject = EventSubject::kSwitch;
+        e.m_action = EventAction::kReleased;
         e.m_id = static_cast<uint8_t>(m_switchId);
         e.m_timestamp = now;
         t_outEvents[eventCount++] = e;

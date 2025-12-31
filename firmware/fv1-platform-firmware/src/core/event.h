@@ -7,10 +7,11 @@ enum class EventDomain {
   kUI,
   kMidi,
   kLogic,
+  kMemory,
   kSystem
 };
 
-enum class EventSUbject {
+enum class EventSubject {
   kGeneral,
   kSwitch,
   kPot,
@@ -22,7 +23,7 @@ enum class EventSUbject {
   kMenu
 };
 
-enum class EventACtion {
+enum class EventAction {
   kNoAction,
   kBooted,
   kPressed,
@@ -30,6 +31,7 @@ enum class EventACtion {
   kLongPressed,
   kValueChanged,
   kDeltaChanged,
+  kToggled,
   kSave,
   kLoad,
   kUpdated
@@ -37,8 +39,8 @@ enum class EventACtion {
 
 struct Event {
   EventDomain m_domain;
-  EventSUbject m_subject;
-  EventACtion m_action;
+  EventSubject m_subject;
+  EventAction m_action;
 
   uint8_t m_id;
   uint32_t m_timestamp;
