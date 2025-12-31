@@ -80,7 +80,7 @@ void test_menu_lock_timeout() {
   TEST_ASSERT_EQUAL(EventType::kMenuViewUpdated, e.m_type);
   TEST_ASSERT_EQUAL("Program mode", menuService.getcurrentMenuPage().m_header);
 
-  clock.setClock(31000);
+  clock.setClock(610000);
   menuService.update();
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   EventBus::recall(e);
@@ -137,7 +137,7 @@ void test_wrap_around() {
   TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
-  TEST_ASSERT_EQUAL("Expression settings", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Pot settings", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
   TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
@@ -301,12 +301,12 @@ void test_sub_menu() {
   EventBus::recall(e);
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
-  TEST_ASSERT_EQUAL("Expression settings", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Pot settings", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
 
-  TEST_ASSERT_EQUAL("Expression settings", menuService.getcurrentMenuPage().m_header);
-  TEST_ASSERT_EQUAL("State", menuService.getcurrentMenuItem().m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Pot settings", menuService.getcurrentMenuPage().m_header);
+  TEST_ASSERT_EQUAL("P0 State", menuService.getcurrentMenuItem().m_label(&logicalState));
 }
 
 void test_not_visible() {
@@ -321,6 +321,7 @@ void test_not_visible() {
   EventBus::recall(e);
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
   TEST_ASSERT_EQUAL("Expression settings", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderPressed, 100, {}});
@@ -329,12 +330,18 @@ void test_not_visible() {
   TEST_ASSERT_EQUAL("State", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_EQUAL("Back", menuService.getcurrentMenuItem().m_label(&logicalState));
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=-1}});
   TEST_ASSERT_EQUAL("State", menuService.getcurrentMenuItem().m_label(&logicalState));
 
-  TEST_ASSERT_TRUE(menuService.getcurrentMenuItem().m_visible(&logicalState));
-  logicalState.m_exprParams[logicalState.m_currentProgram].m_state = ExprState::kActive;
+  TEST_ASSERT_FALSE(menuService.getcurrentMenuPage().m_items[1].m_visible(&logicalState));
 
-  TEST_ASSERT_TRUE(menuService.getcurrentMenuItem().m_visible(&logicalState));
+  logicalState.m_exprParams[logicalState.m_currentProgram].m_state = ExprState::kActive;
+  TEST_ASSERT_TRUE(menuService.getcurrentMenuPage().m_items[1].m_visible(&logicalState));
+
+  menuService.handleEvent({EventType::kMenuEncoderMoved, 100, {.delta=1}});
+  TEST_ASSERT_EQUAL("Mapped Pot", menuService.getcurrentMenuItem().m_label(&logicalState));
 }
 
 void test_publish_list_menu() {
@@ -395,9 +402,10 @@ void test_pot_menu() {
   TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
   TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
 
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[5];
+
   menuService.handleEvent({EventType::kPot0Moved, 1000, {}});
   TEST_ASSERT_EQUAL("P0 Setting", menuService.getcurrentMenuPage().m_header);
-  TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.handleEvent({EventType::kPot1Moved, 2000, {}});
   TEST_ASSERT_EQUAL("P1 Setting", menuService.getcurrentMenuPage().m_header);
@@ -423,9 +431,10 @@ void test_pot_menu_timeout() {
   TEST_ASSERT_EQUAL("Prog", menuService.getcurrentMenuItem().m_label(&logicalState));
   TEST_ASSERT_EQUAL(SubState::kSelecting, menuService.getsubState());
 
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[5];
+
   menuService.handleEvent({EventType::kPot0Moved, 24000, {}});
   TEST_ASSERT_EQUAL("P0 Setting", menuService.getcurrentMenuPage().m_header);
-  TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   clock.setClock(31000);
   menuService.update();
@@ -434,7 +443,6 @@ void test_pot_menu_timeout() {
 
   menuService.handleEvent({EventType::kPot0Moved, 30800, {}});
   TEST_ASSERT_EQUAL("P0 Setting", menuService.getcurrentMenuPage().m_header);
-  TEST_ASSERT_EQUAL("Tempo", menuService.getcurrentMenuItem().m_label(&logicalState));
 
   menuService.update();
 
@@ -456,11 +464,12 @@ void test_lock_screen() {
   TEST_ASSERT_EQUAL("B", menuService.getcurrentMenuPage().m_items[1].m_label(&logicalState));
   TEST_ASSERT_EQUAL("P", menuService.getcurrentMenuPage().m_items[2].m_label(&logicalState));
   TEST_ASSERT_EQUAL("T", menuService.getcurrentMenuPage().m_items[3].m_label(&logicalState));
-  TEST_ASSERT_EQUAL("P0", menuService.getcurrentMenuPage().m_items[4].m_label(&logicalState));
-  TEST_ASSERT_EQUAL("P1", menuService.getcurrentMenuPage().m_items[5].m_label(&logicalState));
-  TEST_ASSERT_EQUAL("P2", menuService.getcurrentMenuPage().m_items[6].m_label(&logicalState));
-  TEST_ASSERT_EQUAL("Mix", menuService.getcurrentMenuPage().m_items[7].m_label(&logicalState));
-  TEST_ASSERT_EQUAL("Expr", menuService.getcurrentMenuPage().m_items[8].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("D", menuService.getcurrentMenuPage().m_items[4].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("P0", menuService.getcurrentMenuPage().m_items[5].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("P1", menuService.getcurrentMenuPage().m_items[6].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("P2", menuService.getcurrentMenuPage().m_items[7].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Mix", menuService.getcurrentMenuPage().m_items[8].m_label(&logicalState));
+  TEST_ASSERT_EQUAL("Expr", menuService.getcurrentMenuPage().m_items[9].m_label(&logicalState));
 }
 
 void test_publish_lock_screen() {
