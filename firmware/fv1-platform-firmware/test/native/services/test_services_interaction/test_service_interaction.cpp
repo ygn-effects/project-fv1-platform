@@ -134,6 +134,10 @@ void test() {
   runEventChain(services, servicesCount);
   runUpdateChain(services, servicesCount);
 
+  // Forward and update
+  clock.setClock(34000);
+  runUpdateChain(services, servicesCount);
+
   // Assert pot movement
   TEST_ASSERT_EQUAL(509, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
   TEST_ASSERT_EQUAL(510, logicalState.m_potParams[logicalState.m_currentProgram][1].m_value);
