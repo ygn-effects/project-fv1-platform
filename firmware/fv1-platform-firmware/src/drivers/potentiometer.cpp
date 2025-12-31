@@ -30,9 +30,11 @@ size_t PotDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
     if (eventCount >= t_maxEvents) return eventCount;
 
     Event e;
-    e.m_type = EventType::kPotMoved;
+    e.m_domain = EventDomain::kPhysical;
+    e.m_subject = EventSUbject::kPot;
+    e.m_action = EventACtion::kValueChanged;
+    e.m_id = static_cast<uint8_t>(m_potId);
     e.m_timestamp = millis();
-    e.m_data.id = static_cast<uint8_t>(m_potId);
     e.m_data.value = value;
     t_outEvents[eventCount++] = e;
   }
