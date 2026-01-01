@@ -50,4 +50,9 @@ struct Event {
     int16_t delta;
     void* ptr;
   } m_data;
+
+  template <typename T>
+  bool matchesId(T t_targetId) const {
+    return m_id == static_cast<uint8_t>(t_targetId);
+  }
 };
