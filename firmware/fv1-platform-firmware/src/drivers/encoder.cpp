@@ -29,7 +29,7 @@ size_t EncoderDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
       m_accumulator -= c_stepsPerDetent;
 
       Event e;
-      e.m_domain = EventDomain::kPhysical;
+      e.m_domain = EventDomain::kRaw;
       e.m_subject = EventSubject::kEncoder;
       e.m_action = EventAction::kDeltaChanged;
       e.m_id = static_cast<uint8_t>(m_encoderId);
@@ -42,7 +42,7 @@ size_t EncoderDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
       m_accumulator += c_stepsPerDetent;
 
       Event e;
-      e.m_domain = EventDomain::kPhysical;
+      e.m_domain = EventDomain::kRaw;
       e.m_subject = EventSubject::kEncoder;
       e.m_action = EventAction::kDeltaChanged;
       e.m_id = static_cast<uint8_t>(m_encoderId);
