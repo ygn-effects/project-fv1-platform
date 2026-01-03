@@ -63,13 +63,17 @@ void BypassService::update() {
 }
 
 bool BypassService::interestedIn(const Event& t_event) const {
-  if (t_event.m_subject == EventSubject::kSwitch
-      && t_event.m_action == EventAction::kPressed
-      && t_event.matchesId(SwitchId::kBypass)) return true;
+  if (t_event.m_domain == EventDomain::kPhysical) {
+    if (t_event.m_subject == EventSubject::kSwitch
+        && t_event.m_action == EventAction::kPressed
+        && t_event.matchesId(SwitchId::kBypass)) return true;
+  }
 
-  if (t_event.m_subject == EventSubject::kSwitch
-      && t_event.m_action == EventAction::kValueChanged
-      && t_event.matchesId(SwitchId::kBypass)) return true;
+  if (t_event.m_domain == EventDomain::kMidi) {
+    if (t_event.m_subject == EventSubject::kSwitch
+        && t_event.m_action == EventAction::kValueChanged
+        && t_event.matchesId(SwitchId::kBypass)) return true;
+  }
 
   return false;
 }
