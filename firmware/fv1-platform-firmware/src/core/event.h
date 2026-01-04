@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 enum class EventDomain {
+  kDriver,
   kPhysical,
   kUI,
   kMidi,
@@ -17,15 +18,18 @@ enum class EventSubject {
   kPot,
   kEncoder,
   kProgram,
+  kProgramMode,
   kPreset,
   kTempo,
   kBypass,
-  kMenu
+  kMenu,
+  kMidiChannel
 };
 
 enum class EventAction {
   kNoAction,
   kBooted,
+  kStateChanged,
   kPressed,
   kReleased,
   kLongPressed,
@@ -34,6 +38,8 @@ enum class EventAction {
   kToggled,
   kSave,
   kLoad,
+  kLocked,
+  kUnlocked,
   kUpdated
 };
 
