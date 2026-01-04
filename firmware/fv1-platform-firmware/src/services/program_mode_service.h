@@ -9,13 +9,15 @@ class ProgramModeService : public Service {
   private:
     LogicalState& m_logicalState;
 
-    void publishSaveProgramModeEvent(const Event& t_event);
+    void publishSaveProgramModeEvent(const Event& t_event) const;
+    void publishProgramModeToggledEvent(const Event& t_event) const;
 
   public:
-    ProgramModeService(LogicalState& t_lState);
+    ProgramModeService(LogicalState& t_lState)
+      : m_logicalState(t_lState) {}
 
     void init() override;
     void handleEvent(const Event& t_event) override;
     void update() override;
-    bool interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const override;
+    bool interestedIn(const Event& t_event) const override;
 };
