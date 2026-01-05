@@ -6,14 +6,22 @@ void ProgramService::syncActiveProgram() {
 
 void ProgramService::publishProgramChangeEvent(const Event& t_event) {
   Event e;
-  e.m_type = EventType::kProgramChanged;
-  e.m_timestamp = t_event.m_timestamp; /*millis()*/
-  e.m_data.value = m_logicState.m_currentProgram;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kValueChanged;
+  e.m_timestamp = t_event.m_timestamp;
+
   EventBus::publish(e);
 }
 
 void ProgramService::publishSaveCurrentProgram(const Event& t_event) {
-  EventBus::publish({EventType::kSaveCurrentProgram, t_event.m_timestamp /*millis()*/, {}});
+  Event e;
+  e.m_domain = EventDomain::kMemory;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kSave;
+  e.m_timestamp = t_event.m_timestamp;
+
+  EventBus::publish(e);
 }
 
 void ProgramService::init() {
@@ -21,33 +29,24 @@ void ProgramService::init() {
 }
 
 void ProgramService::handleEvent(const Event& t_event) {
-  switch (t_event.m_type) {
-    case EventType::kMenuProgramChanged: {
-      int16_t max = static_cast<int16_t>(ProgramConstants::c_maxPrograms);
-      int16_t delta = static_cast<int16_t>(t_event.m_data.delta);
-      if (delta < -max || delta > max) return;
+  if (t_event.m_domain == EventDomain::kUI && t_event.m_subject == EventSubject::kProgram) {
+    int16_t max = static_cast<int16_t>(ProgramConstants::c_maxPrograms);
+    int16_t delta = static_cast<int16_t>(t_event.m_data.delta);
+    if (delta < -max || delta > max) return;
 
-      int16_t curr = static_cast<int16_t>(m_logicState.m_currentProgram);
-      int16_t next = (curr + delta) % max;
-      if (next < 0) next += max;
+    int16_t curr = static_cast<int16_t>(m_logicState.m_currentProgram);
+    int16_t next = (curr + delta) % max;
+    if (next < 0) next += max;
 
-      m_logicState.m_currentProgram = static_cast<uint8_t>(next);
+    m_logicState.m_currentProgram = static_cast<uint8_t>(next);
 
-      syncActiveProgram();
-      publishProgramChangeEvent(t_event);
-      publishSaveCurrentProgram(t_event);
-      break;
-    }
-
-    case EventType::kMenuPresetChanged:
-    case EventType::kPresetBankLoaded:
-    case EventType::kProgramModeChanged:
-      syncActiveProgram();
-      publishProgramChangeEvent(t_event);
-      break;
-
-    default:
-      break;
+    syncActiveProgram();
+    publishProgramChangeEvent(t_event);
+    publishSaveCurrentProgram(t_event);
+  }
+  else {
+    syncActiveProgram();
+    publishProgramChangeEvent(t_event);
   }
 }
 
@@ -55,10 +54,20 @@ void ProgramService::update() {
 
 }
 
-bool ProgramService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuProgramChangedEvent)
-      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPresetChangedEvent)
-      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent)
-      || (t_category == EventCategory::kLoadEvent && t_subCategory == EventSubCategory::kBankLoadEvent)
-      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramModeChangedEvent);
+bool ProgramService::interestedIn(const Event& t_event) const {
+  if (t_event.m_domain == EventDomain::kUI)
+    if (t_event.m_subject == EventSubject::kProgram
+        && t_event.m_action == EventAction::kValueChanged) return true;
+    if (t_event.m_subject == EventSubject::kPreset
+        && t_event.m_action == EventAction::kValueChanged) return true;
+
+  if (t_event.m_domain == EventDomain::kLogic
+      && t_event.m_subject == EventSubject::kProgramMode
+      && t_event.m_action == EventAction::kToggled) return true;
+
+  if (t_event.m_domain == EventDomain::kMemory
+      && t_event.m_subject == EventSubject::kPresetBank
+      && t_event.m_action == EventAction::kLoad) return true;
+
+  return false;
 }
