@@ -20,6 +20,7 @@ enum class EventSubject {
   kProgram,
   kProgramMode,
   kPreset,
+  kPresetBank,
   kTempo,
   kBypass,
   kMenu,
@@ -40,7 +41,9 @@ enum class EventAction {
   kLoad,
   kLocked,
   kUnlocked,
-  kUpdated
+  kUpdated,
+  kSettingChanged,
+  kSettingToggled
 };
 
 struct Event {
