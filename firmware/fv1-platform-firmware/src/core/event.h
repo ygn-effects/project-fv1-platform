@@ -17,6 +17,7 @@ enum class EventSubject {
   kSwitch,
   kPot,
   kEncoder,
+  kExpr,
   kProgram,
   kProgramMode,
   kPreset,
