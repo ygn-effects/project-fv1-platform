@@ -648,11 +648,11 @@ void test_interested_in() {
   FsmService fsmService(logicalState);
 
   // Boot complete event
-  Event e {EventDomain::kSystem, EventSubject::kGeneral, EventAction::kBooted, static_cast<u_int8_t>(SwitchId::kBypass), 0, {}};
+  Event e {EventDomain::kSystem, EventSubject::kGeneral, EventAction::kBooted, static_cast<uint8_t>(SwitchId::kBypass), 0, {}};
   TEST_ASSERT_TRUE(fsmService.interestedIn(e));
 
   // Bypass footswitch press
-  e = {EventDomain::kDriver, EventSubject::kSwitch, EventAction::kPressed, static_cast<u_int8_t>(SwitchId::kBypass), 0, {}};
+  e = {EventDomain::kDriver, EventSubject::kSwitch, EventAction::kPressed, static_cast<uint8_t>(SwitchId::kBypass), 0, {}};
   TEST_ASSERT_TRUE(fsmService.interestedIn(e));
 
   // UI domain lock/unlock events
@@ -667,7 +667,7 @@ void test_interested_in() {
   TEST_ASSERT_TRUE(fsmService.interestedIn(e));
 
   // Nonsensical event
-  e = {EventDomain::kSystem, EventSubject::kTempo, EventAction::kPressed, static_cast<u_int8_t>(SwitchId::kTap), 0, {}};
+  e = {EventDomain::kSystem, EventSubject::kTempo, EventAction::kPressed, static_cast<uint8_t>(SwitchId::kTap), 0, {}};
   TEST_ASSERT_FALSE(fsmService.interestedIn(e));
 }
 

@@ -76,12 +76,12 @@ void test_interested_in() {
   LogicalState logicalState;
   ProgramModeService programModeService(logicalState);
 
-  // Boot complete event
-  Event e {EventDomain::kPhysical, EventSubject::kSwitch, EventAction::kLongPressed, static_cast<u_int8_t>(SwitchId::kProgramMode), 0, {}};
+  // Program mode switch long press
+  Event e {EventDomain::kPhysical, EventSubject::kSwitch, EventAction::kLongPressed, static_cast<uint8_t>(SwitchId::kProgramMode), 0, {}};
   TEST_ASSERT_TRUE(programModeService.interestedIn(e));
 
   // Nonsensical event
-  e = {EventDomain::kSystem, EventSubject::kTempo, EventAction::kPressed, static_cast<u_int8_t>(SwitchId::kTap), 0, {}};
+  e = {EventDomain::kSystem, EventSubject::kTempo, EventAction::kPressed, static_cast<uint8_t>(SwitchId::kTap), 0, {}};
   TEST_ASSERT_FALSE(programModeService.interestedIn(e));
 }
 

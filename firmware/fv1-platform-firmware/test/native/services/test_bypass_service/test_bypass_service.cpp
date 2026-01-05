@@ -185,31 +185,31 @@ void test_interested_in() {
   BypassService bypassService(logicalState, mockBypass);
 
   // Bypass footswitch press
-  Event e {EventDomain::kPhysical, EventSubject::kSwitch, EventAction::kPressed, static_cast<u_int8_t>(SwitchId::kBypass), 0, {}};
+  Event e {EventDomain::kPhysical, EventSubject::kSwitch, EventAction::kPressed, static_cast<uint8_t>(SwitchId::kBypass), 0, {}};
   TEST_ASSERT_TRUE(bypassService.interestedIn(e));
 
   // MIDI switch press
-  e = {EventDomain::kMidi, EventSubject::kSwitch, EventAction::kValueChanged, static_cast<u_int8_t>(SwitchId::kBypass), 0, {}};
+  e = {EventDomain::kMidi, EventSubject::kSwitch, EventAction::kValueChanged, static_cast<uint8_t>(SwitchId::kBypass), 0, {}};
   TEST_ASSERT_TRUE(bypassService.interestedIn(e));
 
   // Bypass footswitch longpress
-  e = {EventDomain::kPhysical, EventSubject::kSwitch, EventAction::kLongPressed, static_cast<u_int8_t>(SwitchId::kBypass), 0, {}};
+  e = {EventDomain::kPhysical, EventSubject::kSwitch, EventAction::kLongPressed, static_cast<uint8_t>(SwitchId::kBypass), 0, {}};
   TEST_ASSERT_FALSE(bypassService.interestedIn(e));
 
   // Random switch press
-  e = {EventDomain::kPhysical, EventSubject::kSwitch, EventAction::kPressed, static_cast<u_int8_t>(SwitchId::kTap), 0, {}};
+  e = {EventDomain::kPhysical, EventSubject::kSwitch, EventAction::kPressed, static_cast<uint8_t>(SwitchId::kTap), 0, {}};
   TEST_ASSERT_FALSE(bypassService.interestedIn(e));
 
   // Pot move
-  e = {EventDomain::kPhysical, EventSubject::kPot, EventAction::kValueChanged, static_cast<u_int8_t>(SwitchId::kTap), 0, {}};
+  e = {EventDomain::kPhysical, EventSubject::kPot, EventAction::kValueChanged, static_cast<uint8_t>(SwitchId::kTap), 0, {}};
   TEST_ASSERT_FALSE(bypassService.interestedIn(e));
 
   // Program change
-  e = {EventDomain::kLogic, EventSubject::kProgram, EventAction::kValueChanged, static_cast<u_int8_t>(SwitchId::kTap), 0, {}};
+  e = {EventDomain::kLogic, EventSubject::kProgram, EventAction::kValueChanged, static_cast<uint8_t>(SwitchId::kTap), 0, {}};
   TEST_ASSERT_FALSE(bypassService.interestedIn(e));
 
   // Nonsensical event
-  e = {EventDomain::kSystem, EventSubject::kTempo, EventAction::kPressed, static_cast<u_int8_t>(SwitchId::kTap), 0, {}};
+  e = {EventDomain::kSystem, EventSubject::kTempo, EventAction::kPressed, static_cast<uint8_t>(SwitchId::kTap), 0, {}};
   TEST_ASSERT_FALSE(bypassService.interestedIn(e));
 }
 
