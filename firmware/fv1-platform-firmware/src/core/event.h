@@ -23,6 +23,7 @@ enum class EventSubject {
   kPreset,
   kPresetBank,
   kTempo,
+  kTap,
   kBypass,
   kMenu,
   kMidiChannel
