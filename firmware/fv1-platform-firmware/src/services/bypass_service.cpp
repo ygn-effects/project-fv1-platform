@@ -36,16 +36,27 @@ void BypassService::handleEvent(const Event& t_event) {
         : BypassState::kActive;
 
       m_bypass.toggle();
+
+      publishBypassToggledEvent(t_event);
+      publishSaveBypassEvent(t_event);
       break;
 
     case EventDomain::kMidi:
-      if (t_event.m_data.value == MidiCCValues::c_bypassDisable) {
+      if (t_event.m_data.value == MidiCCValues::c_bypassDisable
+          && m_logicalState.m_bypassState != BypassState::kBypassed) {
         m_logicalState.m_bypassState = BypassState::kBypassed;
         m_bypass.off();
+
+        publishBypassToggledEvent(t_event);
+        publishSaveBypassEvent(t_event);
       }
-      else if (t_event.m_data.value == MidiCCValues::c_bypassEnable) {
+      else if (t_event.m_data.value == MidiCCValues::c_bypassEnable
+              && m_logicalState.m_bypassState != BypassState::kActive) {
         m_logicalState.m_bypassState = BypassState::kActive;
         m_bypass.on();
+
+        publishBypassToggledEvent(t_event);
+        publishSaveBypassEvent(t_event);
       }
 
       break;
@@ -53,9 +64,6 @@ void BypassService::handleEvent(const Event& t_event) {
     default:
       break;
   }
-
-  publishBypassToggledEvent(t_event);
-  publishSaveBypassEvent(t_event);
 }
 
 void BypassService::update() {
