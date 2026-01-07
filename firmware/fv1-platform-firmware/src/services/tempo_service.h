@@ -7,6 +7,7 @@
 #include "logic/tempo_handler.h"
 #include "periphs/adjustable.h"
 #include "periphs/clock.h"
+#include "ui/inputs.h"
 #include "utils/utils.h"
 
 class TempoService : public Service {
@@ -17,7 +18,6 @@ class TempoService : public Service {
     TempoHandler m_handler;
 
     void syncHandler();
-
     void publishTempoEvent(uint16_t t_interval) const;
     void publishSaveTempoEvent(uint16_t t_interval) const;
 
@@ -27,5 +27,5 @@ class TempoService : public Service {
     void init() override;
     void handleEvent(const Event& t_event) override;
     void update() override;
-    bool interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const override;
+    bool interestedIn(const Event& t_event) const override;
 };
