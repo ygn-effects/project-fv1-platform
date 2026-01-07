@@ -6,29 +6,76 @@
 
 #include "../src/services/bypass_service.cpp"
 
-void setUp() {
-  Event event;
+// =============================================================================
+// Helper functions
+// =============================================================================
 
+void clearEventBus() {
+  Event e;
   while (EventBus::hasEvent()) {
-    EventBus::recall(event);
+    EventBus::recall(e);
   }
+}
+
+Event makePhysicalBypassPressEvent() {
+  Event e;
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kSwitch;
+  e.m_action = EventAction::kPressed;
+  e.m_id = static_cast<uint8_t>(SwitchId::kBypass);
+  return e;
+}
+
+Event makeMidiBypassEvent(uint16_t t_value) {
+  Event e;
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kSwitch;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(SwitchId::kBypass);
+  e.m_data.value = t_value;
+  return e;
+}
+
+void assertBypassToggledEventPublished() {
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  Event e;
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventDomain::kLogic, e.m_domain);
+  TEST_ASSERT_EQUAL(EventSubject::kBypass, e.m_subject);
+  TEST_ASSERT_EQUAL(EventAction::kToggled, e.m_action);
+}
+
+void assertBypassSaveEventPublished() {
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  Event e;
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventDomain::kMemory, e.m_domain);
+  TEST_ASSERT_EQUAL(EventSubject::kBypass, e.m_subject);
+  TEST_ASSERT_EQUAL(EventAction::kSave, e.m_action);
+}
+
+void setUp() {
+  clearEventBus();
 }
 
 void tearDown() {
 
 }
 
+// =============================================================================
+// Init Tests
+// =============================================================================
+
 void test_init_when_active() {
   LogicalState logicalState;
   MockBypass mockBypass;
   BypassService bypassService(logicalState, mockBypass);
 
-  // Default state is kActive
+  // Set active
   TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
-
   bypassService.init();
 
-  // Bypass relay should be on (effects active)
+  // Bypass relay should be on
   TEST_ASSERT_EQUAL(1, mockBypass.m_kState);
 }
 
@@ -37,189 +84,275 @@ void test_init_when_bypassed() {
   MockBypass mockBypass;
   BypassService bypassService(logicalState, mockBypass);
 
-  // Set state to bypassed before init
+  // Set bypassed
   logicalState.m_bypassState = BypassState::kBypassed;
-
   bypassService.init();
 
-  // Bypass relay should be off (effects bypassed)
+  // Bypass relay should be off
   TEST_ASSERT_EQUAL(0, mockBypass.m_kState);
 }
 
-void test_bypass() {
+// =============================================================================
+// Physical Switch Tests
+// =============================================================================
+
+void test_physical_press_toggles_active_to_bypassed() {
   LogicalState logicalState;
   MockBypass mockBypass;
   BypassService bypassService(logicalState, mockBypass);
 
+  // Start active
   TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
-
-  // Send a footswitch pressed event
-  Event e {EventDomain::kPhysical, EventSubject::kSwitch, EventAction::kPressed, 0, 0, {}};
-  bypassService.handleEvent(e);
-
-  TEST_ASSERT_TRUE(EventBus::hasEvent());
-  // First event should be bypass state toggled
-  EventBus::recall(e);
-  TEST_ASSERT_EQUAL(EventDomain::kLogic, e.m_domain);
-  TEST_ASSERT_EQUAL(EventSubject::kBypass, e.m_subject);
-  TEST_ASSERT_EQUAL(EventAction::kToggled, e.m_action);
-
-  TEST_ASSERT_TRUE(EventBus::hasEvent());
-  // Second event should be bypass state save
-  EventBus::recall(e);
-  TEST_ASSERT_EQUAL(EventDomain::kMemory, e.m_domain);
-  TEST_ASSERT_EQUAL(EventSubject::kBypass, e.m_subject);
-  TEST_ASSERT_EQUAL(EventAction::kSave, e.m_action);
-
-  // Check LogicalState
-  TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
-
-  // Check MockBypass state (toggled from initial 0)
-  TEST_ASSERT_EQUAL(1, mockBypass.m_kState);
-
-  // Send a footswitch pressed event
-  e = {EventDomain::kPhysical, EventSubject::kSwitch, EventAction::kPressed, 0, 0, {}};
-  bypassService.handleEvent(e);
-
-  TEST_ASSERT_TRUE(EventBus::hasEvent());
-  // First event should be bypass state toggled
-  EventBus::recall(e);
-  TEST_ASSERT_EQUAL(EventDomain::kLogic, e.m_domain);
-  TEST_ASSERT_EQUAL(EventSubject::kBypass, e.m_subject);
-  TEST_ASSERT_EQUAL(EventAction::kToggled, e.m_action);
-
-  TEST_ASSERT_TRUE(EventBus::hasEvent());
-  // Second event should be bypass state save
-  EventBus::recall(e);
-  TEST_ASSERT_EQUAL(EventDomain::kMemory, e.m_domain);
-  TEST_ASSERT_EQUAL(EventSubject::kBypass, e.m_subject);
-  TEST_ASSERT_EQUAL(EventAction::kSave, e.m_action);
-
-  // Check LogicalState
-  TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
-
-  // Check MockBypass state (toggled back to 0)
-  TEST_ASSERT_EQUAL(0, mockBypass.m_kState);
-
-  // Event bus should be empty
-  TEST_ASSERT_FALSE(EventBus::hasEvent());
-}
-
-void test_midi_bypass_disable() {
-  LogicalState logicalState;
-  MockBypass mockBypass;
-  BypassService bypassService(logicalState, mockBypass);
-
-  // Start with active state
-  logicalState.m_bypassState = BypassState::kActive;
   mockBypass.on();
 
-  // Send MIDI bypass disable event (value = 0)
-  Event e {EventDomain::kMidi, EventSubject::kSwitch, EventAction::kValueChanged, static_cast<uint8_t>(SwitchId::kBypass), 0, {}};
-  e.m_data.value = MidiCCValues::c_bypassDisable;
+  bypassService.handleEvent(makePhysicalBypassPressEvent());
 
-  bypassService.handleEvent(e);
-
-  // Check LogicalState changed to bypassed
+  // State should toggle to bypassed
   TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
-
-  // Check MockBypass is off
   TEST_ASSERT_EQUAL(0, mockBypass.m_kState);
 
   // Verify events published
-  TEST_ASSERT_TRUE(EventBus::hasEvent());
-  EventBus::recall(e);
-  TEST_ASSERT_EQUAL(EventDomain::kLogic, e.m_domain);
-  TEST_ASSERT_EQUAL(EventSubject::kBypass, e.m_subject);
-  TEST_ASSERT_EQUAL(EventAction::kToggled, e.m_action);
-
-  TEST_ASSERT_TRUE(EventBus::hasEvent());
-  EventBus::recall(e);
-  TEST_ASSERT_EQUAL(EventDomain::kMemory, e.m_domain);
-  TEST_ASSERT_EQUAL(EventSubject::kBypass, e.m_subject);
-  TEST_ASSERT_EQUAL(EventAction::kSave, e.m_action);
-
+  assertBypassToggledEventPublished();
+  assertBypassSaveEventPublished();
   TEST_ASSERT_FALSE(EventBus::hasEvent());
 }
 
-void test_midi_bypass_enable() {
+void test_physical_press_toggles_bypassed_to_active() {
   LogicalState logicalState;
   MockBypass mockBypass;
   BypassService bypassService(logicalState, mockBypass);
 
-  // Start with bypassed state
+  // Start bypassed
   logicalState.m_bypassState = BypassState::kBypassed;
   mockBypass.off();
 
-  // Send MIDI bypass enable event (value = 127)
-  Event e {EventDomain::kMidi, EventSubject::kSwitch, EventAction::kValueChanged, static_cast<uint8_t>(SwitchId::kBypass), 0, {}};
-  e.m_data.value = MidiCCValues::c_bypassEnable;
+  bypassService.handleEvent(makePhysicalBypassPressEvent());
 
-  bypassService.handleEvent(e);
-
-  // Check LogicalState changed to active
+  // State should toggle to active
   TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
-
-  // Check MockBypass is on
   TEST_ASSERT_EQUAL(1, mockBypass.m_kState);
 
   // Verify events published
-  TEST_ASSERT_TRUE(EventBus::hasEvent());
-  EventBus::recall(e);
-  TEST_ASSERT_EQUAL(EventDomain::kLogic, e.m_domain);
-  TEST_ASSERT_EQUAL(EventSubject::kBypass, e.m_subject);
-  TEST_ASSERT_EQUAL(EventAction::kToggled, e.m_action);
-
-  TEST_ASSERT_TRUE(EventBus::hasEvent());
-  EventBus::recall(e);
-  TEST_ASSERT_EQUAL(EventDomain::kMemory, e.m_domain);
-  TEST_ASSERT_EQUAL(EventSubject::kBypass, e.m_subject);
-  TEST_ASSERT_EQUAL(EventAction::kSave, e.m_action);
-
+  assertBypassToggledEventPublished();
+  assertBypassSaveEventPublished();
   TEST_ASSERT_FALSE(EventBus::hasEvent());
 }
 
-void test_interested_in() {
+void test_physical_press_multiple_toggles() {
   LogicalState logicalState;
   MockBypass mockBypass;
   BypassService bypassService(logicalState, mockBypass);
 
-  // Bypass footswitch press
-  Event e {EventDomain::kPhysical, EventSubject::kSwitch, EventAction::kPressed, static_cast<uint8_t>(SwitchId::kBypass), 0, {}};
+  // First toggle: active -> bypassed
+  bypassService.handleEvent(makePhysicalBypassPressEvent());
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
+  clearEventBus();
+
+  // Second toggle: bypassed -> active
+  bypassService.handleEvent(makePhysicalBypassPressEvent());
+  TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
+  clearEventBus();
+
+  // Third toggle: active -> bypassed
+  bypassService.handleEvent(makePhysicalBypassPressEvent());
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
+}
+
+// =============================================================================
+// MIDI Tests
+// =============================================================================
+
+void test_midi_disable_when_active() {
+  LogicalState logicalState;
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
+
+  // Start active
+  logicalState.m_bypassState = BypassState::kActive;
+  mockBypass.on();
+
+  bypassService.handleEvent(makeMidiBypassEvent(MidiCCValues::c_bypassDisable));
+
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
+  TEST_ASSERT_EQUAL(0, mockBypass.m_kState);
+
+  // Verify events published
+  assertBypassToggledEventPublished();
+  assertBypassSaveEventPublished();
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+}
+
+void test_midi_enable_when_active() {
+  LogicalState logicalState;
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
+
+  // Start active
+  logicalState.m_bypassState = BypassState::kActive;
+  mockBypass.on();
+
+  bypassService.handleEvent(makeMidiBypassEvent(MidiCCValues::c_bypassEnable));
+
+  // State shouldn't have changed
+  TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
+  TEST_ASSERT_EQUAL(1, mockBypass.m_kState);
+
+  // Verify no events published
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+}
+
+void test_midi_enable_when_bypassed() {
+  LogicalState logicalState;
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
+
+  // Start bypassed
+  logicalState.m_bypassState = BypassState::kBypassed;
+  mockBypass.off();
+
+  bypassService.handleEvent(makeMidiBypassEvent(MidiCCValues::c_bypassEnable));
+
+  TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
+  TEST_ASSERT_EQUAL(1, mockBypass.m_kState);
+
+  assertBypassToggledEventPublished();
+  assertBypassSaveEventPublished();
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+}
+
+void test_midi_disable_when_bypassed() {
+  LogicalState logicalState;
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
+
+  // Start active
+  logicalState.m_bypassState = BypassState::kBypassed;
+  mockBypass.off();
+
+  bypassService.handleEvent(makeMidiBypassEvent(MidiCCValues::c_bypassDisable));
+
+  // State shouldn't have changed
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
+  TEST_ASSERT_EQUAL(0, mockBypass.m_kState);
+
+  // Verify no events published
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+}
+
+// =============================================================================
+// interestedIn Tests
+// =============================================================================
+
+void test_interested_in_physical_bypass_press() {
+  LogicalState logicalState;
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
+
+  Event e;
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kSwitch;
+  e.m_action = EventAction::kPressed;
+  e.m_id = static_cast<uint8_t>(SwitchId::kBypass);
+
   TEST_ASSERT_TRUE(bypassService.interestedIn(e));
+}
 
-  // MIDI switch press
-  e = {EventDomain::kMidi, EventSubject::kSwitch, EventAction::kValueChanged, static_cast<uint8_t>(SwitchId::kBypass), 0, {}};
+void test_interested_in_midi_bypass() {
+  LogicalState logicalState;
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
+
+  Event e;
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kSwitch;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(SwitchId::kBypass);
+
   TEST_ASSERT_TRUE(bypassService.interestedIn(e));
+}
 
-  // Bypass footswitch longpress
-  e = {EventDomain::kPhysical, EventSubject::kSwitch, EventAction::kLongPressed, static_cast<uint8_t>(SwitchId::kBypass), 0, {}};
+void test_not_interested_in_bypass_long_press() {
+  LogicalState logicalState;
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
+
+  Event e;
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kSwitch;
+  e.m_action = EventAction::kLongPressed;
+  e.m_id = static_cast<uint8_t>(SwitchId::kBypass);
+
+  TEST_ASSERT_FALSE(bypassService.interestedIn(e));
+}
+
+void test_not_interested_in_other_switches() {
+  LogicalState logicalState;
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
+
+  Event e;
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kSwitch;
+  e.m_action = EventAction::kPressed;
+  e.m_id = static_cast<uint8_t>(SwitchId::kTap);
+
+  TEST_ASSERT_FALSE(bypassService.interestedIn(e));
+}
+
+void test_not_interested_in_other_events() {
+  LogicalState logicalState;
+  MockBypass mockBypass;
+  BypassService bypassService(logicalState, mockBypass);
+
+  Event e;
+
+  // Not interested in pot events
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
   TEST_ASSERT_FALSE(bypassService.interestedIn(e));
 
-  // Random switch press
-  e = {EventDomain::kPhysical, EventSubject::kSwitch, EventAction::kPressed, static_cast<uint8_t>(SwitchId::kTap), 0, {}};
+  // Not interested in program change
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kValueChanged;
   TEST_ASSERT_FALSE(bypassService.interestedIn(e));
 
-  // Pot move
-  e = {EventDomain::kPhysical, EventSubject::kPot, EventAction::kValueChanged, static_cast<uint8_t>(SwitchId::kTap), 0, {}};
+  // Not interested in memory events
+  e.m_domain = EventDomain::kMemory;
+  e.m_subject = EventSubject::kBypass;
   TEST_ASSERT_FALSE(bypassService.interestedIn(e));
 
-  // Program change
-  e = {EventDomain::kLogic, EventSubject::kProgram, EventAction::kValueChanged, static_cast<uint8_t>(SwitchId::kTap), 0, {}};
-  TEST_ASSERT_FALSE(bypassService.interestedIn(e));
-
-  // Nonsensical event
-  e = {EventDomain::kSystem, EventSubject::kTempo, EventAction::kPressed, static_cast<uint8_t>(SwitchId::kTap), 0, {}};
+  // Not interested in logic bypass events (outputs them)
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kBypass;
   TEST_ASSERT_FALSE(bypassService.interestedIn(e));
 }
 
 int main() {
   UNITY_BEGIN();
+
+  // Init
   RUN_TEST(test_init_when_active);
   RUN_TEST(test_init_when_bypassed);
-  RUN_TEST(test_bypass);
-  RUN_TEST(test_midi_bypass_disable);
-  RUN_TEST(test_midi_bypass_enable);
-  RUN_TEST(test_interested_in);
+
+  // Physical Switch
+  RUN_TEST(test_physical_press_toggles_active_to_bypassed);
+  RUN_TEST(test_physical_press_toggles_bypassed_to_active);
+  RUN_TEST(test_physical_press_multiple_toggles);
+
+  // MIDI
+  RUN_TEST(test_midi_disable_when_active);
+  RUN_TEST(test_midi_enable_when_active);
+  RUN_TEST(test_midi_enable_when_bypassed);
+  RUN_TEST(test_midi_disable_when_bypassed);
+
+  // interestedIn
+  RUN_TEST(test_interested_in_physical_bypass_press);
+  RUN_TEST(test_interested_in_midi_bypass);
+  RUN_TEST(test_not_interested_in_bypass_long_press);
+  RUN_TEST(test_not_interested_in_other_switches);
+  RUN_TEST(test_not_interested_in_other_events);
+
   UNITY_END();
 }
