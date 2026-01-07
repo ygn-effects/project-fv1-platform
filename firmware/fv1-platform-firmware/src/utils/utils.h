@@ -12,6 +12,15 @@ namespace Utils {
     value = static_cast<uint16_t>(lowByte) | (static_cast<uint16_t>(highByte) << 8);
   }
 
+  constexpr void pack8(uint8_t value, uint8_t& lowByte, uint8_t& highByte) {
+    lowByte = value & 0xF;
+    highByte = (value >> 4) & 0xF;
+  }
+
+  constexpr void unpack8(const uint8_t lowByte, const uint8_t highByte, uint8_t& value) {
+    value = lowByte | (highByte << 8);
+  }
+
   template<typename T>
   constexpr const T& min(const T& a, const T& b) {
     return (b < a) ? b : a;
