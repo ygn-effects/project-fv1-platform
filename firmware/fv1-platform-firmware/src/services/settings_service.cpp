@@ -1,6 +1,6 @@
-#include "services/memory_service.h"
+#include "services/settings_service.h"
 
-void MemoryService::saveRegion(MemoryRegion t_region, uint8_t t_programIndex, uint8_t t_potIndex) {
+void SettingsService::saveRegion(MemoryRegion t_region, uint8_t t_programIndex, uint8_t t_potIndex) {
   RegionInfo info = m_handler.calculateRegionInfo(t_region, t_programIndex, t_potIndex);
 
   uint8_t buffer[info.m_length];
@@ -8,7 +8,7 @@ void MemoryService::saveRegion(MemoryRegion t_region, uint8_t t_programIndex, ui
   m_eeprom.write(info.m_address, buffer, info.m_length);
 }
 
-void MemoryService::loadRegion(MemoryRegion t_region, uint8_t t_programIndex, uint8_t t_potIndex) {
+void SettingsService::loadRegion(MemoryRegion t_region, uint8_t t_programIndex, uint8_t t_potIndex) {
   RegionInfo info = m_handler.calculateRegionInfo(t_region, t_programIndex, t_potIndex);
 
   uint8_t buffer[info.m_length];
@@ -16,40 +16,17 @@ void MemoryService::loadRegion(MemoryRegion t_region, uint8_t t_programIndex, ui
   m_handler.deserializeRegion(t_region, m_logicalState, buffer, t_programIndex, t_potIndex);
 }
 
-void MemoryService::loadPresetBank(uint8_t t_bankIndex) {
-  RegionInfo info = m_handler.calculateRegionInfo(MemoryRegion::kPresetBank, t_bankIndex);
-
-  uint8_t buffer[info.m_length];
-  m_eeprom.read(info.m_address, buffer, info.m_length);
-  m_handler.deserializePresetBank(m_loadedBank, buffer, t_bankIndex, 0);
-}
-
-void MemoryService::savePreset(uint8_t t_bankIndex, uint8_t t_presetIndex) {
-  RegionInfo info = m_handler.calculateRegionInfo(MemoryRegion::kPreset, t_bankIndex, t_presetIndex);
-
-  uint8_t buffer[info.m_length];
-  m_handler.serializePreset(m_loadedBank.m_presets[t_presetIndex], buffer, t_bankIndex, t_presetIndex, 0);
-  m_eeprom.write(info.m_address, buffer, info.m_length);
-}
-
-MemoryService::MemoryService(LogicalState& t_lState, EEPROM& t_eeprom)
+SettingsService::SettingsService(LogicalState& t_lState, EEPROM& t_eeprom)
   : m_logicalState(t_lState),
     m_eeprom(t_eeprom) {}
 
-void MemoryService::init() {
+void SettingsService::init() {
   m_eeprom.init();
 
   loadRegion(MemoryRegion::kLogicalState);
-  loadPresetBank(m_logicalState.m_currentPresetBank);
-
-  Event e;
-  e.m_type = EventType::kPresetBankLoaded;
-  e.m_timestamp = 0; /*millis()*/
-  e.m_data.bank = &m_loadedBank;
-  EventBus::publish(e);
 }
 
-void MemoryService::handleEvent(const Event& t_event) {
+void SettingsService::handleEvent(const Event& t_event) {
   switch (t_event.m_type) {
     case EventType::kSaveBypass:
       saveRegion(MemoryRegion::kBypass);
@@ -104,44 +81,16 @@ void MemoryService::handleEvent(const Event& t_event) {
       loadRegion(MemoryRegion::kLogicalState);
       break;
 
-    case EventType::kLoadPresetBank:
-      loadPresetBank(t_event.m_data.value);
-
-      Event e;
-      e.m_type = EventType::kPresetBankLoaded;
-      e.m_timestamp = 0; /*millis()*/
-      e.m_data.bank = &m_loadedBank;
-      EventBus::publish(e);
-      break;
-
-    case EventType::kSavePreset: {
-      uint8_t low = 0, high = 0;
-      Utils::pack16(t_event.m_data.value, low, high);
-      savePreset(high, low);
-      break;
-    }
-
-    case EventType::kProgramModeChanged:
-      if (m_logicalState.m_programMode == ProgramMode::kProgram) {
-        saveRegion(MemoryRegion::kLogicalState);
-      }
-      else {
-        loadRegion(MemoryRegion::kLogicalState);
-        // Hackish, loadRegion will restore program mode while technically it should still be preset at this point
-        m_logicalState.m_programMode = ProgramMode::kPreset;
-      }
-      break;
-
     default:
       break;
   }
 }
 
-void MemoryService::update() {
+void SettingsService::update() {
 
 }
 
-bool MemoryService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
+bool SettingsService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
   return t_category == EventCategory::kSaveEvent
       || t_category == EventCategory::kLoadEvent
       || t_category == EventCategory::kBootEvent
