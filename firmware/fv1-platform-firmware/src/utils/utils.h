@@ -18,7 +18,7 @@ namespace Utils {
   }
 
   constexpr void unpack8(const uint8_t lowByte, const uint8_t highByte, uint8_t& value) {
-    value = lowByte | (highByte << 8);
+    value = lowByte | (highByte << 4);
   }
 
   template<typename T>
