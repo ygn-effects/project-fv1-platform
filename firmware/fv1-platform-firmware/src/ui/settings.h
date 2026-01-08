@@ -9,3 +9,9 @@ enum class ExprParam : uint8_t {
   kHeel,
   kToe
 };
+
+enum class PotParam : uint8_t {
+  kState,
+  kMinValue,
+  kMaxValue
+};
