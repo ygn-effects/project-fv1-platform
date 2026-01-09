@@ -2,184 +2,229 @@
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
 #include "logic/memory_handler.h"
-#include "logic/preset_handler.h"
-#include "services/memory_service.h"
+#include "services/settings_service.h"
 #include "mock/mock_eeprom.h"
 #include <algorithm>
 
 #include "../src/logic/memory_handler.cpp"
-#include "../src/logic/preset_handler.cpp"
-#include "../src/services/memory_service.cpp"
+#include "../src/services/settings_service.cpp"
 
+// =============================================================================
+// Helper functions
+// =============================================================================
+
+Event makeMemorySaveEvent(EventSubject t_subject, PotId t_id = PotId::kPot0) {
+  Event e;
+  e.m_domain = EventDomain::kMemory;
+  e.m_subject = t_subject;
+  e.m_action = EventAction::kSave;
+  e.m_id = static_cast<uint8_t>(t_id);
+  return e;
+}
+
+Event makeMemoryLoadGeneralEvent() {
+  Event e;
+  e.m_domain = EventDomain::kMemory;
+  e.m_subject = EventSubject::kGeneral;
+  e.m_action = EventAction::kLoad;
+  return e;
+}
+
+void assertEventBusEmpty() {
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+}
+
+void clearEventBus() {
+  Event e;
+  while (EventBus::hasEvent()) {
+    EventBus::recall(e);
+  }
+}
 
 void setUp() {
-  Event event;
-
-  while (EventBus::hasEvent()) {
-    EventBus::recall(event);
-  }
+  clearEventBus();
 }
 
 void tearDown() {
 
 }
 
-void test_logical_state() {
-  LogicalState logicalState;
+// =============================================================================
+// Init tests
+// =============================================================================
+
+void test_init_loads_logical_state_from_eeprom() {
   MockEEPROM eeprom;
+  eeprom.reset();
 
-  MemoryService memoryService(logicalState, eeprom);
+  // Create first service and save some state to EEPROM
+  {
+    LogicalState logicalState;
+    logicalState.m_bypassState = BypassState::kBypassed;
+    logicalState.m_currentProgram = 3;
+    logicalState.m_programMode = ProgramMode::kPreset;
+    logicalState.m_tempo = 750;
 
-  logicalState.m_bypassState = BypassState::kActive;
-  logicalState.m_currentProgram = 2;
-  memoryService.handleEvent({EventType::kSaveLogicalState, 0, {}});
+    SettingsService settingsService(logicalState, eeprom);
+    settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kGeneral));
+  }
 
-  logicalState.m_bypassState = BypassState::kBypassed;
-  logicalState.m_currentProgram = 0;
+  // Create new service with different state
+  LogicalState newLogicalState;
+  newLogicalState.m_bypassState = BypassState::kActive;
+  newLogicalState.m_currentProgram = 0;
+  newLogicalState.m_programMode = ProgramMode::kProgram;
+  newLogicalState.m_tempo = 0;
 
-  memoryService.handleEvent({EventType::kRestoreState, 0, {}});
-  TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
+  SettingsService newSettingsService(newLogicalState, eeprom);
+
+  // Init should load from EEPROM
+  newSettingsService.init();
+
+  // Verify state was restored
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, newLogicalState.m_bypassState);
+  TEST_ASSERT_EQUAL(3, newLogicalState.m_currentProgram);
+  TEST_ASSERT_EQUAL(ProgramMode::kPreset, newLogicalState.m_programMode);
+  TEST_ASSERT_EQUAL(750, newLogicalState.m_tempo);
 }
 
-void test_bypass() {
+// =============================================================================
+// Save tests
+// =============================================================================
+
+void test_memory_save_bypass() {
   LogicalState logicalState;
   MockEEPROM eeprom;
+  SettingsService settingsService(logicalState, eeprom);
 
-  MemoryService memoryService(logicalState, eeprom);
-
+  // Set bypass state and send the save event
   logicalState.m_bypassState = BypassState::kBypassed;
-  memoryService.handleEvent({EventType::kSaveBypass, 0, {}});
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kBypass));
 
+  // Modify the bypass state
   logicalState.m_bypassState = BypassState::kActive;
 
-  memoryService.handleEvent({EventType::kRestoreState, 0, {}});
+  // Send the restore event
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Check logicalState
   TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
 }
 
-void test_program_mode() {
+void test_memory_save_program_mode() {
   LogicalState logicalState;
   MockEEPROM eeprom;
+  SettingsService settingsService(logicalState, eeprom);
 
-  MemoryService memoryService(logicalState, eeprom);
-
+  // Set program modeand send the save event
   logicalState.m_programMode = ProgramMode::kPreset;
-  memoryService.handleEvent({EventType::kSaveProgramMode, 0, {}});
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kProgramMode));
 
+  // Modify the program mode
   logicalState.m_programMode = ProgramMode::kProgram;
 
-  memoryService.handleEvent({EventType::kRestoreState, 0, {}});
+  // Send the restore event
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Check logicalState
   TEST_ASSERT_EQUAL(ProgramMode::kPreset, logicalState.m_programMode);
 }
 
-void test_current_program() {
+void test_memory_save_program() {
   LogicalState logicalState;
   MockEEPROM eeprom;
+  SettingsService settingsService(logicalState, eeprom);
 
-  MemoryService memoryService(logicalState, eeprom);
+  // Set program and send the save event
+  logicalState.m_currentProgram = 1;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kProgram));
 
-  logicalState.m_currentProgram = 3;
-  memoryService.handleEvent({EventType::kSaveCurrentProgram, 0, {}});
-
+  // Modify the program
   logicalState.m_currentProgram = 0;
 
-  memoryService.handleEvent({EventType::kRestoreState, 0, {}});
-  TEST_ASSERT_EQUAL(3, logicalState.m_currentProgram);
+  // Send the restore event
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Check logicalState
+  TEST_ASSERT_EQUAL(1, logicalState.m_currentProgram);
 }
 
-void test_current_preset() {
+void test_memory_save_tap() {
   LogicalState logicalState;
   MockEEPROM eeprom;
+  SettingsService settingsService(logicalState, eeprom);
 
-  MemoryService memoryService(logicalState, eeprom);
-
-  logicalState.m_currentPreset = 4;
-  memoryService.handleEvent({EventType::kSaveCurrentPreset, 0, {}});
-
-  logicalState.m_currentPreset = 0;
-
-  memoryService.handleEvent({EventType::kRestoreState, 0, {}});
-  TEST_ASSERT_EQUAL(4, logicalState.m_currentPreset);
-}
-
-void test_midi_channel() {
-  LogicalState logicalState;
-  MockEEPROM eeprom;
-
-  MemoryService memoryService(logicalState, eeprom);
-
-  logicalState.m_midiChannel = 7;
-  memoryService.handleEvent({EventType::kSaveMidiChannel, 0, {}});
-
-  logicalState.m_midiChannel = 0;
-
-  memoryService.handleEvent({EventType::kRestoreState, 0, {}});
-  TEST_ASSERT_EQUAL(7, logicalState.m_midiChannel);
-}
-
-void test_tap() {
-  LogicalState logicalState;
-  MockEEPROM eeprom;
-
-  MemoryService memoryService(logicalState, eeprom);
-
+  // Set tap parameters and send the save event
   logicalState.m_tapState = TapState::kEnabled;
   logicalState.m_divState = DivState::kEnabled;
   logicalState.m_divValue = DivValue::kEight;
-  logicalState.m_interval = 512;
-  logicalState.m_divInterval = 256;
-  memoryService.handleEvent({EventType::kSaveTap, 0, {}});
+  logicalState.m_interval = 400;
+  logicalState.m_divInterval = 200;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTap));
 
+  // Modify the tap parameters
   logicalState.m_tapState = TapState::kDisabled;
   logicalState.m_divState = DivState::kDisabled;
   logicalState.m_divValue = DivValue::kQuarter;
   logicalState.m_interval = 0;
   logicalState.m_divInterval = 0;
 
-  memoryService.handleEvent({EventType::kRestoreState, 0, {}});
+  // Send the restore event
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Check logicalState
   TEST_ASSERT_EQUAL(TapState::kEnabled, logicalState.m_tapState);
   TEST_ASSERT_EQUAL(DivState::kEnabled, logicalState.m_divState);
   TEST_ASSERT_EQUAL(DivValue::kEight, logicalState.m_divValue);
-  TEST_ASSERT_EQUAL(512, logicalState.m_interval);
-  TEST_ASSERT_EQUAL(256, logicalState.m_divInterval);
+  TEST_ASSERT_EQUAL(400, logicalState.m_interval);
+  TEST_ASSERT_EQUAL(200, logicalState.m_divInterval);
 }
 
-void test_tempo() {
+void test_memory_save_tempo() {
   LogicalState logicalState;
   MockEEPROM eeprom;
+  SettingsService settingsService(logicalState, eeprom);
 
-  MemoryService memoryService(logicalState, eeprom);
+  // Set tempo and send the save event
+  logicalState.m_tempo = 500;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTempo));
 
-  logicalState.m_tempo = 512;
-  memoryService.handleEvent({EventType::kSaveTempo, 0, {}});
-
+  // Modify the tempo
   logicalState.m_tempo = 0;
 
-  memoryService.handleEvent({EventType::kRestoreState, 0, {}});
-  TEST_ASSERT_EQUAL(512, logicalState.m_tempo);
+  // Send the restore event
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Check logicalState
+  TEST_ASSERT_EQUAL(500, logicalState.m_tempo);
 }
 
-void test_expr() {
+void test_memory_save_expr() {
   LogicalState logicalState;
   MockEEPROM eeprom;
+  SettingsService settingsService(logicalState, eeprom);
 
-  MemoryService memoryService(logicalState, eeprom);
-
+  // Set expr parameters and send the save event
   logicalState.m_currentProgram = 2;
   logicalState.m_exprParams[2].m_state = ExprState::kActive;
   logicalState.m_exprParams[2].m_mappedPot = MappedPot::kPot1;
   logicalState.m_exprParams[2].m_direction = Direction::kInverted;
   logicalState.m_exprParams[2].m_heelValue = 256;
   logicalState.m_exprParams[2].m_toeValue = 512;
-  memoryService.handleEvent({EventType::kSaveExpr, 0, {}});
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kExpr));
 
+  // Modify the expr parameters
   logicalState.m_currentProgram = 0;
-  logicalState.m_exprParams[2].m_state = ExprState::kActive;
-  logicalState.m_exprParams[2].m_mappedPot = MappedPot::kPot1;
-  logicalState.m_exprParams[2].m_direction = Direction::kInverted;
-  logicalState.m_exprParams[2].m_heelValue = 256;
-  logicalState.m_exprParams[2].m_toeValue = 512;
+  logicalState.m_exprParams[2].m_state = ExprState::kInactive;
+  logicalState.m_exprParams[2].m_mappedPot = MappedPot::kPot0;
+  logicalState.m_exprParams[2].m_direction = Direction::kNormal;
+  logicalState.m_exprParams[2].m_heelValue = 0;
+  logicalState.m_exprParams[2].m_toeValue = 1023;
 
-  memoryService.handleEvent({EventType::kRestoreState, 0, {}});
+  // Send the restore event
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Check logicalState
   TEST_ASSERT_EQUAL(ExprState::kActive, logicalState.m_exprParams[2].m_state);
   TEST_ASSERT_EQUAL(MappedPot::kPot1, logicalState.m_exprParams[2].m_mappedPot);
   TEST_ASSERT_EQUAL(Direction::kInverted, logicalState.m_exprParams[2].m_direction);
@@ -187,181 +232,135 @@ void test_expr() {
   TEST_ASSERT_EQUAL(512, logicalState.m_exprParams[2].m_toeValue);
 }
 
-void test_pot() {
+void test_memory_save_pot() {
   LogicalState logicalState;
   MockEEPROM eeprom;
+  SettingsService settingsService(logicalState, eeprom);
 
-  MemoryService memoryService(logicalState, eeprom);
-
+  // Set pot parameters and send the save event
   logicalState.m_currentProgram = 3;
   logicalState.m_potParams[3][2].m_state = PotState::kDisabled;
   logicalState.m_potParams[3][2].m_value = 512;
   logicalState.m_potParams[3][2].m_minValue = 256;
   logicalState.m_potParams[3][2].m_maxValue = 768;
-  memoryService.handleEvent({EventType::kSavePot, 0, {.value=2}});
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, PotId::kPot2));
 
+  // Modify the pot parameters
   logicalState.m_currentProgram = 0;
   logicalState.m_potParams[3][2].m_state = PotState::kActive;
   logicalState.m_potParams[3][2].m_value = 0;
   logicalState.m_potParams[3][2].m_minValue = 0;
   logicalState.m_potParams[3][2].m_maxValue = 0;
 
-  memoryService.handleEvent({EventType::kRestoreState, 0, {}});
+  // Send the restore event
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Check logicalState
   TEST_ASSERT_EQUAL(PotState::kDisabled, logicalState.m_potParams[3][2].m_state);
   TEST_ASSERT_EQUAL(512, logicalState.m_potParams[3][2].m_value);
   TEST_ASSERT_EQUAL(256, logicalState.m_potParams[3][2].m_minValue);
   TEST_ASSERT_EQUAL(768, logicalState.m_potParams[3][2].m_maxValue);
 }
 
-void test_corrupted_eeprom() {
+// =============================================================================
+// interestedIn Tests
+// =============================================================================
+
+void test_interested_in_memory() {
   LogicalState logicalState;
   MockEEPROM eeprom;
+  SettingsService settingsService(logicalState, eeprom);
 
-  MemoryService memoryService(logicalState, eeprom);
-
-  uint8_t buffer[MemoryLayout::c_potParamEnd];
-
-  for (uint16_t i = 0; i < sizeof(buffer); i++) {
-    buffer[i] = 255;
-  }
-
-  eeprom.write(0, buffer, sizeof(buffer));
-
-  memoryService.handleEvent({EventType::kRestoreState, 0, {}});
-  TEST_ASSERT_EQUAL(BypassState::kActive, logicalState.m_bypassState);
-}
-
-void test_preset() {
-  LogicalState logicalState;
-  PresetHandler presetHandler;
-  MockEEPROM eeprom;
-
-  MemoryService memoryService(logicalState, eeprom);
-
-  memoryService.handleEvent({EventType::kLoadPresetBank, 0, {.value=0}});
-
-  TEST_ASSERT_TRUE(EventBus::hasEvent());
   Event e;
-  EventBus::recall(e);
+  e.m_domain = EventDomain::kMemory;
 
-  TEST_ASSERT_EQUAL(EventType::kPresetBankLoaded, e.m_type);
-
-  PresetBank* bank = e.m_data.bank;
-  Preset& preset = bank->m_presets[0];
-
-  bank->m_id = 0;
-  preset.m_id = 0;
-  preset.m_programIndex = 3;
-  preset.m_tapState = TapState::kEnabled;
-  preset.m_divState = DivState::kEnabled;
-  preset.m_divValue = DivValue::kEight;
-  preset.m_interval = 512;
-  preset.m_divInterval = 256;
-  preset.m_tempo = 256;
-  preset.m_exprState = ExprState::kActive;
-  preset.m_mappedPot = MappedPot::kPot2;
-  preset.m_direction = Direction::kInverted;
-  preset.m_heelValue = 256;
-  preset.m_toeValue = 512;
-  preset.m_potParams[3].m_state = PotState::kActive;
-  preset.m_potParams[3].m_value = 512;
-  preset.m_potParams[3].m_minValue = 256;
-  preset.m_potParams[3].m_maxValue = 768;
-
-  for (uint8_t i = 0; i < PresetConstants::c_presetPerBank; i++) {
-    uint16_t preset = 0;
-    Utils::unpack16(i, 0, preset);
-    memoryService.handleEvent({EventType::kSavePreset, 0, {.value=preset}});
-  }
-
-  preset = bank->m_presets[0];
-
-  bank->m_id = 1;
-  preset.m_id = 2;
-  preset.m_programIndex = 4;
-  preset.m_tapState = TapState::kDisabled;
-  preset.m_divState = DivState::kDisabled;
-  preset.m_divValue = DivValue::kQuarter;
-  preset.m_interval = 0;
-  preset.m_divInterval = 0;
-  preset.m_tempo = 0;
-  preset.m_exprState = ExprState::kInactive;
-  preset.m_mappedPot = MappedPot::kPot0;
-  preset.m_direction = Direction::kNormal;
-  preset.m_heelValue = 0;
-  preset.m_toeValue = 0;
-  preset.m_potParams[3].m_state = PotState::kDisabled;
-  preset.m_potParams[3].m_value = 0;
-  preset.m_potParams[3].m_minValue = 0;
-  preset.m_potParams[3].m_maxValue = 0;
-
-  memoryService.handleEvent({EventType::kLoadPresetBank, 0, {.value=0}});
-
-  TEST_ASSERT_TRUE(EventBus::hasEvent());
-  EventBus::recall(e);
-
-  TEST_ASSERT_EQUAL(EventType::kPresetBankLoaded, e.m_type);
-
-  bank = e.m_data.bank;
-  preset = bank->m_presets[0];
-
-  TEST_ASSERT_EQUAL(0, bank->m_id);
-  TEST_ASSERT_EQUAL(0, preset.m_id);
-  TEST_ASSERT_EQUAL(3, preset.m_programIndex);
-  TEST_ASSERT_EQUAL(TapState::kEnabled, preset.m_tapState);
-  TEST_ASSERT_EQUAL(DivState::kEnabled, preset.m_divState);
-  TEST_ASSERT_EQUAL(DivValue::kEight, preset.m_divValue);
-  TEST_ASSERT_EQUAL(512, preset.m_interval);
-  TEST_ASSERT_EQUAL(256, preset.m_divInterval);
-  TEST_ASSERT_EQUAL(256, preset.m_tempo);
-  TEST_ASSERT_EQUAL(ExprState::kActive, preset.m_exprState);
-  TEST_ASSERT_EQUAL(MappedPot::kPot2, preset.m_mappedPot);
-  TEST_ASSERT_EQUAL(Direction::kInverted, preset.m_direction);
-  TEST_ASSERT_EQUAL(256, preset.m_heelValue);
-  TEST_ASSERT_EQUAL(512, preset.m_toeValue);
-  TEST_ASSERT_EQUAL(PotState::kActive, preset.m_potParams[3].m_state);
-  TEST_ASSERT_EQUAL(512, preset.m_potParams[3].m_value);
-  TEST_ASSERT_EQUAL(256, preset.m_potParams[3].m_minValue);
-  TEST_ASSERT_EQUAL(768, preset.m_potParams[3].m_maxValue);
+  TEST_ASSERT_TRUE(settingsService.interestedIn(e));
 }
 
-void test_interested_in() {
+void test_interested_in_memory_but_not_preset() {
   LogicalState logicalState;
-  PresetHandler presetHandler;
   MockEEPROM eeprom;
+  SettingsService settingsService(logicalState, eeprom);
 
-  MemoryService memoryService(logicalState, eeprom);
+  Event e;
+  e.m_domain = EventDomain::kMemory;
+  e.m_subject = EventSubject::kPreset;
 
-  Event e{EventType::kSaveBypass, 500, {.value=100}};
-  TEST_ASSERT_TRUE(memoryService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+  TEST_ASSERT_FALSE(settingsService.interestedIn(e));
+}
 
-  e = {EventType::kRestoreState, 500, {.delta=1}};
-  TEST_ASSERT_TRUE(memoryService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+void test_interested_in_memory_but_not_preset_bank() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  SettingsService settingsService(logicalState, eeprom);
 
-  e = {EventType::kBootCompleted, 500, {.delta=1}};
-  TEST_ASSERT_TRUE(memoryService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+  Event e;
+  e.m_domain = EventDomain::kMemory;
+  e.m_subject = EventSubject::kPresetBank;
 
-  e = {EventType::kExprMoved, 500, {.delta=1}};
-  TEST_ASSERT_FALSE(memoryService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+  TEST_ASSERT_FALSE(settingsService.interestedIn(e));
+}
 
-  e = {EventType::kMenuExprMappedPotMoved, 500, {.delta=1}};
-  TEST_ASSERT_FALSE(memoryService.interestedIn(eventToCategory(e.m_type), EventToSubCategory(e.m_type)));
+void test_not_interested_in_other_events() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  SettingsService settingsService(logicalState, eeprom);
+
+  Event e;
+
+  // Not interested in physical switch events
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kSwitch;
+  TEST_ASSERT_FALSE(settingsService.interestedIn(e));
+
+  // Not interested in logic expr events (outputs them, doesn't consume)
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kPot;
+  TEST_ASSERT_FALSE(settingsService.interestedIn(e));
+
+  // Not interested in other MIDI events
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kExpr;
+  TEST_ASSERT_FALSE(settingsService.interestedIn(e));
+
+  // Not interested in logic Expr events
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kExpr;
+  TEST_ASSERT_FALSE(settingsService.interestedIn(e));
+
+  // Not interested in logic program with different action
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kSave;
+  TEST_ASSERT_FALSE(settingsService.interestedIn(e));
+
+  // Not interested in nonsensical event
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kPressed;
+  TEST_ASSERT_FALSE(settingsService.interestedIn(e));
 }
 
 int main() {
   UNITY_BEGIN();
-  RUN_TEST(test_logical_state);
-  RUN_TEST(test_bypass);
-  RUN_TEST(test_program_mode);
-  RUN_TEST(test_current_program);
-  RUN_TEST(test_current_preset);
-  RUN_TEST(test_midi_channel);
-  RUN_TEST(test_tap);
-  RUN_TEST(test_tempo);
-  RUN_TEST(test_expr);
-  RUN_TEST(test_pot);
-  RUN_TEST(test_corrupted_eeprom);
-  RUN_TEST(test_preset);
-  RUN_TEST(test_interested_in);
+
+  // Init tests
+  RUN_TEST(test_init_loads_logical_state_from_eeprom);
+
+  // Save tests
+  RUN_TEST(test_memory_save_bypass);
+  RUN_TEST(test_memory_save_program_mode);
+  RUN_TEST(test_memory_save_program);
+  RUN_TEST(test_memory_save_tap);
+  RUN_TEST(test_memory_save_tempo);
+  RUN_TEST(test_memory_save_expr);
+  RUN_TEST(test_memory_save_pot);
+
+  //interestedIn Tests
+  RUN_TEST(test_interested_in_memory);
+  RUN_TEST(test_interested_in_memory_but_not_preset);
+  RUN_TEST(test_interested_in_memory_but_not_preset_bank);
+  RUN_TEST(test_not_interested_in_other_events);
+
   UNITY_END();
 }
