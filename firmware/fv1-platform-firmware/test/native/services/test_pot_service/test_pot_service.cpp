@@ -181,6 +181,27 @@ void test_physical_pot_value_changed_changes_logical_state() {
   assertEventBusEmpty();
 }
 
+void test_disabled_pot_ignores_physical_input() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Disable POT0 for program0
+  logicalState.m_potParams[0][0].m_state = PotState::kDisabled;
+  logicalState.m_potParams[0][0].m_value = 0;
+
+  // Init
+  potService.init();
+
+  // Send physical event
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 512));
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+
+  // Check logicalState value
+  TEST_ASSERT_EQUAL(0, logicalState.m_potParams[0][0].m_value);
+}
+
 // =============================================================================
 // Program Change Tests
 // =============================================================================
@@ -564,6 +585,7 @@ int main() {
 
   // Physical pots tests
   RUN_TEST(test_physical_pot_value_changed_changes_logical_state);
+  RUN_TEST(test_disabled_pot_ignores_physical_input);
 
   // Program Change Tests
   RUN_TEST(test_program_change_syncs_handler_from_logical_state);
