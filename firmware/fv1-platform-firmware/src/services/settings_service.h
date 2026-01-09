@@ -6,6 +6,7 @@
 #include "periphs/eeprom.h"
 #include "logic/logical_state.h"
 #include "logic/memory_handler.h"
+#include "ui/inputs.h"
 
 class SettingsService : public Service {
   private:
@@ -16,11 +17,10 @@ class SettingsService : public Service {
     void saveRegion(MemoryRegion t_region, uint8_t t_programIndex = 0, uint8_t t_potIndex = 0);
     void loadRegion(MemoryRegion t_region, uint8_t t_programIndex = 0, uint8_t t_potIndex = 0);
 
-    void loadPresetBank(uint8_t t_bankIndex);
-    void savePreset(uint8_t t_bankIndex, uint8_t t_presetIndex);
-
   public:
-    SettingsService(LogicalState& t_lState, EEPROM& t_eeprom);
+    SettingsService(LogicalState& t_lState, EEPROM& t_eeprom) :
+      m_logicalState(t_lState),
+      m_eeprom(t_eeprom) {}
 
     void init() override;
     void handleEvent(const Event& t_event) override;
