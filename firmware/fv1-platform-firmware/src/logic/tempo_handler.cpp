@@ -37,11 +37,11 @@ uint8_t TempoHandler::calculateTempoLedValue(uint32_t t_now) {
       }
     }
     else {
-      m_ledValue -= delta;
-
-      if (m_ledValue <= 0) {
+      if (delta >= m_ledValue) {
         m_ledValue = 0;
         m_ledIncreasing = true;
+      } else {
+        m_ledValue -= delta;
       }
     }
 
