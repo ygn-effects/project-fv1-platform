@@ -4,24 +4,29 @@
 #include "core/service.h"
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
+#include "logic/memory_handler.h"
 #include "logic/preset_handler.h"
+#include "periphs/eeprom.h"
 #include "utils/utils.h"
 
 class PresetService : public Service {
   private:
     LogicalState& m_logicalState;
-    PresetHandler m_handler;
+    PresetHandler m_presetHandler;
+    MemoryHandler m_memoryHandler;
+    EEPROM& m_eeprom;
 
     void applyPreset();
-    void publishLoadBankEvent(const Event& t_event);
-    void publishSaveCurrentPresetBank(const Event& t_event);
-    void publishSaveCurrentPreset(const Event& t_event);
+    void savePreset();
+    void publishSavePresetEvent(const Event& t_event);
 
   public:
-    PresetService(LogicalState& t_lState);
+    PresetService(LogicalState& t_lState, EEPROM& t_eeprom) :
+      m_logicalState(t_lState),
+      m_eeprom(t_eeprom) {}
 
     void init() override;
     void handleEvent(const Event& t_event) override;
     void update() override;
-    bool interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const override;
+    bool interestedIn(const Event& t_event) const override;
 };
