@@ -2,6 +2,9 @@
 
 #include <stdint.h>
 #include "logic/logical_state.h"
+#include "logic/tap_handler.h"
+#include "logic/expr_handler.h"
+#include "logic/pot_handler.h"
 
 namespace PresetConstants {
   constexpr uint8_t c_maxPreset = 16;
