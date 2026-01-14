@@ -30,6 +30,8 @@ void PresetBankService::handleEvent(const Event& t_event) {
       if (t_event.m_data.value >= 0 && t_event.m_data.value < PresetConstants::c_presetBankCount) {
         loadPresetBank(t_event.m_data.value, m_logicalState.m_loadedPresetBank);
         publishSavePresetBankEvent(t_event);
+
+        return;
       }
     }
   }
@@ -41,6 +43,8 @@ void PresetBankService::handleEvent(const Event& t_event) {
 
       loadPresetBank(bank, m_logicalState.m_loadedPresetBank);
       publishSavePresetBankEvent(t_event);
+
+      return;
     }
   }
 }
