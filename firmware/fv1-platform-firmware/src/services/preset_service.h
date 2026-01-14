@@ -17,7 +17,7 @@ class PresetService : public Service {
     EEPROM& m_eeprom;
 
     void applyPreset();
-    void savePreset();
+    void savePreset(uint8_t t_bankIndex, uint8_t t_presetIndex);
     void publishSavePresetEvent(const Event& t_event);
 
   public:
