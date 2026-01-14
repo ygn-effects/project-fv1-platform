@@ -6,6 +6,7 @@
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
 #include "periphs/clock.h"
+#include "ui/inputs.h"
 #include "ui/menu_model.h"
 #include "ui/menu_stack.h"
 
@@ -37,6 +38,10 @@ class MenuService : public Service {
     uint32_t m_lastTempoChangeTime;
     bool m_tempoMenuActive;
 
+    void publishUIMenuLockedEvent() const;
+    void publishUIMenuUnlockedEvent() const;
+    void publishUIMenuUpdatedEvent();
+
     void handleLocked(const Event& t_event);
     void handleUnlocked(const Event& t_event);
 
@@ -65,7 +70,7 @@ class MenuService : public Service {
     void init() override;
     void handleEvent(const Event& t_event) override;
     void update() override;
-    bool interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const override;
+    bool interestedIn(const Event& t_event) const override;
 
     // Debug
     const ui::MenuPage& getcurrentMenuPage() const;

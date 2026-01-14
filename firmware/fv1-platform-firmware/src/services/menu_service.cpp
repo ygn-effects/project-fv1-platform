@@ -6,8 +6,37 @@ MenuService::MenuService(LogicalState& t_lState, Clock& t_clock)
       m_potMenuActive(false), m_subState(SubState::kSelecting), m_editRow(0),
       m_valueBackup(0), m_lastTempoChangeTime(0), m_tempoMenuActive(false) {}
 
+void MenuService::publishUIMenuLockedEvent() const {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kMenu;
+  e.m_action = EventAction::kLocked;
+
+  EventBus::publish(e);
+}
+
+void MenuService::publishUIMenuUnlockedEvent() const {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kMenu;
+  e.m_action = EventAction::kUnlocked;
+
+  EventBus::publish(e);
+}
+
+void MenuService::publishUIMenuUpdatedEvent() {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kMenu;
+  e.m_action = EventAction::kUpdated;
+  e.m_data.ptr = static_cast<void*>(&m_view);
+
+  EventBus::publish(e);
+}
+
 void MenuService::handleLocked(const Event& t_event) {
-  if (t_event.m_type == EventType::kMenuLockLongPressed) {
+  if (t_event.m_action == EventAction::kLongPressed
+      && t_event.matchesId(SwitchId::kMenuLock)) {
     unlockUi(t_event.m_timestamp);
     m_lastInputTime = t_event.m_timestamp;
 
@@ -16,37 +45,54 @@ void MenuService::handleLocked(const Event& t_event) {
 }
 
 void MenuService::handleUnlocked(const Event& t_event) {
-  if (t_event.m_type == EventType::kBypassDisabled) { lockUi(t_event.m_timestamp); publishView(); return; }
-
   if (m_subState == SubState::kSelecting) {
-    switch (t_event.m_type) {
-      case EventType::kMenuEncoderMoved:
-      case EventType::kMenuEncoderPressed:
-      case EventType::kMenuLockLongPressed:
+    if (t_event.m_domain == EventDomain::kPhysical) {
+      if (t_event.m_subject == EventSubject::kEncoder
+          && t_event.matchesId(EncoderId::kMenuEncoder)) {
         handleSelecting(t_event);
-        break;
+      }
 
-      case EventType::kPot0Moved:
-      case EventType::kPot1Moved:
-      case EventType::kPot2Moved:
-      case EventType::kMixPotMoved:
+      else if (t_event.m_subject == EventSubject::kPot
+          && t_event.m_action == EventAction::kValueChanged) {
         handlePotsMoving(t_event);
-        break;
+      }
 
-      case EventType::kTempoChanged:
+      else if (t_event.m_subject == EventSubject::kSwitch
+          && t_event.m_action == EventAction::kLongPressed
+          && t_event.matchesId(SwitchId::kMenuLock)) {
+        lockUi(t_event.m_timestamp);
+      }
+
+      publishView();
+      m_lastInputTime = t_event.m_timestamp;
+
+      return;
+    }
+
+    if (t_event.m_domain == EventDomain::kLogic) {
+      if (t_event.m_subject == EventSubject::kTempo
+          && t_event.m_action == EventAction::kValueChanged) {
         handleTempoChange(t_event);
-        break;
+        publishView();
+        m_lastInputTime = t_event.m_timestamp;
 
-      default:
-        break;
+        return;
+      }
+
+      if (t_event.m_subject == EventSubject::kBypass
+          && t_event.m_action == EventAction::kToggled) {
+        lockUi(t_event.m_timestamp);
+        publishView();
+        return;
+      }
     }
   }
   else {
-    handleEditing(t_event);
+    if (t_event.m_subject == EventSubject::kEncoder
+        && t_event.matchesId(EncoderId::kMenuEncoder)) {
+      handleEditing(t_event);
+    }
   }
-
-  publishView();
-  m_lastInputTime = t_event.m_timestamp;
 }
 
 void MenuService::lockUi(uint32_t t_now) {
@@ -59,7 +105,7 @@ void MenuService::lockUi(uint32_t t_now) {
   m_cursor = 0;
   m_first = 0;
 
-  EventBus::publish({EventType::kMenuLocked, t_now, {}});
+  publishUIMenuLockedEvent();
 }
 
 void MenuService::unlockUi(uint32_t t_now) {
@@ -70,21 +116,16 @@ void MenuService::unlockUi(uint32_t t_now) {
     ? m_menuStack.push(&ui::ProgramMenuPage)
     : m_menuStack.push(&ui::PresetMenuPage);
 
-  EventBus::publish({EventType::kMenuUnlocked, t_now, {}});
+  publishUIMenuUnlockedEvent();
 }
 
 void MenuService::handleSelecting(const Event& t_event) {
-  if (t_event.m_type == EventType::kMenuLockLongPressed) {
-    lockUi(t_event.m_timestamp);
-    return;
-  }
-
-  switch (t_event.m_type) {
-    case EventType::kMenuEncoderMoved:
+  switch (t_event.m_action) {
+    case EventAction::kDeltaChanged:
       moveCursor(t_event.m_data.delta);
       break;
 
-    case EventType::kMenuEncoderPressed: {
+    case EventAction::kPressed: {
       ui::MenuItem item = getcurrentMenuItem();
 
       if (item.m_subMenu) {
@@ -113,37 +154,46 @@ void MenuService::handleSelecting(const Event& t_event) {
 }
 
 void MenuService::handleEditing(const Event& t_event) {
-  if (t_event.m_type == EventType::kMenuEncoderMoved) {
-    getcurrentMenuItem().m_onMove(t_event.m_data.delta);
-  }
-  else if (t_event.m_type == EventType::kMenuEncoderPressed) {
-    endEditing();
+  switch (t_event.m_action) {
+    case EventAction::kDeltaChanged:
+      getcurrentMenuItem().m_onMove(t_event.m_data.delta);
+      break;
+
+    case EventAction::kPressed:
+      endEditing();
+      break;
   }
 }
 
 void MenuService::handlePotsMoving(const Event& t_event) {
-  if (m_potMenuActive) { m_menuStack.pop(); }
-  if (m_tempoMenuActive) { m_tempoMenuActive = false; m_menuStack.pop(); }
+  if (m_potMenuActive) {
+    m_menuStack.pop();
+  }
 
-  switch (t_event.m_type) {
-    case EventType::kPot0Moved:
+  if (m_tempoMenuActive) {
+    m_tempoMenuActive = false;
+    m_menuStack.pop();
+  }
+
+  switch (t_event.m_id) {
+    case static_cast<uint8_t>(PotId::kPot0):
       if (!m_logicState.m_activeProgram->m_isDelayEffect){
         m_menuStack.push(&ui::Pot0ValueMenuPage);
         m_potMenuActive = true;
       }
       break;
 
-    case EventType::kPot1Moved:
+    case static_cast<uint8_t>(PotId::kPot1):
       m_menuStack.push(&ui::Pot1ValueMenuPage);
       m_potMenuActive = true;
       break;
 
-    case EventType::kPot2Moved:
+    case static_cast<uint8_t>(PotId::kPot2):
       m_menuStack.push(&ui::Pot2ValueMenuPage);
       m_potMenuActive = true;
       break;
 
-    case EventType::kMixPotMoved:
+    case static_cast<uint8_t>(PotId::kMixPot):
       m_menuStack.push(&ui::MixPotValueMenuPage);
       m_potMenuActive = true;
       break;
@@ -309,11 +359,7 @@ void MenuService::publishView() {
 
   }
 
-  Event e;
-  e.m_type = EventType::kMenuViewUpdated;
-  e.m_timestamp = m_clock.now();
-  e.m_data.view = &m_view;
-  EventBus::publish(e);
+  publishUIMenuUpdatedEvent();
 }
 
 void MenuService::init() {
@@ -322,7 +368,8 @@ void MenuService::init() {
 }
 
 void MenuService::handleEvent(const Event& t_event) {
-  if (t_event.m_type == EventType::kProgramChanged || t_event.m_type == EventType::kMenuExprStateToggled) { publishView(); return; }
+  // Weird
+  // if (t_event.m_type == EventType::kProgramChanged || t_event.m_type == EventType::kMenuExprStateToggled) { publishView(); return; }
 
   switch (m_mode) {
     case UiMode::kLocked:
@@ -382,12 +429,33 @@ const ui::MenuView* MenuService::getMenuView() const {
   return &m_view;
 }
 
-bool MenuService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kEncoderEvent)
-      || (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kLockEvent)
-      || (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent)
-      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuExprEvent)
-      || (t_category == EventCategory::kTempoEvent && t_subCategory == EventSubCategory::kTempoChangedEvent)
-      || (t_category == EventCategory::kBypassEvent && t_subCategory == EventSubCategory::kBypassDisabledEvent)
-      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent);
+bool MenuService::interestedIn(const Event& t_event) const {
+  if (t_event.m_domain == EventDomain::kPhysical) {
+    if (t_event.m_subject == EventSubject::kSwitch
+        && t_event.m_action == EventAction::kLongPressed
+        && t_event.matchesId(SwitchId::kMenuLock)) return true;
+
+    if (t_event.m_subject == EventSubject::kEncoder
+        && t_event.matchesId(EncoderId::kMenuEncoder)) return true;
+
+    if (t_event.m_subject == EventSubject::kPot
+        && t_event.m_action == EventAction::kValueChanged) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kUI) {
+    if (t_event.m_subject == EventSubject::kExpr) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kLogic) {
+    if (t_event.m_subject == EventSubject::kTempo
+        && t_event.m_action == EventAction::kValueChanged) return true;
+
+    if (t_event.m_subject == EventSubject::kProgram
+        && t_event.m_action == EventAction::kValueChanged) return true;
+
+    if (t_event.m_subject == EventSubject::kBypass
+        && t_event.m_action == EventAction::kToggled) return true;
+  }
+
+  return false;
 }
