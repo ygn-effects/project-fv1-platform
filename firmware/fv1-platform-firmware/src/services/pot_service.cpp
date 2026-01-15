@@ -31,6 +31,9 @@ void PotService::publishSavePotEvent(uint8_t t_potIndex) {
 }
 
 void PotService::handlePhysicalEvent(const Event& t_event) {
+  // When in a delay program TempoService handles POT0
+  if (static_cast<PotId>(t_event.m_id) == PotId::kPot0 && m_logicalState.m_activeProgram->m_isDelayEffect) return;
+
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
   if (params[t_event.m_id].m_state == PotState::kActive) {
     params[t_event.m_id].m_value = m_handler.mapAdcValue(t_event.m_data.value, t_event.m_id);

@@ -119,6 +119,9 @@ void test_init_syncs_handler_from_logical_state() {
   LogicalState logicalState;
   PotService potService(logicalState);
 
+  // Set to a non delay effect
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
   // Set pot states
   logicalState.m_currentProgram = 0;
   logicalState.m_potParams[logicalState.m_currentProgram][0].m_state = PotState::kActive;
@@ -156,6 +159,9 @@ void test_physical_pot_value_changed_changes_logical_state() {
   LogicalState logicalState;
   PotService potService(logicalState);
 
+  // Set to a non delay effect
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
   // Init
   potService.init();
 
@@ -181,9 +187,26 @@ void test_physical_pot_value_changed_changes_logical_state() {
   assertEventBusEmpty();
 }
 
+void test_pot0_is_ignored_when_using_delay_effect() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Init
+  potService.init();
+
+  // Send physical events
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 512));
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+}
+
 void test_disabled_pot_ignores_physical_input() {
   LogicalState logicalState;
   PotService potService(logicalState);
+
+  // Set to a non delay effect
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
 
   // Disable POT0 for program0
   logicalState.m_potParams[0][0].m_state = PotState::kDisabled;
@@ -229,7 +252,8 @@ void test_program_change_syncs_handler_from_logical_state() {
   potService.init();
 
   // Set current program
-  logicalState.m_currentProgram = 1;
+  logicalState.m_currentProgram = 7;
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
 
   // Set pot states for program 1
   logicalState.m_potParams[logicalState.m_currentProgram][0].m_state = PotState::kActive;
@@ -585,6 +609,7 @@ int main() {
 
   // Physical pots tests
   RUN_TEST(test_physical_pot_value_changed_changes_logical_state);
+  RUN_TEST(test_pot0_is_ignored_when_using_delay_effect);
   RUN_TEST(test_disabled_pot_ignores_physical_input);
 
   // Program Change Tests
