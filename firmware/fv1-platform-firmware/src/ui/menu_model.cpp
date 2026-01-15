@@ -411,7 +411,9 @@ const char* valueMixPotMaxValue(const LogicalState* t_state) {
 
 void onMoveProgram(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuProgramChanged;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kValueChanged;
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -419,7 +421,10 @@ void onMoveProgram(int8_t t_delta) {
 
 void onMovePot0(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuPot0Moved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(PotId::kPot0);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -427,7 +432,10 @@ void onMovePot0(int8_t t_delta) {
 
 void onMovePot1(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuPot1Moved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(PotId::kPot1);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -435,7 +443,10 @@ void onMovePot1(int8_t t_delta) {
 
 void onMovePot2(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuPot2Moved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(PotId::kPot2);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -443,7 +454,10 @@ void onMovePot2(int8_t t_delta) {
 
 void onMoveMixPot(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuMixPotMoved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(PotId::kMixPot);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -451,7 +465,9 @@ void onMoveMixPot(int8_t t_delta) {
 
 void onMoveTempo(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuTempoChanged;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kTempo;
+  e.m_action = EventAction::kValueChanged;
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -459,7 +475,10 @@ void onMoveTempo(int8_t t_delta) {
 
 void onMoveExprMappedPot(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuExprMappedPotMoved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = static_cast<uint8_t>(ExprParam::kMappedPot);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -467,7 +486,10 @@ void onMoveExprMappedPot(int8_t t_delta) {
 
 void onMoveExprHeelValue(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuExprHeelValueMoved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = static_cast<uint8_t>(ExprParam::kHeel);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -475,15 +497,10 @@ void onMoveExprHeelValue(int8_t t_delta) {
 
 void onMoveExprToeValue(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuExprToeValueMoved;
-  e.m_timestamp = 0; /*millis()*/
-  e.m_data.delta = t_delta;
-  EventBus::publish(e);
-}
-
-void onMoveDivValue(int8_t t_delta) {
-  Event e;
-  e.m_type = EventType::kMenuDivValueMoved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = static_cast<uint8_t>(ExprParam::kToe);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -491,7 +508,10 @@ void onMoveDivValue(int8_t t_delta) {
 
 void onMovePot0MinValue(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuPot0MinValueMoved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kSettingChanged;
+  Utils::unpack8(static_cast<uint8_t>(PotId::kPot0), static_cast<uint8_t>(PotParam::kMinValue), e.m_id);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -499,7 +519,10 @@ void onMovePot0MinValue(int8_t t_delta) {
 
 void onMovePot1MinValue(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuPot1MinValueMoved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kSettingChanged;
+  Utils::unpack8(static_cast<uint8_t>(PotId::kPot1), static_cast<uint8_t>(PotParam::kMinValue), e.m_id);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -507,7 +530,10 @@ void onMovePot1MinValue(int8_t t_delta) {
 
 void onMovePot2MinValue(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuPot2MinValueMoved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kSettingChanged;
+  Utils::unpack8(static_cast<uint8_t>(PotId::kPot2), static_cast<uint8_t>(PotParam::kMinValue), e.m_id);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -515,7 +541,10 @@ void onMovePot2MinValue(int8_t t_delta) {
 
 void onMoveMixPotMinValue(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuMixPotMinValueMoved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kSettingChanged;
+  Utils::unpack8(static_cast<uint8_t>(PotId::kMixPot), static_cast<uint8_t>(PotParam::kMinValue), e.m_id);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -523,7 +552,10 @@ void onMoveMixPotMinValue(int8_t t_delta) {
 
 void onMovePot0MaxValue(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuPot0MaxValueMoved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kSettingChanged;
+  Utils::unpack8(static_cast<uint8_t>(PotId::kPot0), static_cast<uint8_t>(PotParam::kMaxValue), e.m_id);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -531,7 +563,10 @@ void onMovePot0MaxValue(int8_t t_delta) {
 
 void onMovePot1MaxValue(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuPot1MaxValueMoved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kSettingChanged;
+  Utils::unpack8(static_cast<uint8_t>(PotId::kPot1), static_cast<uint8_t>(PotParam::kMaxValue), e.m_id);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -539,7 +574,10 @@ void onMovePot1MaxValue(int8_t t_delta) {
 
 void onMovePot2MaxValue(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuPot2MaxValueMoved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kSettingChanged;
+  Utils::unpack8(static_cast<uint8_t>(PotId::kPot2), static_cast<uint8_t>(PotParam::kMaxValue), e.m_id);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
@@ -547,18 +585,33 @@ void onMovePot2MaxValue(int8_t t_delta) {
 
 void onMoveMixPotMaxValue(int8_t t_delta) {
   Event e;
-  e.m_type = EventType::kMenuMixPotMaxValueMoved;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kSettingChanged;
+  Utils::unpack8(static_cast<uint8_t>(PotId::kMixPot), static_cast<uint8_t>(PotParam::kMaxValue), e.m_id);
   e.m_timestamp = 0; /*millis()*/
   e.m_data.delta = t_delta;
   EventBus::publish(e);
 }
 
 void onClickExprState() {
-  EventBus::publish({EventType::kMenuExprStateToggled, 0 /*millis()*/, {}});
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kSettingToggled;
+  e.m_id = static_cast<uint8_t>(ExprParam::kState);
+  e.m_timestamp = 0; /*millis()*/
+  EventBus::publish(e);
 }
 
 void onClickExprDirection() {
-  EventBus::publish({EventType::kMenuExprDirectionToggled, 0 /*millis()*/, {}});
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kSettingToggled;
+  e.m_id = static_cast<uint8_t>(ExprParam::kDirection);
+  e.m_timestamp = 0; /*millis()*/
+  EventBus::publish(e);
 }
 
 constexpr MenuPage BlankMenuPage = {
@@ -591,7 +644,7 @@ constexpr MenuPage LockScreenMenuPage = {
 constexpr MenuItem ProgramMenuItems[] = {
   { labelProgram, isAlwaysVisible, valueProgram, onMoveProgram, nullptr, nullptr },
   { labelTempo, visibleIfDelayEffect, valueTempo, onMoveTempo, nullptr, nullptr },
-  { labelDivValue, visibleIfDivEnabled, valueDivValue, onMoveDivValue, nullptr, nullptr },
+  { labelDivValue, visibleIfDivEnabled, valueDivValue, nullptr, nullptr, nullptr },
   { labelPot0, notVisibleIfDelayEffect, valuePot0, onMovePot0, nullptr, nullptr },
   { labelPot1, isAlwaysVisible, valuePot1, onMovePot1, nullptr, nullptr },
   { labelPot2, isAlwaysVisible, valuePot2, onMovePot2, nullptr, nullptr },

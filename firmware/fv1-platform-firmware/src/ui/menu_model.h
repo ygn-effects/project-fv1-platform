@@ -6,6 +6,8 @@
 #include "core/event_bus.h"
 #include "core/service.h"
 #include "logic/logical_state.h"
+#include "ui/inputs.h"
+#include "ui/settings.h"
 #include "utils/utils.h"
 
 namespace ui {
