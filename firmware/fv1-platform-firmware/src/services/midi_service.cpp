@@ -5,7 +5,13 @@ void MidiService::syncHandler() {
 }
 
 void MidiService::publishSaveMidiChannelEvent(const Event& t_event) {
-  EventBus::publish({EventType::kSaveMidiChannel, t_event.m_timestamp /*millis()*/, {}});
+  Event e;
+  e.m_domain = EventDomain::kMemory;
+  e.m_subject = EventSubject::kGeneral;
+  e.m_action = EventAction::kSave;
+  e.m_timestamp = t_event.m_timestamp;
+
+  EventBus::publish(e);
 }
 
 void MidiService::init() {
@@ -13,19 +19,17 @@ void MidiService::init() {
 }
 
 void MidiService::handleEvent(const Event& t_event) {
-  switch (t_event.m_type) {
-    case EventType::kProgramChanged:
-      syncHandler();
-      break;
+  // Program change
+  if (t_event.m_subject == EventSubject::kProgram && t_event.m_action == EventAction::kValueChanged) {
+    syncHandler();
+  }
 
-    case EventType::kMenuMidiChannelChanged:
-      m_logicalState.m_midiChannel = Utils::wrappedAdd(m_logicalState.m_midiChannel, t_event.m_data.delta, MidiHandlerConstants::c_maxMidiChannels);
-      syncHandler();
-      publishSaveMidiChannelEvent(t_event);
-      break;
+  // MIDI channel change
+  if (t_event.m_domain == EventDomain::kMidi && t_event.m_action == EventAction::kValueChanged) {
+    m_logicalState.m_midiChannel = Utils::wrappedAdd(m_logicalState.m_midiChannel, t_event.m_data.delta, MidiHandlerConstants::c_maxMidiChannels);
 
-    default:
-      break;
+    syncHandler();
+    publishSaveMidiChannelEvent(t_event);
   }
 }
 
@@ -33,62 +37,49 @@ void MidiService::update() {
   // Add Arduino serial code
 
   MidiMessage message;
+
   if (m_midiHandler.popMessage(message)) {
-    switch (message.m_type) {
-      case MidiMessageType::kControlChange: {
-        EventType eventType = ccParamToEvent(message.m_param);
+    if (message.m_type == MidiMessageType::kControlChange) {
+      if (message.m_param < c_ccMapSize) {
+        const MidiEventDefinition& definition = c_ccMap[message.m_param];
 
-        switch (eventType) {
-          case EventType::kMidiBypassPressed: {
-            if (message.m_value != MidiCCValues::c_bypassEnable && message.m_value != MidiCCValues::c_bypassDisable) { return; }
-
-            Event e;
-            e.m_type = eventType;
-            e.m_timestamp = 0; /*millis*/
-            e.m_data.value = message.m_value;
-            EventBus::publish(e);
-            break;
-          }
-
-          case EventType::kMidiTapPressed: {
-            if (message.m_value != MidiCCValues::c_tapShortPress && message.m_value != MidiCCValues::c_tapLongPress) { return; }
-
-            Event e;
-            e.m_type = eventType;
-            e.m_timestamp = 0; /*millis*/
-            e.m_data.value = message.m_value;
-            EventBus::publish(e);
-            break;
-          }
-
-          default: {
-            Event e;
-            e.m_type = eventType;
-            e.m_timestamp = 0; /*millis*/
-            e.m_data.value = message.m_value;
-            EventBus::publish(e);
-            break;
-          }
-        }
-        break;
-      }
-
-      case MidiMessageType::kProgramChange:
         Event e;
-        e.m_type = EventType::kMidiProgramChanged;
-        e.m_timestamp = 0; /*millis*/
-        e.m_data.value = message.m_param;
-        EventBus::publish(e);
-        break;
+        e.m_domain = EventDomain::kMidi;
+        e.m_subject = definition.m_subject;
+        e.m_action = definition.m_action;
+        e.m_timestamp = 0; // millis()
+        e.m_id = definition.m_id;
+        e.m_data.value = message.m_value;
 
-      default:
-        break;
+        EventBus::publish(e);
+      }
     }
+  }
+
+  if (message.m_type == MidiMessageType::kProgramChange) {
+        Event e;
+        e.m_domain = EventDomain::kMidi;
+        e.m_subject = EventSubject::kProgram;
+        e.m_action = EventAction::kValueChanged;
+        e.m_timestamp = 0; // millis()
+        e.m_id = 0;
+        e.m_data.value = message.m_param;
+
+        EventBus::publish(e);
   }
 }
 
-bool MidiService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent)
-      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuMidiChannelEvent);
+bool MidiService::interestedIn(const Event& t_event) const {
+  // MIDI channel change
+  if (t_event.m_domain == EventDomain::kMidi
+      && t_event.m_subject == EventSubject::kGeneral
+      && t_event.m_action == EventAction::kValueChanged) return true;
+
+  // Program change
+  if (t_event.m_domain == EventDomain::kLogic
+      && t_event.m_subject == EventSubject::kProgram
+      && t_event.m_action == EventAction::kValueChanged) return true;
+
+  return false;
 }
 

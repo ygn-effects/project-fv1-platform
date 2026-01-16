@@ -16,6 +16,26 @@ void tearDown() {
 
 }
 
+// =============================================================================
+// Initialization Tests
+// =============================================================================
+
+void test_default_initialization() {
+  TapHandler tapHandler;
+
+  TEST_ASSERT_EQUAL(TapState::kDisabled, tapHandler.m_tapState);
+  TEST_ASSERT_EQUAL(DivState::kDisabled, tapHandler.m_divState);
+  TEST_ASSERT_EQUAL(DivValue::kQuarter, tapHandler.m_divValue);
+  TEST_ASSERT_EQUAL(0, tapHandler.m_interval);
+  TEST_ASSERT_EQUAL(0, tapHandler.m_divInterval);
+  TEST_ASSERT_EQUAL(1000, tapHandler.m_tapTimeout);
+  TEST_ASSERT_FALSE(tapHandler.m_isNewIntervalSet);
+}
+
+// =============================================================================
+// Enum Validation Tests
+// =============================================================================
+
 void test_tap_enums_validation() {
   TEST_ASSERT_TRUE(TapStateValidator::isValid(0));
   TEST_ASSERT_TRUE(TapStateValidator::isValid(1));
@@ -46,6 +66,20 @@ void test_tap_enums_validation() {
   TEST_ASSERT_EQUAL(DivValue::kSixteenth, DivValueValidator::sanitize(6, DivValue::kSixteenth));
 }
 
+// =============================================================================
+// registerTap Tests
+// =============================================================================
+
+void test_register_tap_first_tap_does_not_enable() {
+  TapHandler tapHandler;
+
+  tapHandler.registerTap(1000);
+
+  TEST_ASSERT_EQUAL(TapState::kDisabled, tapHandler.m_tapState);
+  TEST_ASSERT_EQUAL(0, tapHandler.m_interval);
+  TEST_ASSERT_FALSE(tapHandler.m_isNewIntervalSet);
+}
+
 void test_register_tap() {
   TapHandler tapHandler;
 
@@ -61,6 +95,43 @@ void test_register_tap() {
 
   TEST_ASSERT_EQUAL(DivState::kDisabled, tapHandler.m_divState);
 }
+
+void test_register_tap_timeout_resets_sequence() {
+  TapHandler tapHandler;
+  tapHandler.m_tapTimeout = 500;
+
+  tapHandler.registerTap(1000);
+  tapHandler.registerTap(1200);
+  TEST_ASSERT_EQUAL(TapState::kEnabled, tapHandler.m_tapState);
+  TEST_ASSERT_EQUAL(200, tapHandler.m_interval);
+  TEST_ASSERT_TRUE(tapHandler.m_isNewIntervalSet);
+
+  // Tap after timeout (1200 + 600 = 1800, delta = 600 > 500 timeout)
+  tapHandler.registerTap(1800);
+
+  TEST_ASSERT_EQUAL(TapState::kDisabled, tapHandler.m_tapState);
+  TEST_ASSERT_EQUAL(0, tapHandler.m_interval);
+  TEST_ASSERT_FALSE(tapHandler.m_isNewIntervalSet);
+}
+
+void test_register_tap_multiple_taps_averages_interval() {
+  TapHandler tapHandler;
+
+  tapHandler.registerTap(1000);  // First
+  tapHandler.registerTap(1500);  // +500ms
+  TEST_ASSERT_EQUAL(500, tapHandler.m_interval);
+
+  tapHandler.registerTap(2000);  // +500ms
+  TEST_ASSERT_EQUAL(500, tapHandler.m_interval);
+
+  tapHandler.registerTap(2600);  // +600ms
+  // Interval = (2600 - 1000) / 3 = 533ms
+  TEST_ASSERT_EQUAL(533, tapHandler.m_interval);
+}
+
+// =============================================================================
+// setNextDivValue Tests
+// =============================================================================
 
 void test_div() {
   TapHandler tapHandler;
@@ -136,11 +207,49 @@ void test_div_values() {
   TEST_ASSERT_EQUAL(200, tapHandler.m_divInterval);
 }
 
+// =============================================================================
+// Div interval recalculation Tests
+// =============================================================================
+
+void test_div_interval_recalculation_on_tap() {
+  TapHandler tapHandler;
+
+  // Set up initial interval with div enabled
+  tapHandler.registerTap(1000);
+  tapHandler.registerTap(1200);
+  TEST_ASSERT_EQUAL(200, tapHandler.m_interval);
+
+  tapHandler.setNextDivValue();  // Enable kEight
+  TEST_ASSERT_EQUAL(DivState::kEnabled, tapHandler.m_divState);
+  TEST_ASSERT_EQUAL(100, tapHandler.m_divInterval);
+
+  // New tap should recalculate divInterval
+  tapHandler.registerTap(1500);  // (1500 - 1000) / 2 = 250ms interval
+  TEST_ASSERT_EQUAL(250, tapHandler.m_interval);
+  TEST_ASSERT_EQUAL(125, tapHandler.m_divInterval);  // 250 / 2 = 125
+}
+
 int main() {
   UNITY_BEGIN();
+
+  // Initialization
+  RUN_TEST(test_default_initialization);
+
+  // Enum validation
   RUN_TEST(test_tap_enums_validation);
+
+  // registerTap
+  RUN_TEST(test_register_tap_first_tap_does_not_enable);
   RUN_TEST(test_register_tap);
+  RUN_TEST(test_register_tap_timeout_resets_sequence);
+  RUN_TEST(test_register_tap_multiple_taps_averages_interval);
+
+  // setNextDivValue
   RUN_TEST(test_div);
   RUN_TEST(test_div_values);
+
+  // Div interval recalculation
+  RUN_TEST(test_div_interval_recalculation_on_tap);
+
   UNITY_END();
 }

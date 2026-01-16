@@ -5,13 +5,16 @@
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
 #include "logic/pot_handler.h"
+#include "ui/inputs.h"
+#include "ui/settings.h"
 
 class PotService : public Service {
   private:
     LogicalState& m_logicalState;
     PotHandler m_handler;
 
-    void syncHandler(uint8_t t_potIndex);
+    void syncHandler();
+    void publishPotValueChangedEvent(uint8_t t_potIndex);
     void publishSavePotEvent(uint8_t t_potIndex);
 
     void handlePhysicalEvent(const Event& t_event);
@@ -19,9 +22,9 @@ class PotService : public Service {
     void handleMidiEvent(const Event& t_event);
     void handleExprEvent(const Event& t_event);
 
-    void handleMenuPotStateToggleEvent(const Event& t_event);
-    void handleMenuPotMinValueMove(const Event& t_event);
-    void handleMenuPotMaxValueMove(const Event& t_event);
+    void handleMenuPotStateToggleEvent(const Event& t_event, uint8_t t_potIndex);
+    void handleMenuPotMinValueMove(const Event& t_event, uint8_t t_potIndex);
+    void handleMenuPotMaxValueMove(const Event& t_event, uint8_t t_potIndex);
 
   public:
   PotService(LogicalState& t_lState) :
@@ -30,5 +33,5 @@ class PotService : public Service {
     void init() override;
     void handleEvent(const Event& t_event) override;
     void update() override;
-    bool interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const override;
+    bool interestedIn(const Event& t_event) const override;
 };

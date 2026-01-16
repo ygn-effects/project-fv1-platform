@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "logic/preset.h"
 #include "logic/program.h"
 #include "logic/programs.h"
 #include "logic/tap_handler.h"
@@ -29,6 +30,7 @@ struct LogicalState {
   uint8_t m_currentProgram = 0;
   uint8_t m_currentPresetBank = 0;
   uint8_t m_currentPreset = 0;
+  PresetBank m_loadedPresetBank;
   uint8_t m_midiChannel = 0;
 
   TapState m_tapState = TapState::kDisabled;

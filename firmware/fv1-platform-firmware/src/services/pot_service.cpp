@@ -1,127 +1,151 @@
 #include "services/pot_service.h"
 
-void PotService::syncHandler(uint8_t t_potIndex) {
-  m_handler.m_state[t_potIndex] = m_logicalState.m_potParams[m_logicalState.m_currentProgram][t_potIndex].m_state;
-  m_handler.m_minValue[t_potIndex] = m_logicalState.m_potParams[m_logicalState.m_currentProgram][t_potIndex].m_minValue;
-  m_handler.m_maxValue[t_potIndex] = m_logicalState.m_potParams[m_logicalState.m_currentProgram][t_potIndex].m_maxValue;
+void PotService::syncHandler() {
+  for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
+    m_handler.m_state[i] = m_logicalState.m_potParams[m_logicalState.m_currentProgram][i].m_state;
+    m_handler.m_minValue[i] = m_logicalState.m_potParams[m_logicalState.m_currentProgram][i].m_minValue;
+    m_handler.m_maxValue[i] = m_logicalState.m_potParams[m_logicalState.m_currentProgram][i].m_maxValue;
+  }
+}
+
+void PotService::publishPotValueChangedEvent(uint8_t t_potIndex) {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = t_potIndex;
+  e.m_timestamp = 0; // millis()
+
+  EventBus::publish(e);
 }
 
 void PotService::publishSavePotEvent(uint8_t t_potIndex) {
   Event e;
-  e.m_type = EventType::kSavePot;
-  e.m_timestamp = 0; /*millis()*/
-  e.m_data.value = t_potIndex;
+  e.m_domain = EventDomain::kMemory;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kSave;
+  e.m_id = t_potIndex;
+  e.m_timestamp = 0; // millis()
 
   EventBus::publish(e);
 }
 
 void PotService::handlePhysicalEvent(const Event& t_event) {
+  // When in a delay program TempoService handles POT0
+  if (static_cast<PotId>(t_event.m_id) == PotId::kPot0 && m_logicalState.m_activeProgram->m_isDelayEffect) return;
+
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
-  uint8_t potIndex = static_cast<uint8_t>(t_event.m_type) - static_cast<uint8_t>(EventType::kPot0Moved);
-  params[potIndex].m_value = m_handler.mapAdcValue(t_event.m_data.value, potIndex);
+  if (params[t_event.m_id].m_state == PotState::kActive) {
+    params[t_event.m_id].m_value = m_handler.mapAdcValue(t_event.m_data.value, t_event.m_id);
+    publishPotValueChangedEvent(t_event.m_id);
+  }
 }
 
 void PotService::handleMenuEvent(const Event& t_event) {
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
-  uint8_t potIndex = static_cast<uint8_t>(t_event.m_type) - static_cast<uint8_t>(EventType::kMenuPot0Moved);
-  params[potIndex].m_value = m_handler.mapMenuValue(params[potIndex].m_value, t_event.m_data.delta, potIndex);
+  params[t_event.m_id].m_value = m_handler.mapMenuValue(params[t_event.m_id].m_value, t_event.m_data.delta, t_event.m_id);
+  publishPotValueChangedEvent(t_event.m_id);
 }
 
 void PotService::handleMidiEvent(const Event& t_event) {
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
-  uint8_t potIndex = static_cast<uint8_t>(t_event.m_type) - static_cast<uint8_t>(EventType::kMidiPot0Moved);
-  params[potIndex].m_value = m_handler.mapMidiValue(t_event.m_data.value, potIndex);
+  params[t_event.m_id].m_value = m_handler.mapMidiValue(t_event.m_data.value, t_event.m_id);
+  publishPotValueChangedEvent(t_event.m_id);
 }
 
 void PotService::handleExprEvent(const Event& t_event) {
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
-  uint8_t potIndex = static_cast<uint8_t>(t_event.m_type) - static_cast<uint8_t>(EventType::kExprPot0Moved);
-  params[potIndex].m_value = t_event.m_data.value;
+  params[t_event.m_id].m_value = t_event.m_data.value;
+  publishPotValueChangedEvent(t_event.m_id);
 }
 
-void PotService::handleMenuPotStateToggleEvent(const Event& t_event) {
+void PotService::handleMenuPotStateToggleEvent(const Event& t_event, uint8_t t_potIndex) {
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
-  uint8_t potIndex = static_cast<uint8_t>(t_event.m_type) - static_cast<uint8_t>(EventType::kMenuPot0StateToggled);
-  params[potIndex].m_state = m_handler.togglePotState(potIndex);
+  params[t_potIndex].m_state = m_handler.togglePotState(t_potIndex);
 
-  publishSavePotEvent(potIndex);
+  publishSavePotEvent(t_potIndex);
 }
 
-void PotService::handleMenuPotMinValueMove(const Event& t_event) {
+void PotService::handleMenuPotMinValueMove(const Event& t_event, uint8_t t_potIndex) {
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
-  uint8_t potIndex = static_cast<uint8_t>(t_event.m_type) - static_cast<uint8_t>(EventType::kMenuPot0MinValueMoved);
-  params[potIndex].m_minValue = m_handler.changePotMinValue(t_event.m_data.delta, potIndex);
+  params[t_potIndex].m_minValue = m_handler.changePotMinValue(t_event.m_data.delta, t_potIndex);
 
-  publishSavePotEvent(potIndex);
+  publishSavePotEvent(t_potIndex);
 }
 
-void PotService::handleMenuPotMaxValueMove(const Event& t_event) {
+void PotService::handleMenuPotMaxValueMove(const Event& t_event, uint8_t t_potIndex) {
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
-  uint8_t potIndex = static_cast<uint8_t>(t_event.m_type) - static_cast<uint8_t>(EventType::kMenuPot0MaxValueMoved);
-  params[potIndex].m_maxValue = m_handler.changePotMaxValue(t_event.m_data.delta, potIndex);
+  params[t_potIndex].m_maxValue = m_handler.changePotMaxValue(t_event.m_data.delta, t_potIndex);
 
-  publishSavePotEvent(potIndex);
+  publishSavePotEvent(t_potIndex);
 }
 
 void PotService::init() {
-  for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
-    syncHandler(i);
-  }
+  syncHandler();
 }
 
 void PotService::handleEvent(const Event& t_event) {
-  if (t_event.m_type == EventType::kProgramChanged) { init(); return; }
-
-  if (EventToSubCategory(t_event.m_type) == EventSubCategory::kMenuPotSettingsEvent) {
-    switch (t_event.m_type) {
-
-      case EventType::kMenuPot0StateToggled:
-      case EventType::kMenuPot1StateToggled:
-      case EventType::kMenuPot2StateToggled:
-      case EventType::kMenuMixPotStateToggled:
-        handleMenuPotStateToggleEvent(t_event);
-        break;
-
-      case EventType::kMenuPot0MinValueMoved:
-      case EventType::kMenuPot1MinValueMoved:
-      case EventType::kMenuPot2MinValueMoved:
-      case EventType::kMenuMixPotMinValueMoved:
-        handleMenuPotMinValueMove(t_event);
-        break;
-
-      case EventType::kMenuPot0MaxValueMoved:
-      case EventType::kMenuPot1MaxValueMoved:
-      case EventType::kMenuPot2MaxValueMoved:
-      case EventType::kMenuMixPotMaxValueMoved:
-        handleMenuPotMaxValueMove(t_event);
-        break;
-
-      default:
-        break;
+  if (t_event.m_domain == EventDomain::kPhysical) {
+    if (t_event.m_subject == EventSubject::kPot
+        && t_event.m_action == EventAction::kValueChanged) {
+      handlePhysicalEvent(t_event);
+      return;
     }
-
-    return;
   }
 
-  switch (EventToSubCategory(t_event.m_type)) {
-    case EventSubCategory::kPotEvent:
-      handlePhysicalEvent(t_event);
-      break;
+  if (t_event.m_domain == EventDomain::kLogic) {
+    if (t_event.m_subject == EventSubject::kProgram
+        && t_event.m_action == EventAction::kValueChanged) {
+      syncHandler();
+      return;
+    }
 
-    case EventSubCategory::kMenuPotEvent:
-      handleMenuEvent(t_event);
-      break;
-
-    case EventSubCategory::kMidiPotMovedEvent:
-      handleMidiEvent(t_event);
-      break;
-
-    case EventSubCategory::kExprPotEvent:
+    if (t_event.m_subject == EventSubject::kExpr
+        && t_event.m_action == EventAction::kValueChanged) {
       handleExprEvent(t_event);
-      break;
+      return;
+    }
+  }
 
-    default:
-      break;
+  if (t_event.m_domain == EventDomain::kUI) {
+    if (t_event.m_subject == EventSubject::kPot
+        && t_event.m_action == EventAction::kSettingChanged) {
+      uint8_t index = 0, param = 0;
+      Utils::pack8(t_event.m_id, index, param);
+
+      switch (static_cast<PotParam>(param)) {
+        case PotParam::kState:
+          handleMenuPotStateToggleEvent(t_event, index);
+          break;
+
+        case PotParam::kMinValue:
+          handleMenuPotMinValueMove(t_event, index);
+          break;
+
+        case PotParam::kMaxValue:
+          handleMenuPotMaxValueMove(t_event, index);
+          break;
+
+        default:
+          break;
+      }
+
+      return;
+    }
+
+    if (t_event.m_subject == EventSubject::kPot
+        && t_event.m_action == EventAction::kValueChanged) {
+      handleMenuEvent(t_event);
+      return;
+    }
+  }
+
+  if (t_event.m_domain == EventDomain::kMidi) {
+    if (t_event.m_subject == EventSubject::kPot
+        && t_event.m_action == EventAction::kValueChanged) {
+      handleMidiEvent(t_event);
+      return;
+    }
   }
 }
 
@@ -129,10 +153,27 @@ void PotService::update() {
 
 }
 
-bool PotService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent)
-      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPotEvent)
-      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuPotSettingsEvent)
-      || (t_category == EventCategory::kMidiEvent && t_subCategory == EventSubCategory::kMidiPotMovedEvent)
-      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent);
+bool PotService::interestedIn(const Event& t_event) const {
+  if (t_event.m_domain == EventDomain::kPhysical) {
+    if (t_event.m_subject == EventSubject::kPot
+        && t_event.m_action == EventAction::kValueChanged) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kLogic) {
+    if (t_event.m_subject == EventSubject::kProgram
+        && t_event.m_action == EventAction::kValueChanged) return true;
+
+    if (t_event.m_subject == EventSubject::kExpr
+        && t_event.m_action == EventAction::kValueChanged) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kUI) {
+    if (t_event.m_subject == EventSubject::kPot) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kMidi) {
+    if (t_event.m_subject == EventSubject::kPot) return true;
+  }
+
+  return false;
 }

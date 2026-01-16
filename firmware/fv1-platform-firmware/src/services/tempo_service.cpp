@@ -11,17 +11,21 @@ void TempoService::syncHandler() {
 
 void TempoService::publishTempoEvent(uint16_t t_interval) const {
   Event e;
-  e.m_type = EventType::kTempoChanged;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kTempo;
+  e.m_action = EventAction::kValueChanged;
   e.m_timestamp = m_clock.now();
   e.m_data.value = t_interval;
+
   EventBus::publish(e);
 }
 
 void TempoService::publishSaveTempoEvent(uint16_t t_interval) const {
   Event e;
-  e.m_type = EventType::kSaveTempo;
-  e.m_timestamp = m_clock.now();
-  e.m_data.value = t_interval;
+  e.m_domain = EventDomain::kMemory;
+  e.m_subject = EventSubject::kTempo;
+  e.m_action = EventAction::kSave;
+
   EventBus::publish(e);
 }
 
@@ -31,49 +35,61 @@ void TempoService::init() {
 }
 
 void TempoService::handleEvent(const Event& t_event) {
-  if (! m_logicState.m_activeProgram->m_isDelayEffect) { return; }
-
-  switch (t_event.m_type) {
-    case EventType::kTapIntervalChanged:
+  if (t_event.m_domain == EventDomain::kLogic
+      && t_event.m_subject == EventSubject::kProgram
+      && t_event.m_action == EventAction::kValueChanged) {
+    if (m_logicState.m_activeProgram->m_isDelayEffect) {
+      syncHandler();
       m_handler.m_source = TempoSource::kTap;
-      m_logicState.m_tempo = m_handler.mapInterval(t_event.m_data.value);
+      m_logicState.m_tempo = m_handler.mapInterval(m_handler.m_interval);
 
       publishTempoEvent(m_logicState.m_tempo);
       publishSaveTempoEvent(m_logicState.m_tempo);
-      break;
+    }
+    else {
+      m_tempoLed.off();
+    }
+  }
 
-    case EventType::kPot0Moved:
+  if (! m_logicState.m_activeProgram->m_isDelayEffect) return;
+
+  if (t_event.m_domain == EventDomain::kLogic
+      && t_event.m_subject == EventSubject::kTap
+      && t_event.m_action == EventAction::kValueChanged) {
+    m_handler.m_source = TempoSource::kTap;
+    m_logicState.m_tempo = m_handler.mapInterval(t_event.m_data.value);
+
+    publishTempoEvent(m_logicState.m_tempo);
+    publishSaveTempoEvent(m_logicState.m_tempo);
+
+    return;
+  }
+
+  if (t_event.m_domain == EventDomain::kPhysical) {
+    if (t_event.m_subject == EventSubject::kPot
+        && t_event.m_action == EventAction::kValueChanged
+        && t_event.matchesId(PotId::kPot0)) {
       m_handler.m_source = TempoSource::kPot;
       m_logicState.m_tempo = m_handler.mapInterval(t_event.m_data.value);
 
       publishTempoEvent(m_logicState.m_tempo);
       publishSaveTempoEvent(m_logicState.m_tempo);
-      break;
 
-    case EventType::kMenuTempoChanged:
+      return;
+    }
+  }
+
+  if (t_event.m_domain == EventDomain::kUI) {
+    if (t_event.m_subject == EventSubject::kTempo
+        && t_event.m_action == EventAction::kValueChanged) {
       m_handler.m_source = TempoSource::kMenu;
       m_logicState.m_tempo = m_handler.mapInterval(t_event.m_data.delta);
 
       publishTempoEvent(m_logicState.m_tempo);
       publishSaveTempoEvent(m_logicState.m_tempo);
-      break;
 
-    case EventType::kProgramChanged:
-      if (m_logicState.m_activeProgram->m_isDelayEffect) {
-        syncHandler();
-        m_handler.m_source = TempoSource::kTap;
-        m_logicState.m_tempo = m_handler.mapInterval(m_handler.m_interval);
-
-        publishTempoEvent(m_logicState.m_tempo);
-        publishSaveTempoEvent(m_logicState.m_tempo);
-      }
-      else {
-        m_tempoLed.off();
-      }
-      break;
-
-    default:
-      break;
+      return;
+    }
   }
 }
 
@@ -83,9 +99,24 @@ void TempoService::update() {
   }
 }
 
-bool TempoService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kPotEvent)
-      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuTempoEvent)
-      || (t_category == EventCategory::kTempoEvent && t_subCategory == EventSubCategory::kTapIntervalEvent)
-      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent);
+bool TempoService::interestedIn(const Event& t_event) const {
+  if (t_event.m_domain == EventDomain::kLogic) {
+    if (t_event.m_subject == EventSubject::kProgram
+        && t_event.m_action == EventAction::kValueChanged) return true;
+    if (t_event.m_subject == EventSubject::kTap
+        && t_event.m_action == EventAction::kValueChanged) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kPhysical) {
+    if (t_event.m_subject == EventSubject::kPot
+        && t_event.m_action == EventAction::kValueChanged
+        && t_event.matchesId(PotId::kPot0)) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kUI) {
+    if (t_event.m_subject == EventSubject::kTempo
+        && t_event.m_action == EventAction::kValueChanged) return true;
+  }
+
+  return false;
 }

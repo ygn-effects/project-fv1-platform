@@ -1,200 +1,230 @@
 #include "services/fsm_service.h"
 
-void FsmService::transitionTo(AppState t_state, uint32_t t_timestamp) {
+void FsmService::transitionTo(AppState t_state) {
   m_state = t_state;
+}
 
-  Event e;
-  e.m_type = EventType::kStateChanged;
-  e.m_timestamp = t_timestamp; /*millis*/
-  e.m_data.value = static_cast<uint16_t>(t_state);
+bool FsmService::isPressed(const Event& t_event, const SwitchId t_id) const {
+  return (t_event.m_subject == EventSubject::kSwitch
+          && t_event.m_action == EventAction::kPressed
+          && t_event.matchesId(static_cast<uint8_t>(t_id)));
+}
+
+bool FsmService::isLongPressed(const Event& t_event, const SwitchId t_id) const {
+  return (t_event.m_subject == EventSubject::kSwitch
+          && t_event.m_action == EventAction::kLongPressed
+          && t_event.matchesId(static_cast<uint8_t>(t_id)));
+}
+
+bool FsmService::isDeltaChanged(const Event& t_event) const {
+  return (t_event.m_subject == EventSubject::kEncoder
+          && t_event.m_action == EventAction::kDeltaChanged);
+}
+
+bool FsmService::isValueChanged(const Event& t_event) const {
+  return (t_event.m_subject == EventSubject::kPot
+          && t_event.m_action == EventAction::kValueChanged);
+}
+
+bool FsmService::isBypassToggled(const Event& t_event) const {
+  return (t_event.m_domain == EventDomain::kLogic
+          && t_event.m_subject == EventSubject::kBypass
+          && t_event.m_action == EventAction::kToggled);
+}
+
+bool FsmService::isMenuUnlocked(const Event& t_event) const {
+  return (t_event.m_domain == EventDomain::kUI
+          && t_event.m_subject == EventSubject::kMenu
+          && t_event.m_action == EventAction::kUnlocked);
+}
+
+bool FsmService::isMenuLocked(const Event& t_event) const {
+  return (t_event.m_domain == EventDomain::kUI
+          && t_event.m_subject == EventSubject::kMenu
+          && t_event.m_action == EventAction::kLocked);
+}
+
+bool FsmService::isProgramModeToggled(const Event& t_event) const {
+  return (t_event.m_subject == EventSubject::kProgramMode
+          && t_event.m_action == EventAction::kToggled);
+}
+
+void FsmService::rePublishPhysicalEvent(const Event& t_event) const {
+  Event e = t_event;
+  e.m_domain = EventDomain::kPhysical;
   EventBus::publish(e);
 }
 
 void FsmService::init() {
-  transitionTo(AppState::kRestoreState, /*Timestamp*/ 0);
+  transitionTo(AppState::kRestoreState);
 }
 
 void FsmService::handleEvent(const Event& t_event) {
   switch(m_state) {
     case AppState::kBoot:
     case AppState::kRestoreState:
-      if (t_event.m_type == EventType::kBootCompleted) {
+      if (t_event.m_action == EventAction::kBooted) {
         if (m_logicalState.m_bypassState == BypassState::kActive) {
           transitionTo(m_logicalState.m_programMode == ProgramMode::kProgram
                         ? AppState::kProgramIdle
-                        : AppState::kPresetIdle, t_event.m_timestamp);
+                        : AppState::kPresetIdle);
         }
         else {
-          transitionTo(AppState::kBypassed, t_event.m_timestamp);
+          transitionTo(AppState::kBypassed);
         }
       }
 
       break;
 
     case AppState::kBypassed:
-      // Bypass
-      if (t_event.m_type == EventType::kRawBypassPressed) {
-        EventBus::publish({EventType::kBypassPressed, t_event.m_timestamp, {}});
+      // Bypass Press
+      if (isPressed(t_event, SwitchId::kBypass)) {
+        rePublishPhysicalEvent(t_event);
         return;
       }
 
-      if (t_event.m_type == EventType::kBypassEnabled) {
+      // Bypass toggle logic event
+      if (isBypassToggled(t_event)) {
         transitionTo(m_logicalState.m_programMode == ProgramMode::kProgram
                       ? AppState::kProgramIdle
-                      : AppState::kPresetIdle, t_event.m_timestamp);
+                      : AppState::kPresetIdle);
       }
 
       break;
 
     case AppState::kProgramIdle:
-      // Bypass
-      if (t_event.m_type == EventType::kRawBypassPressed) {
-        EventBus::publish({EventType::kBypassPressed, t_event.m_timestamp, {}});
+      // Bypass Press
+      if (isPressed(t_event, SwitchId::kBypass)) {
+        rePublishPhysicalEvent(t_event);
         return;
       }
 
-      if (t_event.m_type == EventType::kBypassDisabled) {
-        transitionTo(AppState::kBypassed, t_event.m_timestamp);
+      // Bypass state toggled
+      if (isBypassToggled(t_event)) {
+        transitionTo(AppState::kBypassed);
         return;
       }
 
       // Tap
-      if (t_event.m_type == EventType::kRawTapPressed) {
-        EventBus::publish({EventType::kTapPressed, t_event.m_timestamp, {}});
+      if (isPressed(t_event, SwitchId::kTap)) {
+        rePublishPhysicalEvent(t_event);
         return;
       }
 
       // Long‑tap
-      if (t_event.m_type == EventType::kRawTapLongPressed) {
-        EventBus::publish({EventType::kTapLongPressed, t_event.m_timestamp, {}});
+      if (isLongPressed(t_event, SwitchId::kTap)) {
+        rePublishPhysicalEvent(t_event);
         return;
       }
 
       // Encoder‑switch long press
-      if (t_event.m_type == EventType::kRawMenuLockLongPressed) {
-        EventBus::publish({EventType::kMenuLockLongPressed, t_event.m_timestamp, {}});
+      if (isLongPressed(t_event, SwitchId::kMenuEncoder)) {
+        rePublishPhysicalEvent(t_event);
         return;
       }
 
-      if (t_event.m_type == EventType::kMenuUnlocked) {
-        transitionTo(AppState::kProgramEdit, t_event.m_timestamp);
+      // Menu unlocked
+      if (isMenuUnlocked(t_event)) {
+        transitionTo(AppState::kProgramEdit);
         return;
       }
 
-      if (t_event.m_type == EventType::kRawProgramModeSwitchLongPress) {
-        transitionTo(AppState::kPresetIdle, t_event.m_timestamp);
-        EventBus::publish({EventType::kProgramModeChanged, t_event.m_timestamp /*millis*/, {}});
+      // Program mode switch long press
+      if (isLongPressed(t_event, SwitchId::kProgramMode)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Program mode toggle
+      if (isProgramModeToggled(t_event)) {
+        transitionTo(AppState::kPresetIdle);
         return;
       }
 
       break;
 
     case AppState::kProgramEdit:
-
-      // Bypass
-      if (t_event.m_type == EventType::kRawBypassPressed) {
-        EventBus::publish({EventType::kBypassPressed, t_event.m_timestamp, {}});
+      // Bypass Press
+      if (isPressed(t_event, SwitchId::kBypass)) {
+        rePublishPhysicalEvent(t_event);
         return;
       }
 
-      if (t_event.m_type == EventType::kMenuLocked) {
-        transitionTo(AppState::kProgramIdle, t_event.m_timestamp);
+      // Menu unlocked
+      if (isMenuLocked(t_event)) {
+        transitionTo(AppState::kProgramIdle);
         return;
       }
 
-      if (t_event.m_type == EventType::kRawMenuEncoderPressed) {
-        EventBus::publish({EventType::kMenuEncoderPressed, t_event.m_timestamp, {}});
+      // Menu encoder press
+      if (isPressed(t_event, SwitchId::kMenuEncoder)) {
+        rePublishPhysicalEvent(t_event);
         return;
       }
 
-      if (t_event.m_type == EventType::kRawMenuLockLongPressed) {
-        EventBus::publish({EventType::kMenuLockLongPressed, t_event.m_timestamp, {}});
+      // Encoder‑switch long press
+      if (isLongPressed(t_event, SwitchId::kMenuEncoder)) {
+        rePublishPhysicalEvent(t_event);
         return;
       }
 
-      if (t_event.m_type == EventType::kRawMenuEncoderMoved) {
-        Event e;
-        e.m_type = EventType::kMenuEncoderMoved;
-        e.m_timestamp = t_event.m_timestamp;
-        e.m_data.delta = t_event.m_data.delta;
-        EventBus::publish(e);
+      // Menu encoder moved
+      if (isDeltaChanged(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
       }
 
       // Tap
-      if (t_event.m_type == EventType::kRawTapPressed) {
-        EventBus::publish({EventType::kTapPressed, t_event.m_timestamp, {}});
+      if (isPressed(t_event, SwitchId::kTap)) {
+        rePublishPhysicalEvent(t_event);
         return;
       }
 
       // Long‑tap
-      if (t_event.m_type == EventType::kRawTapLongPressed) {
-        EventBus::publish({EventType::kTapLongPressed, t_event.m_timestamp, {}});
+      if (isLongPressed(t_event, SwitchId::kTap)) {
+        rePublishPhysicalEvent(t_event);
         return;
       }
 
-      // Pot 0 move
-      if (t_event.m_type == EventType::kRawPot0Moved && m_logicalState.m_bypassState==BypassState::kActive) {
-        Event e;
-        e.m_type = EventType::kPot0Moved;
-        e.m_timestamp = t_event.m_timestamp;
-        e.m_data.value = t_event.m_data.value;
-        EventBus::publish(e);
+      // Pot move
+      if (isValueChanged(t_event)) {
+        rePublishPhysicalEvent(t_event);
         return;
       }
 
-      // Pot 1 move
-      if (t_event.m_type == EventType::kRawPot1Moved && m_logicalState.m_bypassState==BypassState::kActive) {
-        Event e;
-        e.m_type = EventType::kPot1Moved;
-        e.m_timestamp = t_event.m_timestamp;
-        e.m_data.value = t_event.m_data.value;
-        EventBus::publish(e);
+      // Bypass state toggled
+      if (isBypassToggled(t_event)) {
+        transitionTo(AppState::kBypassed);
         return;
-      }
-
-      // Pot 2 move
-      if (t_event.m_type == EventType::kRawPot2Moved && m_logicalState.m_bypassState==BypassState::kActive) {
-        Event e;
-        e.m_type = EventType::kPot2Moved;
-        e.m_timestamp = t_event.m_timestamp;
-        e.m_data.value = t_event.m_data.value;
-        EventBus::publish(e);
-        return;
-      }
-
-      // Mix pot move
-      if (t_event.m_type == EventType::kRawMixPotMoved && m_logicalState.m_bypassState==BypassState::kActive) {
-        Event e;
-        e.m_type = EventType::kMixPotMoved;
-        e.m_timestamp = t_event.m_timestamp;
-        e.m_data.value = t_event.m_data.value;
-        EventBus::publish(e);
-        return;
-      }
-
-      if (t_event.m_type == EventType::kMenuLocked) {
-        transitionTo(AppState::kProgramIdle, t_event.m_timestamp);
-        return;
-      }
-
-      if (t_event.m_type == EventType::kBypassDisabled) {
-        transitionTo(AppState::kProgramIdle, t_event.m_timestamp);
       }
 
       break;
 
     case AppState::kPresetIdle:
-      // Bypass
-      if (t_event.m_type == EventType::kRawBypassPressed) {
-        EventBus::publish({EventType::kBypassPressed, t_event.m_timestamp, {}});
+      // Bypass Press
+      if (isPressed(t_event, SwitchId::kBypass)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+      // Program mode switch long press
+      if (isLongPressed(t_event, SwitchId::kProgramMode)) {
+        rePublishPhysicalEvent(t_event);
         return;
       }
 
-      if (t_event.m_type == EventType::kRawProgramModeSwitchLongPress) {
-        transitionTo(AppState::kProgramIdle, t_event.m_timestamp);
-        EventBus::publish({EventType::kProgramModeChanged, t_event.m_timestamp /*millis*/, {}});
+      // Bypass state toggled
+      if (isBypassToggled(t_event)) {
+        transitionTo(AppState::kBypassed);
         return;
       }
+
+      // Program mode toggle
+      if (isProgramModeToggled(t_event)) {
+        transitionTo(AppState::kProgramIdle);
+        return;
+      }
+
+      break;
 
     default:
       break;
@@ -205,7 +235,33 @@ void FsmService::update() {
 
 }
 
-bool FsmService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return t_category == EventCategory::kRawPhysicalEvent || t_category == EventCategory::kBootEvent
-      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuLockEvent);
+bool FsmService::interestedIn(const Event& t_event) const {
+  if (t_event.m_domain == EventDomain::kSystem) {
+    if (t_event.m_action == EventAction::kBooted) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kDriver) return true;
+
+  if (t_event.m_domain == EventDomain::kUI) {
+    if (t_event.m_action == EventAction::kLocked
+        || t_event.m_action == EventAction::kUnlocked) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kLogic) {
+    if (t_event.m_subject == EventSubject::kBypass
+        && t_event.m_action == EventAction::kToggled) return true;
+
+    if (t_event.m_subject == EventSubject::kProgramMode
+        && t_event.m_action == EventAction::kToggled) return true;
+  }
+
+  return false;
+}
+
+AppState FsmService::getAppState() const {
+  return m_state;
+}
+
+void FsmService::setAppState(const AppState t_state) {
+  m_state = t_state;
 }

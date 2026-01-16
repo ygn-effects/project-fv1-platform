@@ -6,30 +6,24 @@
 #include "periphs/eeprom.h"
 #include "logic/logical_state.h"
 #include "logic/memory_handler.h"
-#include "logic/preset_handler.h"
+#include "ui/inputs.h"
 
-class MemoryService : public Service {
+class SettingsService : public Service {
   private:
     LogicalState& m_logicalState;
     MemoryHandler m_handler;
     EEPROM& m_eeprom;
 
-    PresetBank m_loadedBank;
-
     void saveRegion(MemoryRegion t_region, uint8_t t_programIndex = 0, uint8_t t_potIndex = 0);
     void loadRegion(MemoryRegion t_region, uint8_t t_programIndex = 0, uint8_t t_potIndex = 0);
 
-    void loadPresetBank(uint8_t t_bankIndex);
-    void savePreset(uint8_t t_bankIndex, uint8_t t_presetIndex);
-
   public:
-    MemoryService(LogicalState& t_lState, EEPROM& t_eeprom);
+    SettingsService(LogicalState& t_lState, EEPROM& t_eeprom) :
+      m_logicalState(t_lState),
+      m_eeprom(t_eeprom) {}
 
     void init() override;
     void handleEvent(const Event& t_event) override;
     void update() override;
-    bool interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const override;
-
-    // Debug
-    PresetBank& getLoadedBank() { return m_loadedBank; }
+    bool interestedIn(const Event& t_event) const override;
 };

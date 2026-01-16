@@ -11,7 +11,13 @@ void ExprService::syncHandler() {
 }
 
 void ExprService::publishSaveExprEvent(const Event& t_event) {
-  EventBus::publish({EventType::kSaveExpr, t_event.m_timestamp /*millis*/, {}});
+  Event e;
+  e.m_domain = EventDomain::kMemory;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kSave;
+  e.m_timestamp = t_event.m_timestamp; // millis()
+
+  EventBus::publish(e);
 }
 
 void ExprService::init() {
@@ -19,32 +25,36 @@ void ExprService::init() {
 }
 
 void ExprService::handleEvent(const Event& t_event) {
-  if (t_event.m_type == EventType::kProgramChanged) {
-    syncHandler();
-    return;
+  if (t_event.m_domain == EventDomain::kLogic) {
+    if (t_event.m_subject == EventSubject::kProgram
+        && t_event.m_action == EventAction::kValueChanged) {
+      syncHandler();
+      return;
+    }
   }
 
-  if (EventToSubCategory(t_event.m_type) == EventSubCategory::kMenuExprEvent) {
+  if (t_event.m_domain == EventDomain::kUI
+      && t_event.m_subject == EventSubject::kExpr) {
     auto& params = m_logicState.m_exprParams[m_logicState.m_currentProgram];
 
-    switch (t_event.m_type) {
-      case EventType::kMenuExprStateToggled:
+    switch (t_event.m_id) {
+      case static_cast<uint8_t>(ExprParam::kState):
         params.m_state = m_exprHandler.toggleExprState();
         break;
 
-      case EventType::kMenuExprMappedPotMoved:
+      case static_cast<uint8_t>(ExprParam::kMappedPot):
         params.m_mappedPot = m_exprHandler.changeMappedPot(t_event.m_data.delta);
         break;
 
-      case EventType::kMenuExprDirectionToggled:
+      case static_cast<uint8_t>(ExprParam::kDirection):
         params.m_direction = m_exprHandler.toggleDirection();
         break;
 
-      case EventType::kMenuExprHeelValueMoved:
+      case static_cast<uint8_t>(ExprParam::kHeel):
         params.m_heelValue = m_exprHandler.changeHeelValue(t_event.m_data.delta);
         break;
 
-      case EventType::kMenuExprToeValueMoved:
+      case static_cast<uint8_t>(ExprParam::kToe):
         params.m_toeValue = m_exprHandler.changeToeValue(t_event.m_data.delta);
         break;
 
@@ -56,35 +66,41 @@ void ExprService::handleEvent(const Event& t_event) {
     return;
   }
 
-  if (m_exprHandler.m_state != ExprState::kActive) return;
+  if (t_event.m_domain == EventDomain::kPhysical) {
+    if (m_exprHandler.m_state != ExprState::kActive) return;
 
-  if (t_event.m_type == EventType::kExprMoved) {
-    Event e;
-    e.m_timestamp = t_event.m_timestamp;
-    e.m_data.value = m_exprHandler.mapAdcValue(t_event.m_data.value);
+    if (t_event.m_subject == EventSubject::kExpr
+        && t_event.m_action == EventAction::kValueChanged) {
+      Event e;
+      e.m_domain = EventDomain::kLogic;
+      e.m_subject = EventSubject::kExpr;
+      e.m_action = EventAction::kValueChanged;
+      e.m_timestamp = t_event.m_timestamp;
+      e.m_data.value = m_exprHandler.mapAdcValue(t_event.m_data.value);
 
-    switch (m_exprHandler.m_mappedPot) {
-      case MappedPot::kPot0:
-        e.m_type = EventType::kExprPot0Moved;
-        break;
+      switch (m_exprHandler.m_mappedPot) {
+        case MappedPot::kPot0:
+          e.m_id = static_cast<uint8_t>(PotId::kPot0);
+          break;
 
-      case MappedPot::kPot1:
-        e.m_type = EventType::kExprPot1Moved;
-        break;
+        case MappedPot::kPot1:
+          e.m_id = static_cast<uint8_t>(PotId::kPot1);
+          break;
 
-      case MappedPot::kPot2:
-        e.m_type = EventType::kExprPot2Moved;
-        break;
+        case MappedPot::kPot2:
+          e.m_id = static_cast<uint8_t>(PotId::kPot2);
+          break;
 
-      case MappedPot::kMixPot:
-        e.m_type = EventType::kExprMixPotMoved;
-        break;
+        case MappedPot::kMixPot:
+          e.m_id = static_cast<uint8_t>(PotId::kMixPot);
+          break;
 
-      default:
-        break;
+        default:
+          break;
+      }
+
+      EventBus::publish(e);
     }
-
-    EventBus::publish(e);
   }
 }
 
@@ -92,8 +108,19 @@ void ExprService::update() {
 
 }
 
-bool ExprService::interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const {
-  return (t_category == EventCategory::kPhysicalEvent && t_subCategory == EventSubCategory::kExprEvent)
-      || (t_category == EventCategory::kMenuEvent && t_subCategory == EventSubCategory::kMenuExprEvent)
-      || (t_category == EventCategory::kProgramEvent && t_subCategory == EventSubCategory::kProgramChangedEvent);
+bool ExprService::interestedIn(const Event& t_event) const {
+  if (t_event.m_domain == EventDomain::kLogic) {
+    if (t_event.m_subject == EventSubject::kProgram
+      && t_event.m_action == EventAction::kValueChanged) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kUI) {
+    if (t_event.m_subject == EventSubject::kExpr) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kPhysical) {
+    if (t_event.m_subject == EventSubject::kExpr) return true;
+  }
+
+  return false;
 }

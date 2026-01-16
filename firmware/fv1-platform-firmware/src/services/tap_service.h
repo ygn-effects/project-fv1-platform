@@ -11,6 +11,7 @@ class TapService : public Service {
     LogicalState& m_logicalState;
     TapHandler m_tapHandler;
 
+    void syncHandler();
     void publishTapIntervalEvent(const Event& t_event) const;
     void publishSaveTapEvent(const Event& t_event) const;
 
@@ -21,5 +22,5 @@ class TapService : public Service {
     void init() override;
     void handleEvent(const Event& t_event) override;
     void update() override;
-    bool interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const override;
+    bool interestedIn(const Event& t_event) const override;
 };

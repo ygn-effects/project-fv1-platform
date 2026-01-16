@@ -5,6 +5,8 @@
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
 #include "logic/expr_handler.h"
+#include "ui/inputs.h"
+#include "ui/settings.h"
 
 class ExprService : public Service {
   private:
@@ -21,5 +23,5 @@ class ExprService : public Service {
     void init() override;
     void handleEvent(const Event& t_event) override;
     void update() override;
-    bool interestedIn(EventCategory t_category, EventSubCategory t_subCategory) const override;
+    bool interestedIn(const Event& t_event) const override;
 };

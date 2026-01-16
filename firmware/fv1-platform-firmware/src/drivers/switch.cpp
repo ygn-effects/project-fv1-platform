@@ -34,25 +34,11 @@ size_t SwitchDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
         m_state = SwitchState::kPressed;
         m_stateMs = now;
         m_longPress = false;
-
-        Event e;
-        e.m_type = EventType::kSwitchDebounced;
-        e.m_timestamp = now;
-        e.m_data.id = static_cast<uint8_t>(m_switchId);
-        t_outEvents[eventCount++] = e;
       }
       break;
 
     case SwitchState::kPressed:
       if (switchEvent && elapsed >= m_longPressMs) {
-        if (!m_longPress) {
-          Event e;
-          e.m_type = EventType::kSwitchLongDebounced;
-          e.m_timestamp = now;
-          e.m_data.id = static_cast<uint8_t>(m_switchId);
-          t_outEvents[eventCount++] = e;
-        }
-
         m_longPress = true;
       }
       else if (! switchEvent) {
@@ -70,23 +56,29 @@ size_t SwitchDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
       else if (elapsed >= m_debounceMs) {
         if (m_longPress) {
           Event e;
-          e.m_type = EventType::kSwitchLongPressed;
+          e.m_domain = EventDomain::kRaw;
+          e.m_subject = EventSubject::kSwitch;
+          e.m_action = EventAction::kLongPressed;
+          e.m_id = static_cast<uint8_t>(m_switchId);
           e.m_timestamp = now;
-          e.m_data.id = static_cast<uint8_t>(m_switchId);
           t_outEvents[eventCount++] = e;
         }
         else {
           Event e;
-          e.m_type = EventType::kSwitchPressed;
+          e.m_domain = EventDomain::kRaw;
+          e.m_subject = EventSubject::kSwitch;
+          e.m_action = EventAction::kPressed;
+          e.m_id = static_cast<uint8_t>(m_switchId);
           e.m_timestamp = now;
-          e.m_data.id = static_cast<uint8_t>(m_switchId);
           t_outEvents[eventCount++] = e;
         }
 
         Event e;
-        e.m_type = EventType::kSwitchReleased;
+        e.m_domain = EventDomain::kRaw;
+        e.m_subject = EventSubject::kSwitch;
+        e.m_action = EventAction::kReleased;
+        e.m_id = static_cast<uint8_t>(m_switchId);
         e.m_timestamp = now;
-        e.m_data.id = static_cast<uint8_t>(m_switchId);
         t_outEvents[eventCount++] = e;
 
         m_state = SwitchState::kIdle;
