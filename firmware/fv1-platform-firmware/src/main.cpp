@@ -10,7 +10,11 @@ void setup() {
   hal::init();
   services::init();
 
-  EventBus::publish({EventType::kBootCompleted, 0, {}});
+  Event e;
+  e.m_domain = EventDomain::kSystem;
+  e.m_subject = EventSubject::kGeneral;
+  e.m_action = EventAction::kBooted;
+  EventBus::publish(e);
 
   Serial.println("Setup done, starting main loop...");
 }

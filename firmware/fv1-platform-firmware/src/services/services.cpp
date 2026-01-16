@@ -4,9 +4,8 @@ namespace services {
 
 LogicalState logicalState;
 
-PollService pollService(logicalState);
 FsmService fsmService(logicalState);
-MemoryService memoryService(logicalState, hal::eeprom);
+SettingsService settingsService(logicalState, hal::eeprom);
 ProgramModeService programModeService(logicalState);
 ProgramService programService(logicalState);
 BypassService bypassService(logicalState, hal::bypass);
@@ -19,9 +18,8 @@ DisplayService displayService(logicalState, hal::display);
 ServiceManager serviceManager;
 
 void init() {
-  serviceManager.registerService(&pollService);
   serviceManager.registerService(&fsmService);
-  serviceManager.registerService(&memoryService);
+  serviceManager.registerService(&settingsService);
   serviceManager.registerService(&programModeService);
   serviceManager.registerService(&programService);
   serviceManager.registerService(&bypassService);
