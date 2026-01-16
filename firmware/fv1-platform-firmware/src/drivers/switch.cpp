@@ -56,7 +56,7 @@ size_t SwitchDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
       else if (elapsed >= m_debounceMs) {
         if (m_longPress) {
           Event e;
-          e.m_domain = EventDomain::kRaw;
+          e.m_domain = EventDomain::kDriver;
           e.m_subject = EventSubject::kSwitch;
           e.m_action = EventAction::kLongPressed;
           e.m_id = static_cast<uint8_t>(m_switchId);
@@ -65,7 +65,7 @@ size_t SwitchDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
         }
         else {
           Event e;
-          e.m_domain = EventDomain::kRaw;
+          e.m_domain = EventDomain::kDriver;
           e.m_subject = EventSubject::kSwitch;
           e.m_action = EventAction::kPressed;
           e.m_id = static_cast<uint8_t>(m_switchId);
@@ -74,7 +74,7 @@ size_t SwitchDriver::poll(Event* t_outEvents, size_t t_maxEvents) {
         }
 
         Event e;
-        e.m_domain = EventDomain::kRaw;
+        e.m_domain = EventDomain::kDriver;
         e.m_subject = EventSubject::kSwitch;
         e.m_action = EventAction::kReleased;
         e.m_id = static_cast<uint8_t>(m_switchId);
