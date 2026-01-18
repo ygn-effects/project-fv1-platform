@@ -1,0 +1,177 @@
+#pragma once
+
+#include "core/event_bus.h"
+#include "logic/logical_state.h"
+#include "logic/fsm.h"
+#include "logic/memory_handler.h"
+#include "services/service_manager.h"
+#include "services/fsm_service.h"
+#include "services/midi_service.h"
+#include "services/settings_service.h"
+#include "services/preset_bank_service.h"
+#include "services/preset_service.h"
+#include "services/program_mode_service.h"
+#include "services/program_service.h"
+#include "services/bypass_service.h"
+#include "services/expr_service.h"
+#include "services/pot_service.h"
+#include "services/tap_service.h"
+#include "services/tempo_service.h"
+#include "services/fv1_service.h"
+#include "services/menu_service.h"
+#include "services/display_service.h"
+#include "mock/mock_eeprom.h"
+#include "mock/mock_fv1.h"
+#include "mock/mock_bypass.h"
+#include "mock/mock_clock.h"
+#include "mock/mock_adjustable.h"
+#include "mock/mock_display.h"
+
+
+class InteractionFixture {
+  public:
+    LogicalState logicalState;
+
+    MockEEPROM mockEeprom;
+    MockFv1 mockFv1;
+    MockBypass mockBypass;
+    MockedClock mockClock;
+    MockAdjustable mockTapLed;
+    MockDisplay mockDisplay;
+
+    FsmService fsmService;
+    MidiService midiService;
+    SettingsService settingsService;
+    PresetBankService presetBankService;
+    PresetService presetService;
+    ProgramModeService programModeService;
+    ProgramService programService;
+    BypassService bypassService;
+    ExprService exprService;
+    PotService potService;
+    TapService tapService;
+    TempoService tempoService;
+    Fv1Service fv1Service;
+    MenuService menuService;
+    DisplayService displayService;
+
+    ServiceManager serviceManager;
+
+    InteractionFixture()
+      : fsmService(logicalState)
+      , midiService(logicalState)
+      , settingsService(logicalState, mockEeprom)
+      , presetBankService(logicalState, mockEeprom)
+      , presetService(logicalState, mockEeprom)
+      , programModeService(logicalState)
+      , programService(logicalState)
+      , bypassService(logicalState, mockBypass)
+      , exprService(logicalState)
+      , potService(logicalState)
+      , tapService(logicalState)
+      , tempoService(logicalState, mockTapLed, mockClock)
+      , fv1Service(logicalState, mockFv1)
+      , menuService(logicalState, mockClock)
+      , displayService(logicalState, mockDisplay)
+    {
+      clearEventBus();
+      registerServices();
+    }
+
+    void init() {
+      serviceManager.init();
+    }
+
+    void dispatchAllEvents() {
+      serviceManager.handleEvents();
+    }
+
+    void publish(const Event& t_event) {
+      EventBus::publish(t_event);
+    }
+
+    void publishAndDispatch(const Event& t_event) {
+      EventBus::publish(t_event);
+      dispatchAllEvents();
+    }
+
+    void clearEventBus() {
+      Event e;
+      while (EventBus::hasEvent()) {
+        EventBus::recall(e);
+      }
+    }
+
+    bool findEvent(EventDomain t_domain, EventSubject t_subject, EventAction t_action) {
+      Event e;
+      while (EventBus::hasEvent()) {
+        EventBus::recall(e);
+        if (e.m_domain == t_domain && e.m_subject == t_subject && e.m_action == t_action) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    bool recallEvent(Event& t_event) {
+      if (EventBus::hasEvent()) {
+        EventBus::recall(t_event);
+        return true;
+      }
+
+      return false;
+    }
+
+    bool hasEvents() const {
+      return EventBus::hasEvent();
+    }
+
+    void syncEepromWithState() {
+      MemoryHandler handler;
+      uint8_t buffer[512];
+      handler.serializeRegion(MemoryRegion::kLogicalState, logicalState, buffer);
+      RegionInfo info = handler.calculateRegionInfo(MemoryRegion::kLogicalState);
+      mockEeprom.write(info.m_address, buffer, info.m_length);
+    }
+
+    void resetMocks() {
+      mockEeprom.reset();
+      mockFv1.m_potValues.clear();
+      mockFv1.m_s0 = 0;
+      mockFv1.m_s1 = 0;
+      mockFv1.m_s2 = 0;
+      mockBypass.m_kState = 0;
+      mockBypass.m_okState = 0;
+      mockClock.setClock(0);
+      mockTapLed.reset();
+      mockDisplay.reset();
+    }
+
+    void advanceTime(uint32_t t_ms) {
+      mockClock.advanceBy(t_ms);
+    }
+
+    void setTime(uint32_t t_ms) {
+      mockClock.setClock(t_ms);
+    }
+
+  private:
+    void registerServices() {
+      serviceManager.registerService(&fsmService);
+      serviceManager.registerService(&midiService);
+      serviceManager.registerService(&settingsService);
+      serviceManager.registerService(&presetBankService);
+      serviceManager.registerService(&presetService);
+      serviceManager.registerService(&programModeService);
+      serviceManager.registerService(&programService);
+      serviceManager.registerService(&bypassService);
+      serviceManager.registerService(&exprService);
+      serviceManager.registerService(&potService);
+      serviceManager.registerService(&tapService);
+      serviceManager.registerService(&tempoService);
+      serviceManager.registerService(&fv1Service);
+      serviceManager.registerService(&menuService);
+      serviceManager.registerService(&displayService);
+    }
+};
