@@ -32,10 +32,10 @@ class ServiceManager {
         Event e;
         EventBus::recall(e);
 
-        Serial.print("Received event : ");
-        Serial.println(static_cast<uint8_t>(e.m_domain));
-        Serial.println(static_cast<uint8_t>(e.m_subject));
-        Serial.println(static_cast<uint8_t>(e.m_action));
+        // Serial.print("Received event : ");
+        // Serial.println(static_cast<uint8_t>(e.m_domain));
+        // Serial.println(static_cast<uint8_t>(e.m_subject));
+        // Serial.println(static_cast<uint8_t>(e.m_action));
 
         for (uint8_t i = 0; i < m_servicesCount; i++) {
           if (m_services[i]->interestedIn(e)) {
