@@ -45,6 +45,19 @@ class ServiceManager {
       }
     }
 
+    void handleEvent() {
+      if (EventBus::hasEvent()) {
+        Event e;
+        EventBus::recall(e);
+
+        for (uint8_t i = 0; i < m_servicesCount; i++) {
+          if (m_services[i]->interestedIn(e)) {
+            m_services[i]->handleEvent(e);
+          }
+        }
+      }
+    }
+
     void update() {
       for (uint8_t i = 0; i < m_servicesCount; i++) {
         m_services[i]->update();
