@@ -50,4 +50,7 @@ class MenuService : public Service {
     void handleEvent(const Event& t_event) override;
     void update() override;
     bool interestedIn(const Event& t_event) const override;
+
+    // Tests
+    MenuHandler* getMenuHandler() { return &m_handler; }
 };
