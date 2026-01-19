@@ -86,11 +86,20 @@ class InteractionFixture {
       serviceManager.handleEvents();
     }
 
+    void dispatchEvent() {
+      serviceManager.handleEvent();
+    }
+
     void publish(const Event& t_event) {
       EventBus::publish(t_event);
     }
 
-    void publishAndDispatch(const Event& t_event) {
+    void publishAndDispatchEvent(const Event& t_event) {
+      EventBus::publish(t_event);
+      dispatchEvent();
+    }
+
+    void publishAndDispatchAllEvents(const Event& t_event) {
       EventBus::publish(t_event);
       dispatchAllEvents();
     }
@@ -127,11 +136,23 @@ class InteractionFixture {
       return EventBus::hasEvent();
     }
 
+    void updateAllServices() {
+      serviceManager.update();
+    }
+
     void syncEepromWithState() {
       MemoryHandler handler;
       uint8_t buffer[512];
       handler.serializeRegion(MemoryRegion::kLogicalState, logicalState, buffer);
       RegionInfo info = handler.calculateRegionInfo(MemoryRegion::kLogicalState);
+      mockEeprom.write(info.m_address, buffer, info.m_length);
+    }
+
+    void SyncEepromWithLoadedPresetBank() {
+      MemoryHandler handler;
+      uint8_t buffer[512];
+      RegionInfo info = handler.calculateRegionInfo(MemoryRegion::kPreset, logicalState.m_currentPresetBank, logicalState.m_currentPreset);
+      handler.serializePreset(logicalState.m_loadedPresetBank.m_presets[logicalState.m_currentPreset], buffer, logicalState.m_currentPresetBank, logicalState.m_currentPreset, 0);
       mockEeprom.write(info.m_address, buffer, info.m_length);
     }
 
