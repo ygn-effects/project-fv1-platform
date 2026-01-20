@@ -224,6 +224,18 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
+      // Tap
+      if (isPressed(t_event, SwitchId::kTap)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Long‑tap
+      if (isLongPressed(t_event, SwitchId::kTap)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
       break;
 
     default:
