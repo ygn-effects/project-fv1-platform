@@ -31,6 +31,14 @@ Event makeUIPresetValueChangeEvent(int8_t t_delta) {
   return e;
 }
 
+Event makeMemoryPresetBankLoadEvent() {
+  Event e;
+  e.m_domain = EventDomain::kMemory;
+  e.m_subject = EventSubject::kPresetBank;
+  e.m_action = EventAction::kLoad;
+  return e;
+}
+
 Event makePhysicalTapPressEvent() {
   Event e;
   e.m_domain = EventDomain::kPhysical;
@@ -214,6 +222,23 @@ void test_midi_preset_loading_out_of_range() {
 
   // Check logicalState hasn't changed
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+}
+
+void test_load_preset_bank_changes_logical_state() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetService presetService(logicalState, eeprom);
+
+  logicalState.m_currentPreset = 2;
+
+  presetService.handleEvent(makeMemoryPresetBankLoadEvent());
+
+  // Check logicalState and event bus
+  TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
+  assertPresetSaveEventPublished();
 
   // Event bus should be empty
   assertEventBusEmpty();
@@ -450,6 +475,19 @@ void test_interested_in_logic_program_mode_toggle() {
   TEST_ASSERT_TRUE(presetService.interestedIn(e));
 }
 
+void test_interested_in_memory_preset_bank_load() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetService presetService(logicalState, eeprom);
+
+  Event e;
+  e.m_domain = EventDomain::kMemory;
+  e.m_subject = EventSubject::kPresetBank;
+  e.m_action = EventAction::kLoad;
+
+  TEST_ASSERT_TRUE(presetService.interestedIn(e));
+}
+
 void test_not_interested_in_physical_tap_program_mode() {
   LogicalState logicalState;
   MockEEPROM eeprom;
@@ -515,6 +553,7 @@ int main() {
   RUN_TEST(test_ui_preset_loading_wraps_around);
   RUN_TEST(test_midi_preset_loading_changes_logical_state);
   RUN_TEST(test_midi_preset_loading_out_of_range);
+  RUN_TEST(test_load_preset_bank_changes_logical_state);
   RUN_TEST(test_physical_tap_press_changes_logical_state);
   RUN_TEST(test_physical_tap_long_press_changes_logical_state);
   RUN_TEST(test_physical_tap_wraps_around);
@@ -531,6 +570,7 @@ int main() {
   RUN_TEST(test_interested_in_physical_tap_switch_long_press);
   RUN_TEST(test_interested_in_logic_preset_save);
   RUN_TEST(test_interested_in_logic_program_mode_toggle);
+  RUN_TEST(test_interested_in_memory_preset_bank_load);
   RUN_TEST(test_not_interested_in_physical_tap_program_mode);
   RUN_TEST(test_not_interested_in_other_events);
 

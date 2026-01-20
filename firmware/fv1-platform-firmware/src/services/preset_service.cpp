@@ -52,6 +52,16 @@ void PresetService::handleEvent(const Event& t_event) {
     }
   }
 
+  if (t_event.m_domain == EventDomain::kMemory
+      && t_event.m_subject == EventSubject::kPresetBank
+      && t_event.m_action == EventAction::kLoad) {
+    m_logicalState.m_currentPreset = 0;
+    applyPreset();
+    publishSavePresetEvent(t_event);
+
+    return;
+  }
+
   if (t_event.m_domain == EventDomain::kPhysical) {
     if (t_event.m_subject == EventSubject::kTap
         && t_event.m_action == EventAction::kPressed) {
@@ -98,6 +108,11 @@ bool PresetService::interestedIn(const Event& t_event) const {
   if (t_event.m_domain == EventDomain::kMidi) {
     if (t_event.m_subject == EventSubject::kPreset
         && t_event.m_action == EventAction::kValueChanged) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kMemory) {
+    if (t_event.m_subject == EventSubject::kPresetBank
+        && t_event.m_action == EventAction::kLoad) return true;
   }
 
   // Physical events are only processed in preset mode
