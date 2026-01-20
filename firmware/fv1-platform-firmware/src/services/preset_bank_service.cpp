@@ -27,7 +27,9 @@ void PresetBankService::handleEvent(const Event& t_event) {
   if (t_event.m_domain == EventDomain::kMidi) {
     if (t_event.m_subject == EventSubject::kPresetBank
         && t_event.m_action == EventAction::kValueChanged) {
-      if (t_event.m_data.value >= 0 && t_event.m_data.value < PresetConstants::c_presetBankCount) {
+      if (t_event.m_data.value >= 0
+          && t_event.m_data.value < PresetConstants::c_presetBankCount
+          && t_event.m_data.value != m_logicalState.m_currentPresetBank) {
         loadPresetBank(t_event.m_data.value, m_logicalState.m_loadedPresetBank);
         publishSavePresetBankEvent(t_event);
 

@@ -163,6 +163,23 @@ void test_bank_loading_out_of_range() {
   assertEventBusEmpty();
 }
 
+void test_wont_load_same_midi_bank() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetBankService presetBankService(logicalState, eeprom);
+
+  // Set the current preset
+  logicalState.m_currentPresetBank = 1;
+  presetBankService.init();
+
+  // Bogus value
+  presetBankService.handleEvent(makeMidiPresetBankValueChangeEvent(1));
+
+  // Check logical state and event bus
+  TEST_ASSERT_EQUAL(1, logicalState.m_currentPresetBank);
+  assertEventBusEmpty();
+}
+
 // =============================================================================
 // interestedIn Tests
 // =============================================================================
@@ -246,6 +263,7 @@ int main() {
   RUN_TEST(test_ui_bank_loading_changes_logical_state);
   RUN_TEST(test_ui_bank_loading_wraps_around);
   RUN_TEST(test_bank_loading_out_of_range);
+  RUN_TEST(test_wont_load_same_midi_bank);
 
   // interestedIn Tests
   RUN_TEST(test_interested_in_midi_preset_bank_value_change);
