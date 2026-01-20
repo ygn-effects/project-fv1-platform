@@ -87,7 +87,6 @@ void test_driver_footswitch_pressed_event_toggles_bypass_on() {
 
   // Test bypass and LogicalState
   TEST_ASSERT_EQUAL(1, fix.mockBypass.m_kState);
-  TEST_ASSERT_EQUAL(BypassState::kActive, fix.logicalState.m_bypassState);
 }
 
 void test_driver_footswitch_pressed_event_toggles_bypass_off() {
@@ -103,6 +102,35 @@ void test_driver_footswitch_pressed_event_toggles_bypass_off() {
 
   // Test bypass and LogicalState
   TEST_ASSERT_EQUAL(0, fix.mockBypass.m_kState);
+}
+
+void test_driver_footswitch_pressed_event_sets_logical_state_active() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kBypassed;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send footswitch event
+  fix.publishAndDispatchAllEvents(makeDriverSwitchPressedEvent(SwitchId::kBypass));
+
+  // Test LogicalState
+  TEST_ASSERT_EQUAL(BypassState::kActive, fix.logicalState.m_bypassState);
+}
+
+void test_driver_footswitch_pressed_event_sets_logical_state_bypassed() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send footswitch event
+  fix.publishAndDispatchAllEvents(makeDriverSwitchPressedEvent(SwitchId::kBypass));
+
+  // Test LogicalState
   TEST_ASSERT_EQUAL(BypassState::kBypassed, fix.logicalState.m_bypassState);
 }
 
@@ -152,7 +180,7 @@ void test_bypass_state_toggled_sets_fsm_program_mode_bypassed() {
   TEST_ASSERT_EQUAL(AppState::kBypassed, fix.fsmService.getAppState());
 }
 
-void test_toggle_bypass_on_persists() {
+void test_only_bypass_switch_republished_when_bypassed() {
   InteractionFixture fix;
   fix.logicalState.m_bypassState = BypassState::kBypassed;
   fix.syncEepromWithState();
@@ -160,51 +188,26 @@ void test_toggle_bypass_on_persists() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-  // Send footswitch event
-  fix.publishAndDispatchAllEvents(makeDriverSwitchPressedEvent(SwitchId::kBypass));
 
-  // Reset EEPROM
-  fix.init();
+  // Send encoder switch
+  fix.publishAndDispatchEvent(makeDriverSwitchPressedEvent(SwitchId::kMenuEncoder));
+  // Event bus should be empty
+  TEST_ASSERT_FALSE(fix.hasEvents());
 
-  // Test logicalstate
-  TEST_ASSERT_EQUAL(BypassState::kActive, fix.logicalState.m_bypassState);
-}
+  // Send program mode switch
+  fix.publishAndDispatchEvent(makeDriverSwitchPressedEvent(SwitchId::kProgramMode));
+  // Event bus should be empty
+  TEST_ASSERT_FALSE(fix.hasEvents());
 
-void test_toggle_bypass_off_persists() {
-  InteractionFixture fix;
-  fix.logicalState.m_bypassState = BypassState::kActive;
-  fix.syncEepromWithState();
-  fix.init();
+  // Send tap switch
+  fix.publishAndDispatchEvent(makeDriverSwitchPressedEvent(SwitchId::kTap));
+  // Event bus should be empty
+  TEST_ASSERT_FALSE(fix.hasEvents());
 
-  // Boot
-  fix.publishAndDispatchAllEvents(makeBootEvent());
-  // Send footswitch event
-  fix.publishAndDispatchAllEvents(makeDriverSwitchPressedEvent(SwitchId::kBypass));
-
-  // Reset EEPROM
-  fix.init();
-
-  // Test logicalstate
-  TEST_ASSERT_EQUAL(BypassState::kBypassed, fix.logicalState.m_bypassState);
-}
-
-void test_toggle_bypass_when_menu_unlocked_locks_menu() {
-  InteractionFixture fix;
-  fix.logicalState.m_bypassState = BypassState::kActive;
-  fix.syncEepromWithState();
-  fix.init();
-
-  // Boot
-  fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Unlock menu
-  fix.menuService.getMenuHandler()->m_mode = UiMode::kUnlocked;
-
-  // Send footswitch event
-  fix.publishAndDispatchAllEvents(makeDriverSwitchPressedEvent(SwitchId::kBypass));
-
-  // Check handler
-  TEST_ASSERT_EQUAL(UiMode::kLocked, fix.menuService.getMenuHandler()->m_mode);
+  // Send menu lock switch
+  fix.publishAndDispatchEvent(makeDriverSwitchPressedEvent(SwitchId::kMenuLock));
+  // Event bus should be empty
+  TEST_ASSERT_FALSE(fix.hasEvents());
 }
 
 // =============================================================================
@@ -292,6 +295,69 @@ void test_bypass_stays_on_on_midi_cc_on_message() {
 }
 
 // =============================================================================
+// Memory tests
+// =============================================================================
+
+void test_toggle_bypass_on_persists() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kBypassed;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send footswitch event
+  fix.publishAndDispatchAllEvents(makeDriverSwitchPressedEvent(SwitchId::kBypass));
+
+  // Reset EEPROM
+  fix.init();
+
+  // Test logicalstate
+  TEST_ASSERT_EQUAL(BypassState::kActive, fix.logicalState.m_bypassState);
+}
+
+void test_toggle_bypass_off_persists() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send footswitch event
+  fix.publishAndDispatchAllEvents(makeDriverSwitchPressedEvent(SwitchId::kBypass));
+
+  // Reset EEPROM
+  fix.init();
+
+  // Test logicalstate
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, fix.logicalState.m_bypassState);
+}
+
+// =============================================================================
+// Menu tests
+// =============================================================================
+
+void test_toggle_bypass_when_menu_unlocked_locks_menu() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Unlock menu
+  fix.menuService.getMenuHandler()->m_mode = UiMode::kUnlocked;
+
+  // Send footswitch event
+  fix.publishAndDispatchAllEvents(makeDriverSwitchPressedEvent(SwitchId::kBypass));
+
+  // Check handler
+  TEST_ASSERT_EQUAL(UiMode::kLocked, fix.menuService.getMenuHandler()->m_mode);
+}
+
+// =============================================================================
 // Event chain tests
 // =============================================================================
 
@@ -333,7 +399,7 @@ void test_full_bypass_event_chain() {
   TEST_ASSERT_EQUAL(EventSubject::kBypass, e1.m_subject);
   TEST_ASSERT_EQUAL(EventAction::kToggled, e1.m_action);
 
-  // Event should be bypass savez
+  // Event should be bypass save
   TEST_ASSERT_TRUE(fix.hasEvents());
   fix.recallEvent(e2);
   TEST_ASSERT_EQUAL(EventDomain::kMemory, e2.m_domain);
@@ -358,18 +424,25 @@ int main() {
   // Physical bypass toggle tests
   RUN_TEST(test_driver_footswitch_pressed_event_toggles_bypass_on);
   RUN_TEST(test_driver_footswitch_pressed_event_toggles_bypass_off);
+  RUN_TEST(test_driver_footswitch_pressed_event_sets_logical_state_active);
+  RUN_TEST(test_driver_footswitch_pressed_event_sets_logical_state_bypassed);
   RUN_TEST(test_bypass_state_toggled_sets_fsm_program_mode_idle);
   RUN_TEST(test_bypass_state_toggled_sets_fsm_preset_mode_idle);
   RUN_TEST(test_bypass_state_toggled_sets_fsm_program_mode_bypassed);
-  RUN_TEST(test_toggle_bypass_on_persists);
-  RUN_TEST(test_toggle_bypass_off_persists);
-  RUN_TEST(test_toggle_bypass_when_menu_unlocked_locks_menu);
+  RUN_TEST(test_only_bypass_switch_republished_when_bypassed);
 
   // MIDI bypass control tests
   RUN_TEST(test_toggle_bypass_off_on_midi_cc_message);
   RUN_TEST(test_toggle_bypass_on_on_midi_cc_message);
   RUN_TEST(test_bypass_stays_on_on_midi_cc_on_message);
   RUN_TEST(test_bypass_stays_off_on_midi_cc_off_message);
+
+  // Memory tests
+  RUN_TEST(test_toggle_bypass_on_persists);
+  RUN_TEST(test_toggle_bypass_off_persists);
+
+  // Menu tests
+  RUN_TEST(test_toggle_bypass_when_menu_unlocked_locks_menu);
 
   // Event chain tests
   RUN_TEST(test_full_bypass_event_chain);
