@@ -149,11 +149,13 @@ class InteractionFixture {
     }
 
     void SyncEepromWithLoadedPresetBank() {
-      MemoryHandler handler;
-      uint8_t buffer[512];
-      RegionInfo info = handler.calculateRegionInfo(MemoryRegion::kPreset, logicalState.m_currentPresetBank, logicalState.m_currentPreset);
-      handler.serializePreset(logicalState.m_loadedPresetBank.m_presets[logicalState.m_currentPreset], buffer, logicalState.m_currentPresetBank, logicalState.m_currentPreset, 0);
-      mockEeprom.write(info.m_address, buffer, info.m_length);
+      for (uint8_t i = 0; i < PresetConstants::c_presetPerBank; i++) {
+        MemoryHandler handler;
+        uint8_t buffer[512];
+        RegionInfo info = handler.calculateRegionInfo(MemoryRegion::kPreset, logicalState.m_currentPresetBank, i);
+        handler.serializePreset(logicalState.m_loadedPresetBank.m_presets[i], buffer, logicalState.m_currentPresetBank, i, 0);
+        mockEeprom.write(info.m_address, buffer, info.m_length);
+      }
     }
 
     void resetMocks() {
@@ -182,9 +184,9 @@ class InteractionFixture {
       serviceManager.registerService(&fsmService);
       serviceManager.registerService(&midiService);
       serviceManager.registerService(&settingsService);
+      serviceManager.registerService(&programModeService);
       serviceManager.registerService(&presetBankService);
       serviceManager.registerService(&presetService);
-      serviceManager.registerService(&programModeService);
       serviceManager.registerService(&programService);
       serviceManager.registerService(&bypassService);
       serviceManager.registerService(&exprService);
