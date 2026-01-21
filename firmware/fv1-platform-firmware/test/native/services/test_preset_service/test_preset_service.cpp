@@ -42,16 +42,18 @@ Event makeMemoryPresetBankLoadEvent() {
 Event makePhysicalTapPressEvent() {
   Event e;
   e.m_domain = EventDomain::kPhysical;
-  e.m_subject = EventSubject::kTap;
+  e.m_subject = EventSubject::kSwitch;
   e.m_action = EventAction::kPressed;
+  e.m_id = static_cast<uint8_t>(SwitchId::kTap);
   return e;
 }
 
 Event makePhysicalTapLongPressEvent() {
   Event e;
   e.m_domain = EventDomain::kPhysical;
-  e.m_subject = EventSubject::kTap;
+  e.m_subject = EventSubject::kSwitch;
   e.m_action = EventAction::kLongPressed;
+  e.m_id = static_cast<uint8_t>(SwitchId::kTap);
   return e;
 }
 
@@ -427,8 +429,9 @@ void test_interested_in_physical_tap_switch_press() {
 
   Event e;
   e.m_domain = EventDomain::kPhysical;
-  e.m_subject = EventSubject::kTap;
+  e.m_subject = EventSubject::kSwitch;
   e.m_action = EventAction::kPressed;
+  e.m_id = static_cast<uint8_t>(SwitchId::kTap);
 
   TEST_ASSERT_TRUE(presetService.interestedIn(e));
 }
@@ -443,8 +446,9 @@ void test_interested_in_physical_tap_switch_long_press() {
 
   Event e;
   e.m_domain = EventDomain::kPhysical;
-  e.m_subject = EventSubject::kTap;
+  e.m_subject = EventSubject::kSwitch;
   e.m_action = EventAction::kLongPressed;
+  e.m_id = static_cast<uint8_t>(SwitchId::kTap);
 
   TEST_ASSERT_TRUE(presetService.interestedIn(e));
 }
