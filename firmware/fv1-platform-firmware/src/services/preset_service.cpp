@@ -63,7 +63,7 @@ void PresetService::handleEvent(const Event& t_event) {
   }
 
   if (t_event.m_domain == EventDomain::kPhysical) {
-    if (t_event.m_subject == EventSubject::kTap
+    if (t_event.m_subject == EventSubject::kSwitch
         && t_event.m_action == EventAction::kPressed) {
       m_logicalState.m_currentPreset = Utils::wrappedAdd(m_logicalState.m_currentPreset, 1, PresetConstants::c_presetPerBank);
       applyPreset();
@@ -72,7 +72,7 @@ void PresetService::handleEvent(const Event& t_event) {
       return;
     }
 
-    if (t_event.m_subject == EventSubject::kTap
+    if (t_event.m_subject == EventSubject::kSwitch
         && t_event.m_action == EventAction::kLongPressed) {
       m_logicalState.m_currentPreset = Utils::wrappedAdd(m_logicalState.m_currentPreset, -1, PresetConstants::c_presetPerBank);
       applyPreset();
@@ -118,9 +118,8 @@ bool PresetService::interestedIn(const Event& t_event) const {
   // Physical events are only processed in preset mode
   if (m_logicalState.m_programMode == ProgramMode::kPreset) {
     if (t_event.m_domain == EventDomain::kPhysical) {
-      if (t_event.m_subject == EventSubject::kTap
-          && t_event.m_action == EventAction::kPressed
-          || t_event.m_action == EventAction::kLongPressed) return true;
+      if (t_event.m_subject == EventSubject::kSwitch
+          && t_event.matchesId(SwitchId::kTap)) return true;
     }
   }
 
