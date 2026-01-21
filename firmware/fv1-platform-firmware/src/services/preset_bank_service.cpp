@@ -19,6 +19,15 @@ void PresetBankService::publishSavePresetBankEvent(const Event& t_event) const {
   EventBus::publish(e);
 }
 
+void PresetBankService::publishPresetBankValueChangedEvent(const Event& t_event) const {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kPresetBank;
+  e.m_action = EventAction::kValueChanged;
+
+  EventBus::publish(e);
+}
+
 void PresetBankService::init() {
   loadPresetBank(m_logicalState.m_currentPresetBank, m_logicalState.m_loadedPresetBank);
 }
@@ -31,6 +40,7 @@ void PresetBankService::handleEvent(const Event& t_event) {
           && t_event.m_data.value < PresetConstants::c_presetBankCount
           && t_event.m_data.value != m_logicalState.m_currentPresetBank) {
         loadPresetBank(t_event.m_data.value, m_logicalState.m_loadedPresetBank);
+        publishPresetBankValueChangedEvent(t_event);
         publishSavePresetBankEvent(t_event);
 
         return;
@@ -44,6 +54,7 @@ void PresetBankService::handleEvent(const Event& t_event) {
       uint8_t bank = Utils::wrappedAdd(m_logicalState.m_currentPresetBank, t_event.m_data.delta, PresetConstants::c_presetBankCount);
 
       loadPresetBank(bank, m_logicalState.m_loadedPresetBank);
+      publishPresetBankValueChangedEvent(t_event);
       publishSavePresetBankEvent(t_event);
 
       return;

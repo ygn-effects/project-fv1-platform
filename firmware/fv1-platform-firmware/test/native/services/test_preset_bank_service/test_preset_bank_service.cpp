@@ -30,6 +30,15 @@ Event makeUIPresetBankValueChangeEvent(int8_t t_delta) {
   return e;
 }
 
+void asertPresetBankValueChangedEventPublished() {
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  Event e;
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventDomain::kLogic, e.m_domain);
+  TEST_ASSERT_EQUAL(EventSubject::kPresetBank, e.m_subject);
+  TEST_ASSERT_EQUAL(EventAction::kValueChanged, e.m_action);
+}
+
 void assertPresetBankSaveEventPublished() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   Event e;
@@ -99,6 +108,7 @@ void test_midi_bank_loading_changes_logical_state() {
 
   // Check logical state and event bus
   TEST_ASSERT_EQUAL(1, logicalState.m_currentPresetBank);
+  asertPresetBankValueChangedEventPublished();
   assertPresetBankSaveEventPublished();
 }
 
@@ -114,6 +124,7 @@ void test_ui_bank_loading_changes_logical_state() {
 
   // Check logical state and event bus
   TEST_ASSERT_EQUAL(1, logicalState.m_currentPresetBank);
+  asertPresetBankValueChangedEventPublished();
   assertPresetBankSaveEventPublished();
 
   // UI event
@@ -121,6 +132,7 @@ void test_ui_bank_loading_changes_logical_state() {
 
   // Check logical state and event bus
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPresetBank);
+  asertPresetBankValueChangedEventPublished();
   assertPresetBankSaveEventPublished();
 }
 
@@ -136,6 +148,7 @@ void test_ui_bank_loading_wraps_around() {
 
   // Check logical state and event bus
   TEST_ASSERT_EQUAL(PresetConstants::c_presetBankCount - 1, logicalState.m_currentPresetBank);
+  asertPresetBankValueChangedEventPublished();
   assertPresetBankSaveEventPublished();
 
   // UI event
@@ -143,6 +156,7 @@ void test_ui_bank_loading_wraps_around() {
 
   // Check logical state and event bus
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPresetBank);
+  asertPresetBankValueChangedEventPublished();
   assertPresetBankSaveEventPublished();
 }
 
