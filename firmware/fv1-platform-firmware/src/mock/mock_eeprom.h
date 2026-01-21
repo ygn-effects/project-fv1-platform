@@ -10,9 +10,10 @@ class MockEEPROM : public EEPROM {
   public:
     static constexpr size_t c_size = 32768;
     inline static std::array<uint8_t, c_size> m_memory;
+    bool initialized = false;
 
     void init() override {
-
+      initialized = true;
     }
 
     void read(uint16_t t_address, uint8_t* t_data, size_t t_length) override {
