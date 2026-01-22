@@ -55,19 +55,20 @@ void ProgramService::update() {
 }
 
 bool ProgramService::interestedIn(const Event& t_event) const {
-  if (t_event.m_domain == EventDomain::kUI)
+  if (t_event.m_domain == EventDomain::kUI) {
     if (t_event.m_subject == EventSubject::kProgram
         && t_event.m_action == EventAction::kValueChanged) return true;
     if (t_event.m_subject == EventSubject::kPreset
         && t_event.m_action == EventAction::kValueChanged) return true;
+  }
 
-  if (t_event.m_domain == EventDomain::kLogic
-      && t_event.m_subject == EventSubject::kProgramMode
-      && t_event.m_action == EventAction::kToggled) return true;
+  if (t_event.m_domain == EventDomain::kLogic) {
+    if (t_event.m_subject == EventSubject::kProgramMode
+        && t_event.m_action == EventAction::kToggled) return true;
 
-  if (t_event.m_domain == EventDomain::kMemory
-      && t_event.m_subject == EventSubject::kPresetBank
-      && t_event.m_action == EventAction::kLoad) return true;
+    if (t_event.m_subject == EventSubject::kPresetBank
+        && t_event.m_action == EventAction::kLoad) return true;
+  }
 
   return false;
 }

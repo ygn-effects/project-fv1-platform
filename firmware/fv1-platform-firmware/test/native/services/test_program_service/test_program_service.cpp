@@ -337,7 +337,7 @@ void test_interested_in() {
   TEST_ASSERT_TRUE(programService.interestedIn(e));
 
   // Preset bank load
-  e = {EventDomain::kMemory, EventSubject::kPresetBank, EventAction::kLoad,0 , 0, {}};
+  e = {EventDomain::kLogic, EventSubject::kPresetBank, EventAction::kLoad,0 , 0, {}};
   TEST_ASSERT_TRUE(programService.interestedIn(e));
 
   // Unrelated event
