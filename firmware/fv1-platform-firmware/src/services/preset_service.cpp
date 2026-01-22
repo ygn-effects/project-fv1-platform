@@ -52,16 +52,6 @@ void PresetService::handleEvent(const Event& t_event) {
     }
   }
 
-  if (t_event.m_domain == EventDomain::kMemory
-      && t_event.m_subject == EventSubject::kPresetBank
-      && t_event.m_action == EventAction::kLoad) {
-    m_logicalState.m_currentPreset = 0;
-    applyPreset();
-    publishSavePresetEvent(t_event);
-
-    return;
-  }
-
   if (t_event.m_domain == EventDomain::kPhysical) {
     if (t_event.m_subject == EventSubject::kSwitch
         && t_event.m_action == EventAction::kPressed) {
@@ -92,6 +82,15 @@ void PresetService::handleEvent(const Event& t_event) {
         && t_event.m_action == EventAction::kToggled) {
       init();
     }
+
+    if (t_event.m_subject == EventSubject::kPresetBank
+        && t_event.m_action == EventAction::kLoad) {
+      m_logicalState.m_currentPreset = 0;
+      applyPreset();
+      publishSavePresetEvent(t_event);
+
+      return;
+    }
   }
 }
 
@@ -111,8 +110,6 @@ bool PresetService::interestedIn(const Event& t_event) const {
   }
 
   if (t_event.m_domain == EventDomain::kMemory) {
-    if (t_event.m_subject == EventSubject::kPresetBank
-        && t_event.m_action == EventAction::kLoad) return true;
   }
 
   // Physical events are only processed in preset mode
@@ -129,6 +126,9 @@ bool PresetService::interestedIn(const Event& t_event) const {
 
     if (t_event.m_subject == EventSubject::kProgramMode
         && t_event.m_action == EventAction::kToggled) return true;
+
+    if (t_event.m_subject == EventSubject::kPresetBank
+        && t_event.m_action == EventAction::kLoad) return true;
   }
 
   return false;

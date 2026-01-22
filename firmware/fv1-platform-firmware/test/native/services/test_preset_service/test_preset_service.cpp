@@ -31,9 +31,9 @@ Event makeUIPresetValueChangeEvent(int8_t t_delta) {
   return e;
 }
 
-Event makeMemoryPresetBankLoadEvent() {
+Event makeLogicPresetBankLoadEvent() {
   Event e;
-  e.m_domain = EventDomain::kMemory;
+  e.m_domain = EventDomain::kLogic;
   e.m_subject = EventSubject::kPresetBank;
   e.m_action = EventAction::kLoad;
   return e;
@@ -236,7 +236,7 @@ void test_load_preset_bank_changes_logical_state() {
 
   logicalState.m_currentPreset = 2;
 
-  presetService.handleEvent(makeMemoryPresetBankLoadEvent());
+  presetService.handleEvent(makeLogicPresetBankLoadEvent());
 
   // Check logicalState and event bus
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
@@ -479,13 +479,13 @@ void test_interested_in_logic_program_mode_toggle() {
   TEST_ASSERT_TRUE(presetService.interestedIn(e));
 }
 
-void test_interested_in_memory_preset_bank_load() {
+void test_interested_in_logic_preset_bank_load() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   PresetService presetService(logicalState, eeprom);
 
   Event e;
-  e.m_domain = EventDomain::kMemory;
+  e.m_domain = EventDomain::kLogic;
   e.m_subject = EventSubject::kPresetBank;
   e.m_action = EventAction::kLoad;
 
@@ -574,7 +574,7 @@ int main() {
   RUN_TEST(test_interested_in_physical_tap_switch_long_press);
   RUN_TEST(test_interested_in_logic_preset_save);
   RUN_TEST(test_interested_in_logic_program_mode_toggle);
-  RUN_TEST(test_interested_in_memory_preset_bank_load);
+  RUN_TEST(test_interested_in_logic_preset_bank_load);
   RUN_TEST(test_not_interested_in_physical_tap_program_mode);
   RUN_TEST(test_not_interested_in_other_events);
 
