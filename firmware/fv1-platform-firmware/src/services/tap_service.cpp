@@ -59,8 +59,8 @@ void TapService::handleEvent(const Event& t_event) {
 
   if (t_event.matchesId(SwitchId::kTap)) {
     if (t_event.m_action == EventAction::kPressed
-        || t_event.m_action == EventAction::kValueChanged
-        && t_event.m_data.value == MidiCCValues::c_tapShortPress) {
+        || (t_event.m_action == EventAction::kValueChanged
+        && t_event.m_data.value == MidiCCValues::c_tapShortPress)) {
       m_tapHandler.registerTap(t_event.m_timestamp);
 
       if (m_tapHandler.m_isNewIntervalSet) {
@@ -75,8 +75,8 @@ void TapService::handleEvent(const Event& t_event) {
 
     if (m_logicalState.m_tapState == TapState::kEnabled) {
       if (t_event.m_action == EventAction::kLongPressed
-          || t_event.m_action == EventAction::kValueChanged
-          && t_event.m_data.value == MidiCCValues::c_tapLongPress) {
+          || (t_event.m_action == EventAction::kValueChanged
+          && t_event.m_data.value == MidiCCValues::c_tapLongPress)) {
         m_tapHandler.setNextDivValue();
 
         m_logicalState.m_divState = m_tapHandler.m_divState;
@@ -90,8 +90,8 @@ void TapService::handleEvent(const Event& t_event) {
   }
 
   if (t_event.matchesId(PotId::kPot0)
-      || t_event.m_domain == EventDomain::kUI
-      && t_event.m_subject == EventSubject::kTempo) {
+      || (t_event.m_domain == EventDomain::kUI
+      && t_event.m_subject == EventSubject::kTempo)) {
     m_logicalState.m_tapState = TapState::kDisabled;
     m_logicalState.m_divState = DivState::kDisabled;
     m_logicalState.m_divValue = DivValue::kQuarter;
