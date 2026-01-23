@@ -206,6 +206,23 @@ void test_program_change_clamps_tempo_below_minimum() {
   TEST_ASSERT_EQUAL(100, logicalState.m_tempo);
 }
 
+void test_program_change_in_preset_mode_does_nothing() {
+  LogicalState logicalState;
+  MackAdjustbleLed led;
+  MockedClock clock;
+  TempoService tempoService(logicalState, led, clock);
+
+  // Set specific program and tempo in logicalState
+  logicalState.m_currentProgram = 1;
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[logicalState.m_currentProgram];
+  logicalState.m_tempo = 900;
+
+  tempoService.init();
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+}
+
 // =============================================================================
 // Current Program Tests
 // =============================================================================
@@ -494,6 +511,7 @@ int main() {
   RUN_TEST(test_program_change_to_delay_program_syncs_handler);
   RUN_TEST(test_program_change_to_not_delay_program_disables_led);
   RUN_TEST(test_program_change_clamps_tempo_below_minimum);
+  RUN_TEST(test_program_change_in_preset_mode_does_nothing);
 
   // Current program
   RUN_TEST(test_current_program_not_delay_does_nothing);

@@ -35,6 +35,8 @@ void TempoService::init() {
 }
 
 void TempoService::handleEvent(const Event& t_event) {
+  if (m_logicState.m_programMode != ProgramMode::kProgram) return;
+
   if (t_event.m_domain == EventDomain::kLogic
       && t_event.m_subject == EventSubject::kProgram
       && t_event.m_action == EventAction::kValueChanged) {
