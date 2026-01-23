@@ -54,6 +54,7 @@ void TapService::handleEvent(const Event& t_event) {
     }
   }
 
+  if (m_logicalState.m_programMode != ProgramMode::kProgram) return;
   if (! m_logicalState.m_activeProgram->m_supportsTap) return;
 
   if (t_event.matchesId(SwitchId::kTap)) {

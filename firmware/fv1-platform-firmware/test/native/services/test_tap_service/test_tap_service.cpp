@@ -227,6 +227,23 @@ void test_long_press_ignored_when_tap_disabled() {
   assertEventBusEmpty();
 }
 
+void test_tap_ignored_when_in_preset_mode() {
+  LogicalState logicalState;
+  logicalState.m_programMode = ProgramMode::kPreset;
+  TapService tapService(logicalState);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[0];
+  logicalState.m_tapState = TapState::kDisabled;
+  tapService.init();
+
+  tapService.handleEvent(makeTapLongPressEvent());
+
+  // Should remain at defaults
+  TEST_ASSERT_EQUAL(DivState::kDisabled, logicalState.m_divState);
+  TEST_ASSERT_EQUAL(DivValue::kQuarter, logicalState.m_divValue);
+  assertEventBusEmpty();
+}
+
 // =============================================================================
 // Pot0 / UI Tempo Disabling Tap
 // =============================================================================
@@ -486,6 +503,7 @@ int main() {
   RUN_TEST(test_tap_single_press_does_not_enable_tap);
   RUN_TEST(test_tap_two_presses_sets_interval_and_publishes_events);
   RUN_TEST(test_tap_ignored_when_program_does_not_support_tap);
+  RUN_TEST(test_tap_ignored_when_in_preset_mode);
 
   // Long Press / Div
   RUN_TEST(test_long_press_enables_div_and_updates_state);
