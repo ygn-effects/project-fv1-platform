@@ -5,6 +5,7 @@
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
 #include "logic/midi_handler.h"
+#include "periphs/clock.h"
 #include "ui/inputs.h"
 #include "utils/utils.h"
 
@@ -39,13 +40,15 @@ class MidiService : public Service {
   private:
     LogicalState& m_logicalState;
     MidiHandler m_midiHandler;
+    Clock& m_clock;
 
     void syncHandler();
     void publishSaveMidiChannelEvent(const Event& t_event);
 
   public:
-    MidiService(LogicalState& t_lState) :
-      m_logicalState(t_lState) {}
+    MidiService(LogicalState& t_lState, Clock& t_clock) :
+      m_logicalState(t_lState),
+      m_clock(t_clock) {}
 
     void init() override;
     void handleEvent(const Event& t_event) override;

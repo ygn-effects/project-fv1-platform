@@ -47,7 +47,7 @@ void MidiService::update() {
         e.m_domain = EventDomain::kMidi;
         e.m_subject = definition.m_subject;
         e.m_action = definition.m_action;
-        e.m_timestamp = 0; // millis()
+        e.m_timestamp = m_clock.now();
         e.m_id = definition.m_id;
         e.m_data.value = message.m_value;
 
@@ -61,7 +61,7 @@ void MidiService::update() {
         e.m_domain = EventDomain::kMidi;
         e.m_subject = EventSubject::kProgram;
         e.m_action = EventAction::kValueChanged;
-        e.m_timestamp = 0; // millis()
+        e.m_timestamp = m_clock.now();
         e.m_id = 0;
         e.m_data.value = message.m_param;
 

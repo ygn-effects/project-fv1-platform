@@ -1,6 +1,7 @@
 #include <unity.h>
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
+#include "mock/mock_clock.h"
 #include "services/midi_service.h"
 
 #include "../src/services/midi_service.cpp"
@@ -20,7 +21,8 @@ void tearDown() {
 
 void test_basic_cc_message() {
   LogicalState logicalState;
-  MidiService midiService(logicalState);
+  MockedClock clock;
+  MidiService midiService(logicalState, clock);
   MidiHandler* midiHandler = midiService.getMidiHandler();
 
   midiService.init();
@@ -50,7 +52,8 @@ void test_basic_cc_message() {
 
 void test_successive_cc_messages() {
   LogicalState logicalState;
-  MidiService midiService(logicalState);
+  MockedClock clock;
+  MidiService midiService(logicalState, clock);
   MidiHandler* midiHandler = midiService.getMidiHandler();
 
   midiService.init();
@@ -161,7 +164,8 @@ void test_successive_cc_messages() {
 
 void test_cc_invalid_data() {
   LogicalState logicalState;
-  MidiService midiService(logicalState);
+  MockedClock clock;
+  MidiService midiService(logicalState, clock);
   MidiHandler* midiHandler = midiService.getMidiHandler();
 
   midiService.init();
@@ -227,7 +231,8 @@ void test_cc_invalid_data() {
 
 void test_basic_pc_message() {
   LogicalState logicalState;
-  MidiService midiService(logicalState);
+  MockedClock clock;
+  MidiService midiService(logicalState, clock);
   MidiHandler* midiHandler = midiService.getMidiHandler();
 
   midiService.init();
@@ -254,7 +259,8 @@ void test_basic_pc_message() {
 
 void test_pc_invalid_data() {
   LogicalState logicalState;
-  MidiService midiService(logicalState);
+  MockedClock clock;
+  MidiService midiService(logicalState, clock);
   MidiHandler* midiHandler = midiService.getMidiHandler();
 
   midiService.init();
@@ -267,7 +273,8 @@ void test_pc_invalid_data() {
 
 void test_bypass() {
   LogicalState logicalState;
-  MidiService midiService(logicalState);
+  MockedClock clock;
+  MidiService midiService(logicalState, clock);
   MidiHandler* midiHandler = midiService.getMidiHandler();
 
   // CC message bypass on
