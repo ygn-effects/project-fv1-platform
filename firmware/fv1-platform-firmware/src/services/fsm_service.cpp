@@ -21,8 +21,13 @@ bool FsmService::isDeltaChanged(const Event& t_event) const {
           && t_event.m_action == EventAction::kDeltaChanged);
 }
 
-bool FsmService::isValueChanged(const Event& t_event) const {
+bool FsmService::isPotValueChanged(const Event& t_event) const {
   return (t_event.m_subject == EventSubject::kPot
+          && t_event.m_action == EventAction::kValueChanged);
+}
+
+bool FsmService::isExprValueChanged(const Event& t_event) const {
+  return (t_event.m_subject == EventSubject::kExpr
           && t_event.m_action == EventAction::kValueChanged);
 }
 
@@ -141,6 +146,12 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
+      // Expr move
+      if (isExprValueChanged(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
       break;
 
     case AppState::kProgramEdit:
@@ -187,7 +198,13 @@ void FsmService::handleEvent(const Event& t_event) {
       }
 
       // Pot move
-      if (isValueChanged(t_event)) {
+      if (isPotValueChanged(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr move
+      if (isExprValueChanged(t_event)) {
         rePublishPhysicalEvent(t_event);
         return;
       }
@@ -232,6 +249,12 @@ void FsmService::handleEvent(const Event& t_event) {
 
       // Long‑tap
       if (isLongPressed(t_event, SwitchId::kTap)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr move
+      if (isExprValueChanged(t_event)) {
         rePublishPhysicalEvent(t_event);
         return;
       }

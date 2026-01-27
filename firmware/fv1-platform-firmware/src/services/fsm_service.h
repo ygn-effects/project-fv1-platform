@@ -17,7 +17,8 @@ class FsmService : public Service {
     bool isPressed(const Event& t_event, const SwitchId t_id) const;
     bool isLongPressed(const Event& t_event, const SwitchId t_id) const;
     bool isDeltaChanged(const Event& t_event) const;
-    bool isValueChanged(const Event& t_event) const;
+    bool isPotValueChanged(const Event& t_event) const;
+    bool isExprValueChanged(const Event& t_event) const;
     bool isBypassToggled(const Event& t_event) const;
     bool isMenuUnlocked(const Event& t_event) const;
     bool isMenuLocked(const Event& t_event) const;
