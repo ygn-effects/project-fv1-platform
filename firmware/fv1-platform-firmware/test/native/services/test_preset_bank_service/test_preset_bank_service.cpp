@@ -12,12 +12,12 @@
 // Helper functions
 // =============================================================================
 
-Event makeMidiPresetBankValueChangeEvent(uint8_t t_bank) {
+Event makeMidiPresetValueChangeEvent(uint8_t t_preset) {
   Event e;
   e.m_domain = EventDomain::kMidi;
-  e.m_subject = EventSubject::kPresetBank;
+  e.m_subject = EventSubject::kPreset;
   e.m_action = EventAction::kValueChanged;
-  e.m_data.value = t_bank;
+  e.m_data.value = t_preset;
   return e;
 }
 
@@ -104,11 +104,10 @@ void test_midi_bank_loading_changes_logical_state() {
   presetBankService.init();
 
   // MIDI event
-  presetBankService.handleEvent(makeMidiPresetBankValueChangeEvent(1));
+  presetBankService.handleEvent(makeMidiPresetValueChangeEvent(15));
 
   // Check logical state and event bus
-  TEST_ASSERT_EQUAL(1, logicalState.m_currentPresetBank);
-  asertPresetBankValueChangedEventPublished();
+  TEST_ASSERT_EQUAL(3, logicalState.m_currentPresetBank);
   assertPresetBankSaveEventPublished();
 }
 
@@ -170,7 +169,7 @@ void test_bank_loading_out_of_range() {
   presetBankService.init();
 
   // Bogus value
-  presetBankService.handleEvent(makeMidiPresetBankValueChangeEvent(20));
+  presetBankService.handleEvent(makeMidiPresetValueChangeEvent(127));
 
   // Check logical state and event bus
   TEST_ASSERT_EQUAL(1, logicalState.m_currentPresetBank);
@@ -183,14 +182,14 @@ void test_wont_load_same_midi_bank() {
   PresetBankService presetBankService(logicalState, eeprom);
 
   // Set the current preset
-  logicalState.m_currentPresetBank = 1;
+  logicalState.m_currentPresetBank = 3;
   presetBankService.init();
 
   // Bogus value
-  presetBankService.handleEvent(makeMidiPresetBankValueChangeEvent(1));
+  presetBankService.handleEvent(makeMidiPresetValueChangeEvent(15));
 
   // Check logical state and event bus
-  TEST_ASSERT_EQUAL(1, logicalState.m_currentPresetBank);
+  TEST_ASSERT_EQUAL(3, logicalState.m_currentPresetBank);
   assertEventBusEmpty();
 }
 
@@ -212,14 +211,14 @@ void test_interested_in_ui_preset_bank_value_change() {
 
 }
 
-void test_interested_in_midi_preset_bank_value_change() {
+void test_interested_in_midi_preset_value_change() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   PresetBankService presetBankService(logicalState, eeprom);
 
   Event e;
   e.m_domain = EventDomain::kMidi;
-  e.m_subject = EventSubject::kPresetBank;
+  e.m_subject = EventSubject::kPreset;
   e.m_action = EventAction::kValueChanged;
 
   TEST_ASSERT_TRUE(presetBankService.interestedIn(e));
@@ -280,7 +279,7 @@ int main() {
   RUN_TEST(test_wont_load_same_midi_bank);
 
   // interestedIn Tests
-  RUN_TEST(test_interested_in_midi_preset_bank_value_change);
+  RUN_TEST(test_interested_in_midi_preset_value_change);
   RUN_TEST(test_interested_in_ui_preset_bank_value_change);
   RUN_TEST(test_not_interested_in_other_events);
 

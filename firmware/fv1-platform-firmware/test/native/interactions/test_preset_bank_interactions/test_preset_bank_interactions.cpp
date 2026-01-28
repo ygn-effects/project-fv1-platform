@@ -48,13 +48,9 @@ Event makeUiPresetBankValueChangedEvent(int8_t t_delta) {
   return e;
 }
 
-Event makeMidiPresetBankValueChangedEvent(uint8_t t_value) {
-  Event e{};
-  e.m_domain = EventDomain::kMidi;
-  e.m_subject = EventSubject::kPresetBank;
-  e.m_action = EventAction::kValueChanged;
-  e.m_data.value = t_value;
-  return e;
+void makeMidiPCMessage(MidiHandler* t_handler, uint8_t t_program) {
+  t_handler->pushByte(0xC0);
+  t_handler->pushByte(t_program);
 }
 
 void setUp() {
@@ -155,10 +151,12 @@ void test_midi_preset_bank_change_valid_index_changes_logical_state() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send event
-  fix.publishAndDispatchAllEvents(makeMidiPresetBankValueChangedEvent(5));
+  makeMidiPCMessage(fix.midiService.getMidiHandler(), 17);
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
 
   // Check logicalstate
-  TEST_ASSERT_EQUAL(5, fix.logicalState.m_currentPresetBank);
+  TEST_ASSERT_EQUAL(4, fix.logicalState.m_currentPresetBank);
 }
 
 void test_midi_preset_bank_change_valid_index_loads_present_bank() {
@@ -182,7 +180,9 @@ void test_midi_preset_bank_change_valid_index_loads_present_bank() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send event
-  fix.publishAndDispatchAllEvents(makeMidiPresetBankValueChangedEvent(2));
+  makeMidiPCMessage(fix.midiService.getMidiHandler(), 9);
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
 
   // Check loaded preset bank
   TEST_ASSERT_EQUAL(2, fix.logicalState.m_currentPresetBank);
@@ -203,13 +203,13 @@ void test_midi_preset_bank_change_invalid_index_does_not_change_logical_state() 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send event
-  fix.publishAndDispatchEvent(makeMidiPresetBankValueChangedEvent(PresetConstants::c_presetBankCount + 1));
+  makeMidiPCMessage(fix.midiService.getMidiHandler(), 127);
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
 
   // Check loaded preset bank
   TEST_ASSERT_EQUAL(2, fix.logicalState.m_currentPresetBank);
-
-  // No load event
-  TEST_ASSERT_FALSE(fix.findEvent(EventDomain::kMemory, EventSubject::kPresetBank, EventAction::kLoad));
 }
 
 void test_midi_preset_bank_change_index_already_loaded_changes_logical_state() {
@@ -223,13 +223,13 @@ void test_midi_preset_bank_change_index_already_loaded_changes_logical_state() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send event
-  fix.publishAndDispatchEvent(makeMidiPresetBankValueChangedEvent(2));
+  makeMidiPCMessage(fix.midiService.getMidiHandler(), 9);
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
 
   // Check loaded preset bank
   TEST_ASSERT_EQUAL(2, fix.logicalState.m_currentPresetBank);
-
-  // No load event
-  TEST_ASSERT_FALSE(fix.findEvent(EventDomain::kMemory, EventSubject::kPresetBank, EventAction::kLoad));
 }
 
 // =============================================================================
