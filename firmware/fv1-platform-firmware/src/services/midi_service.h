@@ -23,8 +23,7 @@ constexpr MidiEventDefinition c_ccMap[] = {
   /* CC 4 */ { EventSubject::kSwitch, EventAction::kValueChanged, static_cast<uint8_t>(SwitchId::kBypass) },
   /* CC 5 */ { EventSubject::kSwitch, EventAction::kValueChanged, static_cast<uint8_t>(SwitchId::kTap) },
   /* CC 6 */ { EventSubject::kTempo, EventAction::kValueChanged, 0 },
-  /* CC 7 */ { EventSubject::kProgram, EventAction::kValueChanged, 0 },
-  /* CC 8 */ { EventSubject::kProgram, EventAction::kDeltaChanged, 0 }
+  /* CC 7 */ { EventSubject::kProgramMode, EventAction::kValueChanged, 0 },
 };
 
 constexpr uint8_t c_ccMapSize = sizeof(c_ccMap) / sizeof(MidiEventDefinition);
@@ -34,6 +33,8 @@ namespace MidiCCValues {
   constexpr uint8_t c_bypassEnable = 127;
   constexpr uint8_t c_tapShortPress = 0;
   constexpr uint8_t c_tapLongPress = 127;
+  constexpr uint8_t c_programMode = 0;
+  constexpr uint8_t c_presetMode = 127;
 }
 
 class MidiService : public Service {

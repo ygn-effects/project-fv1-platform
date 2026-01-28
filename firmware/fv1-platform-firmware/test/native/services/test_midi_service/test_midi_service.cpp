@@ -327,7 +327,7 @@ void test_cc_program_mode_publishes_event() {
 // PC Message Tests
 // =============================================================================
 
-void test_pc_publishes_program_event() {
+void test_pc_publishes_program_event_in_program_mode() {
   LogicalState logicalState;
   MockedClock clock;
   MidiService midiService(logicalState, clock);
@@ -340,6 +340,22 @@ void test_pc_publishes_program_event() {
   assertMidiProgramEventPublished(3);
   assertEventBusEmpty();
 }
+
+void test_pc_publishes_preset_event_in_preset_mode() {
+  LogicalState logicalState;
+  logicalState.m_programMode = ProgramMode::kPreset;
+  MockedClock clock;
+  MidiService midiService(logicalState, clock);
+  MidiHandler* handler = midiService.getMidiHandler();
+
+  midiService.init();
+  pushPCMessage(handler, 3);
+  midiService.update();
+
+  assertMidiPresetEventPublished(3);
+  assertEventBusEmpty();
+}
+
 
 void test_pc_with_various_program_values() {
   LogicalState logicalState;
@@ -709,7 +725,8 @@ int main() {
   RUN_TEST(test_cc_program_mode_publishes_event);
 
   // PC Message
-  RUN_TEST(test_pc_publishes_program_event);
+  RUN_TEST(test_pc_publishes_program_event_in_program_mode);
+  RUN_TEST(test_pc_publishes_preset_event_in_preset_mode);
   RUN_TEST(test_pc_with_various_program_values);
 
   // Incomplete/Invalid Messages
