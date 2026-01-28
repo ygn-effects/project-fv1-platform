@@ -67,6 +67,16 @@ Event makeDriverPotValueChangedEvent(PotId t_id, uint16_t t_value) {
   return e;
 }
 
+Event makeUIPotValueChangedEvent(PotId t_id, int16_t t_delta) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(t_id);
+  e.m_data.delta = t_delta;
+  return e;
+}
+
 Event makeUIPotSettingChangedEvent(PotId t_id, PotParam t_setting, int16_t t_delta = 0) {
   uint8_t id = 0;
   Utils::unpack8(static_cast<uint8_t>(t_id), static_cast<uint8_t>(t_setting), id);
@@ -211,6 +221,111 @@ void test_logic_expr_value_changed_sets_logical_state_disabled_pot() {
 }
 
 // =============================================================================
+// Menu Pot Edit
+// =============================================================================
+
+void test_ui_pot_value_changed_sets_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Sent events
+  fix.publishAndDispatchAllEvents(makeUIPotValueChangedEvent(PotId::kPot0, 10));
+  fix.publishAndDispatchAllEvents(makeUIPotValueChangedEvent(PotId::kPot1, 20));
+  fix.publishAndDispatchAllEvents(makeUIPotValueChangedEvent(PotId::kPot2, 30));
+  fix.publishAndDispatchAllEvents(makeUIPotValueChangedEvent(PotId::kMixPot, 40));
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(10, fix.logicalState.m_potParams[0][0].m_value);
+  TEST_ASSERT_EQUAL(20, fix.logicalState.m_potParams[0][1].m_value);
+  TEST_ASSERT_EQUAL(30, fix.logicalState.m_potParams[0][2].m_value);
+  TEST_ASSERT_EQUAL(40, fix.logicalState.m_potParams[0][3].m_value);
+}
+
+// =============================================================================
+// MIDI Pot Control
+// =============================================================================
+
+void test_midi_cc_pot_value_sets_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send CC message
+  makeMidiCCPotValueChangedMessage(fix.midiService.getMidiHandler(), PotId::kPot0, 16);
+
+  // Update services and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Test logicals tate
+  TEST_ASSERT_EQUAL(128, fix.logicalState.m_potParams[0][0].m_value);
+
+  // Send CC message
+  makeMidiCCPotValueChangedMessage(fix.midiService.getMidiHandler(), PotId::kPot1, 32);
+
+  // Update services and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Test logicals tate
+  TEST_ASSERT_EQUAL(257, fix.logicalState.m_potParams[0][1].m_value);
+
+  // Send CC message
+  makeMidiCCPotValueChangedMessage(fix.midiService.getMidiHandler(), PotId::kPot2, 48);
+
+  // Update services and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Test logicals tate
+  TEST_ASSERT_EQUAL(386, fix.logicalState.m_potParams[0][2].m_value);
+
+  // Send CC message
+  makeMidiCCPotValueChangedMessage(fix.midiService.getMidiHandler(), PotId::kMixPot, 64);
+
+  // Update services and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Test logicals tate
+  TEST_ASSERT_EQUAL(515, fix.logicalState.m_potParams[0][3].m_value);
+}
+
+// =============================================================================
+// Persistence
+// =============================================================================
+
+void test_pot_params_persists() {
+  InteractionFixture fix;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Set settings
+  fix.publishAndDispatchAllEvents(makeUIPotSettingChangedEvent(PotId::kPot0, PotParam::kState));
+  fix.publishAndDispatchAllEvents(makeUIPotSettingChangedEvent(PotId::kPot2, PotParam::kState));
+  fix.publishAndDispatchAllEvents(makeUIPotSettingChangedEvent(PotId::kPot1, PotParam::kMinValue, 20));
+  fix.publishAndDispatchAllEvents(makeUIPotSettingChangedEvent(PotId::kMixPot, PotParam::kMaxValue, -100));
+
+  // Reset
+  fix.init();
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(PotState::kDisabled, fix.logicalState.m_potParams[0][0].m_state);
+  TEST_ASSERT_EQUAL(PotState::kDisabled, fix.logicalState.m_potParams[0][2].m_state);
+  TEST_ASSERT_EQUAL(20, fix.logicalState.m_potParams[0][1].m_minValue);
+  TEST_ASSERT_EQUAL(923, fix.logicalState.m_potParams[0][3].m_maxValue);
+}
+
+// =============================================================================
 // Main
 // =============================================================================
 
@@ -225,6 +340,15 @@ int main() {
   // Expression Pedal Input
   RUN_TEST(test_logic_expr_value_changed_sets_logical_state);
   RUN_TEST(test_logic_expr_value_changed_sets_logical_state_disabled_pot);
+
+  // Menu Pot Edit
+  RUN_TEST(test_ui_pot_value_changed_sets_logical_state);
+
+  // MIDI Pot Control
+  RUN_TEST(test_midi_cc_pot_value_sets_logical_state);
+
+  // Persistence
+  RUN_TEST(test_pot_params_persists);
 
   return UNITY_END();
 }
