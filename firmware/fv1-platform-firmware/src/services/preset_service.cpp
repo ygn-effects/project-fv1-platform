@@ -42,13 +42,15 @@ void PresetService::handleEvent(const Event& t_event) {
   if (t_event.m_domain == EventDomain::kMidi) {
     if (t_event.m_subject == EventSubject::kPreset
         && t_event.m_action == EventAction::kValueChanged) {
-      if (t_event.m_data.value >= 0 && t_event.m_data.value < PresetConstants::c_presetPerBank) {
-        m_logicalState.m_currentPreset = t_event.m_data.value;
-        applyPreset();
-        publishSavePresetEvent(t_event);
+      uint8_t targetPreset = t_event.m_data.value % PresetConstants::c_presetPerBank;
 
-        return;
-      }
+      if (targetPreset >= PresetConstants::c_presetPerBank) return;
+
+      m_logicalState.m_currentPreset = targetPreset;
+      applyPreset();
+      publishSavePresetEvent(t_event);
+
+      return;
     }
   }
 
@@ -84,7 +86,7 @@ void PresetService::handleEvent(const Event& t_event) {
     }
 
     if (t_event.m_subject == EventSubject::kPresetBank
-        && t_event.m_action == EventAction::kLoad) {
+        && t_event.m_action == EventAction::kValueChanged) {
       m_logicalState.m_currentPreset = 0;
       applyPreset();
       publishSavePresetEvent(t_event);
@@ -109,9 +111,6 @@ bool PresetService::interestedIn(const Event& t_event) const {
         && t_event.m_action == EventAction::kValueChanged) return true;
   }
 
-  if (t_event.m_domain == EventDomain::kMemory) {
-  }
-
   // Physical events are only processed in preset mode
   if (m_logicalState.m_programMode == ProgramMode::kPreset) {
     if (t_event.m_domain == EventDomain::kPhysical) {
@@ -128,7 +127,7 @@ bool PresetService::interestedIn(const Event& t_event) const {
         && t_event.m_action == EventAction::kToggled) return true;
 
     if (t_event.m_subject == EventSubject::kPresetBank
-        && t_event.m_action == EventAction::kLoad) return true;
+        && t_event.m_action == EventAction::kValueChanged) return true;
   }
 
   return false;

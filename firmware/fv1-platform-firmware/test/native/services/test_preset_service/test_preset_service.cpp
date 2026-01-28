@@ -31,11 +31,11 @@ Event makeUIPresetValueChangeEvent(int8_t t_delta) {
   return e;
 }
 
-Event makeLogicPresetBankLoadEvent() {
+Event makeLogicPresetBankValueChangedEvent() {
   Event e;
   e.m_domain = EventDomain::kLogic;
   e.m_subject = EventSubject::kPresetBank;
-  e.m_action = EventAction::kLoad;
+  e.m_action = EventAction::kValueChanged;
   return e;
 }
 
@@ -205,38 +205,24 @@ void test_midi_preset_loading_changes_logical_state() {
   MockEEPROM eeprom;
   PresetService presetService(logicalState, eeprom);
 
-  presetService.handleEvent(makeMidiPresetValueChangeEvent(2));
+  presetService.handleEvent(makeMidiPresetValueChangeEvent(9));
 
   // Check logicalState and event bus
-  TEST_ASSERT_EQUAL(2, logicalState.m_currentPreset);
+  TEST_ASSERT_EQUAL(1, logicalState.m_currentPreset);
   assertPresetSaveEventPublished();
 
   // Event bus should be empty
   assertEventBusEmpty();
 }
 
-void test_midi_preset_loading_out_of_range() {
-  LogicalState logicalState;
-  MockEEPROM eeprom;
-  PresetService presetService(logicalState, eeprom);
-
-  presetService.handleEvent(makeMidiPresetValueChangeEvent(PresetConstants::c_presetPerBank + 2));
-
-  // Check logicalState hasn't changed
-  TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
-
-  // Event bus should be empty
-  assertEventBusEmpty();
-}
-
-void test_load_preset_bank_changes_logical_state() {
+void test_preset_bank_value_changed_sets_logical_state() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   PresetService presetService(logicalState, eeprom);
 
   logicalState.m_currentPreset = 2;
 
-  presetService.handleEvent(makeLogicPresetBankLoadEvent());
+  presetService.handleEvent(makeLogicPresetBankValueChangedEvent());
 
   // Check logicalState and event bus
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
@@ -479,7 +465,7 @@ void test_interested_in_logic_program_mode_toggle() {
   TEST_ASSERT_TRUE(presetService.interestedIn(e));
 }
 
-void test_interested_in_logic_preset_bank_load() {
+void test_interested_in_logic_preset_bank_value_changed() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   PresetService presetService(logicalState, eeprom);
@@ -487,7 +473,7 @@ void test_interested_in_logic_preset_bank_load() {
   Event e;
   e.m_domain = EventDomain::kLogic;
   e.m_subject = EventSubject::kPresetBank;
-  e.m_action = EventAction::kLoad;
+  e.m_action = EventAction::kValueChanged;
 
   TEST_ASSERT_TRUE(presetService.interestedIn(e));
 }
@@ -556,8 +542,7 @@ int main() {
   RUN_TEST(test_ui_preset_loading_changes_logical_state);
   RUN_TEST(test_ui_preset_loading_wraps_around);
   RUN_TEST(test_midi_preset_loading_changes_logical_state);
-  RUN_TEST(test_midi_preset_loading_out_of_range);
-  RUN_TEST(test_load_preset_bank_changes_logical_state);
+  RUN_TEST(test_preset_bank_value_changed_sets_logical_state);
   RUN_TEST(test_physical_tap_press_changes_logical_state);
   RUN_TEST(test_physical_tap_long_press_changes_logical_state);
   RUN_TEST(test_physical_tap_wraps_around);
@@ -574,7 +559,7 @@ int main() {
   RUN_TEST(test_interested_in_physical_tap_switch_long_press);
   RUN_TEST(test_interested_in_logic_preset_save);
   RUN_TEST(test_interested_in_logic_program_mode_toggle);
-  RUN_TEST(test_interested_in_logic_preset_bank_load);
+  RUN_TEST(test_interested_in_logic_preset_bank_value_changed);
   RUN_TEST(test_not_interested_in_physical_tap_program_mode);
   RUN_TEST(test_not_interested_in_other_events);
 

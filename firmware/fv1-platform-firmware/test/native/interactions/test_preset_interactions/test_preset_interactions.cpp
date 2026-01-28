@@ -57,11 +57,11 @@ Event makeDriverSwitchLongPressedEvent(SwitchId t_id) {
   return e;
 }
 
-Event makeLogicPresetBankLoadEvent() {
+Event makeLogicPresetBankValueChangedEvent() {
   Event e{};
   e.m_domain = EventDomain::kLogic;
   e.m_subject = EventSubject::kPresetBank;
-  e.m_action = EventAction::kLoad;
+  e.m_action = EventAction::kValueChanged;
   return e;
 }
 
@@ -372,24 +372,7 @@ void test_midi_preset_change_sets_logical_state() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send program mode switch event
-  fix.publishAndDispatchAllEvents(makeMidiPresetValueChangedEvent(3));
-
-  // Test logical state
-  TEST_ASSERT_EQUAL(3, fix.logicalState.m_currentPreset);
-}
-
-void test_midi_preset_change_invalid_value_does_not_set_logical_state() {
-  InteractionFixture fix;
-  fix.logicalState.m_bypassState = BypassState::kActive;
-  fix.logicalState.m_programMode = ProgramMode::kPreset;
-  fix.logicalState.m_currentPreset = 1;
-  fix.syncEepromWithState();
-  fix.init();
-
-  // Boot
-  fix.publishAndDispatchAllEvents(makeBootEvent());
-  // Send program mode switch event
-  fix.publishAndDispatchAllEvents(makeMidiPresetValueChangedEvent(10));
+  fix.publishAndDispatchAllEvents(makeMidiPresetValueChangedEvent(13));
 
   // Test logical state
   TEST_ASSERT_EQUAL(1, fix.logicalState.m_currentPreset);
@@ -409,7 +392,7 @@ void test_midi_preset_change_applies_preset() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send program mode switch event
-  fix.publishAndDispatchAllEvents(makeMidiPresetValueChangedEvent(0));
+  fix.publishAndDispatchAllEvents(makeMidiPresetValueChangedEvent(8));
 
   // Test logical state
   TEST_ASSERT_EQUAL(0, fix.logicalState.m_currentPreset);
@@ -497,8 +480,8 @@ void test_preset_bank_loaded_sets_logical_state() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-  // Send program mode switch event
-  fix.publishAndDispatchAllEvents(makeLogicPresetBankLoadEvent());
+  // Send preset bank changed event
+  fix.publishAndDispatchAllEvents(makeLogicPresetBankValueChangedEvent());
 
   // Test logical state
   TEST_ASSERT_EQUAL(0, fix.logicalState.m_currentPreset);
@@ -517,8 +500,8 @@ void test_preset_bank_loaded_applies_preset() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-  // Send program mode switch event
-  fix.publishAndDispatchAllEvents(makeLogicPresetBankLoadEvent());
+  // Send preset bank changed event
+  fix.publishAndDispatchAllEvents(makeLogicPresetBankValueChangedEvent());
 
   // Test logical state
   TEST_ASSERT_EQUAL(0, fix.logicalState.m_currentPreset);
