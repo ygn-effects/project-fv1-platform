@@ -33,6 +33,15 @@ Event makeLogicProgramModeToggledEvent() {
   return e;
 }
 
+Event makeMidiProgramModeValueChangedEvent(uint8_t t_value) {
+  Event e;
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kProgramMode;
+  e.m_action = EventAction::kValueChanged;
+  e.m_data.value = t_value;
+  return e;
+}
+
 void assertSaveLogicalStateEventPublished() {
   TEST_ASSERT_TRUE_MESSAGE(EventBus::hasEvent(), "Expected save logical state event but bus was empty");
   Event e;
@@ -170,6 +179,88 @@ void test_logic_toggled_event_toggles_preset_to_program() {
 }
 
 // =============================================================================
+// MIDI Value Changed Event
+// =============================================================================
+
+void test_midi_program_mode_changed_to_preset_when_program_mode_publishes_save_then_toggled_then_save_mode() {
+  LogicalState logicalState;
+  ProgramModeService service(logicalState);
+
+  // Start in program mode (default)
+  TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
+
+  service.handleEvent(makeMidiProgramModeValueChangedEvent(MidiCCValues::c_presetMode));
+
+  // When in kProgram mode, should save logical state first (before toggling)
+  assertSaveLogicalStateEventPublished();
+  assertProgramModeToggledEventPublished();
+  assertSaveProgramModeEventPublished();
+  assertNoMoreEvents();
+
+  // State not yet updated - that happens when the toggled event is processed
+  TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
+}
+
+void test_midi_program_mode_changed_to_program_when_program_mode_no_events() {
+  LogicalState logicalState;
+  ProgramModeService service(logicalState);
+
+  // Start in program mode (default)
+  TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
+
+  service.handleEvent(makeMidiProgramModeValueChangedEvent(MidiCCValues::c_programMode));
+
+  // Already in program mode so no events published
+  assertNoMoreEvents();
+}
+
+void test_midi_program_mode_changed_to_program_when_preset_mode_publishes_save_then_toggled_then_save_mode() {
+  LogicalState logicalState;
+  ProgramModeService service(logicalState);
+
+  // Start in preset mode
+  logicalState.m_programMode = ProgramMode::kPreset;
+
+  service.handleEvent(makePhysicalProgramModeLongPressEvent());
+
+  // When in kPreset mode, should load logical state first (before toggling)
+  assertLoadLogicalStateEventPublished();
+  assertProgramModeToggledEventPublished();
+  assertSaveProgramModeEventPublished();
+  assertNoMoreEvents();
+
+  // State not yet updated - that happens when the toggled event is processed
+  TEST_ASSERT_EQUAL(ProgramMode::kPreset, logicalState.m_programMode);
+}
+
+void test_midi_program_mode_changed_to_preset_when_preset_mode_no_events() {
+  LogicalState logicalState;
+  ProgramModeService service(logicalState);
+
+  // Start in preset mode
+  logicalState.m_programMode = ProgramMode::kPreset;
+
+  service.handleEvent(makeMidiProgramModeValueChangedEvent(MidiCCValues::c_presetMode));
+
+  // Already in preset mode so no events published
+  assertNoMoreEvents();
+}
+
+void test_midi_value_changed_invalid_value_not_changed() {
+  LogicalState logicalState;
+  ProgramModeService service(logicalState);
+
+  // Start in program mode (default)
+  TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
+
+  service.handleEvent(makeMidiProgramModeValueChangedEvent(64));
+
+  // State should not be updated
+  TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
+  assertNoMoreEvents();
+}
+
+// =============================================================================
 // Full Toggle Sequence Tests
 // =============================================================================
 
@@ -274,6 +365,18 @@ void test_interested_in_logic_program_mode_toggled() {
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
+void test_interested_in_midi_program_mode_value_changed() {
+  LogicalState logicalState;
+  ProgramModeService service(logicalState);
+
+  Event e;
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kProgramMode;
+  e.m_action = EventAction::kValueChanged;
+
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
 void test_not_interested_in_physical_program_mode_short_press() {
   LogicalState logicalState;
   ProgramModeService service(logicalState);
@@ -346,10 +449,10 @@ void test_not_interested_in_unrelated_events() {
   e.m_action = EventAction::kPressed;
   TEST_ASSERT_FALSE(service.interestedIn(e));
 
-  // Not interested in MIDI events
-  e.m_domain = EventDomain::kMidi;
+  // Not interested in Memory events
+  e.m_domain = EventDomain::kMemory;
   e.m_subject = EventSubject::kProgramMode;
-  e.m_action = EventAction::kValueChanged;
+  e.m_action = EventAction::kSave;
   TEST_ASSERT_FALSE(service.interestedIn(e));
 }
 
@@ -371,6 +474,13 @@ int main() {
   RUN_TEST(test_logic_toggled_event_toggles_program_to_preset);
   RUN_TEST(test_logic_toggled_event_toggles_preset_to_program);
 
+  // Midi Value Changed Event
+  RUN_TEST(test_midi_program_mode_changed_to_preset_when_preset_mode_no_events);
+  RUN_TEST(test_midi_program_mode_changed_to_preset_when_program_mode_publishes_save_then_toggled_then_save_mode);
+  RUN_TEST(test_midi_program_mode_changed_to_program_when_preset_mode_publishes_save_then_toggled_then_save_mode);
+  RUN_TEST(test_midi_program_mode_changed_to_program_when_program_mode_no_events);
+  RUN_TEST(test_midi_value_changed_invalid_value_not_changed);
+
   // Full Toggle Sequence
   RUN_TEST(test_full_toggle_sequence_program_to_preset);
   RUN_TEST(test_full_toggle_sequence_preset_to_program);
@@ -379,6 +489,7 @@ int main() {
   // interestedIn
   RUN_TEST(test_interested_in_physical_program_mode_long_press);
   RUN_TEST(test_interested_in_logic_program_mode_toggled);
+  RUN_TEST(test_interested_in_midi_program_mode_value_changed);
   RUN_TEST(test_not_interested_in_physical_program_mode_short_press);
   RUN_TEST(test_not_interested_in_other_switch_long_press);
   RUN_TEST(test_not_interested_in_memory_events);

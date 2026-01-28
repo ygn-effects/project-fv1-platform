@@ -64,6 +64,18 @@ Event makeUIMenuUnlockedEvent() {
   return e;
 }
 
+void makeMidiCCProgramModeValueChangedProgram(MidiHandler* t_handler) {
+  t_handler->pushByte(0xB0);
+  t_handler->pushByte(0x07);
+  t_handler->pushByte(0x00);
+}
+
+void makeMidiCCProgramModeValueChangedPreset(MidiHandler* t_handler) {
+  t_handler->pushByte(0xB0);
+  t_handler->pushByte(0x07);
+  t_handler->pushByte(0x7F);
+}
+
 void setUp() {
 
 }
@@ -137,6 +149,44 @@ void test_driver_program_mode_long_press_toggles_fsm_program_idle() {
 }
 
 // =============================================================================
+// MIDI CC ProgramMode
+// =============================================================================
+
+void test_midi_program_mode_value_changed_to_preset_toggles_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_programMode = ProgramMode::kProgram;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send program mode switch event
+  makeMidiCCProgramModeValueChangedPreset(fix.midiService.getMidiHandler());
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Test LogicalState
+  TEST_ASSERT_EQUAL(ProgramMode::kPreset, fix.logicalState.m_programMode);
+}
+
+void test_midi_program_mode_value_changed_to_program_toggles_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send program mode switch event
+  makeMidiCCProgramModeValueChangedProgram(fix.midiService.getMidiHandler());
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Test LogicalState
+  TEST_ASSERT_EQUAL(ProgramMode::kProgram, fix.logicalState.m_programMode);
+}
+
+// =============================================================================
 // Persistence
 // =============================================================================
 
@@ -184,6 +234,10 @@ RUN_TEST(test_driver_program_mode_long_press_toggles_logical_state_preset);
 RUN_TEST(test_driver_program_mode_long_press_toggles_logical_state_program);
 RUN_TEST(test_driver_program_mode_long_press_toggles_fsm_preset_idle);
 RUN_TEST(test_driver_program_mode_long_press_toggles_fsm_program_idle);
+
+// MIDI CC ProgramMode
+RUN_TEST(test_midi_program_mode_value_changed_to_preset_toggles_logical_state);
+RUN_TEST(test_midi_program_mode_value_changed_to_program_toggles_logical_state);
 
 // Persistence
 RUN_TEST(test_program_mode_persists);

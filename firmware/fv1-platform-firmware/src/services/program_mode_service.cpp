@@ -56,6 +56,30 @@ void ProgramModeService::handleEvent(const Event& t_event) {
 
       publishProgramModeToggledEvent(t_event);
       publishSaveProgramModeEvent(t_event);
+      return;
+    }
+  }
+
+  if (t_event.m_domain == EventDomain::kMidi) {
+    if (t_event.m_subject == EventSubject::kProgramMode
+        && t_event.m_action == EventAction::kValueChanged) {
+      if (m_logicalState.m_programMode == ProgramMode::kProgram
+          && t_event.m_data.value == MidiCCValues::c_presetMode) {
+        publishSaveLogicalStateEvent(t_event);
+
+        publishProgramModeToggledEvent(t_event);
+        publishSaveProgramModeEvent(t_event);
+        return;
+      }
+
+      if (m_logicalState.m_programMode == ProgramMode::kPreset
+          && t_event.m_data.value == MidiCCValues::c_programMode) {
+        publishLoadLogicalStateEvent(t_event);
+
+        publishProgramModeToggledEvent(t_event);
+        publishSaveProgramModeEvent(t_event);
+        return;
+      }
     }
   }
 
@@ -84,6 +108,11 @@ bool ProgramModeService::interestedIn(const Event& t_event) const {
   if (t_event.m_domain == EventDomain::kLogic) {
     if (t_event.m_subject == EventSubject::kProgramMode
         && t_event.m_action == EventAction::kToggled) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kMidi) {
+    if (t_event.m_subject == EventSubject::kProgramMode
+        && t_event.m_action == EventAction::kValueChanged) return true;
   }
 
   return false;
