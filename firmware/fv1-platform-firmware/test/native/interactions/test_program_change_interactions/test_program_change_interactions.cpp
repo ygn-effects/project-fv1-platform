@@ -65,11 +65,11 @@ Event makeLogicProgramModeToggledEvent() {
   return e;
 }
 
-Event makeLogicPresetBankLoadEvent() {
+Event makeLogicPresetBankValueChangedEvent() {
   Event e{};
   e.m_domain = EventDomain::kLogic;
   e.m_subject = EventSubject::kPresetBank;
-  e.m_action = EventAction::kLoad;
+  e.m_action = EventAction::kValueChanged;
   return e;
 }
 
@@ -164,7 +164,7 @@ void test_preset_bank_load_sets_logical_state() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send event
-  fix.publishAndDispatchAllEvents(makeLogicPresetBankLoadEvent());
+  fix.publishAndDispatchAllEvents(makeLogicPresetBankValueChangedEvent());
 
   // Check logicalstate, the pointer shouldn't have changed
   TEST_ASSERT_EQUAL_PTR(&ProgramsDefinitions::kPrograms[3], fix.logicalState.m_activeProgram);

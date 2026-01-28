@@ -67,7 +67,7 @@ bool ProgramService::interestedIn(const Event& t_event) const {
         && t_event.m_action == EventAction::kToggled) return true;
 
     if (t_event.m_subject == EventSubject::kPresetBank
-        && t_event.m_action == EventAction::kLoad) return true;
+        && t_event.m_action == EventAction::kValueChanged) return true;
   }
 
   return false;

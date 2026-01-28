@@ -299,7 +299,7 @@ void test_preset_bank_load_event_no_save() {
   Event bankEvent;
   bankEvent.m_domain = EventDomain::kMemory;
   bankEvent.m_subject = EventSubject::kPresetBank;
-  bankEvent.m_action = EventAction::kLoad;
+  bankEvent.m_action = EventAction::kValueChanged;
 
   programService.handleEvent(bankEvent);
 
@@ -337,7 +337,7 @@ void test_interested_in() {
   TEST_ASSERT_TRUE(programService.interestedIn(e));
 
   // Preset bank load
-  e = {EventDomain::kLogic, EventSubject::kPresetBank, EventAction::kLoad,0 , 0, {}};
+  e = {EventDomain::kLogic, EventSubject::kPresetBank, EventAction::kValueChanged,0 , 0, {}};
   TEST_ASSERT_TRUE(programService.interestedIn(e));
 
   // Unrelated event
