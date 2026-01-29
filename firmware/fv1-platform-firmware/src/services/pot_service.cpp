@@ -30,13 +30,29 @@ void PotService::publishSavePotEvent(uint8_t t_potIndex) {
   EventBus::publish(e);
 }
 
+void PotService::publishTempoInputEvent(uint16_t t_value) {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kTempo;
+  e.m_action = EventAction::kInputChanged;
+  e.m_data.value = t_value;
+  e.m_timestamp = 0; // millis()
+
+  EventBus::publish(e);
+}
+
 void PotService::handlePhysicalEvent(const Event& t_event) {
-  // When in a delay program TempoService handles POT0
-  if (static_cast<PotId>(t_event.m_id) == PotId::kPot0 && m_logicalState.m_activeProgram->m_isDelayEffect) return;
+  uint16_t scaledValue = m_handler.mapAdcValue(t_event.m_data.value, t_event.m_id);
+
+  // For delay effects, POT0 controls tempo
+  if (static_cast<PotId>(t_event.m_id) == PotId::kPot0 && m_logicalState.m_activeProgram->m_isDelayEffect) {
+    publishTempoInputEvent(scaledValue);
+    return;
+  }
 
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
   if (params[t_event.m_id].m_state == PotState::kActive) {
-    params[t_event.m_id].m_value = m_handler.mapAdcValue(t_event.m_data.value, t_event.m_id);
+    params[t_event.m_id].m_value = scaledValue;
     publishPotValueChangedEvent(t_event.m_id);
   }
 }
@@ -48,12 +64,26 @@ void PotService::handleMenuEvent(const Event& t_event) {
 }
 
 void PotService::handleMidiEvent(const Event& t_event) {
+  uint16_t scaledValue = m_handler.mapMidiValue(t_event.m_data.value, t_event.m_id);
+
+  // For delay effects, POT0 controls tempo - scale MIDI 0-127 to 0-1023 and forward
+  if (static_cast<PotId>(t_event.m_id) == PotId::kPot0 && m_logicalState.m_activeProgram->m_isDelayEffect) {
+    publishTempoInputEvent(scaledValue);
+    return;
+  }
+
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
-  params[t_event.m_id].m_value = m_handler.mapMidiValue(t_event.m_data.value, t_event.m_id);
+  params[t_event.m_id].m_value = scaledValue;
   publishPotValueChangedEvent(t_event.m_id);
 }
 
 void PotService::handleExprEvent(const Event& t_event) {
+  // For delay effects, POT0 controls tempo - forward raw value to TempoService
+  if (static_cast<PotId>(t_event.m_id) == PotId::kPot0 && m_logicalState.m_activeProgram->m_isDelayEffect) {
+    publishTempoInputEvent(t_event.m_data.value);
+    return;
+  }
+
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
   params[t_event.m_id].m_value = t_event.m_data.value;
   publishPotValueChangedEvent(t_event.m_id);

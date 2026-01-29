@@ -92,6 +92,16 @@ void assertSavePotEventPublished(PotId t_id) {
   TEST_ASSERT_EQUAL(static_cast<uint8_t>(t_id), e.m_id);
 }
 
+void assertTempoInputChangedEventPublished(uint16_t t_expectedValue) {
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  Event e;
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventDomain::kLogic, e.m_domain);
+  TEST_ASSERT_EQUAL(EventSubject::kTempo, e.m_subject);
+  TEST_ASSERT_EQUAL(EventAction::kInputChanged, e.m_action);
+  TEST_ASSERT_EQUAL(t_expectedValue, e.m_data.value);
+}
+
 void assertEventBusEmpty() {
   TEST_ASSERT_FALSE(EventBus::hasEvent());
 }
@@ -187,18 +197,67 @@ void test_physical_pot_value_changed_changes_logical_state() {
   assertEventBusEmpty();
 }
 
-void test_pot0_is_ignored_when_using_delay_effect() {
+void test_pot0_publishes_tempo_input_when_using_delay_effect() {
   LogicalState logicalState;
   PotService potService(logicalState);
 
+  // Default program is delay effect (program 0)
   // Init
   potService.init();
 
-  // Send physical events
+  // Send physical event for POT0
   potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 512));
 
-  // Event bus should be empty
+  // Should publish tempo input event with raw ADC value
+  assertTempoInputChangedEventPublished(512);
+
+  // Event bus should be empty now
   assertEventBusEmpty();
+
+  // m_potParams should NOT be updated for POT0 on delay effects
+  TEST_ASSERT_EQUAL(0, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
+}
+
+void test_midi_pot0_publishes_tempo_input_when_using_delay_effect() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Default program is delay effect (program 0)
+  // Init
+  potService.init();
+
+  // Send MIDI event for POT0 (value 64 = half range)
+  potService.handleEvent(makeMidiPotValueChanged(PotId::kPot0, 64));
+
+  // Should publish tempo input event with scaled value (64 * 1023 / 127 ≈ 515)
+  assertTempoInputChangedEventPublished(515);
+
+  // Event bus should be empty now
+  assertEventBusEmpty();
+
+  // m_potParams should NOT be updated for POT0 on delay effects
+  TEST_ASSERT_EQUAL(0, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
+}
+
+void test_expr_pot0_publishes_tempo_input_when_using_delay_effect() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Default program is delay effect (program 0)
+  // Init
+  potService.init();
+
+  // Send expression event mapped to POT0
+  potService.handleEvent(makeLogicExprValueChangedEvent(PotId::kPot0, 768));
+
+  // Should publish tempo input event with the mapped value
+  assertTempoInputChangedEventPublished(768);
+
+  // Event bus should be empty now
+  assertEventBusEmpty();
+
+  // m_potParams should NOT be updated for POT0 on delay effects
+  TEST_ASSERT_EQUAL(0, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
 }
 
 void test_disabled_pot_ignores_physical_input() {
@@ -293,6 +352,9 @@ void test_midi_pot_value_changed_changes_logical_state() {
   LogicalState logicalState;
   PotService potService(logicalState);
 
+  // Set to a non-delay effect so POT0 is handled as a regular pot
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
   // Set pot values for program 0
   logicalState.m_potParams[logicalState.m_currentProgram][0].m_value = 0;
   logicalState.m_potParams[logicalState.m_currentProgram][1].m_value = 768;
@@ -329,6 +391,9 @@ void test_midi_pot_value_changed_changes_logical_state() {
 void test_expr_value_changed_changes_logical_state() {
   LogicalState logicalState;
   PotService potService(logicalState);
+
+  // Set to a non-delay effect so POT0 is handled as a regular pot
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
 
   // Set pot values for program 0
   logicalState.m_potParams[logicalState.m_currentProgram][0].m_value = 0;
@@ -609,7 +674,9 @@ int main() {
 
   // Physical pots tests
   RUN_TEST(test_physical_pot_value_changed_changes_logical_state);
-  RUN_TEST(test_pot0_is_ignored_when_using_delay_effect);
+  RUN_TEST(test_pot0_publishes_tempo_input_when_using_delay_effect);
+  RUN_TEST(test_midi_pot0_publishes_tempo_input_when_using_delay_effect);
+  RUN_TEST(test_expr_pot0_publishes_tempo_input_when_using_delay_effect);
   RUN_TEST(test_disabled_pot_ignores_physical_input);
 
   // Program Change Tests

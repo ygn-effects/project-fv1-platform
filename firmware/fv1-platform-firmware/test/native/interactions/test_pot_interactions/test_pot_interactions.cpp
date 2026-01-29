@@ -154,20 +154,67 @@ void test_driver_pot_value_changed_not_sets_logical_state_disabled_pot() {
   TEST_ASSERT_EQUAL(0, fix.logicalState.m_potParams[7][3].m_value);
 }
 
-void test_driver_pot0_value_changed_not_sets_logical_state_delay_effect() {
+void test_driver_pot0_value_changed_sets_tempo_on_delay_effect() {
   InteractionFixture fix;
   fix.logicalState.m_bypassState = BypassState::kActive;
-  fix.logicalState.m_currentProgram = 0;
+  fix.logicalState.m_currentProgram = 0;  // Delay effect
+  fix.logicalState.m_tempo = 500;
   fix.syncEepromWithState();
   fix.init();
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-  // Sent event
-  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 128));
+  // Send POT0 event - should go through PotService → TempoService
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 512));
 
-  // Test logical state
+  // m_potParams should NOT be updated for POT0 on delay effects
   TEST_ASSERT_EQUAL(0, fix.logicalState.m_potParams[0][0].m_value);
+
+  // But m_tempo SHOULD be updated (program 0 is 20-1000ms, 512/1023 maps to ~510ms)
+  TEST_ASSERT_NOT_EQUAL(500, fix.logicalState.m_tempo);
+}
+
+void test_midi_cc_pot0_sets_tempo_on_delay_effect() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 0;  // Delay effect
+  fix.logicalState.m_tempo = 500;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Send MIDI CC#0 message
+  makeMidiCCPotValueChangedMessage(fix.midiService.getMidiHandler(), PotId::kPot0, 64);
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // m_potParams should NOT be updated for POT0 on delay effects
+  TEST_ASSERT_EQUAL(0, fix.logicalState.m_potParams[0][0].m_value);
+
+  // But m_tempo SHOULD be updated
+  TEST_ASSERT_NOT_EQUAL(500, fix.logicalState.m_tempo);
+}
+
+void test_expr_pot0_sets_tempo_on_delay_effect() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 0;  // Delay effect
+  fix.logicalState.m_tempo = 500;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send expression event mapped to POT0
+  fix.publishAndDispatchAllEvents(makeLogicExprValueChangedEvent(PotId::kPot0, 768));
+
+  // m_potParams should NOT be updated for POT0 on delay effects
+  TEST_ASSERT_EQUAL(0, fix.logicalState.m_potParams[0][0].m_value);
+
+  // But m_tempo SHOULD be updated
+  TEST_ASSERT_NOT_EQUAL(500, fix.logicalState.m_tempo);
 }
 
 // =============================================================================
@@ -252,6 +299,8 @@ void test_ui_pot_value_changed_sets_logical_state() {
 void test_midi_cc_pot_value_sets_logical_state() {
   InteractionFixture fix;
   fix.logicalState.m_bypassState = BypassState::kActive;
+  // Use non-delay program so POT0 is handled as a regular pot
+  fix.logicalState.m_currentProgram = 7;
   fix.syncEepromWithState();
   fix.init();
 
@@ -264,8 +313,8 @@ void test_midi_cc_pot_value_sets_logical_state() {
   fix.updateAllServices();
   fix.dispatchAllEvents();
 
-  // Test logicals tate
-  TEST_ASSERT_EQUAL(128, fix.logicalState.m_potParams[0][0].m_value);
+  // Test logical state
+  TEST_ASSERT_EQUAL(128, fix.logicalState.m_potParams[7][0].m_value);
 
   // Send CC message
   makeMidiCCPotValueChangedMessage(fix.midiService.getMidiHandler(), PotId::kPot1, 32);
@@ -274,8 +323,8 @@ void test_midi_cc_pot_value_sets_logical_state() {
   fix.updateAllServices();
   fix.dispatchAllEvents();
 
-  // Test logicals tate
-  TEST_ASSERT_EQUAL(257, fix.logicalState.m_potParams[0][1].m_value);
+  // Test logical state
+  TEST_ASSERT_EQUAL(257, fix.logicalState.m_potParams[7][1].m_value);
 
   // Send CC message
   makeMidiCCPotValueChangedMessage(fix.midiService.getMidiHandler(), PotId::kPot2, 48);
@@ -284,8 +333,8 @@ void test_midi_cc_pot_value_sets_logical_state() {
   fix.updateAllServices();
   fix.dispatchAllEvents();
 
-  // Test logicals tate
-  TEST_ASSERT_EQUAL(386, fix.logicalState.m_potParams[0][2].m_value);
+  // Test logical state
+  TEST_ASSERT_EQUAL(386, fix.logicalState.m_potParams[7][2].m_value);
 
   // Send CC message
   makeMidiCCPotValueChangedMessage(fix.midiService.getMidiHandler(), PotId::kMixPot, 64);
@@ -294,8 +343,8 @@ void test_midi_cc_pot_value_sets_logical_state() {
   fix.updateAllServices();
   fix.dispatchAllEvents();
 
-  // Test logicals tate
-  TEST_ASSERT_EQUAL(515, fix.logicalState.m_potParams[0][3].m_value);
+  // Test logical state
+  TEST_ASSERT_EQUAL(515, fix.logicalState.m_potParams[7][3].m_value);
 }
 
 // =============================================================================
@@ -335,7 +384,9 @@ int main() {
   // Physical Pot Input
   RUN_TEST(test_driver_pot_value_changed_sets_logical_state);
   RUN_TEST(test_driver_pot_value_changed_not_sets_logical_state_disabled_pot);
-  RUN_TEST(test_driver_pot0_value_changed_not_sets_logical_state_delay_effect);
+  RUN_TEST(test_driver_pot0_value_changed_sets_tempo_on_delay_effect);
+  RUN_TEST(test_midi_cc_pot0_sets_tempo_on_delay_effect);
+  RUN_TEST(test_expr_pot0_sets_tempo_on_delay_effect);
 
   // Expression Pedal Input
   RUN_TEST(test_logic_expr_value_changed_sets_logical_state);
