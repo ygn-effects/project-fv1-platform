@@ -73,6 +73,24 @@ Event makeLogicPresetBankValueChangedEvent() {
   return e;
 }
 
+Event makeMidiProgramValueChangedEvent(uint8_t t_program) {
+  Event e{};
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kValueChanged;
+  e.m_data.value = t_program;
+  return e;
+}
+
+Event makeMidiPresetValueChangedEvent(uint8_t t_preset) {
+  Event e{};
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kValueChanged;
+  e.m_data.value = t_preset;
+  return e;
+}
+
 void setUp() {
 
 }
@@ -171,6 +189,49 @@ void test_preset_bank_load_sets_logical_state() {
 }
 
 // =============================================================================
+// MIDI Preset Change
+// =============================================================================
+
+void test_midi_preset_change_sets_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_currentPresetBank = 2;
+  fix.logicalState.m_currentPreset = 1;
+  fix.logicalState.m_loadedPresetBank.m_presets[2].m_programIndex = 3;
+  fix.syncEepromWithState();
+  fix.SyncEepromWithLoadedPresetBank();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send event
+  fix.publishAndDispatchAllEvents(makeMidiPresetValueChangedEvent(10));
+
+  // Check logicalstate, the pointer should have changed
+  TEST_ASSERT_EQUAL_PTR(&ProgramsDefinitions::kPrograms[3], fix.logicalState.m_activeProgram);
+
+}
+
+// =============================================================================
+// MIDI Program Change
+// =============================================================================
+
+void test_midi_program_change_sets_logical_state() {
+  InteractionFixture fix;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send event
+  fix.publishAndDispatchAllEvents(makeMidiProgramValueChangedEvent(1));
+
+  // Check logicalstate
+  TEST_ASSERT_EQUAL(1, fix.logicalState.m_currentProgram);
+  TEST_ASSERT_EQUAL_PTR(&ProgramsDefinitions::kPrograms[1], fix.logicalState.m_activeProgram);
+}
+
+// =============================================================================
 // Persistence
 // =============================================================================
 
@@ -210,6 +271,10 @@ int main() {
 
   // Preset Bank Loaded
   RUN_TEST(test_preset_bank_load_sets_logical_state);
+
+  // MIDI Preset/Program Change
+  RUN_TEST(test_midi_preset_change_sets_logical_state);
+  RUN_TEST(test_midi_program_change_sets_logical_state);
 
   // Persistence
   RUN_TEST(test_current_program_persistence);
