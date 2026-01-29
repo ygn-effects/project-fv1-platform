@@ -37,12 +37,11 @@ Event makeProgramChangedEvent(uint8_t t_programId = 0) {
   return e;
 }
 
-Event makePot0ValueChangedEvent(uint16_t t_value = 512) {
+Event makeTempoInputChangedEvent(uint16_t t_value = 512) {
   Event e;
-  e.m_domain = EventDomain::kPhysical;
-  e.m_subject = EventSubject::kPot;
-  e.m_action = EventAction::kValueChanged;
-  e.m_id = static_cast<uint8_t>(PotId::kPot0);
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kTempo;
+  e.m_action = EventAction::kInputChanged;
   e.m_data.value = t_value;
   return e;
 }
@@ -243,8 +242,8 @@ void test_current_program_not_delay_does_nothing() {
   // Event bus should be empty
   assertEventBusEmpty();
 
-  // POT0 value changed
-  tempoService.handleEvent(makePot0ValueChangedEvent());
+  // Tempo input changed
+  tempoService.handleEvent(makeTempoInputChangedEvent());
 
   // Event bus should be empty
   assertEventBusEmpty();
@@ -283,10 +282,10 @@ void test_tap_interval_triggers_tempo_event() {
 }
 
 // =============================================================================
-// POT0 tests
+// Tempo Input tests
 // =============================================================================
 
-void test_pot0_value_changed_triggers_tempo_event() {
+void test_tempo_input_changed_triggers_tempo_event() {
   LogicalState logicalState;
   MackAdjustbleLed led;
   MockedClock clock;
@@ -299,13 +298,13 @@ void test_pot0_value_changed_triggers_tempo_event() {
 
   tempoService.init();
 
-  // POT0 value changed
-  tempoService.handleEvent(makePot0ValueChangedEvent(512));
+  // Tempo input changed (from PotService, normalized 0-1023)
+  tempoService.handleEvent(makeTempoInputChangedEvent(512));
 
-  // Check logicalState
+  // Check logicalState - Program 1 is 100 to 800ms, 512/1023 maps to ~450ms
   TEST_ASSERT_EQUAL(450, logicalState.m_tempo);
 
-  // Program 1 is 100 to 800ms so event tempo should change
+  // Should publish tempo changed event
   assertTempoChangedEventPublished(450);
   // Save event
   assertTempoSaveEventPublished();
@@ -441,17 +440,16 @@ void test_interested_in_tap_value_changed_event() {
   TEST_ASSERT_TRUE(tempoService.interestedIn(e));
 }
 
-void test_interested_in_physical_pot0() {
+void test_interested_in_logic_tempo_input_changed() {
   LogicalState logicalState;
   MackAdjustbleLed led;
   MockedClock clock;
   TempoService tempoService(logicalState, led, clock);
 
   Event e;
-  e.m_domain = EventDomain::kPhysical;
-  e.m_subject = EventSubject::kPot;
-  e.m_action = EventAction::kValueChanged;
-  e.m_id = static_cast<uint8_t>(PotId::kPot0);
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kTempo;
+  e.m_action = EventAction::kInputChanged;
 
   TEST_ASSERT_TRUE(tempoService.interestedIn(e));
 }
@@ -478,9 +476,14 @@ void test_not_interested_in_other_events() {
 
   Event e;
 
-  // Not interested in other pots
+  // Not interested in physical pot events (PotService handles these now)
   e.m_domain = EventDomain::kPhysical;
   e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(PotId::kPot0);
+  TEST_ASSERT_FALSE(tempoService.interestedIn(e));
+
+  // Not interested in other pots either
   e.m_id = static_cast<uint8_t>(PotId::kPot1);
   TEST_ASSERT_FALSE(tempoService.interestedIn(e));
 
@@ -494,9 +497,10 @@ void test_not_interested_in_other_events() {
   e.m_subject = EventSubject::kTap;
   TEST_ASSERT_FALSE(tempoService.interestedIn(e));
 
-  // Not interested in logic tempo events (outputs them)
+  // Not interested in logic tempo kValueChanged events (outputs them)
   e.m_domain = EventDomain::kLogic;
   e.m_subject = EventSubject::kTempo;
+  e.m_action = EventAction::kValueChanged;
   TEST_ASSERT_FALSE(tempoService.interestedIn(e));
 }
 
@@ -519,8 +523,8 @@ int main() {
   // Tap interval tests
   RUN_TEST(test_tap_interval_triggers_tempo_event);
 
-  // POT0 tests
-  RUN_TEST(test_pot0_value_changed_triggers_tempo_event);
+  // Tempo Input tests (from PotService via kInputChanged)
+  RUN_TEST(test_tempo_input_changed_triggers_tempo_event);
 
   // Menu tempo tests
   RUN_TEST(test_ui_tempo_value_changed_triggers_tempo_event);
@@ -533,7 +537,7 @@ int main() {
   // Tests interestedIn
   RUN_TEST(test_interested_in_logic_program_changed);
   RUN_TEST(test_interested_in_tap_value_changed_event);
-  RUN_TEST(test_interested_in_physical_pot0);
+  RUN_TEST(test_interested_in_logic_tempo_input_changed);
   RUN_TEST(test_interested_in_ui_tempo);
   RUN_TEST(test_not_interested_in_other_events);
 

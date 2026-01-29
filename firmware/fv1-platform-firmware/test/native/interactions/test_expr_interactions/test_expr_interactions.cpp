@@ -81,8 +81,9 @@ void tearDown() {
 void test_driver_expr_value_changed_active_sets_logical_state() {
   InteractionFixture fix;
   fix.logicalState.m_bypassState = BypassState::kActive;
-  fix.logicalState.m_currentProgram = 0;
-  fix.logicalState.m_exprParams[0].m_state = ExprState::kActive;
+  // Use non-delay program so POT0 is handled as a regular pot
+  fix.logicalState.m_currentProgram = 7;
+  fix.logicalState.m_exprParams[7].m_state = ExprState::kActive;
   fix.syncEepromWithState();
   fix.init();
 
@@ -92,7 +93,7 @@ void test_driver_expr_value_changed_active_sets_logical_state() {
   fix.publishAndDispatchAllEvents(makeDriverExprValueChangedEvent(512));
 
   // Test logical state
-  TEST_ASSERT_EQUAL(512, fix.logicalState.m_potParams[0][0].m_value);
+  TEST_ASSERT_EQUAL(512, fix.logicalState.m_potParams[7][0].m_value);
 }
 
 void test_driver_expr_value_changed_disabled_not_sets_logical_state() {

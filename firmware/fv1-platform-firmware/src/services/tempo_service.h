@@ -22,7 +22,8 @@ class TempoService : public Service {
     void publishSaveTempoEvent(uint16_t t_interval) const;
 
   public:
-    TempoService(LogicalState& t_lState, Adjustable& t_led, Clock& t_clock);
+    TempoService(LogicalState& t_lState, Adjustable& t_led, Clock& t_clock) :
+      m_logicState(t_lState), m_tempoLed(t_led), m_clock(t_clock) {}
 
     void init() override;
     void handleEvent(const Event& t_event) override;

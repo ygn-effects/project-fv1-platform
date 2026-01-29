@@ -1,8 +1,5 @@
 #include "services/tempo_service.h"
 
-TempoService::TempoService(LogicalState& t_lState, Adjustable& t_led, Clock& t_clock) :
-    m_logicState(t_lState), m_tempoLed(t_led), m_clock(t_clock) {}
-
 void TempoService::syncHandler() {
   m_handler.m_interval = m_logicState.m_tempo;
   m_handler.m_minInterval = m_logicState.m_activeProgram->m_minDelayMs;
@@ -55,22 +52,20 @@ void TempoService::handleEvent(const Event& t_event) {
 
   if (! m_logicState.m_activeProgram->m_isDelayEffect) return;
 
-  if (t_event.m_domain == EventDomain::kLogic
-      && t_event.m_subject == EventSubject::kTap
-      && t_event.m_action == EventAction::kValueChanged) {
-    m_handler.m_source = TempoSource::kTap;
-    m_logicState.m_tempo = m_handler.mapInterval(t_event.m_data.value);
+  if (t_event.m_domain == EventDomain::kLogic) {
+    if (t_event.m_subject == EventSubject::kTap
+        && t_event.m_action == EventAction::kValueChanged) {
+      m_handler.m_source = TempoSource::kTap;
+      m_logicState.m_tempo = m_handler.mapInterval(t_event.m_data.value);
 
-    publishTempoEvent(m_logicState.m_tempo);
-    publishSaveTempoEvent(m_logicState.m_tempo);
+      publishTempoEvent(m_logicState.m_tempo);
+      publishSaveTempoEvent(m_logicState.m_tempo);
 
-    return;
-  }
+      return;
+    }
 
-  if (t_event.m_domain == EventDomain::kPhysical) {
-    if (t_event.m_subject == EventSubject::kPot
-        && t_event.m_action == EventAction::kValueChanged
-        && t_event.matchesId(PotId::kPot0)) {
+    if (t_event.m_subject == EventSubject::kTempo
+        && t_event.m_action == EventAction::kInputChanged) {
       m_handler.m_source = TempoSource::kPot;
       m_logicState.m_tempo = m_handler.mapInterval(t_event.m_data.value);
 
@@ -107,12 +102,8 @@ bool TempoService::interestedIn(const Event& t_event) const {
         && t_event.m_action == EventAction::kValueChanged) return true;
     if (t_event.m_subject == EventSubject::kTap
         && t_event.m_action == EventAction::kValueChanged) return true;
-  }
-
-  if (t_event.m_domain == EventDomain::kPhysical) {
-    if (t_event.m_subject == EventSubject::kPot
-        && t_event.m_action == EventAction::kValueChanged
-        && t_event.matchesId(PotId::kPot0)) return true;
+    if (t_event.m_subject == EventSubject::kTempo
+        && t_event.m_action == EventAction::kInputChanged) return true;
   }
 
   if (t_event.m_domain == EventDomain::kUI) {
