@@ -1,49 +1,65 @@
 #pragma once
-
-#include <stdint.h>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <cstring>
 #include "periphs/display.h"
+
+struct DrawCmd {
+  enum class Type {
+    kText,
+    kRect,
+    kClear,
+    kDisplay
+  };
+
+  Type type;
+  std::string text;
+  int16_t x, y;
+  bool highlighted;
+};
 
 class MockDisplay : public Display {
   public:
     bool m_initialized = false;
-    bool m_cleared = false;
-    bool m_displayed = false;
-    uint8_t m_textSize = 1;
+    std::vector<DrawCmd> m_log;
 
-    void init() override {
-      m_initialized = true;
-    }
+    void init() override { m_initialized = true; }
 
     void clear() override {
-      m_cleared = true;
+      m_log.push_back({DrawCmd::Type::kClear});
     }
 
-    void drawRect(int16_t t_x, int16_t t_y, int16_t t_w, int8_t t_h, bool t_filled = true) override {
-      (void)t_x; (void)t_y; (void)t_w; (void)t_h; (void)t_filled;
+    void drawText(int16_t x, int16_t y, const char* text, bool inverted) override {
+      m_log.push_back({DrawCmd::Type::kText, text, x, y, inverted});
     }
 
-    void drawText(int16_t t_x, int16_t t_y, const char* t_text, bool t_inverted = false) override {
-      (void)t_x; (void)t_y; (void)t_text; (void)t_inverted;
-    }
-
-    void setTextSize(uint8_t t_size) override {
-      m_textSize = t_size;
+    void drawRect(int16_t x, int16_t y, int16_t w, int8_t h, bool filled) override {
+      m_log.push_back({DrawCmd::Type::kRect, "", x, y, filled});
     }
 
     void display() override {
-      m_displayed = true;
+      m_log.push_back({DrawCmd::Type::kDisplay});
     }
+
+    bool showsText(const std::string& text) const {
+      return std::any_of(m_log.begin(), m_log.end(), [&](const DrawCmd& cmd){
+        return cmd.type == DrawCmd::Type::kText && cmd.text == text;
+      });
+    }
+
+    bool isSelected(const std::string& text) const {
+      return std::any_of(m_log.begin(), m_log.end(), [&](const DrawCmd& cmd){
+        return cmd.type == DrawCmd::Type::kText && cmd.text == text && cmd.highlighted;
+      });
+    }
+
+    void reset() { m_log.clear(); }
 
     int16_t getWidth() const override { return 128; }
     int16_t getHeight() const override { return 64; }
-    uint16_t getTextWidth(const char* t_text) override { (void)t_text; return 6; }
-    uint16_t getTextHeight(const char* t_text) override { (void)t_text; return 8; }
-    uint16_t getLineHeight() override { return 10; }
-
-    void reset() {
-      m_initialized = false;
-      m_cleared = false;
-      m_displayed = false;
-      m_textSize = 1;
-    }
+    uint16_t getTextWidth(const char* t) override { return strlen(t) * 6; }
+    uint16_t getTextHeight(const char*) override { return 8; }
+    uint16_t getLineHeight() override { return 8; }
+    void setTextSize(uint8_t) override {}
 };
