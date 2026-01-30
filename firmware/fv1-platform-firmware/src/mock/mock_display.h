@@ -42,15 +42,59 @@ class MockDisplay : public Display {
       m_log.push_back({DrawCmd::Type::kDisplay});
     }
 
+    bool hasClearCmd() const {
+      return m_log.front().type == DrawCmd::Type::kClear;
+    }
+
+    bool hasDisplayCmd() const {
+      return m_log.back().type == DrawCmd::Type::kDisplay;
+    }
+
     bool showsText(const std::string& text) const {
       return std::any_of(m_log.begin(), m_log.end(), [&](const DrawCmd& cmd){
         return cmd.type == DrawCmd::Type::kText && cmd.text == text;
       });
     }
 
-    bool isSelected(const std::string& text) const {
+    bool showsLabelValue(const std::string& t_label, const std::string& t_value) const {
+      const std::vector<DrawCmd> target = {
+        {DrawCmd::Type::kText, t_label, 0, 0, false},
+        {DrawCmd::Type::kText, ":", 0, 0, false},
+        {DrawCmd::Type::kText, t_value, 0, 0, false}
+      };
+
+      auto it = std::search(
+        m_log.begin(), m_log.end(),
+        target.begin(), target.end(),
+
+        [](const DrawCmd& a, const DrawCmd& b) {
+          return a.type == b.type && a.text == b.text;
+        }
+      );
+
+      return it != m_log.end();
+    }
+
+    bool isHighlighted(const std::string& text) const {
       return std::any_of(m_log.begin(), m_log.end(), [&](const DrawCmd& cmd){
         return cmd.type == DrawCmd::Type::kText && cmd.text == text && cmd.highlighted;
+      });
+    }
+
+    bool isCursorPointingTo(const std::string& t_label) const {
+      auto labelIt = std::find_if(m_log.begin(), m_log.end(), [&](const DrawCmd& cmd){
+        return cmd.type == DrawCmd::Type::kText && cmd.text == t_label;
+      });
+
+      if (labelIt == m_log.end()) return false;
+
+      return std::any_of(m_log.begin(), m_log.end(), [&](const DrawCmd& cursor){
+        if (cursor.type != DrawCmd::Type::kText || cursor.text != ">") return false;
+
+        if (cursor.y != labelIt->y) return false;
+        int distance = labelIt->x - cursor.x;
+
+        return (distance >= 5 && distance <= 15);
       });
     }
 
