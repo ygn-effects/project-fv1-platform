@@ -409,6 +409,26 @@ const char* valueMixPotMaxValue(const LogicalState* t_state) {
   return buffer;
 }
 
+void onMovePresetBank(int8_t t_delta) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPresetBank;
+  e.m_action = EventAction::kValueChanged;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
+void onMovePreset(int8_t t_delta) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kValueChanged;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
 void onMoveProgram(int8_t t_delta) {
   Event e;
   e.m_domain = EventDomain::kUI;
@@ -661,13 +681,15 @@ constexpr MenuPage ProgramMenuPage = {
 };
 
 constexpr MenuItem PresetMenuItems[] = {
-
+  { labelPresetBank, isAlwaysVisible, valuePresetBank, onMovePresetBank, nullptr, nullptr },
+  { labelPreset, isAlwaysVisible, valuePreset, onMovePreset, nullptr, nullptr }
 };
 
 constexpr MenuPage PresetMenuPage = {
   "Preset mode",
   PresetMenuItems,
-  0
+  sizeof(PresetMenuItems) / sizeof(PresetMenuItems[0]),
+  ui::MenuLayout::kList
 };
 
 constexpr MenuItem ExprSettingsMenuItems[] = {
