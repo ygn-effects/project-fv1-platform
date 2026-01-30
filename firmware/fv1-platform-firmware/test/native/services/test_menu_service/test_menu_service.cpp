@@ -30,6 +30,16 @@ Event makePhysicalSwitchLongPressEvent(SwitchId t_id, uint32_t t_timestamp = 0) 
   return e;
 }
 
+Event makePhysicalSwitchPressEvent(SwitchId t_id, uint32_t t_timestamp = 0) {
+  Event e;
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kSwitch;
+  e.m_action = EventAction::kPressed;
+  e.m_id = static_cast<uint8_t>(t_id);
+  e.m_timestamp = t_timestamp;
+  return e;
+}
+
 Event makePhysicalEncoderDeltaEvent(EncoderId t_id, int16_t t_delta, uint32_t t_timestamp = 0) {
   Event e;
   e.m_domain = EventDomain::kPhysical;
@@ -37,16 +47,6 @@ Event makePhysicalEncoderDeltaEvent(EncoderId t_id, int16_t t_delta, uint32_t t_
   e.m_action = EventAction::kDeltaChanged;
   e.m_id = static_cast<uint8_t>(t_id);
   e.m_data.delta = t_delta;
-  e.m_timestamp = t_timestamp;
-  return e;
-}
-
-Event makePhysicalEncoderPressEvent(EncoderId t_id, uint32_t t_timestamp = 0) {
-  Event e;
-  e.m_domain = EventDomain::kPhysical;
-  e.m_subject = EventSubject::kEncoder;
-  e.m_action = EventAction::kPressed;
-  e.m_id = static_cast<uint8_t>(t_id);
   e.m_timestamp = t_timestamp;
   return e;
 }
@@ -253,7 +253,7 @@ void test_encoder_press_publishes_updated_when_unlocked() {
   clearEventBus();
 
   // Press to select (enters editing on first item which has onMove)
-  service.handleEvent(makePhysicalEncoderPressEvent(EncoderId::kMenuEncoder, 2000));
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder, 1000));
 
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
@@ -269,7 +269,7 @@ void test_encoder_ignored_when_locked() {
 
   // Try to use encoder while locked
   service.handleEvent(makePhysicalEncoderDeltaEvent(EncoderId::kMenuEncoder, 1, 1000));
-  service.handleEvent(makePhysicalEncoderPressEvent(EncoderId::kMenuEncoder, 1000));
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder, 2000));
 
   assertNoMoreEvents();
 }
@@ -368,7 +368,7 @@ void test_editing_encoder_delta_publishes_updated() {
   clearEventBus();
 
   // Press to enter editing (first item has onMove)
-  service.handleEvent(makePhysicalEncoderPressEvent(EncoderId::kMenuEncoder, 2000));
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder, 2000));
   clearEventBus();
 
   // Move encoder in editing mode
@@ -399,11 +399,11 @@ void test_editing_encoder_press_exits_editing() {
   clearEventBus();
 
   // Enter editing
-  service.handleEvent(makePhysicalEncoderPressEvent(EncoderId::kMenuEncoder, 2000));
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder, 2000));
   clearEventBus();
 
   // Press again to exit editing
-  service.handleEvent(makePhysicalEncoderPressEvent(EncoderId::kMenuEncoder, 3000));
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder, 3000));
 
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
@@ -537,15 +537,21 @@ void test_interested_in_physical_switch_long_press_menu_lock() {
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
-void test_interested_in_physical_encoder_menu_encoder() {
+void test_interested_in_physical_switch_press_menu_encoder() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  Event e = makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder);
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
+void test_interested_in_physical_encoder_move_menu_encoder() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
 
   Event e = makePhysicalEncoderDeltaEvent(EncoderId::kMenuEncoder, 1);
-  TEST_ASSERT_TRUE(service.interestedIn(e));
-
-  e = makePhysicalEncoderPressEvent(EncoderId::kMenuEncoder);
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
@@ -716,7 +722,8 @@ int main() {
 
   // interestedIn
   RUN_TEST(test_interested_in_physical_switch_long_press_menu_lock);
-  RUN_TEST(test_interested_in_physical_encoder_menu_encoder);
+  RUN_TEST(test_interested_in_physical_switch_press_menu_encoder);
+  RUN_TEST(test_interested_in_physical_encoder_move_menu_encoder);
   RUN_TEST(test_interested_in_physical_pot_value_changed);
   RUN_TEST(test_interested_in_logic_tempo_value_changed);
   RUN_TEST(test_interested_in_logic_bypass_toggled);

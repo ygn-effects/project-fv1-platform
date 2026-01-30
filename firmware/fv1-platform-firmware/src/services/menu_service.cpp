@@ -54,6 +54,10 @@ void MenuService::handleUnlocked(const Event& t_event) {
           && t_event.matchesId(EncoderId::kMenuEncoder)) {
         handleSelecting(t_event);
       }
+      else if (t_event.m_subject == EventSubject::kSwitch
+          && t_event.matchesId(SwitchId::kMenuEncoder)) {
+        handleSelecting(t_event);
+      }
       else if (t_event.m_subject == EventSubject::kPot
           && t_event.m_action == EventAction::kValueChanged) {
         handlePotsMoving(t_event);
@@ -90,6 +94,11 @@ void MenuService::handleUnlocked(const Event& t_event) {
   else {
     if (t_event.m_subject == EventSubject::kEncoder
         && t_event.matchesId(EncoderId::kMenuEncoder)) {
+      handleEditing(t_event);
+      publishViewUpdate();
+    }
+    else if (t_event.m_subject == EventSubject::kSwitch
+        && t_event.matchesId(SwitchId::kMenuEncoder)) {
       handleEditing(t_event);
       publishViewUpdate();
     }
@@ -212,6 +221,9 @@ bool MenuService::interestedIn(const Event& t_event) const {
 
     if (t_event.m_subject == EventSubject::kEncoder
         && t_event.matchesId(EncoderId::kMenuEncoder)) return true;
+
+    if (t_event.m_subject == EventSubject::kSwitch
+        && t_event.matchesId(SwitchId::kMenuEncoder)) return true;
 
     if (t_event.m_subject == EventSubject::kPot
         && t_event.m_action == EventAction::kValueChanged) return true;
