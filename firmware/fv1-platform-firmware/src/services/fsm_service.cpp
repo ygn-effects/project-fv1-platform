@@ -128,6 +128,12 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
+      // Menu lock long press
+      if (isLongPressed(t_event, SwitchId::kMenuLock)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
       // Menu unlocked
       if (isMenuUnlocked(t_event)) {
         transitionTo(AppState::kProgramEdit);
@@ -157,6 +163,12 @@ void FsmService::handleEvent(const Event& t_event) {
     case AppState::kProgramEdit:
       // Bypass Press
       if (isPressed(t_event, SwitchId::kBypass)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Menu lock long press
+      if (isLongPressed(t_event, SwitchId::kMenuLock)) {
         rePublishPhysicalEvent(t_event);
         return;
       }
@@ -226,6 +238,18 @@ void FsmService::handleEvent(const Event& t_event) {
       // Program mode switch long press
       if (isLongPressed(t_event, SwitchId::kProgramMode)) {
         rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Menu lock long press
+      if (isLongPressed(t_event, SwitchId::kMenuLock)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Menu unlocked
+      if (isMenuUnlocked(t_event)) {
+        transitionTo(AppState::kPresetEdit);
         return;
       }
 
