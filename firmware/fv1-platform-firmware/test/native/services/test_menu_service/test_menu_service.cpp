@@ -51,9 +51,9 @@ Event makePhysicalEncoderDeltaEvent(EncoderId t_id, int16_t t_delta, uint32_t t_
   return e;
 }
 
-Event makePhysicalPotValueChangedEvent(PotId t_id, uint16_t t_value, uint32_t t_timestamp = 0) {
+Event makeLogicPotValueChangedEvent(PotId t_id, uint16_t t_value, uint32_t t_timestamp = 0) {
   Event e;
-  e.m_domain = EventDomain::kPhysical;
+  e.m_domain = EventDomain::kLogic;
   e.m_subject = EventSubject::kPot;
   e.m_action = EventAction::kValueChanged;
   e.m_id = static_cast<uint8_t>(t_id);
@@ -294,7 +294,7 @@ void test_pot_value_changed_publishes_updated_when_unlocked() {
   clearEventBus();
 
   // Move pot
-  service.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 512, 2000));
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 2000));
 
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
@@ -309,7 +309,7 @@ void test_pot_ignored_when_locked() {
   clearEventBus();
 
   // Try to use pot while locked
-  service.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 512, 1000));
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 1000));
 
   assertNoMoreEvents();
 }
@@ -472,7 +472,7 @@ void test_update_pops_pot_overlay_after_timeout() {
 
   // Push pot overlay at time 2000
   mockClock.setClock(2000);
-  service.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 512, 2000));
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 2000));
   clearEventBus();
 
   // Advance time past pot overlay timeout
@@ -555,12 +555,12 @@ void test_interested_in_physical_encoder_move_menu_encoder() {
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
-void test_interested_in_physical_pot_value_changed() {
+void test_interested_in_logic_pot_value_changed() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
 
-  Event e = makePhysicalPotValueChangedEvent(PotId::kPot1, 512);
+  Event e = makeLogicPotValueChangedEvent(PotId::kPot1, 512);
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
@@ -724,7 +724,7 @@ int main() {
   RUN_TEST(test_interested_in_physical_switch_long_press_menu_lock);
   RUN_TEST(test_interested_in_physical_switch_press_menu_encoder);
   RUN_TEST(test_interested_in_physical_encoder_move_menu_encoder);
-  RUN_TEST(test_interested_in_physical_pot_value_changed);
+  RUN_TEST(test_interested_in_logic_pot_value_changed);
   RUN_TEST(test_interested_in_logic_tempo_value_changed);
   RUN_TEST(test_interested_in_logic_bypass_toggled);
   RUN_TEST(test_interested_in_logic_program_changed);

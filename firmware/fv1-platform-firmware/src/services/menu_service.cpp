@@ -58,10 +58,6 @@ void MenuService::handleUnlocked(const Event& t_event) {
           && t_event.matchesId(SwitchId::kMenuEncoder)) {
         handleSelecting(t_event);
       }
-      else if (t_event.m_subject == EventSubject::kPot
-          && t_event.m_action == EventAction::kValueChanged) {
-        handlePotsMoving(t_event);
-      }
       else if (t_event.m_subject == EventSubject::kSwitch
           && t_event.m_action == EventAction::kLongPressed
           && t_event.matchesId(SwitchId::kMenuLock)) {
@@ -86,6 +82,13 @@ void MenuService::handleUnlocked(const Event& t_event) {
           && t_event.m_action == EventAction::kToggled) {
         m_handler.lock();
         publishUIMenuLockedEvent();
+        publishViewUpdate();
+        return;
+      }
+
+      if (t_event.m_subject == EventSubject::kPot
+          && t_event.m_action == EventAction::kValueChanged) {
+        handlePotsMoving(t_event);
         publishViewUpdate();
         return;
       }
@@ -224,9 +227,6 @@ bool MenuService::interestedIn(const Event& t_event) const {
 
     if (t_event.m_subject == EventSubject::kSwitch
         && t_event.matchesId(SwitchId::kMenuEncoder)) return true;
-
-    if (t_event.m_subject == EventSubject::kPot
-        && t_event.m_action == EventAction::kValueChanged) return true;
   }
 
   if (t_event.m_domain == EventDomain::kUI) {
@@ -242,6 +242,9 @@ bool MenuService::interestedIn(const Event& t_event) const {
 
     if (t_event.m_subject == EventSubject::kBypass
         && t_event.m_action == EventAction::kToggled) return true;
+
+    if (t_event.m_subject == EventSubject::kPot
+        && t_event.m_action == EventAction::kValueChanged) return true;
   }
 
   return false;
