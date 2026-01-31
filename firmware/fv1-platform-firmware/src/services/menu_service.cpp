@@ -151,6 +151,7 @@ void MenuService::handlePotsMoving(const Event& t_event) {
   m_handler.pushPotOverlay(t_event.m_id, m_logicState);
   m_potMenuActive = true;
   m_lastPotMoveTime = t_event.m_timestamp;
+  m_lastInputTime = t_event.m_timestamp;
 }
 
 void MenuService::handleTempoChange(const Event& t_event) {
