@@ -30,6 +30,10 @@ class MockDisplay : public Display {
       m_log.push_back({DrawCmd::Type::kClear});
     }
 
+    bool isCleared() {
+      return m_log.empty();
+    }
+
     void drawText(int16_t x, int16_t y, const char* text, bool inverted) override {
       m_log.push_back({DrawCmd::Type::kText, text, x, y, inverted});
     }
