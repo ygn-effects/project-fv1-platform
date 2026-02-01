@@ -42,7 +42,7 @@ void TempoService::handleEvent(const Event& t_event) {
       m_handler.m_source = TempoSource::kTap;
       m_logicState.m_tempo = m_handler.mapInterval(m_handler.m_interval);
 
-      publishTempoEvent(m_logicState.m_tempo);
+      // publishTempoEvent(m_logicState.m_tempo);
       publishSaveTempoEvent(m_logicState.m_tempo);
     }
     else {

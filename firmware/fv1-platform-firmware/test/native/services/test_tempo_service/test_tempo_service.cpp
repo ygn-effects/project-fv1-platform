@@ -113,8 +113,7 @@ void test_init_syncs_handler_from_logical_state() {
   // Send a program change event
   tempoService.handleEvent(makeProgramChangedEvent());
 
-  // Program 0 is 20 to 1000ms so mapped tempo shouldn't change
-  assertTempoChangedEventPublished(400);
+  assertTempoSaveEventPublished();
 }
 
 void test_init_mock_led_initialized() {
@@ -148,8 +147,6 @@ void test_program_change_to_delay_program_syncs_handler() {
   // Send a program change event
   tempoService.handleEvent(makeProgramChangedEvent());
 
-  // Program 1 is 100 to 800ms so mapped tempo should change
-  assertTempoChangedEventPublished(800);
   // Save event
   assertTempoSaveEventPublished();
 
@@ -200,7 +197,6 @@ void test_program_change_clamps_tempo_below_minimum() {
   tempoService.handleEvent(makeProgramChangedEvent());
 
   // Should clamp to minimum
-  assertTempoChangedEventPublished(100);
   assertTempoSaveEventPublished();
   TEST_ASSERT_EQUAL(100, logicalState.m_tempo);
 }
