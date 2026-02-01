@@ -67,11 +67,12 @@ Event makeDriverSwitchLongPress(SwitchId t_id, uint32_t t_timestamp = 0) {
   return e;
 }
 
-Event makeDriverPotMove(PotId t_id, uint16_t t_value) {
+Event makeDriverPotMove(PotId t_id, uint16_t t_value, uint32_t t_timestamp = 0) {
   Event e{};
   e.m_domain = EventDomain::kDriver;
   e.m_subject = EventSubject::kPot;
   e.m_action = EventAction::kValueChanged;
+  e.m_timestamp = t_timestamp;
   e.m_id = static_cast<uint8_t>(t_id);
   e.m_data.value = t_value;
   return e;
@@ -92,6 +93,15 @@ Event makeDriverEncoderDelta(EncoderId t_id, int16_t t_delta) {
   e.m_subject = EventSubject::kEncoder;
   e.m_action = EventAction::kDeltaChanged;
   e.m_id = static_cast<uint8_t>(t_id);
+  e.m_data.delta = t_delta;
+  return e;
+}
+
+Event makeUIProgramValueChange(int8_t t_delta) {
+  Event e{};
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kValueChanged;
   e.m_data.delta = t_delta;
   return e;
 }
@@ -478,6 +488,453 @@ void test_menu_encoder_press_on_submenu_transition_to_submenu() {
   TEST_ASSERT_TRUE(fix.mockDisplay.isHighlighted("Expression settings"));
 }
 
+void test_menu_encoder_press_on_back_transition_to_previous_menu() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Navigate to the submenu
+  while (! fix.mockDisplay.isCursorPointingTo("Expression settings")) {
+    fix.mockDisplay.reset();
+    fix.publishAndDispatchAllEvents(makeDriverEncoderDelta(EncoderId::kMenuEncoder, 1));
+    fix.updateAllServices();
+  }
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Enter submenu
+  fix.publishAndDispatchAllEvents(makeDriverSwitchPress(SwitchId::kMenuEncoder));
+  fix.updateAllServices();
+
+  // Navigate to the back button
+  while (! fix.mockDisplay.isCursorPointingTo("Back")) {
+    fix.mockDisplay.reset();
+    fix.publishAndDispatchAllEvents(makeDriverEncoderDelta(EncoderId::kMenuEncoder, 1));
+    fix.updateAllServices();
+  }
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Enter submenu
+  fix.publishAndDispatchAllEvents(makeDriverSwitchPress(SwitchId::kMenuEncoder));
+  fix.updateAllServices();
+
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Program mode"));
+}
+
+void test_menu_encoder_press_on_editable_items_highlight_value() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Begin editing
+  fix.publishAndDispatchAllEvents(makeDriverSwitchPress(SwitchId::kMenuEncoder));
+  fix.updateAllServices();
+
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Digital delay"));
+  TEST_ASSERT_TRUE(fix.mockDisplay.isHighlighted("Digital delay"));
+}
+
+void test_menu_encoder_press_on_hilighted_item_exit_edit() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Begin editing
+  fix.publishAndDispatchAllEvents(makeDriverSwitchPress(SwitchId::kMenuEncoder));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Exit editing
+  fix.publishAndDispatchAllEvents(makeDriverSwitchPress(SwitchId::kMenuEncoder));
+  fix.updateAllServices();
+
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Digital delay"));
+  TEST_ASSERT_FALSE(fix.mockDisplay.isHighlighted("Digital delay"));
+}
+
+// =============================================================================
+// Overlay Display
+// =============================================================================
+
+void test_pot_move_shows_pot_overlay_menu_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot1, 512));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Header
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[0].m_params[1].m_label));
+}
+
+void test_pot_move_not_shows_pot_overlay_menu_locked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot1, 512));
+  fix.updateAllServices();
+
+  // Display should be empty
+  TEST_ASSERT_TRUE(fix.mockDisplay.isCleared());
+}
+
+void test_pot_overlay_timeout_pop_overlay() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot1, 512));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Set the clock
+  fix.mockClock.advanceBy(ui::MenuConstants::c_potMenuTimeout + 1);
+
+  // update and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Program mode"));
+}
+
+void test_pot0_move_shows_tempo_overlay_delay_effect_menu_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot0, 512));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Header
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Tempo"));
+  TEST_ASSERT_FALSE(fix.mockDisplay.showsText("Program mode"));
+}
+
+void test_pot0_move_shows_pot_overlay_non_delay_effect_menu_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 7;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot0, 512));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Header
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[7].m_params[0].m_label));
+}
+
+void test_tempo_overlay_timeout_pop_overlay() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot0, 512));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Set the clock
+  fix.mockClock.advanceBy(ui::MenuConstants::c_potMenuTimeout + 1);
+
+  // update and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Program mode"));
+}
+
+void test_successive_pot_move_pushes_pops_overlays() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot0, 512, 0));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Header
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Tempo"));
+  TEST_ASSERT_FALSE(fix.mockDisplay.showsText("Program mode"));
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(ui::MenuConstants::c_potMenuTimeout - 100);
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Shouldn't have changed
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Tempo"));
+  TEST_ASSERT_FALSE(fix.mockDisplay.showsText("Program mode"));
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot1, 512, 399));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Header
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[0].m_params[1].m_label));
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(ui::MenuConstants::c_potMenuTimeout - 100);
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Shouldn't have changed
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[0].m_params[1].m_label));
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot2, 512, 799));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Header
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[0].m_params[2].m_label));
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(ui::MenuConstants::c_potMenuTimeout - 100);
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Shouldn't have changed
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[0].m_params[2].m_label));
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kMixPot, 512,  1199));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Header
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[0].m_params[3].m_label));
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(ui::MenuConstants::c_potMenuTimeout - 100);
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Shouldn't have changed
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[0].m_params[3].m_label));
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Set the clock
+  fix.mockClock.advanceBy(ui::MenuConstants::c_potMenuTimeout + 1);
+
+  // update and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Program mode"));
+}
+
+// =============================================================================
+// Value Change Display Updates
+// =============================================================================
+
+void test_program_value_change_update_display() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeUIProgramValueChange(1));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("Prog", ProgramsDefinitions::kPrograms[1].m_name));
+}
+
 // =============================================================================
 // Main
 // =============================================================================
@@ -500,6 +957,21 @@ int main() {
   RUN_TEST(test_menu_lock_bypass_toggle_transition_to_lock_screen);
   RUN_TEST(test_menu_encoder_delta_changed_moves_cursor);
   RUN_TEST(test_menu_encoder_press_on_submenu_transition_to_submenu);
+  RUN_TEST(test_menu_encoder_press_on_back_transition_to_previous_menu);
+  RUN_TEST(test_menu_encoder_press_on_editable_items_highlight_value);
+  RUN_TEST(test_menu_encoder_press_on_hilighted_item_exit_edit);
+
+  // Overlay Display
+  RUN_TEST(test_pot_move_shows_pot_overlay_menu_unlocked);
+  RUN_TEST(test_pot_move_not_shows_pot_overlay_menu_locked);
+  RUN_TEST(test_pot_overlay_timeout_pop_overlay);
+  RUN_TEST(test_pot0_move_shows_tempo_overlay_delay_effect_menu_unlocked);
+  RUN_TEST(test_pot0_move_shows_pot_overlay_non_delay_effect_menu_unlocked);
+  RUN_TEST(test_pot_overlay_timeout_pop_overlay);
+  RUN_TEST(test_successive_pot_move_pushes_pops_overlays);
+
+  // Value Change Display Updates
+  RUN_TEST(test_program_value_change_update_display);
 
   return UNITY_END();
 }
