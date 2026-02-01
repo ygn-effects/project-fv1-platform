@@ -175,6 +175,13 @@ void MenuService::init() {
 }
 
 void MenuService::handleEvent(const Event& t_event) {
+  if (t_event.m_domain == EventDomain::kLogic) {
+    if (t_event.m_subject == EventSubject::kProgram
+        && t_event.m_action == EventAction::kValueChanged) {
+      publishViewUpdate();
+    }
+  }
+
   switch (m_handler.m_mode) {
     case UiMode::kLocked:
       handleLocked(t_event);

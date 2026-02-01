@@ -525,6 +525,24 @@ void test_update_does_nothing_when_locked() {
 }
 
 // =============================================================================
+// Program change
+// =============================================================================
+
+void test_program_change_publishes_updated() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  service.handleEvent(makeLogicProgramChangedEvent(1));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+// =============================================================================
 // interestedIn Tests
 // =============================================================================
 
@@ -719,6 +737,9 @@ int main() {
   RUN_TEST(test_update_pops_pot_overlay_after_timeout);
   RUN_TEST(test_update_pops_tempo_overlay_after_timeout);
   RUN_TEST(test_update_does_nothing_when_locked);
+
+  // Program change
+  RUN_TEST(test_program_change_publishes_updated);
 
   // interestedIn
   RUN_TEST(test_interested_in_physical_switch_long_press_menu_lock);
