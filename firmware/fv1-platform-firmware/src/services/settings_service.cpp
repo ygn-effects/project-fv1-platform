@@ -56,6 +56,9 @@ void SettingsService::handleEvent(const Event& t_event) {
       case EventSubject::kGeneral:
         saveRegion(MemoryRegion::kLogicalState);
         break;
+
+      default:
+        break;
     }
   }
 
