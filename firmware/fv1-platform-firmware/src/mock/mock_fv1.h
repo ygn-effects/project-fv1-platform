@@ -9,9 +9,12 @@ class MockFv1 : public Fv1 {
   public:
     uint8_t m_s0, m_s1, m_s2;
     std::vector<std::tuple<Fv1Pot, uint16_t>> m_potValues;
+    bool initialized = false;
 
     MockFv1()
       : m_s0(0), m_s1(0), m_s2(0) {}
+
+    void init() override { initialized = true; }
 
     void sendProgramChange(uint8_t t_program) override {
       m_s0 = t_program & 0x1;
