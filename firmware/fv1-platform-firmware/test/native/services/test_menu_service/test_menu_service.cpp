@@ -217,6 +217,20 @@ void test_bypass_toggled_locks_menu() {
   assertNoMoreEvents();
 }
 
+void test_bypass_toggled_ignored_when_locked() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Bypass toggle should lock
+  service.handleEvent(makeLogicBypassToggledEvent(2000));
+
+  assertNoMoreEvents();
+}
+
 // =============================================================================
 // Navigation Tests (Selecting Mode)
 // =============================================================================
@@ -300,17 +314,21 @@ void test_pot_value_changed_publishes_updated_when_unlocked() {
   assertNoMoreEvents();
 }
 
-void test_pot_ignored_when_locked() {
+void test_pot_value_changed_publishes_updated_when_locked() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
 
+  // Use non-delay effect so Pot1 overlay works
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
   service.init();
   clearEventBus();
 
-  // Try to use pot while locked
-  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 1000));
+  // Move pot
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 2000));
 
+  assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
 }
 
@@ -337,7 +355,7 @@ void test_tempo_change_publishes_updated_when_unlocked() {
   assertNoMoreEvents();
 }
 
-void test_tempo_ignored_when_locked() {
+void test_tempo_change_publishes_updated_when_locked() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
@@ -345,9 +363,10 @@ void test_tempo_ignored_when_locked() {
   service.init();
   clearEventBus();
 
-  // Try tempo change while locked
-  service.handleEvent(makeLogicTempoValueChangedEvent(500, 1000));
+  // Tempo change
+  service.handleEvent(makeLogicTempoValueChangedEvent(500, 2000));
 
+  assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
 }
 
@@ -713,6 +732,7 @@ int main() {
   RUN_TEST(test_long_press_unlocks_menu);
   RUN_TEST(test_long_press_locks_menu_when_unlocked);
   RUN_TEST(test_bypass_toggled_locks_menu);
+  RUN_TEST(test_bypass_toggled_ignored_when_locked);
 
   // Navigation (Selecting Mode)
   RUN_TEST(test_encoder_delta_publishes_updated_when_unlocked);
@@ -721,11 +741,11 @@ int main() {
 
   // Pot Overlay
   RUN_TEST(test_pot_value_changed_publishes_updated_when_unlocked);
-  RUN_TEST(test_pot_ignored_when_locked);
+  RUN_TEST(test_pot_value_changed_publishes_updated_when_locked);
 
   // Tempo Overlay
   RUN_TEST(test_tempo_change_publishes_updated_when_unlocked);
-  RUN_TEST(test_tempo_ignored_when_locked);
+  RUN_TEST(test_tempo_change_publishes_updated_when_locked);
 
   // Editing Mode
   RUN_TEST(test_editing_encoder_delta_publishes_updated);

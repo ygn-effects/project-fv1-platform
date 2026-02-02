@@ -45,6 +45,18 @@ void MenuService::handleLocked(const Event& t_event) {
     publishUIMenuUnlockedEvent();
     publishViewUpdate();
   }
+
+  if (t_event.m_domain == EventDomain::kLogic) {
+    if (t_event.m_subject == EventSubject::kPot
+        && t_event.m_action == EventAction::kValueChanged) {
+      publishViewUpdate();
+    }
+
+    if (t_event.m_subject == EventSubject::kTempo
+        && t_event.m_action == EventAction::kValueChanged) {
+      publishViewUpdate();
+    }
+  }
 }
 
 void MenuService::handleUnlocked(const Event& t_event) {
