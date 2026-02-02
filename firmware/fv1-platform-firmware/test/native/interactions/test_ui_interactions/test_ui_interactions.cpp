@@ -106,6 +106,52 @@ Event makeUIProgramValueChange(int8_t t_delta) {
   return e;
 }
 
+Event makeUIPresetValueChange(int8_t t_delta) {
+  Event e{};
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kValueChanged;
+  e.m_data.delta = t_delta;
+  return e;
+}
+
+Event makeUIPresetBankValueChange(int8_t t_delta) {
+  Event e{};
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPresetBank;
+  e.m_action = EventAction::kValueChanged;
+  e.m_data.delta = t_delta;
+  return e;
+}
+
+Event makeMidiProgramValueChange(int8_t t_value) {
+  Event e{};
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kValueChanged;
+  e.m_data.value = t_value;
+  return e;
+}
+
+Event makeMidiPresetValueChange(int8_t t_value) {
+  Event e{};
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kValueChanged;
+  e.m_data.value = t_value;
+  return e;
+}
+
+Event makeMidiPotValueChange(PotId t_id, uint8_t t_value) {
+  Event e{};
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(t_id);
+  e.m_data.value = t_value;
+  return e;
+}
+
 void setUp() {
 
 }
@@ -907,7 +953,7 @@ void test_successive_pot_move_pushes_pops_overlays() {
 // Value Change Display Updates
 // =============================================================================
 
-void test_program_value_change_update_display() {
+void test_program_value_change_update_display_unlocked() {
   InteractionFixture fix;
   fix.logicalState.m_bypassState = BypassState::kActive;
   fix.syncEepromWithState();
@@ -933,6 +979,437 @@ void test_program_value_change_update_display() {
 
   // Label value
   TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("Prog", ProgramsDefinitions::kPrograms[1].m_name));
+}
+
+void test_program_value_change_update_display_locked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeMidiProgramValueChange(1));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("Prog", ProgramsDefinitions::kPrograms[1].m_name));
+}
+
+void test_preset_value_change_update_display_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_programIndex = 1;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.SyncEepromWithLoadedPresetBank();
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeUIPresetValueChange(1));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("Preset", "1"));
+}
+
+void test_preset_value_change_update_display_locked() {
+  InteractionFixture fix;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_programIndex = 1;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.SyncEepromWithLoadedPresetBank();
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeMidiPresetValueChange(1));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("P", "1"));
+}
+
+void test_preset_bank_value_change_update_display_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeUIPresetBankValueChange(1));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("Bank", "1"));
+}
+
+void test_preset_bank_value_change_update_display_locked() {
+  InteractionFixture fix;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeMidiPresetValueChange(4));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("B", "1"));
+}
+
+void test_tempo_value_change_updates_display_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot0, 512));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Set the clock
+  fix.mockClock.advanceBy(ui::MenuConstants::c_tempoMenuTimeout + 1);
+
+  // update and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("Tempo", "510 ms"));
+}
+
+void test_tempo_value_change_updates_display_locked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeMidiPotValueChange(PotId::kPot0, 64));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("T", "513 ms"));
+}
+
+void test_tap_enabled_div_disabled_tap_long_press_updates_display_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_tapState = TapState::kEnabled;
+  fix.logicalState.m_interval = 400;
+  fix.logicalState.m_tempo = 400;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kTap));
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Set the clock
+  fix.mockClock.advanceBy(ui::MenuConstants::c_tempoMenuTimeout + 1);
+
+  // update and handle events to clear the overlay
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("Tempo", "200 ms"));
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("Div", "/2"));
+}
+
+void test_tap_enabled_div_disabled_tap_long_press_updates_display_locked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_tapState = TapState::kEnabled;
+  fix.logicalState.m_interval = 400;
+  fix.logicalState.m_tempo = 400;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kTap));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("T", "200 ms"));
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("D", "/2"));
+}
+
+void test_tap_enabled_div_enabled_tap_long_press_updates_display_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_tapState = TapState::kEnabled;
+  fix.logicalState.m_divState = DivState::kEnabled;
+  fix.logicalState.m_divValue = DivValue::kEightTriplet;
+  fix.logicalState.m_interval = 300;
+  fix.logicalState.m_divInterval = 100;
+  fix.logicalState.m_tempo = 100;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kTap));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Set the clock
+  fix.mockClock.advanceBy(ui::MenuConstants::c_tempoMenuTimeout + 1);
+
+  // update and handle events to clear the overlay
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("Tempo", "300 ms"));
+  TEST_ASSERT_FALSE(fix.mockDisplay.showsLabelValue("Div", "/3"));
+}
+
+void test_tap_enabled_div_enabled_tap_long_press_updates_display_locked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_tapState = TapState::kEnabled;
+  fix.logicalState.m_divState = DivState::kEnabled;
+  fix.logicalState.m_divValue = DivValue::kEightTriplet;
+  fix.logicalState.m_interval = 300;
+  fix.logicalState.m_divInterval = 100;
+  fix.logicalState.m_tempo = 100;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kTap));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("T", "300 ms"));
+  TEST_ASSERT_FALSE(fix.mockDisplay.showsLabelValue("D", "/3"));
+}
+
+void test_mix_pot_moved_updates_display_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kMixPot, 512));
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Set the clock
+  fix.mockClock.advanceBy(ui::MenuConstants::c_potMenuTimeout + 1);
+
+  // update and handle events to clear the overlay
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("Mix", "50 %"));
+}
+
+void test_expr_moved_updates_mapped_pot_display_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_exprParams[0].m_state = ExprState::kActive;
+  fix.logicalState.m_exprParams[0].m_mappedPot = MappedPot::kPot1;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeDriverExprMove(512));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Set the clock
+  fix.mockClock.advanceBy(ui::MenuConstants::c_potMenuTimeout + 1);
+
+  // update and handle events to clear the overlay
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("Feedback", "50 %"));
+}
+
+void test_expr_moved_updates_mapped_pot_display_locked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_exprParams[0].m_state = ExprState::kActive;
+  fix.logicalState.m_exprParams[0].m_mappedPot = MappedPot::kPot1;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeDriverExprMove(512));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("P1", "50 %"));
 }
 
 // =============================================================================
@@ -971,7 +1448,21 @@ int main() {
   RUN_TEST(test_successive_pot_move_pushes_pops_overlays);
 
   // Value Change Display Updates
-  RUN_TEST(test_program_value_change_update_display);
+  RUN_TEST(test_program_value_change_update_display_unlocked);
+  RUN_TEST(test_program_value_change_update_display_locked);
+  RUN_TEST(test_preset_value_change_update_display_locked);
+  RUN_TEST(test_preset_value_change_update_display_unlocked);
+  RUN_TEST(test_preset_bank_value_change_update_display_locked);
+  RUN_TEST(test_preset_bank_value_change_update_display_unlocked);
+  RUN_TEST(test_tempo_value_change_updates_display_unlocked);
+  RUN_TEST(test_tempo_value_change_updates_display_locked);
+  RUN_TEST(test_tap_enabled_div_disabled_tap_long_press_updates_display_locked);
+  RUN_TEST(test_tap_enabled_div_disabled_tap_long_press_updates_display_unlocked);
+  RUN_TEST(test_tap_enabled_div_enabled_tap_long_press_updates_display_unlocked);
+  RUN_TEST(test_tap_enabled_div_enabled_tap_long_press_updates_display_locked);
+  RUN_TEST(test_mix_pot_moved_updates_display_unlocked);
+  RUN_TEST(test_expr_moved_updates_mapped_pot_display_unlocked);
+  RUN_TEST(test_expr_moved_updates_mapped_pot_display_locked);
 
   return UNITY_END();
 }
