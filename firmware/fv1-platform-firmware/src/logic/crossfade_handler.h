@@ -50,6 +50,8 @@ struct CrossfadeHandler {
   static constexpr uint16_t c_midPoint = 512;
 
   MixCurve m_currentCurve = MixCurve::kTransition;
+  uint16_t m_minInputValue = 0;
+  uint16_t m_maxInputValue = 1023;
 
   CrossfadeResult calculate(uint16_t t_mixValue);
 };
