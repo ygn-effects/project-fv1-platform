@@ -18,12 +18,14 @@
 #include "services/tap_service.h"
 #include "services/tempo_service.h"
 #include "services/fv1_service.h"
+#include "services/crossfade_service.h"
 #include "services/menu_service.h"
 #include "services/display_service.h"
 #include "mock/mock_eeprom.h"
 #include "mock/mock_fv1.h"
 #include "mock/mock_bypass.h"
 #include "mock/mock_clock.h"
+#include "mock/mock_dac.h"
 #include "mock/mock_adjustable.h"
 #include "mock/mock_display.h"
 
@@ -38,6 +40,8 @@ class InteractionFixture {
     MockedClock mockClock;
     MockAdjustable mockTapLed;
     MockDisplay mockDisplay;
+    MockDac mockDacDry;
+    MockDac mockDacWet;
 
     FsmService fsmService;
     MidiService midiService;
@@ -52,6 +56,8 @@ class InteractionFixture {
     TapService tapService;
     TempoService tempoService;
     Fv1Service fv1Service;
+    CrossfadeService crossfadeService;
+
     MenuService menuService;
     DisplayService displayService;
 
@@ -71,6 +77,7 @@ class InteractionFixture {
       , tapService(logicalState)
       , tempoService(logicalState, mockTapLed, mockClock)
       , fv1Service(logicalState, mockFv1)
+      , crossfadeService(logicalState, mockDacDry, mockDacWet)
       , menuService(logicalState, mockClock)
       , displayService(logicalState, mockDisplay)
     {
@@ -194,6 +201,7 @@ class InteractionFixture {
       serviceManager.registerService(&tapService);
       serviceManager.registerService(&tempoService);
       serviceManager.registerService(&fv1Service);
+      serviceManager.registerService(&crossfadeService);
       serviceManager.registerService(&menuService);
       serviceManager.registerService(&displayService);
     }

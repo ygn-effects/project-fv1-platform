@@ -1,6 +1,7 @@
 #include <unity.h>
 #include "../interaction_fixture.h"
 #include "../src/logic/programs.h"
+#include "../src/logic/crossfade_handler.cpp"
 #include "../src/logic/expr_handler.cpp"
 #include "../src/logic/fv1_handler.cpp"
 #include "../src/logic/memory_handler.cpp"
@@ -23,6 +24,7 @@
 #include "../src/services/tap_service.cpp"
 #include "../src/services/tempo_service.cpp"
 #include "../src/services/fv1_service.cpp"
+#include "../src/services/crossfade_service.cpp"
 #include "../src/services/menu_service.cpp"
 #include "../src/services/display_service.cpp"
 #include "../src/ui/menu_model.cpp"
