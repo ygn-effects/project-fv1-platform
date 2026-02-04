@@ -28,6 +28,13 @@ enum class ParamUnit : uint8_t {
   kMs
 };
 
+enum class MixCurve : uint8_t {
+  kTransition,
+  kConstantPower,
+  kLogarithmic,
+  kLinear
+};
+
 struct ProgramParameter {
   const char* m_label;
   uint16_t m_min;
@@ -38,9 +45,16 @@ struct ProgramParameter {
   bool m_editable;
 };
 
+struct CrossfadeParameter {
+  MixCurve m_curve;
+  uint16_t m_minValue;
+  uint16_t m_maxValue;
+};
+
 struct Program {
   const char* m_name;
   ProgramParameter m_params[ProgramConstants::c_maxParameters];
+  CrossfadeParameter m_crossfadeParams;
   bool m_isDelayEffect;
   uint16_t m_minDelayMs;
   uint16_t m_maxDelayMs;
