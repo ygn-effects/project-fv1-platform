@@ -70,21 +70,26 @@ void MenuService::handleUnlocked(const Event& t_event) {
       if (t_event.m_subject == EventSubject::kEncoder
           && t_event.matchesId(EncoderId::kMenuEncoder)) {
         handleSelecting(t_event);
+        publishViewUpdate();
+        return;
       }
-      else if (t_event.m_subject == EventSubject::kSwitch
+
+      if (t_event.m_subject == EventSubject::kSwitch
+          && t_event.m_action == EventAction::kPressed
           && t_event.matchesId(SwitchId::kMenuEncoder)) {
         handleSelecting(t_event);
+        publishViewUpdate();
+        return;
       }
-      else if (t_event.m_subject == EventSubject::kSwitch
+
+      if (t_event.m_subject == EventSubject::kSwitch
           && t_event.m_action == EventAction::kLongPressed
           && t_event.matchesId(SwitchId::kMenuLock)) {
         m_handler.lock();
         publishUIMenuLockedEvent();
+        publishViewUpdate();
+        return;
       }
-
-      publishViewUpdate();
-      m_lastInputTime = t_event.m_timestamp;
-      return;
     }
 
     if (t_event.m_domain == EventDomain::kLogic) {
@@ -118,6 +123,7 @@ void MenuService::handleUnlocked(const Event& t_event) {
       publishViewUpdate();
     }
     else if (t_event.m_subject == EventSubject::kSwitch
+        && t_event.m_action == EventAction::kPressed
         && t_event.matchesId(SwitchId::kMenuEncoder)) {
       handleEditing(t_event);
       publishViewUpdate();
@@ -138,6 +144,8 @@ void MenuService::handleSelecting(const Event& t_event) {
     default:
       break;
   }
+
+  m_lastInputTime = t_event.m_timestamp;
 }
 
 void MenuService::handleEditing(const Event& t_event) {
@@ -153,6 +161,8 @@ void MenuService::handleEditing(const Event& t_event) {
     default:
       break;
   }
+
+  m_lastInputTime = t_event.m_timestamp;
 }
 
 void MenuService::handlePotsMoving(const Event& t_event) {
