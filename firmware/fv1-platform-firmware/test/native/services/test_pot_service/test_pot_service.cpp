@@ -344,6 +344,117 @@ void test_program_change_syncs_handler_from_logical_state() {
   assertEventBusEmpty();
 }
 
+void test_program_change_copies_pot_values_in_program_mode() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set to a non delay effect
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  // Ensure program mode
+  logicalState.m_programMode = ProgramMode::kProgram;
+  logicalState.m_currentProgram = 0;
+
+  // Set pot values for program 0
+  logicalState.m_potParams[0][0].m_value = 100;
+  logicalState.m_potParams[0][1].m_value = 200;
+  logicalState.m_potParams[0][2].m_value = 300;
+  logicalState.m_potParams[0][3].m_value = 400;
+
+  // Set different pot values for program 3
+  logicalState.m_potParams[3][0].m_value = 900;
+  logicalState.m_potParams[3][1].m_value = 800;
+  logicalState.m_potParams[3][2].m_value = 700;
+  logicalState.m_potParams[3][3].m_value = 600;
+
+  // Init (sets m_lastSyncedProgram = 0)
+  potService.init();
+
+  // Simulate ProgramService having already updated currentProgram
+  logicalState.m_currentProgram = 3;
+
+  // Send program change event
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+
+  // Verify program 3's pot values now match program 0's values
+  TEST_ASSERT_EQUAL(100, logicalState.m_potParams[3][0].m_value);
+  TEST_ASSERT_EQUAL(200, logicalState.m_potParams[3][1].m_value);
+  TEST_ASSERT_EQUAL(300, logicalState.m_potParams[3][2].m_value);
+  TEST_ASSERT_EQUAL(400, logicalState.m_potParams[3][3].m_value);
+}
+
+void test_program_change_does_not_copy_in_preset_mode() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set to a non delay effect
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  // Set preset mode
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentProgram = 0;
+
+  // Set pot values for program 0
+  logicalState.m_potParams[0][0].m_value = 100;
+  logicalState.m_potParams[0][1].m_value = 200;
+  logicalState.m_potParams[0][2].m_value = 300;
+  logicalState.m_potParams[0][3].m_value = 400;
+
+  // Set different pot values for program 3
+  logicalState.m_potParams[3][0].m_value = 900;
+  logicalState.m_potParams[3][1].m_value = 800;
+  logicalState.m_potParams[3][2].m_value = 700;
+  logicalState.m_potParams[3][3].m_value = 600;
+
+  // Init
+  potService.init();
+
+  // Simulate ProgramService having already updated currentProgram
+  logicalState.m_currentProgram = 3;
+
+  // Send program change event
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+
+  // Verify program 3's pot values are NOT overwritten
+  TEST_ASSERT_EQUAL(900, logicalState.m_potParams[3][0].m_value);
+  TEST_ASSERT_EQUAL(800, logicalState.m_potParams[3][1].m_value);
+  TEST_ASSERT_EQUAL(700, logicalState.m_potParams[3][2].m_value);
+  TEST_ASSERT_EQUAL(600, logicalState.m_potParams[3][3].m_value);
+}
+
+void test_program_change_does_not_publish_events() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set to a non delay effect
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  // Ensure program mode
+  logicalState.m_programMode = ProgramMode::kProgram;
+  logicalState.m_currentProgram = 0;
+
+  // Set pot values for program 0
+  logicalState.m_potParams[0][0].m_value = 100;
+  logicalState.m_potParams[0][1].m_value = 200;
+  logicalState.m_potParams[0][2].m_value = 300;
+  logicalState.m_potParams[0][3].m_value = 400;
+
+  // Init
+  potService.init();
+
+  // Simulate ProgramService having already updated currentProgram
+  logicalState.m_currentProgram = 3;
+
+  // Clear event bus before the action under test
+  clearEventBus();
+
+  // Send program change event
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+
+  // No events should have been published
+  assertEventBusEmpty();
+}
+
 // =============================================================================
 // Midi tests
 // =============================================================================
@@ -681,6 +792,9 @@ int main() {
 
   // Program Change Tests
   RUN_TEST(test_program_change_syncs_handler_from_logical_state);
+  RUN_TEST(test_program_change_copies_pot_values_in_program_mode);
+  RUN_TEST(test_program_change_does_not_copy_in_preset_mode);
+  RUN_TEST(test_program_change_does_not_publish_events);
 
   // Midi tests
   RUN_TEST(test_midi_pot_value_changed_changes_logical_state);

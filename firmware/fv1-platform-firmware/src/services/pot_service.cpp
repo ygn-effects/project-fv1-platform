@@ -110,8 +110,16 @@ void PotService::handleMenuPotMaxValueMove(const Event& t_event, uint8_t t_potIn
   publishSavePotEvent(t_potIndex);
 }
 
+void PotService::copyPotValues(uint8_t t_targetProgram) {
+  for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
+    m_logicalState.m_potParams[t_targetProgram][i].m_value =
+      m_logicalState.m_potParams[m_lastSyncedProgram][i].m_value;
+  }
+}
+
 void PotService::init() {
   syncHandler();
+  m_lastSyncedProgram = m_logicalState.m_currentProgram;
 }
 
 void PotService::handleEvent(const Event& t_event) {
@@ -126,6 +134,11 @@ void PotService::handleEvent(const Event& t_event) {
   if (t_event.m_domain == EventDomain::kLogic) {
     if (t_event.m_subject == EventSubject::kProgram
         && t_event.m_action == EventAction::kValueChanged) {
+      if (m_logicalState.m_programMode == ProgramMode::kProgram) {
+        copyPotValues(m_logicalState.m_currentProgram);
+      }
+
+      m_lastSyncedProgram = m_logicalState.m_currentProgram;
       syncHandler();
       return;
     }
