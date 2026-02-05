@@ -122,12 +122,6 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
-      // Encoder‑switch long press
-      if (isLongPressed(t_event, SwitchId::kMenuEncoder)) {
-        rePublishPhysicalEvent(t_event);
-        return;
-      }
-
       // Menu lock long press
       if (isLongPressed(t_event, SwitchId::kMenuLock)) {
         rePublishPhysicalEvent(t_event);

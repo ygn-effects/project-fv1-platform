@@ -356,21 +356,6 @@ void test_program_idle_republishes_tap_long_press() {
   TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
 }
 
-void test_program_idle_republishes_encoder_long_press() {
-  InteractionFixture fix;
-  fix.logicalState.m_bypassState = BypassState::kActive;
-  fix.logicalState.m_programMode = ProgramMode::kProgram;
-  fix.syncEepromWithState();
-  fix.init();
-  fix.publishAndDispatchAllEvents(makeBootEvent());
-  fix.clearEventBus();
-
-  Event driverEvent = makeDriverSwitchLongPress(SwitchId::kMenuEncoder);
-  fix.publishAndDispatchEvent(driverEvent);
-
-  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
-}
-
 void test_program_idle_republishes_program_mode_long_press() {
   InteractionFixture fix;
   fix.logicalState.m_bypassState = BypassState::kActive;
@@ -456,6 +441,21 @@ void test_program_idle_filters_pot_move() {
   fix.clearEventBus();
 
   Event driverEvent = makeDriverPotMove(PotId::kPot0, 512);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_FALSE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
+void test_program_idle_filters_encoder_long_press() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kProgram;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverSwitchLongPress(SwitchId::kMenuEncoder);
   fix.publishAndDispatchEvent(driverEvent);
 
   TEST_ASSERT_FALSE(eventWasRepublishedAsPhysical(fix, driverEvent));
@@ -827,11 +827,11 @@ int main() {
   RUN_TEST(test_program_idle_republishes_bypass_press);
   RUN_TEST(test_program_idle_republishes_tap_press);
   RUN_TEST(test_program_idle_republishes_tap_long_press);
-  RUN_TEST(test_program_idle_republishes_encoder_long_press);
   RUN_TEST(test_program_idle_republishes_program_mode_long_press);
   RUN_TEST(test_program_idle_republishes_expr_move);
   RUN_TEST(test_program_idle_republishes_menu_lock_long_press);
   RUN_TEST(test_program_idle_filters_encoder_press);
+  RUN_TEST(test_program_idle_filters_encoder_long_press);
   RUN_TEST(test_program_idle_filters_encoder_delta);
   RUN_TEST(test_program_idle_filters_pot_move);
 
