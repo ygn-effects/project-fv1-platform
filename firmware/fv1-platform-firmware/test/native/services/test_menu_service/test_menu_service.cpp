@@ -628,17 +628,6 @@ void test_interested_in_logic_program_changed() {
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
-void test_interested_in_ui_expr() {
-  LogicalState logicalState;
-  MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
-
-  Event e;
-  e.m_domain = EventDomain::kUI;
-  e.m_subject = EventSubject::kExpr;
-  TEST_ASSERT_TRUE(service.interestedIn(e));
-}
-
 void test_not_interested_in_other_switches() {
   LogicalState logicalState;
   MockedClock mockClock;
@@ -769,7 +758,6 @@ int main() {
   RUN_TEST(test_interested_in_logic_tempo_value_changed);
   RUN_TEST(test_interested_in_logic_bypass_toggled);
   RUN_TEST(test_interested_in_logic_program_changed);
-  RUN_TEST(test_interested_in_ui_expr);
   RUN_TEST(test_not_interested_in_other_switches);
   RUN_TEST(test_not_interested_in_switch_press);
   RUN_TEST(test_not_interested_in_other_encoders);

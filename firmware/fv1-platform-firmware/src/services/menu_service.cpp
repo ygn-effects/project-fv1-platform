@@ -249,10 +249,6 @@ bool MenuService::interestedIn(const Event& t_event) const {
         && t_event.matchesId(SwitchId::kMenuEncoder)) return true;
   }
 
-  if (t_event.m_domain == EventDomain::kUI) {
-    if (t_event.m_subject == EventSubject::kExpr) return true;
-  }
-
   if (t_event.m_domain == EventDomain::kLogic) {
     if (t_event.m_subject == EventSubject::kTempo
         && t_event.m_action == EventAction::kValueChanged) return true;
