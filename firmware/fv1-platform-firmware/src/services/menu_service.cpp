@@ -3,6 +3,11 @@
 MenuService::MenuService(LogicalState& t_lState, Clock& t_clock)
     : m_logicState(t_lState), m_clock(t_clock) {}
 
+void MenuService::syncSavePresetState() {
+  m_logicState.m_saveTargetBank = m_logicState.m_currentPresetBank;
+  m_logicState.m_saveTargetPreset = m_logicState.m_currentPreset;
+}
+
 void MenuService::publishUIMenuLockedEvent() const {
   Event e;
   e.m_domain = EventDomain::kUI;
@@ -183,6 +188,7 @@ void MenuService::handleTempoChange(const Event& t_event) {
 
 void MenuService::init() {
   m_handler.init();
+  syncSavePresetState();
   publishViewUpdate();
 }
 
@@ -191,6 +197,10 @@ void MenuService::handleEvent(const Event& t_event) {
     if (t_event.m_subject == EventSubject::kProgram
         && t_event.m_action == EventAction::kValueChanged) {
       publishViewUpdate();
+
+      if (m_logicState.m_programMode == ProgramMode::kPreset) {
+        syncSavePresetState();
+      }
     }
   }
 

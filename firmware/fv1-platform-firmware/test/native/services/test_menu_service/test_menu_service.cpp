@@ -158,6 +158,20 @@ void test_init_starts_locked() {
   assertNoMoreEvents();
 }
 
+void test_init_syncs_save_bank_preset_to_logical_state() {
+  LogicalState logicalState;
+  logicalState.m_currentPresetBank = 2;
+  logicalState.m_currentPreset = 1;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  TEST_ASSERT_EQUAL(2, logicalState.m_saveTargetBank);
+  TEST_ASSERT_EQUAL(1, logicalState.m_saveTargetPreset);
+}
+
 // =============================================================================
 // Lock/Unlock Tests
 // =============================================================================
@@ -561,6 +575,41 @@ void test_program_change_publishes_updated() {
   assertNoMoreEvents();
 }
 
+void test_program_change_syncs_save_bank_preset_to_logical_state_preset_mode() {
+  LogicalState logicalState;
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentPresetBank = 3;
+  logicalState.m_currentPreset = 2;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  logicalState.m_currentPreset = 1;
+  service.handleEvent(makeLogicProgramChangedEvent(1));
+
+  TEST_ASSERT_EQUAL(3, logicalState.m_saveTargetBank);
+  TEST_ASSERT_EQUAL(1, logicalState.m_saveTargetPreset);
+}
+
+void test_program_change_not_syncs_save_bank_preset_to_logical_state_program_mode() {
+  LogicalState logicalState;
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentPresetBank = 3;
+  logicalState.m_currentPreset = 2;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  service.handleEvent(makeLogicProgramChangedEvent(1));
+
+  TEST_ASSERT_EQUAL(3, logicalState.m_saveTargetBank);
+  TEST_ASSERT_EQUAL(2, logicalState.m_saveTargetPreset);
+}
+
 // =============================================================================
 // interestedIn Tests
 // =============================================================================
@@ -716,6 +765,7 @@ int main() {
   // Init
   RUN_TEST(test_init_publishes_updated_event);
   RUN_TEST(test_init_starts_locked);
+  RUN_TEST(test_init_syncs_save_bank_preset_to_logical_state);
 
   // Lock/Unlock
   RUN_TEST(test_long_press_unlocks_menu);
@@ -749,6 +799,8 @@ int main() {
 
   // Program change
   RUN_TEST(test_program_change_publishes_updated);
+  RUN_TEST(test_program_change_syncs_save_bank_preset_to_logical_state_preset_mode);
+  RUN_TEST(test_program_change_not_syncs_save_bank_preset_to_logical_state_program_mode);
 
   // interestedIn
   RUN_TEST(test_interested_in_physical_switch_long_press_menu_lock);

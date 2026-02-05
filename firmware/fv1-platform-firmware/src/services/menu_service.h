@@ -31,6 +31,8 @@ class MenuService : public Service {
     bool m_potMenuActive{false};
     bool m_tempoMenuActive{false};
 
+    void syncSavePresetState();
+
     void publishUIMenuLockedEvent() const;
     void publishUIMenuUnlockedEvent() const;
     void publishUIMenuUpdatedEvent();
