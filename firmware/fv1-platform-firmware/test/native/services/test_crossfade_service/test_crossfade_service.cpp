@@ -20,13 +20,12 @@ Event makeLogicProgramChangedEvent(uint8_t t_programId) {
   return e;
 }
 
-Event makeLogicPotValueChangedEvent(PotId t_id, uint16_t t_value) {
+Event makeLogicPotValueChangedEvent(PotId t_id) {
   Event e;
   e.m_domain = EventDomain::kLogic;
   e.m_subject = EventSubject::kPot;
   e.m_action = EventAction::kValueChanged;
   e.m_id = static_cast<uint8_t>(t_id);
-  e.m_data.value = t_value;
   return e;
 }
 
@@ -106,7 +105,8 @@ void test_logical_pot_value_changed_event_writes_dacs_full_dry() {
   fadeService.init();
 
   // Full dry
-  fadeService.handleEvent(makeLogicPotValueChangedEvent(PotId::kMixPot, 0));
+  state.m_potParams[state.m_currentProgram][3].m_value = 0;
+  fadeService.handleEvent(makeLogicPotValueChangedEvent(PotId::kMixPot));
 
   TEST_ASSERT_EQUAL(1023, dacDry.m_lastValue);
   TEST_ASSERT_EQUAL(0, dacWet.m_lastValue);
@@ -124,7 +124,8 @@ void test_logical_pot_value_changed_event_writes_dacs_full_wet() {
   fadeService.init();
 
   // Full wet
-  fadeService.handleEvent(makeLogicPotValueChangedEvent(PotId::kMixPot, 1023));
+  state.m_potParams[state.m_currentProgram][3].m_value = 1023;
+  fadeService.handleEvent(makeLogicPotValueChangedEvent(PotId::kMixPot));
 
   // index = 512 >> 2 = 128
   // sineLut[128] = 724, sineLut[127] = 719
@@ -144,7 +145,8 @@ void test_logical_pot_value_changed_event_writes_dacs_mid_point() {
   fadeService.init();
 
   // Mid point (512)
-  fadeService.handleEvent(makeLogicPotValueChangedEvent(PotId::kMixPot, 512));
+  state.m_potParams[state.m_currentProgram][3].m_value = 512;
+  fadeService.handleEvent(makeLogicPotValueChangedEvent(PotId::kMixPot));
 
   // Program 0 uses kConstantPower with range 0-512
   // effectiveValue = mapValue(512, 0, 1023, 0, 512) = 256

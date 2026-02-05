@@ -32,7 +32,7 @@ void CrossfadeService::handleEvent(const Event& t_event) {
 
     if (t_event.m_subject == EventSubject::kPot
         && t_event.m_action == EventAction::kValueChanged) {
-      applyMix(t_event.m_data.value);
+      applyMix(m_logicalState.m_potParams[m_logicalState.m_currentProgram][static_cast<uint8_t>(PotId::kMixPot)].m_value);
     }
   }
 }
