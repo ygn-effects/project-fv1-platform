@@ -106,6 +106,9 @@ constexpr const char* labelPot1MaxValue(const LogicalState* t_state);
 constexpr const char* labelPot2MaxValue(const LogicalState* t_state);
 constexpr const char* labelMixPotMaxValue(const LogicalState* t_state);
 constexpr const char* labelPotSettings(const LogicalState* t_state);
+constexpr const char* labelPresetBankSaveTarget(const LogicalState* t_state);
+constexpr const char* labelPresetSaveTarget(const LogicalState* t_state);
+constexpr const char* labelSave(const LogicalState* t_state);
 
 constexpr const char* valueProgram(const LogicalState* t_state);
 const char* valuePresetBank(const LogicalState* t_state);
@@ -135,6 +138,8 @@ const char* valuePot0MaxValue(const LogicalState* t_state);
 const char* valuePot1MaxValue(const LogicalState* t_state);
 const char* valuePot2MaxValue(const LogicalState* t_state);
 const char* valueMixPotMaxValue(const LogicalState* t_state);
+const char* valuePresetBankSaveTarget(const LogicalState* t_state);
+const char* valuePresetSaveTarget(const LogicalState* t_state);
 
 void onMoveProgram(int8_t t_delta);
 void onMovePot0(int8_t t_delta);
@@ -154,8 +159,11 @@ void onMovePot0MaxValue(int8_t t_delta);
 void onMovePot1MaxValue(int8_t t_delta);
 void onMovePot2MaxValue(int8_t t_delta);
 void onMoveMixPotMaxValue(int8_t t_delta);
+void onMovePresetBankSaveTarget(int8_t t_delta);
+void onMovePresetSaveTarget(int8_t t_delta);
 
 void onClickExprState();
+void onClickExprDirection();
 void onClickExprDirection();
 
 extern const MenuPage BlankMenuPage;
@@ -169,5 +177,6 @@ extern const MenuPage Pot2ValueMenuPage;
 extern const MenuPage MixPotValueMenuPage;
 extern const MenuPage TempoMenuPage;
 extern const MenuPage PotSettingsMenuPage;
+extern const MenuPage SavePresetMenuPage;
 
 } // namespace ui

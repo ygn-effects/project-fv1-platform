@@ -1142,6 +1142,38 @@ void test_tempo_overlay_active_pot_move_timeout_returns_to_menu() {
 }
 
 // =============================================================================
+// Preset Saving
+// =============================================================================
+
+void test_menu_encoder_long_press_show_preset_saving_menu_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuEncoder));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Header
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Preset save"));
+}
+
+// =============================================================================
 // Value Change Display Updates
 // =============================================================================
 
@@ -1646,6 +1678,8 @@ int main() {
   RUN_TEST(test_tempo_overlay_active_preset_save_replaces_with_save_overlay);
   RUN_TEST(test_tempo_overlay_active_pot_move_timeout_returns_to_menu);
 
+  // Preset Saving
+  RUN_TEST(test_menu_encoder_long_press_show_preset_saving_menu_unlocked);
 
   // Value Change Display Updates
   RUN_TEST(test_program_value_change_update_display_unlocked);

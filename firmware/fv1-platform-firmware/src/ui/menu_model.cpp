@@ -190,6 +190,18 @@ inline constexpr const char* labelPotSettings(const LogicalState* t_state) {
   return "Pot settings";
 }
 
+inline constexpr const char* labelPresetBankSaveTarget(const LogicalState* t_state) {
+  return "Preset bank";
+}
+
+inline constexpr const char* labelPresetSaveTarget(const LogicalState* t_state) {
+  return "Preset";
+}
+
+inline constexpr const char* labelSave(const LogicalState* t_state) {
+  return "Save";
+}
+
 const char* valuePresetBank(const LogicalState* t_state) {
   static char buffer[8];
   snprintf(buffer, sizeof(buffer), "%u", t_state->m_currentPresetBank);
@@ -405,6 +417,20 @@ const char* valuePot2MaxValue(const LogicalState* t_state) {
 const char* valueMixPotMaxValue(const LogicalState* t_state) {
   static char buffer[8];
   snprintf(buffer, sizeof(buffer), "%u", t_state->m_potParams[t_state->m_currentProgram][3].m_maxValue);
+
+  return buffer;
+}
+
+const char* valuePresetBankSaveTarget(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_saveTargetBank);
+
+  return buffer;
+}
+
+const char* valuePresetSaveTarget(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_saveTargetPreset);
 
   return buffer;
 }
@@ -634,6 +660,19 @@ void onClickExprDirection() {
   EventBus::publish(e);
 }
 
+void onClickSavePreset() {
+
+}
+
+
+void onMovePresetBankSaveTarget(int8_t t_delta) {
+
+}
+
+void onMovePresetSaveTarget(int8_t t_delta) {
+
+}
+
 constexpr MenuPage BlankMenuPage = {
   "Back",
   nullptr,
@@ -784,6 +823,20 @@ constexpr MenuPage PotSettingsMenuPage = {
   "Pot settings",
   PotSettingsMenuItems,
   sizeof(PotSettingsMenuItems) / sizeof(PotSettingsMenuItems[0]),
+  ui::MenuLayout::kList
+};
+
+constexpr MenuItem SavePresetMenuItems[] = {
+  { labelPresetBankSaveTarget, isAlwaysVisible, valuePresetBankSaveTarget, onMovePresetBankSaveTarget, nullptr, nullptr },
+  { labelPresetSaveTarget, isAlwaysVisible, valuePresetSaveTarget, onMovePresetSaveTarget, nullptr, nullptr },
+  { labelSave, isAlwaysVisible, nullptr, nullptr, onClickSavePreset, nullptr },
+  { labelBack, isAlwaysVisible, nullptr, nullptr, nullptr, &BlankMenuPage }
+};
+
+constexpr MenuPage SavePresetMenuPage = {
+  "Preset save",
+  SavePresetMenuItems,
+  sizeof(SavePresetMenuItems) / sizeof(SavePresetMenuItems[0]),
   ui::MenuLayout::kList
 };
 

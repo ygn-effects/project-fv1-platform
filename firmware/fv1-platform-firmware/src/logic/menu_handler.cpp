@@ -221,6 +221,10 @@ void MenuHandler::pushTempoOverlay() {
   m_menuStack.push(&ui::TempoMenuPage);
 }
 
+void MenuHandler::pushPresetSaveOverlay() {
+  m_menuStack.push(&ui::SavePresetMenuPage);
+}
+
 void MenuHandler::popOverlay() {
   m_menuStack.pop();
 }

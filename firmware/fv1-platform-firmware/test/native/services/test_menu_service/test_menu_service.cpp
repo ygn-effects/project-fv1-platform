@@ -385,6 +385,29 @@ void test_tempo_change_publishes_updated_when_locked() {
 }
 
 // =============================================================================
+// Preset Save Overlay Tests
+// =============================================================================
+
+void test_menu_encoder_long_press_publishes_updated_when_unlocked() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Unlock
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
+  clearEventBus();
+
+  // Menu encoder long press
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuEncoder));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+// =============================================================================
 // Editing Mode Tests
 // =============================================================================
 
@@ -785,6 +808,9 @@ int main() {
   // Tempo Overlay
   RUN_TEST(test_tempo_change_publishes_updated_when_unlocked);
   RUN_TEST(test_tempo_change_publishes_updated_when_locked);
+
+  // Preset Save Overlay
+  RUN_TEST(test_menu_encoder_long_press_publishes_updated_when_unlocked);
 
   // Editing Mode
   RUN_TEST(test_editing_encoder_delta_publishes_updated);

@@ -90,6 +90,13 @@ void MenuService::handleUnlocked(const Event& t_event) {
         publishViewUpdate();
         return;
       }
+
+      if (t_event.m_subject == EventSubject::kSwitch
+          && t_event.m_action == EventAction::kLongPressed
+          && t_event.matchesId(static_cast<uint8_t>(SwitchId::kMenuEncoder))) {
+        handlePresetSaving(t_event);
+        publishViewUpdate();
+      }
     }
 
     if (t_event.m_domain == EventDomain::kLogic) {
@@ -166,12 +173,13 @@ void MenuService::handleEditing(const Event& t_event) {
 }
 
 void MenuService::handlePotsMoving(const Event& t_event) {
-  if (m_potMenuActive) {
+  if (m_tempoMenuActive || m_savePresetMenuActive) {
+    m_tempoMenuActive = false;
+    m_savePresetMenuActive = false;
     m_handler.popOverlay();
   }
 
-  if (m_tempoMenuActive) {
-    m_tempoMenuActive = false;
+  if (m_potMenuActive) {
     m_handler.popOverlay();
   }
 
@@ -182,8 +190,9 @@ void MenuService::handlePotsMoving(const Event& t_event) {
 }
 
 void MenuService::handleTempoChange(const Event& t_event) {
-  if (m_potMenuActive) {
+  if (m_potMenuActive || m_savePresetMenuActive) {
     m_potMenuActive = false;
+    m_savePresetMenuActive = false;
     m_handler.popOverlay();
   }
 
@@ -193,6 +202,21 @@ void MenuService::handleTempoChange(const Event& t_event) {
 
   m_tempoMenuActive = true;
   m_lastTempoChangeTime = t_event.m_timestamp;
+  m_lastInputTime = t_event.m_timestamp;
+}
+
+void MenuService::handlePresetSaving(const Event& t_event) {
+  if (m_potMenuActive || m_tempoMenuActive) {
+    m_potMenuActive = false;
+    m_tempoMenuActive = false;
+    m_handler.popOverlay();
+  }
+
+  if (!m_savePresetMenuActive) {
+    m_handler.pushPresetSaveOverlay();
+  }
+
+  m_savePresetMenuActive = true;
   m_lastInputTime = t_event.m_timestamp;
 }
 
