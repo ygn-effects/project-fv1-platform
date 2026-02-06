@@ -122,6 +122,27 @@ void MenuService::handleUnlocked(const Event& t_event) {
         return;
       }
     }
+
+    if (t_event.m_domain == EventDomain::kUI) {
+      if (t_event.m_subject == EventSubject::kPreset
+          && t_event.m_action == EventAction::kSettingChanged) {
+        switch (static_cast<SavePresetParam>(t_event.m_id)) {
+          case SavePresetParam::kTargetBank:
+            m_logicState.m_saveTargetBank = Utils::clampedAdd(m_logicState.m_saveTargetBank, t_event.m_data.delta, PresetConstants::c_presetBankCount - 1);
+            break;
+
+          case SavePresetParam::kTargetPreset:
+            m_logicState.m_saveTargetPreset = Utils::clampedAdd(m_logicState.m_saveTargetPreset, t_event.m_data.delta, PresetConstants::c_presetPerBank - 1);
+            break;
+
+          default:
+            break;
+        }
+
+        publishViewUpdate();
+        return;
+      }
+    }
   }
   else {
     if (t_event.m_subject == EventSubject::kEncoder
@@ -305,6 +326,11 @@ bool MenuService::interestedIn(const Event& t_event) const {
 
     if (t_event.m_subject == EventSubject::kPot
         && t_event.m_action == EventAction::kValueChanged) return true;
+  }
+
+  if (t_event.m_domain == EventDomain::kUI) {
+    if (t_event.m_subject == EventSubject::kPreset
+        && t_event.m_action == EventAction::kSettingChanged) return true;
   }
 
   return false;

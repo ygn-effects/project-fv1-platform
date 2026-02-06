@@ -191,7 +191,7 @@ inline constexpr const char* labelPotSettings(const LogicalState* t_state) {
 }
 
 inline constexpr const char* labelPresetBankSaveTarget(const LogicalState* t_state) {
-  return "Preset bank";
+  return "Bank";
 }
 
 inline constexpr const char* labelPresetSaveTarget(const LogicalState* t_state) {
@@ -661,16 +661,32 @@ void onClickExprDirection() {
 }
 
 void onClickSavePreset() {
-
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSave;
+  e.m_timestamp = 0; /*millis()*/
+  EventBus::publish(e);
 }
 
-
 void onMovePresetBankSaveTarget(int8_t t_delta) {
-
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = static_cast<uint8_t>(SavePresetParam::kTargetBank);
+  e.m_timestamp = 0; /*millis()*/
+  EventBus::publish(e);
 }
 
 void onMovePresetSaveTarget(int8_t t_delta) {
-
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = static_cast<uint8_t>(SavePresetParam::kTargetPreset);
+  e.m_timestamp = 0; /*millis()*/
+  EventBus::publish(e);
 }
 
 constexpr MenuPage BlankMenuPage = {

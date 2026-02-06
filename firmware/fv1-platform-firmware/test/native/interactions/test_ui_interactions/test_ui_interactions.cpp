@@ -154,6 +154,16 @@ Event makeMidiPotValueChange(PotId t_id, uint8_t t_value) {
   return e;
 }
 
+Event makeUIPresetSettingChangeEvent(SavePresetParam t_param, int16_t t_delta = 0) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = static_cast<uint8_t>(t_param);
+  e.m_data.delta = t_delta;
+  return e;
+}
+
 void setUp() {
 
 }
@@ -1636,6 +1646,72 @@ void test_expr_moved_updates_mapped_pot_display_locked() {
   TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("P1", "50 %"));
 }
 
+void test_ui_preset_setting_changed_preset_updates_display_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_currentPresetBank = 2;
+  fix.logicalState.m_currentPreset = 1;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Enter save preset menu
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuEncoder));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeUIPresetSettingChangeEvent(SavePresetParam::kTargetPreset, 1));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("Preset", "2"));
+}
+
+void test_ui_preset_setting_changed_bank_updates_display_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_currentPresetBank = 2;
+  fix.logicalState.m_currentPreset = 1;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Enter save preset menu
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuEncoder));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Send the event
+  fix.publishAndDispatchAllEvents(makeUIPresetSettingChangeEvent(SavePresetParam::kTargetBank, 1));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("Bank", "3"));
+}
+
 // =============================================================================
 // Main
 // =============================================================================
@@ -1697,6 +1773,8 @@ int main() {
   RUN_TEST(test_mix_pot_moved_updates_display_unlocked);
   RUN_TEST(test_expr_moved_updates_mapped_pot_display_unlocked);
   RUN_TEST(test_expr_moved_updates_mapped_pot_display_locked);
+  RUN_TEST(test_ui_preset_setting_changed_preset_updates_display_unlocked);
+  RUN_TEST(test_ui_preset_setting_changed_bank_updates_display_unlocked);
 
   return UNITY_END();
 }

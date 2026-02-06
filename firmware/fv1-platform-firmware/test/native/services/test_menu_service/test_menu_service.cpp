@@ -90,6 +90,16 @@ Event makeLogicProgramChangedEvent(uint8_t t_programId) {
   return e;
 }
 
+Event makeUIPresetSettingChangeEvent(SavePresetParam t_param, int16_t t_delta = 0) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = static_cast<uint8_t>(t_param);
+  e.m_data.delta = t_delta;
+  return e;
+}
+
 void assertMenuLockedEventPublished() {
   TEST_ASSERT_TRUE_MESSAGE(EventBus::hasEvent(), "Expected kLocked event but bus was empty");
   Event e;
@@ -407,6 +417,52 @@ void test_menu_encoder_long_press_publishes_updated_when_unlocked() {
   assertNoMoreEvents();
 }
 
+void test_ui_preset_setting_changed_sets_logical_state_target_preset() {
+  LogicalState logicalState;
+  logicalState.m_currentPresetBank = 2;
+  logicalState.m_currentPreset = 1;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Unlock
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
+  clearEventBus();
+
+  // Menu encoder long press
+  service.handleEvent(makeUIPresetSettingChangeEvent(SavePresetParam::kTargetPreset, 1));
+
+  TEST_ASSERT_EQUAL(2, logicalState.m_saveTargetPreset);
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_ui_preset_setting_changed_sets_logical_state_target_bank() {
+  LogicalState logicalState;
+  logicalState.m_currentPresetBank = 2;
+  logicalState.m_currentPreset = 1;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Unlock
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
+  clearEventBus();
+
+  // Menu encoder long press
+  service.handleEvent(makeUIPresetSettingChangeEvent(SavePresetParam::kTargetBank, 1));
+
+  TEST_ASSERT_EQUAL(3, logicalState.m_saveTargetBank);
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
 // =============================================================================
 // Editing Mode Tests
 // =============================================================================
@@ -700,6 +756,15 @@ void test_interested_in_logic_program_changed() {
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
+void test_interested_in_ui_preset_seting_changed() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  Event e = makeUIPresetSettingChangeEvent(SavePresetParam::kTargetBank);
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
 void test_not_interested_in_other_switches() {
   LogicalState logicalState;
   MockedClock mockClock;
@@ -811,6 +876,8 @@ int main() {
 
   // Preset Save Overlay
   RUN_TEST(test_menu_encoder_long_press_publishes_updated_when_unlocked);
+  RUN_TEST(test_ui_preset_setting_changed_sets_logical_state_target_bank);
+  RUN_TEST(test_ui_preset_setting_changed_sets_logical_state_target_preset);
 
   // Editing Mode
   RUN_TEST(test_editing_encoder_delta_publishes_updated);
@@ -836,6 +903,7 @@ int main() {
   RUN_TEST(test_interested_in_logic_tempo_value_changed);
   RUN_TEST(test_interested_in_logic_bypass_toggled);
   RUN_TEST(test_interested_in_logic_program_changed);
+  RUN_TEST(test_interested_in_ui_preset_seting_changed);
   RUN_TEST(test_not_interested_in_other_switches);
   RUN_TEST(test_not_interested_in_switch_press);
   RUN_TEST(test_not_interested_in_other_encoders);

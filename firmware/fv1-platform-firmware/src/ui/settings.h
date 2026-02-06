@@ -15,3 +15,8 @@ enum class PotParam : uint8_t {
   kMinValue,
   kMaxValue
 };
+
+enum class SavePresetParam : uint8_t {
+  kTargetBank,
+  kTargetPreset
+};
