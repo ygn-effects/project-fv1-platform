@@ -44,6 +44,14 @@ void PresetBankService::handleEvent(const Event& t_event) {
 
       return;
     }
+
+    if (t_event.m_subject == EventSubject::kPreset
+        && t_event.m_action == EventAction::kSave) {
+      if (m_logicalState.m_saveTargetBank < PresetConstants::c_presetBankCount
+          && m_logicalState.m_saveTargetBank != m_logicalState.m_currentPresetBank) {
+        loadPresetBank(m_logicalState.m_saveTargetBank, m_logicalState.m_loadedPresetBank);
+      }
+    }
   }
 
   if (t_event.m_domain == EventDomain::kMidi) {
@@ -71,6 +79,9 @@ bool PresetBankService::interestedIn(const Event& t_event) const {
   if (t_event.m_domain == EventDomain::kUI) {
     if (t_event.m_subject == EventSubject::kPresetBank
         && t_event.m_action == EventAction::kValueChanged) return true;
+
+    if (t_event.m_subject == EventSubject::kPreset
+        && t_event.m_action == EventAction::kSave) return true;
   }
 
   if (t_event.m_domain == EventDomain::kMidi) {

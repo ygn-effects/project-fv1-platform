@@ -50,6 +50,14 @@ Event makeUiPresetBankValueChangedEvent(int8_t t_delta) {
   return e;
 }
 
+Event makeUiPresetSaveEvent() {
+  Event e{};
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSave;
+  return e;
+}
+
 void makeMidiPCMessage(MidiHandler* t_handler, uint8_t t_program) {
   t_handler->pushByte(0xC0);
   t_handler->pushByte(t_program);
@@ -209,7 +217,6 @@ void test_midi_preset_bank_change_invalid_index_does_not_change_logical_state() 
   fix.updateAllServices();
   fix.dispatchAllEvents();
 
-
   // Check loaded preset bank
   TEST_ASSERT_EQUAL(2, fix.logicalState.m_currentPresetBank);
 }
@@ -229,6 +236,124 @@ void test_midi_preset_bank_change_index_already_loaded_changes_logical_state() {
   fix.updateAllServices();
   fix.dispatchAllEvents();
 
+
+  // Check loaded preset bank
+  TEST_ASSERT_EQUAL(2, fix.logicalState.m_currentPresetBank);
+}
+
+// =============================================================================
+// Save Preset
+// =============================================================================
+
+void test_ui_preset_save_sets_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_currentPresetBank = 2;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Set target bank
+  fix.logicalState.m_saveTargetBank = 4;
+
+  // Send event
+  fix.publishAndDispatchAllEvents(makeUiPresetSaveEvent());
+  fix.updateAllServices();
+
+  // Check logicalstate
+  TEST_ASSERT_EQUAL(4, fix.logicalState.m_currentPresetBank);
+}
+
+void test_ui_preset_save_loads_preset_bank() {
+  InteractionFixture fix;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_currentPresetBank = 2;
+  fix.logicalState.m_currentPreset = 1;
+
+  // Set preset values and save
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_programIndex = 5;
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_tapState = TapState::kEnabled;
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_interval = 500;
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_tempo = 500;
+  fix.SyncEepromWithLoadedPresetBank();
+
+  // Change preset bank, save and reset
+  fix.logicalState.m_currentPresetBank = 1;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Set target bank
+  fix.logicalState.m_saveTargetBank = 2;
+
+  // Send event
+  fix.publishAndDispatchAllEvents(makeUiPresetSaveEvent());
+  fix.updateAllServices();
+
+  // Check loaded preset bank
+  TEST_ASSERT_EQUAL(2, fix.logicalState.m_currentPresetBank);
+  TEST_ASSERT_EQUAL(5, fix.logicalState.m_loadedPresetBank.m_presets[1].m_programIndex);
+  TEST_ASSERT_EQUAL(TapState::kEnabled, fix.logicalState.m_loadedPresetBank.m_presets[1].m_tapState);
+  TEST_ASSERT_EQUAL(500, fix.logicalState.m_loadedPresetBank.m_presets[1].m_interval);
+  TEST_ASSERT_EQUAL(500, fix.logicalState.m_loadedPresetBank.m_presets[1].m_tempo);
+}
+
+void test_ui_preset_save_not_loads_same_bank() {
+  InteractionFixture fix;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_currentPresetBank = 2;
+  fix.logicalState.m_currentPreset = 1;
+
+  // Set preset values and save
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_programIndex = 5;
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_tapState = TapState::kEnabled;
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_interval = 500;
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_tempo = 500;
+  fix.SyncEepromWithLoadedPresetBank();
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.updateAllServices();
+
+  // Modify a random value
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_programIndex = 6;
+
+  // Send event
+  fix.publishAndDispatchAllEvents(makeUiPresetSaveEvent());
+  fix.updateAllServices();
+
+  // Check loaded preset bank
+  TEST_ASSERT_EQUAL(2, fix.logicalState.m_currentPresetBank);
+  TEST_ASSERT_EQUAL(6, fix.logicalState.m_loadedPresetBank.m_presets[1].m_programIndex);
+  TEST_ASSERT_EQUAL(TapState::kEnabled, fix.logicalState.m_loadedPresetBank.m_presets[1].m_tapState);
+  TEST_ASSERT_EQUAL(500, fix.logicalState.m_loadedPresetBank.m_presets[1].m_interval);
+  TEST_ASSERT_EQUAL(500, fix.logicalState.m_loadedPresetBank.m_presets[1].m_tempo);
+}
+
+void test_ui_preset_save_invalid_index_not_sets_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_currentPresetBank = 2;
+  fix.logicalState.m_currentPreset = 1;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.updateAllServices();
+
+  // Set logical state
+  fix.logicalState.m_saveTargetBank = 32;
+
+  // Send event
+  fix.publishAndDispatchAllEvents(makeUiPresetSaveEvent());
+  fix.updateAllServices();
 
   // Check loaded preset bank
   TEST_ASSERT_EQUAL(2, fix.logicalState.m_currentPresetBank);
@@ -269,6 +394,12 @@ int main() {
   RUN_TEST(test_midi_preset_bank_change_valid_index_loads_present_bank);
   RUN_TEST(test_midi_preset_bank_change_invalid_index_does_not_change_logical_state);
   RUN_TEST(test_midi_preset_bank_change_index_already_loaded_changes_logical_state);
+
+  // Preset Save
+  RUN_TEST(test_ui_preset_save_sets_logical_state);
+  RUN_TEST(test_ui_preset_save_loads_preset_bank);
+  RUN_TEST(test_ui_preset_save_not_loads_same_bank);
+  RUN_TEST(test_ui_preset_save_invalid_index_not_sets_logical_state);
 
   // Persistence
   RUN_TEST(test_current_preset_bank_persists);
