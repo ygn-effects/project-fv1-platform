@@ -952,6 +952,196 @@ void test_successive_pot_move_pushes_pops_overlays() {
 }
 
 // =============================================================================
+// Overlay Cross-Transitions
+// =============================================================================
+
+void test_tempo_overlay_active_pot_move_replaces_with_pot_overlay() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Pot0 move on delay effect → tempo overlay
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot0, 512));
+  fix.updateAllServices();
+
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Tempo"));
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Pot1 move → should pop tempo overlay, push pot overlay
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot1, 256));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Should show pot1 overlay, not tempo
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[0].m_params[1].m_label));
+  TEST_ASSERT_FALSE(fix.mockDisplay.showsText("Tempo"));
+}
+
+void test_pot_overlay_active_tempo_change_replaces_with_tempo_overlay() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_tapState = TapState::kEnabled;
+  fix.logicalState.m_interval = 400;
+  fix.logicalState.m_tempo = 400;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Pot1 move → pot overlay
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot1, 512));
+  fix.updateAllServices();
+
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[0].m_params[1].m_label));
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Tap long press → div change → tempo overlay should replace pot overlay
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kTap));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Should show tempo overlay, not pot
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Tempo"));
+  TEST_ASSERT_FALSE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[0].m_params[1].m_label));
+}
+
+void test_pot_overlay_active_preset_save_replaces_with_save_overlay() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Pot1 move → pot overlay
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot1, 512));
+  fix.updateAllServices();
+
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[0].m_params[1].m_label));
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Encoder long press → preset save should replace pot overlay
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuEncoder));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Should show preset save overlay, not pot
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Preset save"));
+  TEST_ASSERT_FALSE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[0].m_params[1].m_label));
+}
+
+void test_tempo_overlay_active_preset_save_replaces_with_save_overlay() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Pot0 move on delay effect → tempo overlay
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot0, 512));
+  fix.updateAllServices();
+
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Tempo"));
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Encoder long press → preset save should replace tempo overlay
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuEncoder));
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Should show preset save overlay, not tempo
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Preset save"));
+  TEST_ASSERT_FALSE(fix.mockDisplay.showsText("Tempo"));
+}
+
+void test_tempo_overlay_active_pot_move_timeout_returns_to_menu() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Pot0 move on delay effect → tempo overlay
+  fix.mockClock.setClock(1000);
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot0, 512, 1000));
+  fix.updateAllServices();
+
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Tempo"));
+
+  // Pot1 move → replaces tempo with pot overlay
+  fix.mockClock.setClock(1200);
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot1, 256, 1200));
+  fix.updateAllServices();
+
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText(ProgramsDefinitions::kPrograms[0].m_params[1].m_label));
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Timeout pot overlay → should return to menu, not tempo overlay
+  fix.mockClock.setClock(1200 + ui::MenuConstants::c_potMenuTimeout + 1);
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Should show menu, not an overlay
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Program mode"));
+}
+
+// =============================================================================
 // Value Change Display Updates
 // =============================================================================
 
@@ -1448,6 +1638,14 @@ int main() {
   RUN_TEST(test_pot0_move_shows_pot_overlay_non_delay_effect_menu_unlocked);
   RUN_TEST(test_pot_overlay_timeout_pop_overlay);
   RUN_TEST(test_successive_pot_move_pushes_pops_overlays);
+
+  // Overlay Cross-Transitions
+  RUN_TEST(test_tempo_overlay_active_pot_move_replaces_with_pot_overlay);
+  RUN_TEST(test_pot_overlay_active_tempo_change_replaces_with_tempo_overlay);
+  RUN_TEST(test_pot_overlay_active_preset_save_replaces_with_save_overlay);
+  RUN_TEST(test_tempo_overlay_active_preset_save_replaces_with_save_overlay);
+  RUN_TEST(test_tempo_overlay_active_pot_move_timeout_returns_to_menu);
+
 
   // Value Change Display Updates
   RUN_TEST(test_program_value_change_update_display_unlocked);
