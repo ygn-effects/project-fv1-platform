@@ -50,6 +50,9 @@ void PresetBankService::handleEvent(const Event& t_event) {
       if (m_logicalState.m_saveTargetBank < PresetConstants::c_presetBankCount
           && m_logicalState.m_saveTargetBank != m_logicalState.m_currentPresetBank) {
         loadPresetBank(m_logicalState.m_saveTargetBank, m_logicalState.m_loadedPresetBank);
+        publishSavePresetBankEvent(t_event);
+
+        return;
       }
     }
   }

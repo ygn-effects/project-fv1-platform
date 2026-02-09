@@ -218,6 +218,7 @@ void test_preset_save_loads_different_bank() {
   TEST_ASSERT_EQUAL(4, logicalState.m_currentPresetBank);
   TEST_ASSERT_EQUAL(4, logicalState.m_loadedPresetBank.m_id);
 
+  assertPresetBankSaveEventPublished();
   assertEventBusEmpty();
 }
 
