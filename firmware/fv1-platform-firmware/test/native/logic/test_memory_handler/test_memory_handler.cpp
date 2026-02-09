@@ -596,7 +596,7 @@ void test_deserialize_currentProgram_clamps_above_max() {
   uint8_t buffer[1] = {255};
   handler.deserializeRegion(MemoryRegion::kCurrentProgram, state, buffer);
 
-  TEST_ASSERT_EQUAL(ProgramConstants::c_maxPrograms, state.m_currentProgram);
+  TEST_ASSERT_EQUAL(ProgramConstants::c_maxPrograms - 1, state.m_currentProgram);
 }
 
 void test_deserialize_currentPreset() {
@@ -616,7 +616,7 @@ void test_deserialize_currentPreset_clamps_above_max() {
   uint8_t buffer[1] = {255};
   handler.deserializeRegion(MemoryRegion::kCurrentPreset, state, buffer);
 
-  TEST_ASSERT_EQUAL(PresetConstants::c_maxPreset, state.m_currentPreset);
+  TEST_ASSERT_EQUAL(PresetConstants::c_maxPreset - 1, state.m_currentPreset);
 }
 
 void test_deserialize_currentPresetBank() {
@@ -636,7 +636,7 @@ void test_deserialize_currentPresetBank_clamps_above_max() {
   uint8_t buffer[1] = {255};
   handler.deserializeRegion(MemoryRegion::kCurrentPresetBank, state, buffer);
 
-  TEST_ASSERT_EQUAL(PresetConstants::c_presetBankCount, state.m_currentPresetBank);
+  TEST_ASSERT_EQUAL(PresetConstants::c_presetBankCount - 1, state.m_currentPresetBank);
 }
 
 void test_deserialize_midiChannel() {
@@ -649,14 +649,14 @@ void test_deserialize_midiChannel() {
   TEST_ASSERT_EQUAL(5, state.m_midiChannel);
 }
 
-void test_deserialize_midiChannel_clamps_above_7() {
+void test_deserialize_midiChannel_clamps_above_max() {
   LogicalState state;
   MemoryHandler handler;
 
   uint8_t buffer[1] = {255};
   handler.deserializeRegion(MemoryRegion::kMidiChannel, state, buffer);
 
-  TEST_ASSERT_EQUAL(7, state.m_midiChannel);
+  TEST_ASSERT_EQUAL(MidiHandlerConstants::c_maxMidiChannels - 1, state.m_midiChannel);
 }
 
 // =============================================================================
@@ -1351,7 +1351,7 @@ int main() {
   RUN_TEST(test_deserialize_currentPresetBank);
   RUN_TEST(test_deserialize_currentPresetBank_clamps_above_max);
   RUN_TEST(test_deserialize_midiChannel);
-  RUN_TEST(test_deserialize_midiChannel_clamps_above_7);
+  RUN_TEST(test_deserialize_midiChannel_clamps_above_max);
 
   // Deserialize: DeviceState
   RUN_TEST(test_deserialize_deviceState);

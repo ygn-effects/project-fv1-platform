@@ -117,19 +117,19 @@ void MemoryHandler::deserializeProgramMode(LogicalState& t_lState, const uint8_t
 }
 
 void MemoryHandler::deserializeCurrentProgram(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex) {
-  t_lState.m_currentProgram = Utils::clamp<uint8_t>(t_buffer[t_startIndex], 0, ProgramConstants::c_maxPrograms);
+  t_lState.m_currentProgram = Utils::clamp<uint8_t>(t_buffer[t_startIndex], 0, ProgramConstants::c_maxPrograms - 1);
 }
 
 void MemoryHandler::deserializeCurrentPreset(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex) {
-  t_lState.m_currentPreset = Utils::clamp<uint8_t>(t_buffer[t_startIndex], 0, PresetConstants::c_maxPreset);
+  t_lState.m_currentPreset = Utils::clamp<uint8_t>(t_buffer[t_startIndex], 0, PresetConstants::c_maxPreset - 1);
 }
 
 void MemoryHandler::deserializeCurrentPresetBank(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex) {
-  t_lState.m_currentPresetBank = Utils::clamp<uint8_t>(t_buffer[t_startIndex], 0, PresetConstants::c_presetBankCount);
+  t_lState.m_currentPresetBank = Utils::clamp<uint8_t>(t_buffer[t_startIndex], 0, PresetConstants::c_presetBankCount - 1);
 }
 
 void MemoryHandler::deserializeMidiChannel(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex) {
-  t_lState.m_midiChannel = Utils::clamp<uint8_t>(t_buffer[t_startIndex], 0, 7);
+  t_lState.m_midiChannel = Utils::clamp<uint8_t>(t_buffer[t_startIndex], 0, MidiHandlerConstants::c_maxMidiChannels - 1);
 }
 
 void MemoryHandler::deserializeDeviceState(LogicalState& t_lState, const uint8_t* t_buffer, uint16_t t_startIndex) {
