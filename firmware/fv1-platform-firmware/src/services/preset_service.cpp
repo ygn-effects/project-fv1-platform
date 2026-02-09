@@ -86,11 +86,6 @@ void PresetService::handleEvent(const Event& t_event) {
   }
 
   if (t_event.m_domain == EventDomain::kLogic) {
-    if (t_event.m_subject == EventSubject::kPreset
-        && t_event.m_action == EventAction::kSave) {
-      // TBD
-    }
-
     if (t_event.m_subject == EventSubject::kProgramMode
         && t_event.m_action == EventAction::kToggled) {
       init();
