@@ -37,6 +37,17 @@ void PresetService::handleEvent(const Event& t_event) {
 
       return;
     }
+
+    if (t_event.m_subject == EventSubject::kPreset
+        && t_event.m_action == EventAction::kSave) {
+      if (m_logicalState.m_saveTargetPreset < PresetConstants::c_presetPerBank) {
+        m_logicalState.m_currentPreset = m_logicalState.m_saveTargetPreset;
+        m_presetHandler.snapshotFromState(m_logicalState, m_logicalState.m_saveTargetPreset);
+
+        publishSavePresetEvent(t_event);
+        return;
+      }
+    }
   }
 
   if (t_event.m_domain == EventDomain::kMidi) {
@@ -104,6 +115,9 @@ bool PresetService::interestedIn(const Event& t_event) const {
   if (t_event.m_domain == EventDomain::kUI) {
     if (t_event.m_subject == EventSubject::kPreset
         && t_event.m_action == EventAction::kValueChanged) return true;
+
+    if (t_event.m_subject == EventSubject::kPreset
+        && t_event.m_action == EventAction::kSave) return true;
   }
 
   if (t_event.m_domain == EventDomain::kMidi) {
@@ -120,9 +134,6 @@ bool PresetService::interestedIn(const Event& t_event) const {
   }
 
   if (t_event.m_domain == EventDomain::kLogic) {
-    if (t_event.m_subject == EventSubject::kPreset
-        && t_event.m_action == EventAction::kSave) return true;
-
     if (t_event.m_subject == EventSubject::kProgramMode
         && t_event.m_action == EventAction::kToggled) return true;
 

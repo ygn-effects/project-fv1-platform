@@ -73,6 +73,14 @@ Event makeLogicProgramModeToggleEvent(uint8_t t_bank) {
   return e;
 }
 
+Event makeUiSavePresetEvent() {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSave;
+  return e;
+}
+
 void assertPresetSaveEventPublished() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   Event e;
@@ -376,6 +384,68 @@ void test_physical_tap_applies_preset_data_to_logical_state() {
 }
 
 // =============================================================================
+// Save preset tests
+// =============================================================================
+
+void test_ui_save_preset_sets_logical_state() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetService presetService(logicalState, eeprom);
+
+  // Set logical state
+  logicalState.m_saveTargetPreset = 3;
+
+  // Send the preset save event
+  presetService.handleEvent(makeUiSavePresetEvent());
+
+  // Check logical state
+  TEST_ASSERT_EQUAL(logicalState.m_saveTargetPreset, logicalState.m_currentPreset);
+
+  assertPresetSaveEventPublished();
+  assertEventBusEmpty();
+}
+
+void test_ui_save_preset_invalid_value_not_sets_logical_state() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetService presetService(logicalState, eeprom);
+
+  // Set logical state
+  logicalState.m_saveTargetPreset = 12;
+
+  // Send the preset save event
+  presetService.handleEvent(makeUiSavePresetEvent());
+
+  // Check logical state
+  TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
+
+  assertEventBusEmpty();
+}
+
+void test_ui_save_preset_saves_logical_state_to_preset_bank() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetService presetService(logicalState, eeprom);
+
+  // Set logical state
+  logicalState.m_saveTargetPreset = 3;
+  logicalState.m_currentProgram = 2;
+  logicalState.m_tapState = TapState::kEnabled;
+  logicalState.m_tempo = 300;
+
+  // Send the preset save event
+  presetService.handleEvent(makeUiSavePresetEvent());
+
+  // Check logical state
+  TEST_ASSERT_EQUAL(logicalState.m_currentProgram, logicalState.m_loadedPresetBank.m_presets[3].m_programIndex);
+  TEST_ASSERT_EQUAL(logicalState.m_tapState, logicalState.m_loadedPresetBank.m_presets[3].m_tapState);
+  TEST_ASSERT_EQUAL(logicalState.m_tempo, logicalState.m_loadedPresetBank.m_presets[3].m_tempo);
+
+  assertPresetSaveEventPublished();
+  assertEventBusEmpty();
+}
+
+// =============================================================================
 // interestedIn Tests
 // =============================================================================
 
@@ -439,13 +509,13 @@ void test_interested_in_physical_tap_switch_long_press() {
   TEST_ASSERT_TRUE(presetService.interestedIn(e));
 }
 
-void test_interested_in_logic_preset_save() {
+void test_interested_in_ui_preset_save() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   PresetService presetService(logicalState, eeprom);
 
   Event e;
-  e.m_domain = EventDomain::kLogic;
+  e.m_domain = EventDomain::kUI;
   e.m_subject = EventSubject::kPreset;
   e.m_action = EventAction::kSave;
 
@@ -552,12 +622,17 @@ int main() {
   RUN_TEST(test_midi_preset_change_applies_preset_data_to_logical_state);
   RUN_TEST(test_physical_tap_applies_preset_data_to_logical_state);
 
+  // Save preset tests
+  RUN_TEST(test_ui_save_preset_sets_logical_state);
+  RUN_TEST(test_ui_save_preset_invalid_value_not_sets_logical_state);
+  RUN_TEST(test_ui_save_preset_saves_logical_state_to_preset_bank);
+
   // interestedIn Tests
   RUN_TEST(test_interested_in_midi_preset_value_change);
   RUN_TEST(test_interested_in_ui_preset_value_change);
   RUN_TEST(test_interested_in_physical_tap_switch_press);
   RUN_TEST(test_interested_in_physical_tap_switch_long_press);
-  RUN_TEST(test_interested_in_logic_preset_save);
+  RUN_TEST(test_interested_in_ui_preset_save);
   RUN_TEST(test_interested_in_logic_program_mode_toggle);
   RUN_TEST(test_interested_in_logic_preset_bank_value_changed);
   RUN_TEST(test_not_interested_in_physical_tap_program_mode);

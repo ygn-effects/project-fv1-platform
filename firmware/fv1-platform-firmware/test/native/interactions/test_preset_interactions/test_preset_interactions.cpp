@@ -101,6 +101,21 @@ Event makeMemoryLoadLogicalStateEvent() {
   return e;
 }
 
+Event makeUiSavePresetEvent() {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSave;
+  return e;
+}
+
+void populateLogicalState(LogicalState& t_state) {
+  t_state.m_currentProgram = 4;
+  t_state.m_tapState = TapState::kEnabled;
+  t_state.m_interval = 400;
+  t_state.m_tempo = 400;
+}
+
 void populatePresetBank(LogicalState& t_state) {
   t_state.m_loadedPresetBank.m_presets[0].m_programIndex = 1;
   t_state.m_loadedPresetBank.m_presets[0].m_tapState = TapState::kEnabled;
@@ -469,6 +484,54 @@ void test_program_mode_toggled_to_program_does_not_apply_preset() {
 }
 
 // =============================================================================
+// UI Preset Save
+// =============================================================================
+
+void test_ui_preset_save_sets_logical_state() {
+  InteractionFixture fix;
+  populateLogicalState(fix.logicalState);
+  fix.SyncEepromWithLoadedPresetBank();
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Set target preset
+  fix.logicalState.m_saveTargetPreset = 3;
+
+  // Send save event
+  fix.publishAndDispatchAllEvents(makeUiSavePresetEvent());
+
+  // Check logical state
+  TEST_ASSERT_EQUAL(3, fix.logicalState.m_currentPreset);
+}
+
+void test_ui_preset_save_saves_logical_state_to_loaded_bank() {
+  InteractionFixture fix;
+  populateLogicalState(fix.logicalState);
+  fix.SyncEepromWithLoadedPresetBank();
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Set target preset
+  fix.logicalState.m_saveTargetPreset = 3;
+
+  // Send save event
+  fix.publishAndDispatchAllEvents(makeUiSavePresetEvent());
+
+  // Check logical state
+  TEST_ASSERT_EQUAL(3, fix.logicalState.m_currentPreset);
+  TEST_ASSERT_EQUAL(4, fix.logicalState.m_loadedPresetBank.m_presets[3].m_programIndex);
+  TEST_ASSERT_EQUAL(TapState::kEnabled, fix.logicalState.m_loadedPresetBank.m_presets[3].m_tapState);
+  TEST_ASSERT_EQUAL(400, fix.logicalState.m_loadedPresetBank.m_presets[3].m_interval);
+  TEST_ASSERT_EQUAL(400, fix.logicalState.m_loadedPresetBank.m_presets[3].m_tempo);
+}
+
+// =============================================================================
 // Preset Bank Loaded
 // =============================================================================
 
@@ -561,6 +624,10 @@ int main() {
   // Program Mode Toggled
   RUN_TEST(test_program_mode_toggled_to_preset_applies_preset);
   RUN_TEST(test_program_mode_toggled_to_program_does_not_apply_preset);
+
+  // UI preset save
+  RUN_TEST(test_ui_preset_save_sets_logical_state);
+  RUN_TEST(test_ui_preset_save_saves_logical_state_to_loaded_bank);
 
   // Preset Bank Loaded
   RUN_TEST(test_preset_bank_loaded_sets_logical_state);
