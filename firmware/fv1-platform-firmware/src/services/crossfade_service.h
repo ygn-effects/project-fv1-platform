@@ -12,8 +12,8 @@ class CrossfadeService : public Service {
   private:
     const LogicalState& m_logicalState;
     CrossfadeHandler m_handler;
-    Dac& m_dacWet;
     Dac& m_dacDry;
+    Dac& m_dacWet;
 
     void syncHandler();
     void applyMix(uint16_t t_mixValue);

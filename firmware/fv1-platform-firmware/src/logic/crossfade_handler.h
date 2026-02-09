@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
 #include "logic/program.h"
 #include "periphs/dac.h"
 #include "utils/utils.h"
