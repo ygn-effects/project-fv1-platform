@@ -54,22 +54,22 @@ void MidiService::update() {
         EventBus::publish(e);
       }
     }
-  }
 
-  if (message.m_type == MidiMessageType::kProgramChange) {
-        Event e;
-        e.m_domain = EventDomain::kMidi;
+    if (message.m_type == MidiMessageType::kProgramChange) {
+      Event e;
+      e.m_domain = EventDomain::kMidi;
 
-        m_logicalState.m_programMode == ProgramMode::kProgram
-          ? e.m_subject = EventSubject::kProgram
-          : e.m_subject = EventSubject::kPreset;
+      m_logicalState.m_programMode == ProgramMode::kProgram
+        ? e.m_subject = EventSubject::kProgram
+        : e.m_subject = EventSubject::kPreset;
 
-        e.m_action = EventAction::kValueChanged;
-        e.m_timestamp = m_clock.now();
-        e.m_id = 0;
-        e.m_data.value = message.m_param;
+      e.m_action = EventAction::kValueChanged;
+      e.m_timestamp = m_clock.now();
+      e.m_id = 0;
+      e.m_data.value = message.m_param;
 
-        EventBus::publish(e);
+      EventBus::publish(e);
+    }
   }
 }
 
