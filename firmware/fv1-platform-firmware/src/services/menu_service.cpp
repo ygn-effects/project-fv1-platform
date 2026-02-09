@@ -243,6 +243,11 @@ void MenuService::handlePresetSaving(const Event& t_event) {
 
 void MenuService::init() {
   m_handler.init();
+
+  if (m_logicState.m_programMode == ProgramMode::kProgram) {
+    m_handler.unlock(m_logicState);
+  }
+
   syncSavePresetState();
   publishViewUpdate();
 }
@@ -278,10 +283,12 @@ void MenuService::update() {
 
   uint32_t now = m_clock.now();
 
-  if ((now - m_lastInputTime) > ui::MenuConstants::c_menuTimeout) {
-    m_handler.lock();
-    publishUIMenuLockedEvent();
-    publishViewUpdate();
+  if (m_logicState.m_programMode == ProgramMode::kPreset) {
+    if ((now - m_lastInputTime) > ui::MenuConstants::c_menuTimeout) {
+      m_handler.lock();
+      publishUIMenuLockedEvent();
+      publishViewUpdate();
+    }
   }
 
   if (m_potMenuActive) {

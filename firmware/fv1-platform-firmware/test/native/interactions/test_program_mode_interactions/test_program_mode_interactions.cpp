@@ -98,6 +98,8 @@ void test_driver_program_mode_long_press_toggles_logical_state_preset() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Lock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPressedEvent(SwitchId::kMenuLock));
   // Send program mode switch event
   fix.publishAndDispatchAllEvents(makeDriverSwitchLongPressedEvent(SwitchId::kProgramMode));
 
@@ -128,6 +130,8 @@ void test_driver_program_mode_long_press_toggles_fsm_preset_idle() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Lock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPressedEvent(SwitchId::kMenuLock));
   // Send program mode switch event
   fix.publishAndDispatchAllEvents(makeDriverSwitchLongPressedEvent(SwitchId::kProgramMode));
 
@@ -147,7 +151,7 @@ void test_driver_program_mode_long_press_toggles_fsm_program_idle() {
   fix.publishAndDispatchAllEvents(makeDriverSwitchLongPressedEvent(SwitchId::kProgramMode));
 
   // Test FSM state
-  TEST_ASSERT_EQUAL(AppState::kProgramIdle, fix.fsmService.getAppState());
+  TEST_ASSERT_EQUAL(AppState::kProgramEdit, fix.fsmService.getAppState());
 }
 
 // =============================================================================
@@ -205,7 +209,7 @@ void test_program_mode_persists() {
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
   // Test FSM state
-  TEST_ASSERT_EQUAL(AppState::kProgramIdle, fix.fsmService.getAppState());
+  TEST_ASSERT_EQUAL(AppState::kProgramEdit, fix.fsmService.getAppState());
 }
 
 void test_preset_mode_persists() {

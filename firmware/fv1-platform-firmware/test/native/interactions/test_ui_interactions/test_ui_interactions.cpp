@@ -184,6 +184,9 @@ void test_boot_lock_screen_program_mode_delay_effect_div_disabled_expr_inactive(
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
+  // Lock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+
   // Commands
   TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
   TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
@@ -214,6 +217,9 @@ void test_boot_lock_screen_program_mode_delay_effect_div_enabled_expr_inactive()
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Lock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
 
   // Commands
   TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
@@ -246,6 +252,9 @@ void test_boot_lock_screen_program_mode_delay_effect_div_disabled_expr_active() 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
+  // Lock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+
   // Commands
   TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
   TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
@@ -274,6 +283,9 @@ void test_boot_lock_screen_program_mode_not_delay_effect_div_disabled_expr_inact
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Lock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
 
   // Commands
   TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
@@ -329,30 +341,6 @@ void test_boot_lock_screen_preset_mode_delay_effect_div_disabled_expr_inactive()
 // Menu State Transitions
 // =============================================================================
 
-void test_menu_unlock_menu_lock_switch_long_press_transition_to_program_menu_view() {
-  InteractionFixture fix;
-  fix.logicalState.m_bypassState = BypassState::kActive;
-  fix.syncEepromWithState();
-  fix.init();
-
-  // Boot
-  fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Reset the mock
-  fix.mockDisplay.reset();
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
-  fix.updateAllServices();
-
-  // Commands
-  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
-  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
-
-  // Label
-  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Program mode"));
-}
-
 void test_menu_unlock_menu_lock_switch_long_press_transition_to_preset_menu_view() {
   InteractionFixture fix;
   fix.logicalState.m_programMode = ProgramMode::kPreset;
@@ -387,10 +375,6 @@ void test_menu_lock_menu_lock_switch_long_press_transition_to_lock_screen() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
-  fix.updateAllServices();
-
   // Reset the mock
   fix.mockDisplay.reset();
 
@@ -406,9 +390,10 @@ void test_menu_lock_menu_lock_switch_long_press_transition_to_lock_screen() {
   TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Lock screen"));
 }
 
-void test_menu_lock_timeout_transition_to_lock_screen() {
+void test_menu_lock_timeout_preset_mode_transition_to_lock_screen() {
   InteractionFixture fix;
   fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
   fix.syncEepromWithState();
   fix.init();
 
@@ -445,10 +430,6 @@ void test_menu_lock_bypass_toggle_transition_to_lock_screen() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
-  fix.updateAllServices();
-
   // Reset the mock
   fix.mockDisplay.reset();
 
@@ -472,13 +453,6 @@ void test_menu_encoder_delta_changed_moves_cursor() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Reset the mock
-  fix.mockDisplay.reset();
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
-  fix.updateAllServices();
 
   // Cursor position
   TEST_ASSERT_TRUE(fix.mockDisplay.isCursorPointingTo("Prog"));
@@ -524,10 +498,6 @@ void test_menu_encoder_press_on_submenu_transition_to_submenu() {
   // Reset the mock
   fix.mockDisplay.reset();
 
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
-  fix.updateAllServices();
-
   // Navigate to the submenu
   while (! fix.mockDisplay.isCursorPointingTo("Expression settings")) {
     fix.mockDisplay.reset();
@@ -557,10 +527,6 @@ void test_menu_encoder_press_on_back_transition_to_previous_menu() {
 
   // Reset the mock
   fix.mockDisplay.reset();
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
-  fix.updateAllServices();
 
   // Navigate to the submenu
   while (! fix.mockDisplay.isCursorPointingTo("Expression settings")) {
@@ -602,10 +568,6 @@ void test_menu_encoder_press_on_editable_items_highlight_value() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
-  fix.updateAllServices();
-
   // Reset the mock
   fix.mockDisplay.reset();
 
@@ -625,13 +587,6 @@ void test_menu_encoder_press_on_hilighted_item_exit_edit() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
-  fix.updateAllServices();
-
-  // Reset the mock
-  fix.mockDisplay.reset();
 
   // Begin editing
   fix.publishAndDispatchAllEvents(makeDriverSwitchPress(SwitchId::kMenuEncoder));
@@ -661,10 +616,6 @@ void test_pot_move_shows_pot_overlay_menu_unlocked() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
-  fix.updateAllServices();
-
   // Reset the mock
   fix.mockDisplay.reset();
 
@@ -689,6 +640,10 @@ void test_pot_move_not_shows_pot_overlay_menu_locked() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
+  // Lock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
   // Reset the mock
   fix.mockDisplay.reset();
 
@@ -708,9 +663,6 @@ void test_pot_overlay_timeout_pop_overlay() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Pot move
@@ -743,9 +695,6 @@ void test_pot0_move_shows_tempo_overlay_delay_effect_menu_unlocked() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Reset the mock
@@ -773,9 +722,6 @@ void test_pot0_move_shows_pot_overlay_non_delay_effect_menu_unlocked() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Reset the mock
@@ -801,9 +747,6 @@ void test_tempo_overlay_timeout_pop_overlay() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Pot move
@@ -836,9 +779,6 @@ void test_successive_pot_move_pushes_pops_overlays() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Reset the mock
@@ -973,9 +913,6 @@ void test_tempo_overlay_active_pot_move_replaces_with_pot_overlay() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Pot0 move on delay effect → tempo overlay
@@ -1011,9 +948,6 @@ void test_pot_overlay_active_tempo_change_replaces_with_tempo_overlay() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Pot1 move → pot overlay
@@ -1046,9 +980,6 @@ void test_pot_overlay_active_preset_save_replaces_with_save_overlay() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Pot1 move → pot overlay
@@ -1081,9 +1012,6 @@ void test_tempo_overlay_active_preset_save_replaces_with_save_overlay() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Pot0 move on delay effect → tempo overlay
@@ -1116,9 +1044,6 @@ void test_tempo_overlay_active_pot_move_timeout_returns_to_menu() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Pot0 move on delay effect → tempo overlay
@@ -1163,9 +1088,6 @@ void test_menu_encoder_long_press_show_preset_saving_menu_unlocked() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Reset the mock
@@ -1195,9 +1117,6 @@ void test_program_value_change_update_display_unlocked() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Reset the mock
@@ -1223,6 +1142,10 @@ void test_program_value_change_update_display_locked() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Lock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
 
   // Reset the mock
   fix.mockDisplay.reset();
@@ -1359,9 +1282,6 @@ void test_tempo_value_change_updates_display_unlocked() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Pot move
@@ -1395,6 +1315,10 @@ void test_tempo_value_change_updates_display_locked() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
+  // Lock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
   // Reset the mock
   fix.mockDisplay.reset();
 
@@ -1421,9 +1345,6 @@ void test_tap_enabled_div_disabled_tap_long_press_updates_display_unlocked() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Send the event
@@ -1460,6 +1381,10 @@ void test_tap_enabled_div_disabled_tap_long_press_updates_display_locked() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
+  // Lock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
   // Reset the mock
   fix.mockDisplay.reset();
 
@@ -1490,9 +1415,6 @@ void test_tap_enabled_div_enabled_tap_long_press_updates_display_unlocked() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Send the event
@@ -1533,6 +1455,10 @@ void test_tap_enabled_div_enabled_tap_long_press_updates_display_locked() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
+  // Lock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
   // Reset the mock
   fix.mockDisplay.reset();
 
@@ -1557,9 +1483,6 @@ void test_mix_pot_moved_updates_display_unlocked() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Send the event
@@ -1593,9 +1516,6 @@ void test_expr_moved_updates_mapped_pot_display_unlocked() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Send the event
@@ -1631,6 +1551,10 @@ void test_expr_moved_updates_mapped_pot_display_locked() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
+  // Lock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
   // Reset the mock
   fix.mockDisplay.reset();
 
@@ -1655,9 +1579,6 @@ void test_ui_preset_setting_changed_preset_updates_display_unlocked() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Enter save preset menu
@@ -1688,9 +1609,6 @@ void test_ui_preset_setting_changed_bank_updates_display_unlocked() {
 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
-
-  // Menu unlock
-  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.updateAllServices();
 
   // Enter save preset menu
@@ -1727,10 +1645,9 @@ int main() {
   RUN_TEST(test_boot_lock_screen_preset_mode_delay_effect_div_disabled_expr_inactive);
 
   // Menu State Transitions
-  RUN_TEST(test_menu_unlock_menu_lock_switch_long_press_transition_to_program_menu_view);
   RUN_TEST(test_menu_unlock_menu_lock_switch_long_press_transition_to_preset_menu_view);
   RUN_TEST(test_menu_lock_menu_lock_switch_long_press_transition_to_lock_screen);
-  RUN_TEST(test_menu_lock_timeout_transition_to_lock_screen);
+  RUN_TEST(test_menu_lock_timeout_preset_mode_transition_to_lock_screen);
   RUN_TEST(test_menu_lock_bypass_toggle_transition_to_lock_screen);
   RUN_TEST(test_menu_encoder_delta_changed_moves_cursor);
   RUN_TEST(test_menu_encoder_press_on_submenu_transition_to_submenu);

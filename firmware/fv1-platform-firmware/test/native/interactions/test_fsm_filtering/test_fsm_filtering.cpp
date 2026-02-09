@@ -317,6 +317,7 @@ void test_program_idle_republishes_bypass_press() {
   fix.syncEepromWithState();
   fix.init();
   fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   TEST_ASSERT_EQUAL(AppState::kProgramIdle, fix.fsmService.getAppState());
   fix.clearEventBus();
 
@@ -333,6 +334,7 @@ void test_program_idle_republishes_tap_press() {
   fix.syncEepromWithState();
   fix.init();
   fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.clearEventBus();
 
   Event driverEvent = makeDriverSwitchPress(SwitchId::kTap);
@@ -348,6 +350,7 @@ void test_program_idle_republishes_tap_long_press() {
   fix.syncEepromWithState();
   fix.init();
   fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.clearEventBus();
 
   Event driverEvent = makeDriverSwitchLongPress(SwitchId::kTap);
@@ -363,6 +366,7 @@ void test_program_idle_republishes_program_mode_long_press() {
   fix.syncEepromWithState();
   fix.init();
   fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.clearEventBus();
 
   Event driverEvent = makeDriverSwitchLongPress(SwitchId::kProgramMode);
@@ -378,6 +382,7 @@ void test_program_idle_republishes_expr_move() {
   fix.syncEepromWithState();
   fix.init();
   fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.clearEventBus();
 
   Event driverEvent = makeDriverExprMove(512);
@@ -393,6 +398,7 @@ void test_program_idle_republishes_menu_lock_long_press() {
   fix.syncEepromWithState();
   fix.init();
   fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.clearEventBus();
 
   Event driverEvent = makeDriverSwitchLongPress(SwitchId::kMenuLock);
@@ -408,6 +414,7 @@ void test_program_idle_filters_encoder_press() {
   fix.syncEepromWithState();
   fix.init();
   fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.clearEventBus();
 
   Event driverEvent = makeDriverSwitchPress(SwitchId::kMenuEncoder);
@@ -423,6 +430,7 @@ void test_program_idle_filters_encoder_delta() {
   fix.syncEepromWithState();
   fix.init();
   fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.clearEventBus();
 
   Event driverEvent = makeDriverEncoderDelta(1);
@@ -438,6 +446,7 @@ void test_program_idle_filters_pot_move() {
   fix.syncEepromWithState();
   fix.init();
   fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.clearEventBus();
 
   Event driverEvent = makeDriverPotMove(PotId::kPot0, 512);
@@ -453,6 +462,7 @@ void test_program_idle_filters_encoder_long_press() {
   fix.syncEepromWithState();
   fix.init();
   fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
   fix.clearEventBus();
 
   Event driverEvent = makeDriverSwitchLongPress(SwitchId::kMenuEncoder);

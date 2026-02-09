@@ -71,7 +71,7 @@ void FsmService::handleEvent(const Event& t_event) {
       if (t_event.m_action == EventAction::kBooted) {
         if (m_logicalState.m_bypassState == BypassState::kActive) {
           transitionTo(m_logicalState.m_programMode == ProgramMode::kProgram
-                        ? AppState::kProgramIdle
+                        ? AppState::kProgramEdit
                         : AppState::kPresetIdle);
         }
         else {
@@ -91,7 +91,7 @@ void FsmService::handleEvent(const Event& t_event) {
       // Bypass toggle logic event
       if (isBypassToggled(t_event)) {
         transitionTo(m_logicalState.m_programMode == ProgramMode::kProgram
-                      ? AppState::kProgramIdle
+                      ? AppState::kProgramEdit
                       : AppState::kPresetIdle);
       }
 
@@ -255,7 +255,7 @@ void FsmService::handleEvent(const Event& t_event) {
 
       // Program mode toggle
       if (isProgramModeToggled(t_event)) {
-        transitionTo(AppState::kProgramIdle);
+        transitionTo(AppState::kProgramEdit);
         return;
       }
 

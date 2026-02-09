@@ -242,8 +242,18 @@ void test_init_non_delay_effect_sends_pot_value_to_pot0() {
   TEST_ASSERT_EQUAL(777, pot0Value);
 }
 
-void test_init_menu_starts_locked() {
+void test_init_menu_starts_unlocked_program_mode() {
   InteractionFixture fix;
+  fix.init();
+
+  // Menu should publish an unlock event on init - it starts locked
+  TEST_ASSERT_FALSE(fix.findEvent(EventDomain::kUI, EventSubject::kMenu, EventAction::kUnlocked));
+}
+
+void test_init_menu_starts_locked_preset_mode() {
+  InteractionFixture fix;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
   fix.init();
 
   // Menu should not publish an unlock event on init - it starts locked
@@ -254,7 +264,7 @@ void test_init_menu_starts_locked() {
 // Boot Complete - FSM State Transition Tests
 // =============================================================================
 
-void test_boot_complete_enters_program_idle_when_active_program_mode() {
+void test_boot_complete_enters_program_edit_when_active_program_mode() {
   InteractionFixture fix;
   fix.logicalState.m_bypassState = BypassState::kActive;
   fix.logicalState.m_programMode = ProgramMode::kProgram;
@@ -263,7 +273,7 @@ void test_boot_complete_enters_program_idle_when_active_program_mode() {
 
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
-  TEST_ASSERT_EQUAL(AppState::kProgramIdle, fix.fsmService.getAppState());
+  TEST_ASSERT_EQUAL(AppState::kProgramEdit, fix.fsmService.getAppState());
 }
 
 void test_boot_complete_enters_preset_idle_when_active_preset_mode() {
@@ -393,10 +403,11 @@ int main() {
   RUN_TEST(test_init_program_mode_does_not_apply_preset);
   RUN_TEST(test_init_delay_effect_sends_tempo_to_pot0);
   RUN_TEST(test_init_non_delay_effect_sends_pot_value_to_pot0);
-  RUN_TEST(test_init_menu_starts_locked);
+  RUN_TEST(test_init_menu_starts_unlocked_program_mode);
+  RUN_TEST(test_init_menu_starts_locked_preset_mode);
 
   // Boot complete - FSM state transitions
-  RUN_TEST(test_boot_complete_enters_program_idle_when_active_program_mode);
+  RUN_TEST(test_boot_complete_enters_program_edit_when_active_program_mode);
   RUN_TEST(test_boot_complete_enters_preset_idle_when_active_preset_mode);
   RUN_TEST(test_boot_complete_enters_bypassed_when_bypass_state_is_bypassed);
   RUN_TEST(test_boot_complete_bypassed_takes_precedence_over_preset_mode);
