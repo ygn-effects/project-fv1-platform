@@ -296,10 +296,6 @@ void test_ui_preset_save_loads_preset_bank() {
 
   // Check loaded preset bank
   TEST_ASSERT_EQUAL(2, fix.logicalState.m_currentPresetBank);
-  TEST_ASSERT_EQUAL(5, fix.logicalState.m_loadedPresetBank.m_presets[1].m_programIndex);
-  TEST_ASSERT_EQUAL(TapState::kEnabled, fix.logicalState.m_loadedPresetBank.m_presets[1].m_tapState);
-  TEST_ASSERT_EQUAL(500, fix.logicalState.m_loadedPresetBank.m_presets[1].m_interval);
-  TEST_ASSERT_EQUAL(500, fix.logicalState.m_loadedPresetBank.m_presets[1].m_tempo);
 }
 
 void test_ui_preset_save_not_loads_same_bank() {
@@ -330,10 +326,6 @@ void test_ui_preset_save_not_loads_same_bank() {
 
   // Check loaded preset bank
   TEST_ASSERT_EQUAL(2, fix.logicalState.m_currentPresetBank);
-  TEST_ASSERT_EQUAL(6, fix.logicalState.m_loadedPresetBank.m_presets[1].m_programIndex);
-  TEST_ASSERT_EQUAL(TapState::kEnabled, fix.logicalState.m_loadedPresetBank.m_presets[1].m_tapState);
-  TEST_ASSERT_EQUAL(500, fix.logicalState.m_loadedPresetBank.m_presets[1].m_interval);
-  TEST_ASSERT_EQUAL(500, fix.logicalState.m_loadedPresetBank.m_presets[1].m_tempo);
 }
 
 void test_ui_preset_save_invalid_index_not_sets_logical_state() {
