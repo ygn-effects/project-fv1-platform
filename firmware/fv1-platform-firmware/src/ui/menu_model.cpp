@@ -676,6 +676,7 @@ void onMovePresetBankSaveTarget(int8_t t_delta) {
   e.m_action = EventAction::kSettingChanged;
   e.m_id = static_cast<uint8_t>(SavePresetParam::kTargetBank);
   e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
   EventBus::publish(e);
 }
 
@@ -686,6 +687,7 @@ void onMovePresetSaveTarget(int8_t t_delta) {
   e.m_action = EventAction::kSettingChanged;
   e.m_id = static_cast<uint8_t>(SavePresetParam::kTargetPreset);
   e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
   EventBus::publish(e);
 }
 
@@ -826,9 +828,9 @@ constexpr MenuItem PotSettingsMenuItems[] = {
   { labelPot1State, isAlwaysVisible, valuePot1State, nullptr, nullptr, nullptr },
   { labelPot1MinValue, isAlwaysVisible, valuePot1MinValue, onMovePot1MinValue, nullptr, nullptr },
   { labelPot1MaxValue, isAlwaysVisible, valuePot1MaxValue, onMovePot1MaxValue, nullptr, nullptr },
-  { labelPot2State, isAlwaysVisible, valuePot1State, nullptr, nullptr, nullptr },
-  { labelPot2MinValue, isAlwaysVisible, valuePot1MinValue, onMovePot2MinValue, nullptr, nullptr },
-  { labelPot2MaxValue, isAlwaysVisible, valuePot1MaxValue, onMovePot2MaxValue, nullptr, nullptr },
+  { labelPot2State, isAlwaysVisible, valuePot2State, nullptr, nullptr, nullptr },
+  { labelPot2MinValue, isAlwaysVisible, valuePot2MinValue, onMovePot2MinValue, nullptr, nullptr },
+  { labelPot2MaxValue, isAlwaysVisible, valuePot2MaxValue, onMovePot2MaxValue, nullptr, nullptr },
   { labelMixPotState, isAlwaysVisible, valueMixPotState, nullptr, nullptr, nullptr },
   { labelMixPotMinValue, isAlwaysVisible, valueMixPotMinValue, onMoveMixPotMinValue, nullptr, nullptr },
   { labelMixPotMaxValue, isAlwaysVisible, valueMixPotMaxValue, onMoveMixPotMaxValue, nullptr, nullptr },
