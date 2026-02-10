@@ -58,9 +58,9 @@ Event makeUiPresetSaveEvent() {
   return e;
 }
 
-void makeMidiPCMessage(MidiHandler* t_handler, uint8_t t_program) {
-  t_handler->pushByte(0xC0);
-  t_handler->pushByte(t_program);
+void makeMidiPCMessage(MockedSerial& t_serial, uint8_t t_program) {
+  t_serial.feedByte(0xC0);
+  t_serial.feedByte(t_program);
 }
 
 void setUp() {
@@ -161,7 +161,7 @@ void test_midi_preset_bank_change_valid_index_changes_logical_state() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send event
-  makeMidiPCMessage(fix.midiService.getMidiHandler(), 17);
+  makeMidiPCMessage(fix.mockSerial, 17);
   fix.updateAllServices();
   fix.dispatchAllEvents();
 
@@ -190,7 +190,7 @@ void test_midi_preset_bank_change_valid_index_loads_present_bank() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send event
-  makeMidiPCMessage(fix.midiService.getMidiHandler(), 9);
+  makeMidiPCMessage(fix.mockSerial, 9);
   fix.updateAllServices();
   fix.dispatchAllEvents();
 
@@ -213,7 +213,7 @@ void test_midi_preset_bank_change_invalid_index_does_not_change_logical_state() 
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send event
-  makeMidiPCMessage(fix.midiService.getMidiHandler(), 127);
+  makeMidiPCMessage(fix.mockSerial, 127);
   fix.updateAllServices();
   fix.dispatchAllEvents();
 
@@ -232,7 +232,7 @@ void test_midi_preset_bank_change_index_already_loaded_changes_logical_state() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send event
-  makeMidiPCMessage(fix.midiService.getMidiHandler(), 9);
+  makeMidiPCMessage(fix.mockSerial, 9);
   fix.updateAllServices();
   fix.dispatchAllEvents();
 

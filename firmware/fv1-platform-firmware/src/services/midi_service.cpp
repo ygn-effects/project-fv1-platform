@@ -34,7 +34,9 @@ void MidiService::handleEvent(const Event& t_event) {
 }
 
 void MidiService::update() {
-  // Add Arduino serial code
+  while (m_serial.available()) {
+    m_midiHandler.pushByte(m_serial.read());
+  }
 
   MidiMessage message;
 

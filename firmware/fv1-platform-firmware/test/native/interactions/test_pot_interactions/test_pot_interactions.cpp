@@ -92,10 +92,10 @@ Event makeUIPotSettingChangedEvent(PotId t_id, PotParam t_setting, int16_t t_del
   return e;
 }
 
-void makeMidiCCPotValueChangedMessage(MidiHandler* t_handler, PotId t_id, uint8_t t_value) {
-  t_handler->pushByte(0xB0);
-  t_handler->pushByte(static_cast<uint8_t>(t_id));
-  t_handler->pushByte(t_value);
+void makeMidiCCPotValueChangedMessage(MockedSerial& t_serial, PotId t_id, uint8_t t_value) {
+  t_serial.feedByte(0xB0);
+  t_serial.feedByte(static_cast<uint8_t>(t_id));
+  t_serial.feedByte(t_value);
 }
 
 void setUp() {
@@ -188,7 +188,7 @@ void test_midi_cc_pot0_sets_tempo_on_delay_effect() {
   fix.publishAndDispatchAllEvents(makeBootEvent());
 
   // Send MIDI CC#0 message
-  makeMidiCCPotValueChangedMessage(fix.midiService.getMidiHandler(), PotId::kPot0, 64);
+  makeMidiCCPotValueChangedMessage(fix.mockSerial, PotId::kPot0, 64);
   fix.updateAllServices();
   fix.dispatchAllEvents();
 
@@ -309,7 +309,7 @@ void test_midi_cc_pot_value_sets_logical_state() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send CC message
-  makeMidiCCPotValueChangedMessage(fix.midiService.getMidiHandler(), PotId::kPot0, 16);
+  makeMidiCCPotValueChangedMessage(fix.mockSerial, PotId::kPot0, 16);
 
   // Update services and handle events
   fix.updateAllServices();
@@ -319,7 +319,7 @@ void test_midi_cc_pot_value_sets_logical_state() {
   TEST_ASSERT_EQUAL(128, fix.logicalState.m_potParams[7][0].m_value);
 
   // Send CC message
-  makeMidiCCPotValueChangedMessage(fix.midiService.getMidiHandler(), PotId::kPot1, 32);
+  makeMidiCCPotValueChangedMessage(fix.mockSerial, PotId::kPot1, 32);
 
   // Update services and handle events
   fix.updateAllServices();
@@ -329,7 +329,7 @@ void test_midi_cc_pot_value_sets_logical_state() {
   TEST_ASSERT_EQUAL(257, fix.logicalState.m_potParams[7][1].m_value);
 
   // Send CC message
-  makeMidiCCPotValueChangedMessage(fix.midiService.getMidiHandler(), PotId::kPot2, 48);
+  makeMidiCCPotValueChangedMessage(fix.mockSerial, PotId::kPot2, 48);
 
   // Update services and handle events
   fix.updateAllServices();
@@ -339,7 +339,7 @@ void test_midi_cc_pot_value_sets_logical_state() {
   TEST_ASSERT_EQUAL(386, fix.logicalState.m_potParams[7][2].m_value);
 
   // Send CC message
-  makeMidiCCPotValueChangedMessage(fix.midiService.getMidiHandler(), PotId::kMixPot, 64);
+  makeMidiCCPotValueChangedMessage(fix.mockSerial, PotId::kMixPot, 64);
 
   // Update services and handle events
   fix.updateAllServices();

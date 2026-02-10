@@ -2,6 +2,7 @@
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
 #include "mock/mock_clock.h"
+#include "mock/mock_serial.h"
 #include "services/midi_service.h"
 
 #include "../src/services/midi_service.cpp"
@@ -34,15 +35,15 @@ namespace MidiBytes {
   constexpr uint8_t c_ccProgramMode = 0x07;
 }
 
-void pushCCMessage(MidiHandler* t_handler, uint8_t t_cc, uint8_t t_value) {
-  t_handler->pushByte(MidiBytes::c_ccStatus);
-  t_handler->pushByte(t_cc);
-  t_handler->pushByte(t_value);
+void pushCCMessage(MockedSerial& t_serial, uint8_t t_cc, uint8_t t_value) {
+  t_serial.feedByte(MidiBytes::c_ccStatus);
+  t_serial.feedByte(t_cc);
+  t_serial.feedByte(t_value);
 }
 
-void pushPCMessage(MidiHandler* t_handler, uint8_t t_program) {
-  t_handler->pushByte(MidiBytes::c_pcStatus);
-  t_handler->pushByte(t_program);
+void pushPCMessage(MockedSerial& t_serial, uint8_t t_program) {
+  t_serial.feedByte(MidiBytes::c_pcStatus);
+  t_serial.feedByte(t_program);
 }
 
 Event makeLogicProgramChangedEvent(uint8_t t_programId) {
@@ -155,15 +156,15 @@ void test_init_syncs_midi_channel_to_handler() {
   MockedClock clock;
 
   logicalState.m_midiChannel = 5;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
 
   // Send a CC on channel 5 - should be processed
-  handler->pushByte(0xB5);  // CC on channel 5
-  handler->pushByte(MidiBytes::c_ccPot0);
-  handler->pushByte(64);
+  serial.feedByte(0xB5);  // CC on channel 5
+  serial.feedByte(MidiBytes::c_ccPot0);
+  serial.feedByte(64);
 
   midiService.update();
 
@@ -178,11 +179,11 @@ void test_init_syncs_midi_channel_to_handler() {
 void test_cc_pot0_publishes_midi_pot_event() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
-  pushCCMessage(handler, MidiBytes::c_ccPot0, 64);
+  pushCCMessage(serial, MidiBytes::c_ccPot0, 64);
   midiService.update();
 
   assertMidiPotEventPublished(PotId::kPot0, 64);
@@ -192,11 +193,11 @@ void test_cc_pot0_publishes_midi_pot_event() {
 void test_cc_pot1_publishes_midi_pot_event() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
-  pushCCMessage(handler, MidiBytes::c_ccPot1, 127);
+  pushCCMessage(serial, MidiBytes::c_ccPot1, 127);
   midiService.update();
 
   assertMidiPotEventPublished(PotId::kPot1, 127);
@@ -206,11 +207,11 @@ void test_cc_pot1_publishes_midi_pot_event() {
 void test_cc_pot2_publishes_midi_pot_event() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
-  pushCCMessage(handler, MidiBytes::c_ccPot2, 32);
+  pushCCMessage(serial, MidiBytes::c_ccPot2, 32);
   midiService.update();
 
   assertMidiPotEventPublished(PotId::kPot2, 32);
@@ -220,11 +221,11 @@ void test_cc_pot2_publishes_midi_pot_event() {
 void test_cc_mix_pot_publishes_midi_pot_event() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
-  pushCCMessage(handler, MidiBytes::c_ccMixPot, 100);
+  pushCCMessage(serial, MidiBytes::c_ccMixPot, 100);
   midiService.update();
 
   assertMidiPotEventPublished(PotId::kMixPot, 100);
@@ -238,11 +239,11 @@ void test_cc_mix_pot_publishes_midi_pot_event() {
 void test_cc_bypass_enable_publishes_switch_event() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
-  pushCCMessage(handler, MidiBytes::c_ccBypass, MidiCCValues::c_bypassEnable);
+  pushCCMessage(serial, MidiBytes::c_ccBypass, MidiCCValues::c_bypassEnable);
   midiService.update();
 
   assertMidiSwitchEventPublished(SwitchId::kBypass, MidiCCValues::c_bypassEnable);
@@ -252,11 +253,11 @@ void test_cc_bypass_enable_publishes_switch_event() {
 void test_cc_bypass_disable_publishes_switch_event() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
-  pushCCMessage(handler, MidiBytes::c_ccBypass, MidiCCValues::c_bypassDisable);
+  pushCCMessage(serial, MidiBytes::c_ccBypass, MidiCCValues::c_bypassDisable);
   midiService.update();
 
   assertMidiSwitchEventPublished(SwitchId::kBypass, MidiCCValues::c_bypassDisable);
@@ -266,11 +267,11 @@ void test_cc_bypass_disable_publishes_switch_event() {
 void test_cc_tap_short_press_publishes_switch_event() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
-  pushCCMessage(handler, MidiBytes::c_ccTap, MidiCCValues::c_tapShortPress);
+  pushCCMessage(serial, MidiBytes::c_ccTap, MidiCCValues::c_tapShortPress);
   midiService.update();
 
   assertMidiSwitchEventPublished(SwitchId::kTap, MidiCCValues::c_tapShortPress);
@@ -280,11 +281,11 @@ void test_cc_tap_short_press_publishes_switch_event() {
 void test_cc_tap_long_press_publishes_switch_event() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
-  pushCCMessage(handler, MidiBytes::c_ccTap, MidiCCValues::c_tapLongPress);
+  pushCCMessage(serial, MidiBytes::c_ccTap, MidiCCValues::c_tapLongPress);
   midiService.update();
 
   assertMidiSwitchEventPublished(SwitchId::kTap, MidiCCValues::c_tapLongPress);
@@ -298,11 +299,11 @@ void test_cc_tap_long_press_publishes_switch_event() {
 void test_cc_tempo_publishes_tempo_event() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
-  pushCCMessage(handler, MidiBytes::c_ccTempo, 120);
+  pushCCMessage(serial, MidiBytes::c_ccTempo, 120);
   midiService.update();
 
   assertMidiTempoEventPublished(120);
@@ -312,11 +313,11 @@ void test_cc_tempo_publishes_tempo_event() {
 void test_cc_program_mode_publishes_event() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
-  pushCCMessage(handler, MidiBytes::c_ccProgramMode, MidiCCValues::c_presetMode);
+  pushCCMessage(serial, MidiBytes::c_ccProgramMode, MidiCCValues::c_presetMode);
   midiService.update();
 
   assertMidiProgramModeEventPublished(MidiCCValues::c_presetMode);
@@ -330,11 +331,11 @@ void test_cc_program_mode_publishes_event() {
 void test_pc_publishes_program_event_in_program_mode() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
-  pushPCMessage(handler, 3);
+  pushPCMessage(serial, 3);
   midiService.update();
 
   assertMidiProgramEventPublished(3);
@@ -345,11 +346,11 @@ void test_pc_publishes_preset_event_in_preset_mode() {
   LogicalState logicalState;
   logicalState.m_programMode = ProgramMode::kPreset;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
-  pushPCMessage(handler, 3);
+  pushPCMessage(serial, 3);
   midiService.update();
 
   assertMidiPresetEventPublished(3);
@@ -360,25 +361,25 @@ void test_pc_publishes_preset_event_in_preset_mode() {
 void test_pc_with_various_program_values() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
 
   // Test program 0
-  pushPCMessage(handler, 0);
+  pushPCMessage(serial, 0);
   midiService.update();
   assertMidiProgramEventPublished(0);
   assertEventBusEmpty();
 
   // Test program 7 (max for FV1)
-  pushPCMessage(handler, 7);
+  pushPCMessage(serial, 7);
   midiService.update();
   assertMidiProgramEventPublished(7);
   assertEventBusEmpty();
 
   // Test program 127 (max MIDI value)
-  pushPCMessage(handler, 127);
+  pushPCMessage(serial, 127);
   midiService.update();
   assertMidiProgramEventPublished(127);
   assertEventBusEmpty();
@@ -391,14 +392,14 @@ void test_pc_with_various_program_values() {
 void test_cc_incomplete_message_no_event() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
 
   // Only status and CC number, missing value
-  handler->pushByte(MidiBytes::c_ccStatus);
-  handler->pushByte(MidiBytes::c_ccPot0);
+  serial.feedByte(MidiBytes::c_ccStatus);
+  serial.feedByte(MidiBytes::c_ccPot0);
 
   midiService.update();
 
@@ -408,13 +409,13 @@ void test_cc_incomplete_message_no_event() {
 void test_cc_only_status_byte_no_event() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
 
   // Only status byte
-  handler->pushByte(MidiBytes::c_ccStatus);
+  serial.feedByte(MidiBytes::c_ccStatus);
 
   midiService.update();
 
@@ -424,19 +425,19 @@ void test_cc_only_status_byte_no_event() {
 void test_cc_recovery_after_incomplete_message() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
 
   // Incomplete message
-  handler->pushByte(MidiBytes::c_ccStatus);
-  handler->pushByte(MidiBytes::c_ccPot0);
+  serial.feedByte(MidiBytes::c_ccStatus);
+  serial.feedByte(MidiBytes::c_ccPot0);
   midiService.update();
   assertEventBusEmpty();
 
   // Complete message should work
-  pushCCMessage(handler, MidiBytes::c_ccPot2, 32);
+  pushCCMessage(serial, MidiBytes::c_ccPot2, 32);
   midiService.update();
 
   assertMidiPotEventPublished(PotId::kPot2, 32);
@@ -446,13 +447,13 @@ void test_cc_recovery_after_incomplete_message() {
 void test_cc_out_of_range_ignored() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
 
   // CC 10 is outside the c_ccMap (0-9)
-  pushCCMessage(handler, 10, 64);
+  pushCCMessage(serial, 10, 64);
   midiService.update();
 
   assertEventBusEmpty();
@@ -465,14 +466,14 @@ void test_cc_out_of_range_ignored() {
 void test_successive_cc_messages_processed() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   midiService.init();
 
   // Queue two messages
-  pushCCMessage(handler, MidiBytes::c_ccPot0, 64);
-  pushCCMessage(handler, MidiBytes::c_ccPot1, 127);
+  pushCCMessage(serial, MidiBytes::c_ccPot0, 64);
+  pushCCMessage(serial, MidiBytes::c_ccPot1, 127);
 
   // First update processes first message
   midiService.update();
@@ -492,7 +493,8 @@ void test_successive_cc_messages_processed() {
 void test_program_change_syncs_handler() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   // Change MIDI channel in logical state
   logicalState.m_midiChannel = 3;
@@ -503,10 +505,9 @@ void test_program_change_syncs_handler() {
   midiService.handleEvent(makeLogicProgramChangedEvent(1));
 
   // Handler should now be synced with channel 3
-  MidiHandler* handler = midiService.getMidiHandler();
-  handler->pushByte(0xB3);  // CC on channel 3
-  handler->pushByte(MidiBytes::c_ccPot0);
-  handler->pushByte(50);
+  serial.feedByte(0xB3);  // CC on channel 3
+  serial.feedByte(MidiBytes::c_ccPot0);
+  serial.feedByte(50);
 
   midiService.update();
 
@@ -521,7 +522,8 @@ void test_program_change_syncs_handler() {
 void test_midi_channel_change_updates_state() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   logicalState.m_midiChannel = 0;
   midiService.init();
@@ -536,7 +538,8 @@ void test_midi_channel_change_updates_state() {
 void test_midi_channel_change_wraps_at_max() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   // Valid channels are 0 to (max-1), so start at max-1
   logicalState.m_midiChannel = MidiHandlerConstants::c_maxMidiChannels - 1;
@@ -552,7 +555,8 @@ void test_midi_channel_change_wraps_at_max() {
 void test_midi_channel_change_wraps_at_min() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   logicalState.m_midiChannel = 0;
   midiService.init();
@@ -568,8 +572,8 @@ void test_midi_channel_change_wraps_at_min() {
 void test_midi_channel_change_syncs_handler() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
-  MidiHandler* handler = midiService.getMidiHandler();
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   logicalState.m_midiChannel = 0;
   midiService.init();
@@ -579,9 +583,9 @@ void test_midi_channel_change_syncs_handler() {
   clearEventBus();
 
   // Messages on channel 5 should now be processed
-  handler->pushByte(0xB5);  // CC on channel 5
-  handler->pushByte(MidiBytes::c_ccPot0);
-  handler->pushByte(100);
+  serial.feedByte(0xB5);  // CC on channel 5
+  serial.feedByte(MidiBytes::c_ccPot0);
+  serial.feedByte(100);
 
   midiService.update();
 
@@ -596,7 +600,8 @@ void test_midi_channel_change_syncs_handler() {
 void test_interested_in_midi_channel_change() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   Event e;
   e.m_domain = EventDomain::kMidi;
@@ -609,7 +614,8 @@ void test_interested_in_midi_channel_change() {
 void test_interested_in_logic_program_change() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   Event e;
   e.m_domain = EventDomain::kLogic;
@@ -622,7 +628,8 @@ void test_interested_in_logic_program_change() {
 void test_not_interested_in_midi_pot_events() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   // Service publishes these, should not listen to them
   Event e;
@@ -636,7 +643,8 @@ void test_not_interested_in_midi_pot_events() {
 void test_not_interested_in_midi_switch_events() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   // Service publishes these, should not listen to them
   Event e;
@@ -650,7 +658,8 @@ void test_not_interested_in_midi_switch_events() {
 void test_not_interested_in_midi_program_events() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   // Service publishes these via PC, should not listen to them
   Event e;
@@ -664,7 +673,8 @@ void test_not_interested_in_midi_program_events() {
 void test_not_interested_in_physical_events() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   Event e;
   e.m_domain = EventDomain::kPhysical;
@@ -677,7 +687,8 @@ void test_not_interested_in_physical_events() {
 void test_not_interested_in_logic_program_save() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   // Only interested in kValueChanged, not kSave
   Event e;
@@ -691,7 +702,8 @@ void test_not_interested_in_logic_program_save() {
 void test_not_interested_in_memory_events() {
   LogicalState logicalState;
   MockedClock clock;
-  MidiService midiService(logicalState, clock);
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
 
   // Service publishes these, should not listen to them
   Event e;

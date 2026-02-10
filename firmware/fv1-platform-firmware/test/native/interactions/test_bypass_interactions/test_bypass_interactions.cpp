@@ -50,18 +50,18 @@ Event makeDriverSwitchPressedEvent(SwitchId t_id) {
   return e;
 }
 
-void makeMidiCCBypassOnMessage(MidiHandler* t_handler) {
+void makeMidiCCBypassOnMessage(MockedSerial& t_serial) {
   // CC message bypass on
-  t_handler->pushByte(0xB0);
-  t_handler->pushByte(0x04);
-  t_handler->pushByte(0x7F);
+  t_serial.feedByte(0xB0);
+  t_serial.feedByte(0x04);
+  t_serial.feedByte(0x7F);
 }
 
-void makeMidiCCBypassOffMessage(MidiHandler* t_handler) {
+void makeMidiCCBypassOffMessage(MockedSerial& t_serial) {
   // CC message bypass off
-  t_handler->pushByte(0xB0);
-  t_handler->pushByte(0x04);
-  t_handler->pushByte(0x00);
+  t_serial.feedByte(0xB0);
+  t_serial.feedByte(0x04);
+  t_serial.feedByte(0x00);
 }
 
 void setUp() {
@@ -225,7 +225,7 @@ void test_toggle_bypass_off_on_midi_cc_message() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send CC message
-  makeMidiCCBypassOffMessage(fix.midiService.getMidiHandler());
+  makeMidiCCBypassOffMessage(fix.mockSerial);
 
   // Update services and handle events
   fix.updateAllServices();
@@ -245,7 +245,7 @@ void test_toggle_bypass_on_on_midi_cc_message() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send CC message
-  makeMidiCCBypassOnMessage(fix.midiService.getMidiHandler());
+  makeMidiCCBypassOnMessage(fix.mockSerial);
 
   // Update services and handle events
   fix.updateAllServices();
@@ -265,7 +265,7 @@ void test_bypass_stays_off_on_midi_cc_off_message() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send CC message
-  makeMidiCCBypassOffMessage(fix.midiService.getMidiHandler());
+  makeMidiCCBypassOffMessage(fix.mockSerial);
 
   // Update services and handle events
   fix.updateAllServices();
@@ -285,7 +285,7 @@ void test_bypass_stays_on_on_midi_cc_on_message() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send CC message
-  makeMidiCCBypassOnMessage(fix.midiService.getMidiHandler());
+  makeMidiCCBypassOnMessage(fix.mockSerial);
 
   // Update services and handle events
   fix.updateAllServices();

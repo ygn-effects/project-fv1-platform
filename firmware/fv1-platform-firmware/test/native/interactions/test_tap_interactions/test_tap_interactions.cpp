@@ -97,16 +97,16 @@ Event makeDriverPotValueChangedEvent(PotId t_id, uint16_t t_value) {
   return e;
 }
 
-void makeMidiCCTapShortPressMessage(MidiHandler* t_handler) {
-  t_handler->pushByte(0xB0);
-  t_handler->pushByte(0x05);
-  t_handler->pushByte(0x00);
+void makeMidiCCTapShortPressMessage(MockedSerial& t_serial) {
+  t_serial.feedByte(0xB0);
+  t_serial.feedByte(0x05);
+  t_serial.feedByte(0x00);
 }
 
-void makeMidiCCTapLongPressMessage(MidiHandler* t_handler) {
-  t_handler->pushByte(0xB0);
-  t_handler->pushByte(0x05);
-  t_handler->pushByte(0x7F);
+void makeMidiCCTapLongPressMessage(MockedSerial& t_serial) {
+  t_serial.feedByte(0xB0);
+  t_serial.feedByte(0x05);
+  t_serial.feedByte(0x7F);
 }
 
 void setUp() {
@@ -298,7 +298,7 @@ void test_midi_cc_tap_short_press_sets_logical_state() {
   // Set clock
   fix.mockClock.advanceBy(200);
   // Send CC message
-  makeMidiCCTapShortPressMessage(fix.midiService.getMidiHandler());
+  makeMidiCCTapShortPressMessage(fix.mockSerial);
 
   // Update services and handle events
   fix.updateAllServices();
@@ -307,7 +307,7 @@ void test_midi_cc_tap_short_press_sets_logical_state() {
   // Set clock
   fix.mockClock.advanceBy(200);
   // Send CC message
-  makeMidiCCTapShortPressMessage(fix.midiService.getMidiHandler());
+  makeMidiCCTapShortPressMessage(fix.mockSerial);
 
   // Update services and handle events
   fix.updateAllServices();
@@ -334,7 +334,7 @@ void test_midi_cc_tap_long_press_sets_logical_state() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send CC message
-  makeMidiCCTapLongPressMessage(fix.midiService.getMidiHandler());
+  makeMidiCCTapLongPressMessage(fix.mockSerial);
 
   // Update services and handle events
   fix.updateAllServices();
@@ -362,7 +362,7 @@ void test_midi_cc_tap_long_press_cycles_logical_state() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send CC message
-  makeMidiCCTapLongPressMessage(fix.midiService.getMidiHandler());
+  makeMidiCCTapLongPressMessage(fix.mockSerial);
 
   // Update services and handle events
   fix.updateAllServices();
@@ -376,7 +376,7 @@ void test_midi_cc_tap_long_press_cycles_logical_state() {
   TEST_ASSERT_EQUAL(200, fix.logicalState.m_divInterval);
 
   // Send CC message
-  makeMidiCCTapLongPressMessage(fix.midiService.getMidiHandler());
+  makeMidiCCTapLongPressMessage(fix.mockSerial);
 
   // Update services and handle events
   fix.updateAllServices();
@@ -390,7 +390,7 @@ void test_midi_cc_tap_long_press_cycles_logical_state() {
   TEST_ASSERT_EQUAL(100, fix.logicalState.m_divInterval);
 
   // Send CC message
-  makeMidiCCTapLongPressMessage(fix.midiService.getMidiHandler());
+  makeMidiCCTapLongPressMessage(fix.mockSerial);
 
   // Update services and handle events
   fix.updateAllServices();
@@ -404,7 +404,7 @@ void test_midi_cc_tap_long_press_cycles_logical_state() {
   TEST_ASSERT_EQUAL(300, fix.logicalState.m_divInterval);
 
   // Send CC message
-  makeMidiCCTapLongPressMessage(fix.midiService.getMidiHandler());
+  makeMidiCCTapLongPressMessage(fix.mockSerial);
 
   // Update services and handle events
   fix.updateAllServices();
@@ -418,7 +418,7 @@ void test_midi_cc_tap_long_press_cycles_logical_state() {
   TEST_ASSERT_EQUAL(133, fix.logicalState.m_divInterval);
 
   // Send CC message
-  makeMidiCCTapLongPressMessage(fix.midiService.getMidiHandler());
+  makeMidiCCTapLongPressMessage(fix.mockSerial);
 
   // Update services and handle events
   fix.updateAllServices();

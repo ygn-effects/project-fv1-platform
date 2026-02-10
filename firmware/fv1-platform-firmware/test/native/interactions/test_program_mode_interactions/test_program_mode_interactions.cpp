@@ -66,16 +66,16 @@ Event makeUIMenuUnlockedEvent() {
   return e;
 }
 
-void makeMidiCCProgramModeValueChangedProgram(MidiHandler* t_handler) {
-  t_handler->pushByte(0xB0);
-  t_handler->pushByte(0x07);
-  t_handler->pushByte(0x00);
+void makeMidiCCProgramModeValueChangedProgram(MockedSerial& t_serial) {
+  t_serial.feedByte(0xB0);
+  t_serial.feedByte(0x07);
+  t_serial.feedByte(0x00);
 }
 
-void makeMidiCCProgramModeValueChangedPreset(MidiHandler* t_handler) {
-  t_handler->pushByte(0xB0);
-  t_handler->pushByte(0x07);
-  t_handler->pushByte(0x7F);
+void makeMidiCCProgramModeValueChangedPreset(MockedSerial& t_serial) {
+  t_serial.feedByte(0xB0);
+  t_serial.feedByte(0x07);
+  t_serial.feedByte(0x7F);
 }
 
 void setUp() {
@@ -167,7 +167,7 @@ void test_midi_program_mode_value_changed_to_preset_toggles_logical_state() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send program mode switch event
-  makeMidiCCProgramModeValueChangedPreset(fix.midiService.getMidiHandler());
+  makeMidiCCProgramModeValueChangedPreset(fix.mockSerial);
   fix.updateAllServices();
   fix.dispatchAllEvents();
 
@@ -184,7 +184,7 @@ void test_midi_program_mode_value_changed_to_program_toggles_logical_state() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send program mode switch event
-  makeMidiCCProgramModeValueChangedProgram(fix.midiService.getMidiHandler());
+  makeMidiCCProgramModeValueChangedProgram(fix.mockSerial);
   fix.updateAllServices();
   fix.dispatchAllEvents();
 
