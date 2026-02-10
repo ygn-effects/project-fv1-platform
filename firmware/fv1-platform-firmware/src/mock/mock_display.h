@@ -47,10 +47,14 @@ class MockDisplay : public Display {
     }
 
     bool hasClearCmd() const {
+      if (m_log.empty()) return false;
+
       return m_log.front().type == DrawCmd::Type::kClear;
     }
 
     bool hasDisplayCmd() const {
+      if (m_log.empty()) return false;
+
       return m_log.back().type == DrawCmd::Type::kDisplay;
     }
 
