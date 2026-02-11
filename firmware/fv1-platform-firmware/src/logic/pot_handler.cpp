@@ -31,3 +31,32 @@ uint16_t PotHandler::changePotMaxValue(int8_t t_delta, uint8_t t_potIndex) {
 
   return m_maxValue[t_potIndex];
 }
+
+bool PotHandler::checkPickup(uint16_t t_mappedValue, uint16_t t_storedValue, uint8_t t_potIndex) {
+  if (m_pickedUp[t_potIndex]) return true;
+
+  if (!m_hasReference[t_potIndex]) {
+    m_lastMappedValue[t_potIndex] = t_mappedValue;
+    m_hasReference[t_potIndex] = true;
+    return false;
+  }
+
+  bool crossed = (m_lastMappedValue[t_potIndex] <= t_storedValue && t_mappedValue >= t_storedValue)
+              || (m_lastMappedValue[t_potIndex] >= t_storedValue && t_mappedValue <= t_storedValue);
+
+  m_lastMappedValue[t_potIndex] = t_mappedValue;
+
+  if (crossed) {
+    m_pickedUp[t_potIndex] = true;
+    return true;
+  }
+
+  return false;
+}
+
+void PotHandler::resetPickup() {
+  for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
+    m_pickedUp[i] = false;
+    m_hasReference[i] = false;
+  }
+}

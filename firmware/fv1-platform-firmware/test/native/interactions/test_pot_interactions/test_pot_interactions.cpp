@@ -92,6 +92,24 @@ Event makeUIPotSettingChangedEvent(PotId t_id, PotParam t_setting, int16_t t_del
   return e;
 }
 
+Event makeUiProgramValueChangedEvent(int8_t t_delta) {
+  Event e{};
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kValueChanged;
+  e.m_data.delta = t_delta;
+  return e;
+}
+
+Event makeUIPresetValueChangedEvent(int8_t t_delta) {
+  Event e{};
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kValueChanged;
+  e.m_data.delta = t_delta;
+  return e;
+}
+
 void makeMidiCCPotValueChangedMessage(MockedSerial& t_serial, PotId t_id, uint8_t t_value) {
   t_serial.feedByte(0xB0);
   t_serial.feedByte(static_cast<uint8_t>(t_id));
@@ -350,6 +368,99 @@ void test_midi_cc_pot_value_sets_logical_state() {
 }
 
 // =============================================================================
+// Pickup Mode
+// =============================================================================
+
+void test_pickup_blocks_physical_pot_after_program_change() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 7;
+  fix.logicalState.m_potParams[7][0].m_value = 800;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Change program (7 → 6). In program mode, copyPotValues copies 800 to program 6.
+  fix.publishAndDispatchAllEvents(makeUiProgramValueChangedEvent(-1));
+  TEST_ASSERT_EQUAL(800, fix.logicalState.m_potParams[6][0].m_value);
+
+  // Physical pot at 100 — far from stored 800, should be blocked
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 100));
+  TEST_ASSERT_EQUAL(800, fix.logicalState.m_potParams[6][0].m_value);
+}
+
+void test_pickup_allows_physical_pot_after_crossover() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 7;
+  fix.logicalState.m_potParams[7][0].m_value = 800;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Change program. copyPotValues copies 800 to program 6.
+  fix.publishAndDispatchAllEvents(makeUiProgramValueChangedEvent(-1));
+
+  // Physical pot above stored — blocked (reference)
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 900));
+  TEST_ASSERT_EQUAL(800, fix.logicalState.m_potParams[6][0].m_value);
+
+  // Cross over stored value downward — picks up
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 750));
+  TEST_ASSERT_EQUAL(750, fix.logicalState.m_potParams[6][0].m_value);
+
+  // Subsequent moves work normally
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 500));
+  TEST_ASSERT_EQUAL(500, fix.logicalState.m_potParams[6][0].m_value);
+}
+
+void test_pickup_midi_bypasses_pickup_after_program_change() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 7;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Change program
+  fix.publishAndDispatchAllEvents(makeUiProgramValueChangedEvent(-1));
+
+  // MIDI CC should always work regardless of pickup state
+  makeMidiCCPotValueChangedMessage(fix.mockSerial, PotId::kPot0, 64);
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  TEST_ASSERT_NOT_EQUAL(0, fix.logicalState.m_potParams[6][0].m_value);
+}
+
+void test_pickup_preset_change_blocks_then_crossover_allows() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_currentProgram = 7;
+
+  // Set up preset 1 with specific pot value
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_programIndex = 7;
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_potParams[0].m_value = 600;
+
+  fix.syncEepromWithState();
+  fix.SyncEepromWithLoadedPresetBank();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Change to preset 1
+  fix.publishAndDispatchAllEvents(makeUIPresetValueChangedEvent(1));
+
+  // Physical pot at 200 — far from stored 600, blocked
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 200));
+  TEST_ASSERT_EQUAL(600, fix.logicalState.m_potParams[7][0].m_value);
+
+  // Cross over — picks up
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 650));
+  TEST_ASSERT_EQUAL(650, fix.logicalState.m_potParams[7][0].m_value);
+}
+
+// =============================================================================
 // Persistence
 // =============================================================================
 
@@ -399,6 +510,12 @@ int main() {
 
   // MIDI Pot Control
   RUN_TEST(test_midi_cc_pot_value_sets_logical_state);
+
+  // Pickup Mode
+  RUN_TEST(test_pickup_blocks_physical_pot_after_program_change);
+  RUN_TEST(test_pickup_allows_physical_pot_after_crossover);
+  RUN_TEST(test_pickup_midi_bypasses_pickup_after_program_change);
+  RUN_TEST(test_pickup_preset_change_blocks_then_crossover_allows);
 
   // Persistence
   RUN_TEST(test_pot_params_persists);

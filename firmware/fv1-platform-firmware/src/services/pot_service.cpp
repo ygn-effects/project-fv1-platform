@@ -51,7 +51,8 @@ void PotService::handlePhysicalEvent(const Event& t_event) {
   }
 
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
-  if (params[t_event.m_id].m_state == PotState::kActive) {
+  if (params[t_event.m_id].m_state == PotState::kActive
+      && m_handler.checkPickup(scaledValue, params[t_event.m_id].m_value, t_event.m_id)) {
     params[t_event.m_id].m_value = scaledValue;
     publishPotValueChangedEvent(t_event.m_id, t_event.m_timestamp);
   }
@@ -140,6 +141,7 @@ void PotService::handleEvent(const Event& t_event) {
 
       m_lastSyncedProgram = m_logicalState.m_currentProgram;
       syncHandler();
+      m_handler.resetPickup();
       return;
     }
 
