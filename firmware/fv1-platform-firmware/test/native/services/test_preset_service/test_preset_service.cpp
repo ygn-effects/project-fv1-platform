@@ -601,6 +601,38 @@ void test_not_interested_in_other_events() {
   TEST_ASSERT_FALSE(presetService.interestedIn(e));
 }
 
+// =============================================================================
+// Preset Dirty Flag tests
+// =============================================================================
+
+void test_apply_preset_clears_dirty_flag() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetService presetService(logicalState, eeprom);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_presetDirty = true;
+
+  // Switching preset triggers applyPreset
+  presetService.handleEvent(makeUIPresetValueChangeEvent(1));
+
+  TEST_ASSERT_FALSE(logicalState.m_presetDirty);
+}
+
+void test_save_preset_clears_dirty_flag() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetService presetService(logicalState, eeprom);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_presetDirty = true;
+  logicalState.m_saveTargetPreset = 0;
+
+  presetService.handleEvent(makeUiSavePresetEvent());
+
+  TEST_ASSERT_FALSE(logicalState.m_presetDirty);
+}
+
 int main() {
   UNITY_BEGIN();
 
@@ -626,6 +658,10 @@ int main() {
   RUN_TEST(test_ui_save_preset_sets_logical_state);
   RUN_TEST(test_ui_save_preset_invalid_value_not_sets_logical_state);
   RUN_TEST(test_ui_save_preset_saves_logical_state_to_preset_bank);
+
+  // Preset Dirty Flag
+  RUN_TEST(test_apply_preset_clears_dirty_flag);
+  RUN_TEST(test_save_preset_clears_dirty_flag);
 
   // interestedIn Tests
   RUN_TEST(test_interested_in_midi_preset_value_change);

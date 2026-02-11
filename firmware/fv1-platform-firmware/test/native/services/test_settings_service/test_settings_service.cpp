@@ -542,6 +542,75 @@ void test_not_interested_in_other_events() {
   TEST_ASSERT_FALSE(settingsService.interestedIn(e));
 }
 
+// =============================================================================
+// Preset Dirty Flag tests
+// =============================================================================
+
+void test_preset_dirty_flag_starts_false() {
+  LogicalState logicalState;
+  TEST_ASSERT_FALSE(logicalState.m_presetDirty);
+}
+
+void test_preset_mode_pot_save_sets_dirty() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, PotId::kPot0));
+
+  TEST_ASSERT_TRUE(logicalState.m_presetDirty);
+}
+
+void test_preset_mode_tap_save_sets_dirty() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTap));
+
+  TEST_ASSERT_TRUE(logicalState.m_presetDirty);
+}
+
+void test_preset_mode_tempo_save_sets_dirty() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTempo));
+
+  TEST_ASSERT_TRUE(logicalState.m_presetDirty);
+}
+
+void test_preset_mode_expr_save_sets_dirty() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kExpr));
+
+  TEST_ASSERT_TRUE(logicalState.m_presetDirty);
+}
+
+void test_program_mode_pot_save_does_not_set_dirty() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  logicalState.m_programMode = ProgramMode::kProgram;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, PotId::kPot0));
+
+  TEST_ASSERT_FALSE(logicalState.m_presetDirty);
+}
+
 int main() {
   UNITY_BEGIN();
 
@@ -568,6 +637,14 @@ int main() {
   RUN_TEST(test_preset_mode_still_saves_program);
   RUN_TEST(test_preset_mode_still_saves_program_mode);
   RUN_TEST(test_preset_mode_still_saves_general);
+
+  // Preset Dirty Flag
+  RUN_TEST(test_preset_dirty_flag_starts_false);
+  RUN_TEST(test_preset_mode_pot_save_sets_dirty);
+  RUN_TEST(test_preset_mode_tap_save_sets_dirty);
+  RUN_TEST(test_preset_mode_tempo_save_sets_dirty);
+  RUN_TEST(test_preset_mode_expr_save_sets_dirty);
+  RUN_TEST(test_program_mode_pot_save_does_not_set_dirty);
 
   //interestedIn Tests
   RUN_TEST(test_interested_in_memory);

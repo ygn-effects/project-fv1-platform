@@ -61,4 +61,6 @@ struct LogicalState {
   };
 
   ExprParams m_exprParams[ProgramConstants::c_maxPrograms];
+
+  bool m_presetDirty = false;
 };

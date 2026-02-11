@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <string.h>
 #include "logic/logical_state.h"
 #include "ui/inputs.h"
 #include "ui/menu_model.h"
@@ -18,9 +19,12 @@ enum class SubState : uint8_t {
 
 struct MenuHandler {
   private:
+    char m_headerBuffer[24];
+
     uint8_t getVisibleItemCount(const LogicalState& t_state) const;
     uint8_t visibleToRealIndex(uint8_t t_visibleIndex, const LogicalState& t_state) const;
 
+    void resolveHeader(const ui::MenuPage& t_page, const LogicalState& t_state);
     void buildListView(const ui::MenuPage& t_page, const LogicalState& t_state);
     void buildTwoColumnsView(const ui::MenuPage& t_page, const LogicalState& t_state);
     void buildLabelValueView(const ui::MenuPage& t_page, const LogicalState& t_state);

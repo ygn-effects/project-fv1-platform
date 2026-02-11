@@ -2,6 +2,7 @@
 
 void PresetService::applyPreset() {
   m_presetHandler.applyToState(m_logicalState, m_logicalState.m_currentPreset);
+  m_logicalState.m_presetDirty = false;
 }
 
 void PresetService::savePreset(uint8_t t_bankIndex, uint8_t t_presetIndex) {
@@ -43,6 +44,7 @@ void PresetService::handleEvent(const Event& t_event) {
       if (m_logicalState.m_saveTargetPreset < PresetConstants::c_presetPerBank) {
         m_logicalState.m_currentPreset = m_logicalState.m_saveTargetPreset;
         m_presetHandler.snapshotFromState(m_logicalState, m_logicalState.m_saveTargetPreset);
+        m_logicalState.m_presetDirty = false;
 
         publishSavePresetEvent(t_event);
         return;
