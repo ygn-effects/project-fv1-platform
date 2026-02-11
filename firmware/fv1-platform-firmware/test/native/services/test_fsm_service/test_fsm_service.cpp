@@ -190,6 +190,18 @@ void test_bypass_toggle_preset_idle_to_bypassed() {
   assertNoMoreEvents();
 }
 
+void test_bypass_toggle_preset_edit_to_bypassed() {
+  LogicalState logicalState;
+  FsmService fsmService(logicalState);
+
+  fsmService.setAppState(AppState::kPresetEdit);
+
+  fsmService.handleEvent(makeBypassToggledEvent());
+
+  TEST_ASSERT_EQUAL(AppState::kBypassed, fsmService.getAppState());
+  assertNoMoreEvents();
+}
+
 // =============================================================================
 // Menu Lock/Unlock State Transitions
 // =============================================================================
@@ -227,6 +239,18 @@ void test_menu_unlock_preset_idle_to_preset_edit() {
   fsmService.handleEvent(makeMenuUnlockedEvent());
 
   TEST_ASSERT_EQUAL(AppState::kPresetEdit, fsmService.getAppState());
+  assertNoMoreEvents();
+}
+
+void test_menu_lock_preset_edit_to_preset_idle() {
+  LogicalState logicalState;
+  FsmService fsmService(logicalState);
+
+  fsmService.setAppState(AppState::kPresetEdit);
+
+  fsmService.handleEvent(makeMenuLockedEvent());
+
+  TEST_ASSERT_EQUAL(AppState::kPresetIdle, fsmService.getAppState());
   assertNoMoreEvents();
 }
 
@@ -352,11 +376,13 @@ int main() {
   RUN_TEST(test_bypass_toggle_program_edit_to_bypassed);
   RUN_TEST(test_bypass_toggle_program_idle_to_bypassed);
   RUN_TEST(test_bypass_toggle_preset_idle_to_bypassed);
+  RUN_TEST(test_bypass_toggle_preset_edit_to_bypassed);
 
   // Menu Lock/Unlock
   RUN_TEST(test_menu_unlock_program_idle_to_program_edit);
   RUN_TEST(test_menu_lock_program_edit_to_program_idle);
   RUN_TEST(test_menu_unlock_preset_idle_to_preset_edit);
+  RUN_TEST(test_menu_lock_preset_edit_to_preset_idle);
   RUN_TEST(test_menu_unlock_ignored_in_bypassed);
 
   // Program Mode Toggle

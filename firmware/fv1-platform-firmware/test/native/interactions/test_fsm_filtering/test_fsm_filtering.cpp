@@ -808,6 +808,186 @@ void test_preset_idle_filters_encoder_long_press() {
 }
 
 // =============================================================================
+// kPresetEdit - Most events republished (mirrors kProgramEdit)
+// =============================================================================
+
+void test_preset_edit_republishes_bypass_press() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.fsmService.setAppState(AppState::kPresetEdit);
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverSwitchPress(SwitchId::kBypass);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
+void test_preset_edit_republishes_encoder_press() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.fsmService.setAppState(AppState::kPresetEdit);
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverSwitchPress(SwitchId::kMenuEncoder);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
+void test_preset_edit_republishes_encoder_long_press() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.fsmService.setAppState(AppState::kPresetEdit);
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverSwitchLongPress(SwitchId::kMenuEncoder);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
+void test_preset_edit_republishes_encoder_delta() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.fsmService.setAppState(AppState::kPresetEdit);
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverEncoderDelta(1);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
+void test_preset_edit_republishes_tap_press() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.fsmService.setAppState(AppState::kPresetEdit);
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverSwitchPress(SwitchId::kTap);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
+void test_preset_edit_republishes_tap_long_press() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.fsmService.setAppState(AppState::kPresetEdit);
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverSwitchLongPress(SwitchId::kTap);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
+void test_preset_edit_republishes_pot_move() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.fsmService.setAppState(AppState::kPresetEdit);
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverPotMove(PotId::kPot0, 512);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
+void test_preset_edit_republishes_pot1_move() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.fsmService.setAppState(AppState::kPresetEdit);
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverPotMove(PotId::kPot1, 512);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
+void test_preset_edit_republishes_pot2_move() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.fsmService.setAppState(AppState::kPresetEdit);
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverPotMove(PotId::kPot2, 512);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
+void test_preset_edit_republishes_expr_move() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.fsmService.setAppState(AppState::kPresetEdit);
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverExprMove(512);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
+void test_preset_edit_republishes_menu_lock_long_press() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.fsmService.setAppState(AppState::kPresetEdit);
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverSwitchLongPress(SwitchId::kMenuLock);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
+// =============================================================================
 // Main
 // =============================================================================
 
@@ -869,6 +1049,19 @@ int main() {
   RUN_TEST(test_preset_idle_filters_encoder_delta);
   RUN_TEST(test_preset_idle_filters_pot_move);
   RUN_TEST(test_preset_idle_filters_encoder_long_press);
+
+  // kPresetEdit - Most events republished (mirrors kProgramEdit)
+  RUN_TEST(test_preset_edit_republishes_bypass_press);
+  RUN_TEST(test_preset_edit_republishes_encoder_press);
+  RUN_TEST(test_preset_edit_republishes_encoder_long_press);
+  RUN_TEST(test_preset_edit_republishes_encoder_delta);
+  RUN_TEST(test_preset_edit_republishes_tap_press);
+  RUN_TEST(test_preset_edit_republishes_tap_long_press);
+  RUN_TEST(test_preset_edit_republishes_pot_move);
+  RUN_TEST(test_preset_edit_republishes_pot1_move);
+  RUN_TEST(test_preset_edit_republishes_pot2_move);
+  RUN_TEST(test_preset_edit_republishes_expr_move);
+  RUN_TEST(test_preset_edit_republishes_menu_lock_long_press);
 
   return UNITY_END();
 }
