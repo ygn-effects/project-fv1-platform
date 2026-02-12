@@ -66,7 +66,11 @@ void TapHandler::setNextDivValue() {
   m_divValue = EnumUtils::nextEnumValue<DivValue, TapHandlerConstants::kDivValueCount>(m_divValue);
   calculateDivInterval();
 
-  m_divValue == DivValue::kQuarter
-    ? m_divState = DivState::kDisabled
-    : m_divState = DivState::kEnabled;
+  if (m_divValue == DivValue::kQuarter) {
+    m_divState = DivState::kDisabled;
+    m_divInterval = 0;
+  }
+  else {
+    m_divState = DivState::kEnabled;
+  }
 }

@@ -34,7 +34,9 @@ void MidiService::handleEvent(const Event& t_event) {
 }
 
 void MidiService::update() {
-  // Add Arduino serial code
+  while (m_serial.available()) {
+    m_midiHandler.pushByte(m_serial.read());
+  }
 
   MidiMessage message;
 
@@ -47,25 +49,29 @@ void MidiService::update() {
         e.m_domain = EventDomain::kMidi;
         e.m_subject = definition.m_subject;
         e.m_action = definition.m_action;
-        e.m_timestamp = 0; // millis()
+        e.m_timestamp = m_clock.now();
         e.m_id = definition.m_id;
         e.m_data.value = message.m_value;
 
         EventBus::publish(e);
       }
     }
-  }
 
-  if (message.m_type == MidiMessageType::kProgramChange) {
-        Event e;
-        e.m_domain = EventDomain::kMidi;
-        e.m_subject = EventSubject::kProgram;
-        e.m_action = EventAction::kValueChanged;
-        e.m_timestamp = 0; // millis()
-        e.m_id = 0;
-        e.m_data.value = message.m_param;
+    if (message.m_type == MidiMessageType::kProgramChange) {
+      Event e;
+      e.m_domain = EventDomain::kMidi;
 
-        EventBus::publish(e);
+      m_logicalState.m_programMode == ProgramMode::kProgram
+        ? e.m_subject = EventSubject::kProgram
+        : e.m_subject = EventSubject::kPreset;
+
+      e.m_action = EventAction::kValueChanged;
+      e.m_timestamp = m_clock.now();
+      e.m_id = 0;
+      e.m_data.value = message.m_param;
+
+      EventBus::publish(e);
+    }
   }
 }
 

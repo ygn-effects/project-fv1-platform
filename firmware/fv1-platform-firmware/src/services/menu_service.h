@@ -30,6 +30,9 @@ class MenuService : public Service {
     uint32_t m_lastTempoChangeTime{0};
     bool m_potMenuActive{false};
     bool m_tempoMenuActive{false};
+    bool m_savePresetMenuActive{false};
+
+    void syncSavePresetState();
 
     void publishUIMenuLockedEvent() const;
     void publishUIMenuUnlockedEvent() const;
@@ -42,6 +45,7 @@ class MenuService : public Service {
     void handleEditing(const Event& t_event);
     void handlePotsMoving(const Event& t_event);
     void handleTempoChange(const Event& t_event);
+    void handlePresetSaving(const Event& t_event);
 
   public:
     MenuService(LogicalState& t_lState, Clock& t_clock);
@@ -50,4 +54,7 @@ class MenuService : public Service {
     void handleEvent(const Event& t_event) override;
     void update() override;
     bool interestedIn(const Event& t_event) const override;
+
+    // Tests
+    MenuHandler* getMenuHandler() { return &m_handler; }
 };

@@ -39,24 +39,24 @@ void test_snapshot() {
   logicalState.m_potParams[2][3].m_minValue = 256;
   logicalState.m_potParams[2][3].m_maxValue = 768;
 
-  presetHandler.snapshotFromState(logicalState);
+  presetHandler.snapshotFromState(logicalState, 1);
 
-  TEST_ASSERT_EQUAL(logicalState.m_currentProgram, presetHandler.m_snapshot.m_programIndex);
-  TEST_ASSERT_EQUAL(logicalState.m_tapState, presetHandler.m_snapshot.m_tapState);
-  TEST_ASSERT_EQUAL(logicalState.m_divState, presetHandler.m_snapshot.m_divState);
-  TEST_ASSERT_EQUAL(logicalState.m_divValue, presetHandler.m_snapshot.m_divValue);
-  TEST_ASSERT_EQUAL(logicalState.m_interval, presetHandler.m_snapshot.m_interval);
-  TEST_ASSERT_EQUAL(logicalState.m_divInterval, presetHandler.m_snapshot.m_divInterval);
-  TEST_ASSERT_EQUAL(logicalState.m_tempo, presetHandler.m_snapshot.m_tempo);
-  TEST_ASSERT_EQUAL(logicalState.m_exprParams[2].m_state, presetHandler.m_snapshot.m_exprState);
-  TEST_ASSERT_EQUAL(logicalState.m_exprParams[2].m_mappedPot, presetHandler.m_snapshot.m_mappedPot);
-  TEST_ASSERT_EQUAL(logicalState.m_exprParams[2].m_direction, presetHandler.m_snapshot.m_direction);
-  TEST_ASSERT_EQUAL(logicalState.m_exprParams[2].m_heelValue, presetHandler.m_snapshot.m_heelValue);
-  TEST_ASSERT_EQUAL(logicalState.m_exprParams[2].m_toeValue, presetHandler.m_snapshot.m_toeValue);
-  TEST_ASSERT_EQUAL(logicalState.m_potParams[2][3].m_state, presetHandler.m_snapshot.m_potParams[3].m_state);
-  TEST_ASSERT_EQUAL(logicalState.m_potParams[2][3].m_value, presetHandler.m_snapshot.m_potParams[3].m_value);
-  TEST_ASSERT_EQUAL(logicalState.m_potParams[2][3].m_minValue, presetHandler.m_snapshot.m_potParams[3].m_minValue);
-  TEST_ASSERT_EQUAL(logicalState.m_potParams[2][3].m_maxValue, presetHandler.m_snapshot.m_potParams[3].m_maxValue);
+  TEST_ASSERT_EQUAL(logicalState.m_currentProgram, logicalState.m_loadedPresetBank.m_presets[1].m_programIndex);
+  TEST_ASSERT_EQUAL(logicalState.m_tapState, logicalState.m_loadedPresetBank.m_presets[1].m_tapState);
+  TEST_ASSERT_EQUAL(logicalState.m_divState, logicalState.m_loadedPresetBank.m_presets[1].m_divState);
+  TEST_ASSERT_EQUAL(logicalState.m_divValue, logicalState.m_loadedPresetBank.m_presets[1].m_divValue);
+  TEST_ASSERT_EQUAL(logicalState.m_interval, logicalState.m_loadedPresetBank.m_presets[1].m_interval);
+  TEST_ASSERT_EQUAL(logicalState.m_divInterval, logicalState.m_loadedPresetBank.m_presets[1].m_divInterval);
+  TEST_ASSERT_EQUAL(logicalState.m_tempo, logicalState.m_loadedPresetBank.m_presets[1].m_tempo);
+  TEST_ASSERT_EQUAL(logicalState.m_exprParams[2].m_state, logicalState.m_loadedPresetBank.m_presets[1].m_exprState);
+  TEST_ASSERT_EQUAL(logicalState.m_exprParams[2].m_mappedPot, logicalState.m_loadedPresetBank.m_presets[1].m_mappedPot);
+  TEST_ASSERT_EQUAL(logicalState.m_exprParams[2].m_direction, logicalState.m_loadedPresetBank.m_presets[1].m_direction);
+  TEST_ASSERT_EQUAL(logicalState.m_exprParams[2].m_heelValue, logicalState.m_loadedPresetBank.m_presets[1].m_heelValue);
+  TEST_ASSERT_EQUAL(logicalState.m_exprParams[2].m_toeValue, logicalState.m_loadedPresetBank.m_presets[1].m_toeValue);
+  TEST_ASSERT_EQUAL(logicalState.m_potParams[2][3].m_state, logicalState.m_loadedPresetBank.m_presets[1].m_potParams[3].m_state);
+  TEST_ASSERT_EQUAL(logicalState.m_potParams[2][3].m_value, logicalState.m_loadedPresetBank.m_presets[1].m_potParams[3].m_value);
+  TEST_ASSERT_EQUAL(logicalState.m_potParams[2][3].m_minValue, logicalState.m_loadedPresetBank.m_presets[1].m_potParams[3].m_minValue);
+  TEST_ASSERT_EQUAL(logicalState.m_potParams[2][3].m_maxValue, logicalState.m_loadedPresetBank.m_presets[1].m_potParams[3].m_maxValue);
 }
 
 void test_apply() {

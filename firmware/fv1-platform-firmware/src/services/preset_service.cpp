@@ -2,6 +2,7 @@
 
 void PresetService::applyPreset() {
   m_presetHandler.applyToState(m_logicalState, m_logicalState.m_currentPreset);
+  m_logicalState.m_presetDirty = false;
 }
 
 void PresetService::savePreset(uint8_t t_bankIndex, uint8_t t_presetIndex) {
@@ -37,23 +38,37 @@ void PresetService::handleEvent(const Event& t_event) {
 
       return;
     }
-  }
 
-  if (t_event.m_domain == EventDomain::kMidi) {
     if (t_event.m_subject == EventSubject::kPreset
-        && t_event.m_action == EventAction::kValueChanged) {
-      if (t_event.m_data.value >= 0 && t_event.m_data.value < PresetConstants::c_presetPerBank) {
-        m_logicalState.m_currentPreset = t_event.m_data.value;
-        applyPreset();
-        publishSavePresetEvent(t_event);
+        && t_event.m_action == EventAction::kSave) {
+      if (m_logicalState.m_saveTargetPreset < PresetConstants::c_presetPerBank) {
+        m_logicalState.m_currentPreset = m_logicalState.m_saveTargetPreset;
+        m_presetHandler.snapshotFromState(m_logicalState, m_logicalState.m_saveTargetPreset);
+        m_logicalState.m_presetDirty = false;
 
+        publishSavePresetEvent(t_event);
         return;
       }
     }
   }
 
+  if (t_event.m_domain == EventDomain::kMidi) {
+    if (t_event.m_subject == EventSubject::kPreset
+        && t_event.m_action == EventAction::kValueChanged) {
+      uint8_t targetPreset = t_event.m_data.value % PresetConstants::c_presetPerBank;
+
+      if (targetPreset >= PresetConstants::c_presetPerBank) return;
+
+      m_logicalState.m_currentPreset = targetPreset;
+      applyPreset();
+      publishSavePresetEvent(t_event);
+
+      return;
+    }
+  }
+
   if (t_event.m_domain == EventDomain::kPhysical) {
-    if (t_event.m_subject == EventSubject::kTap
+    if (t_event.m_subject == EventSubject::kSwitch
         && t_event.m_action == EventAction::kPressed) {
       m_logicalState.m_currentPreset = Utils::wrappedAdd(m_logicalState.m_currentPreset, 1, PresetConstants::c_presetPerBank);
       applyPreset();
@@ -62,7 +77,7 @@ void PresetService::handleEvent(const Event& t_event) {
       return;
     }
 
-    if (t_event.m_subject == EventSubject::kTap
+    if (t_event.m_subject == EventSubject::kSwitch
         && t_event.m_action == EventAction::kLongPressed) {
       m_logicalState.m_currentPreset = Utils::wrappedAdd(m_logicalState.m_currentPreset, -1, PresetConstants::c_presetPerBank);
       applyPreset();
@@ -73,14 +88,18 @@ void PresetService::handleEvent(const Event& t_event) {
   }
 
   if (t_event.m_domain == EventDomain::kLogic) {
-    if (t_event.m_subject == EventSubject::kPreset
-        && t_event.m_action == EventAction::kSave) {
-      // TBD
-    }
-
     if (t_event.m_subject == EventSubject::kProgramMode
         && t_event.m_action == EventAction::kToggled) {
       init();
+    }
+
+    if (t_event.m_subject == EventSubject::kPresetBank
+        && t_event.m_action == EventAction::kValueChanged) {
+      m_logicalState.m_currentPreset = 0;
+      applyPreset();
+      publishSavePresetEvent(t_event);
+
+      return;
     }
   }
 }
@@ -93,6 +112,9 @@ bool PresetService::interestedIn(const Event& t_event) const {
   if (t_event.m_domain == EventDomain::kUI) {
     if (t_event.m_subject == EventSubject::kPreset
         && t_event.m_action == EventAction::kValueChanged) return true;
+
+    if (t_event.m_subject == EventSubject::kPreset
+        && t_event.m_action == EventAction::kSave) return true;
   }
 
   if (t_event.m_domain == EventDomain::kMidi) {
@@ -103,18 +125,17 @@ bool PresetService::interestedIn(const Event& t_event) const {
   // Physical events are only processed in preset mode
   if (m_logicalState.m_programMode == ProgramMode::kPreset) {
     if (t_event.m_domain == EventDomain::kPhysical) {
-      if (t_event.m_subject == EventSubject::kTap
-          && t_event.m_action == EventAction::kPressed
-          || t_event.m_action == EventAction::kLongPressed) return true;
+      if (t_event.m_subject == EventSubject::kSwitch
+          && t_event.matchesId(SwitchId::kTap)) return true;
     }
   }
 
   if (t_event.m_domain == EventDomain::kLogic) {
-    if (t_event.m_subject == EventSubject::kPreset
-        && t_event.m_action == EventAction::kSave) return true;
-
     if (t_event.m_subject == EventSubject::kProgramMode
         && t_event.m_action == EventAction::kToggled) return true;
+
+    if (t_event.m_subject == EventSubject::kPresetBank
+        && t_event.m_action == EventAction::kValueChanged) return true;
   }
 
   return false;

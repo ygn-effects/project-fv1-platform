@@ -21,8 +21,13 @@ bool FsmService::isDeltaChanged(const Event& t_event) const {
           && t_event.m_action == EventAction::kDeltaChanged);
 }
 
-bool FsmService::isValueChanged(const Event& t_event) const {
+bool FsmService::isPotValueChanged(const Event& t_event) const {
   return (t_event.m_subject == EventSubject::kPot
+          && t_event.m_action == EventAction::kValueChanged);
+}
+
+bool FsmService::isExprValueChanged(const Event& t_event) const {
+  return (t_event.m_subject == EventSubject::kExpr
           && t_event.m_action == EventAction::kValueChanged);
 }
 
@@ -66,7 +71,7 @@ void FsmService::handleEvent(const Event& t_event) {
       if (t_event.m_action == EventAction::kBooted) {
         if (m_logicalState.m_bypassState == BypassState::kActive) {
           transitionTo(m_logicalState.m_programMode == ProgramMode::kProgram
-                        ? AppState::kProgramIdle
+                        ? AppState::kProgramEdit
                         : AppState::kPresetIdle);
         }
         else {
@@ -86,7 +91,7 @@ void FsmService::handleEvent(const Event& t_event) {
       // Bypass toggle logic event
       if (isBypassToggled(t_event)) {
         transitionTo(m_logicalState.m_programMode == ProgramMode::kProgram
-                      ? AppState::kProgramIdle
+                      ? AppState::kProgramEdit
                       : AppState::kPresetIdle);
       }
 
@@ -117,8 +122,8 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
-      // Encoder‑switch long press
-      if (isLongPressed(t_event, SwitchId::kMenuEncoder)) {
+      // Menu lock long press
+      if (isLongPressed(t_event, SwitchId::kMenuLock)) {
         rePublishPhysicalEvent(t_event);
         return;
       }
@@ -141,11 +146,23 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
+      // Expr move
+      if (isExprValueChanged(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
       break;
 
     case AppState::kProgramEdit:
       // Bypass Press
       if (isPressed(t_event, SwitchId::kBypass)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Menu lock long press
+      if (isLongPressed(t_event, SwitchId::kMenuLock)) {
         rePublishPhysicalEvent(t_event);
         return;
       }
@@ -187,7 +204,13 @@ void FsmService::handleEvent(const Event& t_event) {
       }
 
       // Pot move
-      if (isValueChanged(t_event)) {
+      if (isPotValueChanged(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr move
+      if (isExprValueChanged(t_event)) {
         rePublishPhysicalEvent(t_event);
         return;
       }
@@ -212,6 +235,18 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
+      // Menu lock long press
+      if (isLongPressed(t_event, SwitchId::kMenuLock)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Menu unlocked
+      if (isMenuUnlocked(t_event)) {
+        transitionTo(AppState::kPresetEdit);
+        return;
+      }
+
       // Bypass state toggled
       if (isBypassToggled(t_event)) {
         transitionTo(AppState::kBypassed);
@@ -220,7 +255,94 @@ void FsmService::handleEvent(const Event& t_event) {
 
       // Program mode toggle
       if (isProgramModeToggled(t_event)) {
-        transitionTo(AppState::kProgramIdle);
+        transitionTo(AppState::kProgramEdit);
+        return;
+      }
+
+      // Tap
+      if (isPressed(t_event, SwitchId::kTap)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Long‑tap
+      if (isLongPressed(t_event, SwitchId::kTap)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr move
+      if (isExprValueChanged(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      break;
+
+    case AppState::kPresetEdit:
+      // Bypass Press
+      if (isPressed(t_event, SwitchId::kBypass)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Menu lock long press
+      if (isLongPressed(t_event, SwitchId::kMenuLock)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Menu locked
+      if (isMenuLocked(t_event)) {
+        transitionTo(AppState::kPresetIdle);
+        return;
+      }
+
+      // Menu encoder press
+      if (isPressed(t_event, SwitchId::kMenuEncoder)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Encoder‑switch long press
+      if (isLongPressed(t_event, SwitchId::kMenuEncoder)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Menu encoder moved
+      if (isDeltaChanged(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Tap
+      if (isPressed(t_event, SwitchId::kTap)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Long‑tap
+      if (isLongPressed(t_event, SwitchId::kTap)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Pot move
+      if (isPotValueChanged(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr move
+      if (isExprValueChanged(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Bypass state toggled
+      if (isBypassToggled(t_event)) {
+        transitionTo(AppState::kBypassed);
         return;
       }
 

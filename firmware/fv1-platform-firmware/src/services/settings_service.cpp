@@ -24,6 +24,8 @@ void SettingsService::init() {
 
 void SettingsService::handleEvent(const Event& t_event) {
   if (t_event.m_action == EventAction::kSave) {
+    bool isPresetMode = m_logicalState.m_programMode == ProgramMode::kPreset;
+
     switch (t_event.m_subject) {
       case EventSubject::kBypass:
         saveRegion(MemoryRegion::kBypass);
@@ -38,23 +40,46 @@ void SettingsService::handleEvent(const Event& t_event) {
         break;
 
       case EventSubject::kTap:
-        saveRegion(MemoryRegion::kTap);
+        if (isPresetMode) {
+          m_logicalState.m_presetDirty = true;
+        }
+        else {
+          saveRegion(MemoryRegion::kTap);
+        }
         break;
 
       case EventSubject::kTempo:
-        saveRegion(MemoryRegion::kTempo);
+        if (isPresetMode) {
+          m_logicalState.m_presetDirty = true;
+        }
+        else {
+          saveRegion(MemoryRegion::kTempo);
+        }
         break;
 
       case EventSubject::kExpr:
-        saveRegion(MemoryRegion::kExpr, m_logicalState.m_currentProgram);
+        if (isPresetMode) {
+          m_logicalState.m_presetDirty = true;
+        }
+        else {
+          saveRegion(MemoryRegion::kExpr, m_logicalState.m_currentProgram);
+        }
         break;
 
       case EventSubject::kPot:
-        saveRegion(MemoryRegion::kPot, m_logicalState.m_currentProgram, t_event.m_id);
+        if (isPresetMode) {
+          m_logicalState.m_presetDirty = true;
+        }
+        else {
+          saveRegion(MemoryRegion::kPot, m_logicalState.m_currentProgram, t_event.m_id);
+        }
         break;
 
       case EventSubject::kGeneral:
         saveRegion(MemoryRegion::kLogicalState);
+        break;
+
+      default:
         break;
     }
   }

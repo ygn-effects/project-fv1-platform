@@ -30,6 +30,16 @@ Event makePhysicalSwitchLongPressEvent(SwitchId t_id, uint32_t t_timestamp = 0) 
   return e;
 }
 
+Event makePhysicalSwitchPressEvent(SwitchId t_id, uint32_t t_timestamp = 0) {
+  Event e;
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kSwitch;
+  e.m_action = EventAction::kPressed;
+  e.m_id = static_cast<uint8_t>(t_id);
+  e.m_timestamp = t_timestamp;
+  return e;
+}
+
 Event makePhysicalEncoderDeltaEvent(EncoderId t_id, int16_t t_delta, uint32_t t_timestamp = 0) {
   Event e;
   e.m_domain = EventDomain::kPhysical;
@@ -41,19 +51,9 @@ Event makePhysicalEncoderDeltaEvent(EncoderId t_id, int16_t t_delta, uint32_t t_
   return e;
 }
 
-Event makePhysicalEncoderPressEvent(EncoderId t_id, uint32_t t_timestamp = 0) {
+Event makeLogicPotValueChangedEvent(PotId t_id, uint16_t t_value, uint32_t t_timestamp = 0) {
   Event e;
-  e.m_domain = EventDomain::kPhysical;
-  e.m_subject = EventSubject::kEncoder;
-  e.m_action = EventAction::kPressed;
-  e.m_id = static_cast<uint8_t>(t_id);
-  e.m_timestamp = t_timestamp;
-  return e;
-}
-
-Event makePhysicalPotValueChangedEvent(PotId t_id, uint16_t t_value, uint32_t t_timestamp = 0) {
-  Event e;
-  e.m_domain = EventDomain::kPhysical;
+  e.m_domain = EventDomain::kLogic;
   e.m_subject = EventSubject::kPot;
   e.m_action = EventAction::kValueChanged;
   e.m_id = static_cast<uint8_t>(t_id);
@@ -87,6 +87,16 @@ Event makeLogicProgramChangedEvent(uint8_t t_programId) {
   e.m_subject = EventSubject::kProgram;
   e.m_action = EventAction::kValueChanged;
   e.m_id = t_programId;
+  return e;
+}
+
+Event makeUIPresetSettingChangeEvent(SavePresetParam t_param, int16_t t_delta = 0) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = static_cast<uint8_t>(t_param);
+  e.m_data.delta = t_delta;
   return e;
 }
 
@@ -137,13 +147,14 @@ void test_init_publishes_updated_event() {
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
 
+  logicalState.m_programMode = ProgramMode::kPreset;
   service.init();
 
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
 }
 
-void test_init_starts_locked() {
+void test_init_starts_unlocked_program_mode() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
@@ -154,15 +165,46 @@ void test_init_starts_locked() {
   // Encoder input should be ignored when locked
   service.handleEvent(makePhysicalEncoderDeltaEvent(EncoderId::kMenuEncoder, 1));
 
-  // Only updated event from the lock check, no unlock happened
+  // Menu published event because the cursor moved
+  assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
+}
+
+void test_init_starts_locked_preset_mode() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
+  service.init();
+  clearEventBus();
+
+  // Encoder input should be ignored when locked
+  service.handleEvent(makePhysicalEncoderDeltaEvent(EncoderId::kMenuEncoder, 1));
+
+  // Menu locked so no events
+  assertNoMoreEvents();
+}
+
+void test_init_syncs_save_bank_preset_to_logical_state() {
+  LogicalState logicalState;
+  logicalState.m_currentPresetBank = 2;
+  logicalState.m_currentPreset = 1;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  TEST_ASSERT_EQUAL(2, logicalState.m_saveTargetBank);
+  TEST_ASSERT_EQUAL(1, logicalState.m_saveTargetPreset);
 }
 
 // =============================================================================
 // Lock/Unlock Tests
 // =============================================================================
 
-void test_long_press_unlocks_menu() {
+void test_menu_lock_long_press_locks_menu() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
@@ -172,12 +214,12 @@ void test_long_press_unlocks_menu() {
 
   service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
 
-  assertMenuUnlockedEventPublished();
+  assertMenuLockedEventPublished();
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
 }
 
-void test_long_press_locks_menu_when_unlocked() {
+void test_menu_lock_long_press_unlocks_menu() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
@@ -185,14 +227,14 @@ void test_long_press_locks_menu_when_unlocked() {
   service.init();
   clearEventBus();
 
-  // Unlock first
+  // Lock first
   service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
   clearEventBus();
 
-  // Lock again
+  // Unlock again
   service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 2000));
 
-  assertMenuLockedEventPublished();
+  assertMenuUnlockedEventPublished();
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
 }
@@ -205,15 +247,29 @@ void test_bypass_toggled_locks_menu() {
   service.init();
   clearEventBus();
 
-  // Unlock first
+  // Bypass toggle should lock
+  service.handleEvent(makeLogicBypassToggledEvent(2000));
+
+  assertMenuLockedEventPublished();
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_bypass_toggled_ignored_when_locked() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Lock first
   service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
   clearEventBus();
 
   // Bypass toggle should lock
   service.handleEvent(makeLogicBypassToggledEvent(2000));
 
-  assertMenuLockedEventPublished();
-  assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
 }
 
@@ -227,10 +283,6 @@ void test_encoder_delta_publishes_updated_when_unlocked() {
   MenuService service(logicalState, mockClock);
 
   service.init();
-  clearEventBus();
-
-  // Unlock
-  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
   clearEventBus();
 
   // Move cursor
@@ -248,12 +300,8 @@ void test_encoder_press_publishes_updated_when_unlocked() {
   service.init();
   clearEventBus();
 
-  // Unlock
-  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
-  clearEventBus();
-
   // Press to select (enters editing on first item which has onMove)
-  service.handleEvent(makePhysicalEncoderPressEvent(EncoderId::kMenuEncoder, 2000));
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder, 1000));
 
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
@@ -267,9 +315,13 @@ void test_encoder_ignored_when_locked() {
   service.init();
   clearEventBus();
 
+  // Lock
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
+  clearEventBus();
+
   // Try to use encoder while locked
   service.handleEvent(makePhysicalEncoderDeltaEvent(EncoderId::kMenuEncoder, 1, 1000));
-  service.handleEvent(makePhysicalEncoderPressEvent(EncoderId::kMenuEncoder, 1000));
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder, 2000));
 
   assertNoMoreEvents();
 }
@@ -289,28 +341,32 @@ void test_pot_value_changed_publishes_updated_when_unlocked() {
   service.init();
   clearEventBus();
 
-  // Unlock
-  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
-  clearEventBus();
-
   // Move pot
-  service.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 512, 2000));
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 2000));
 
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
 }
 
-void test_pot_ignored_when_locked() {
+void test_pot_value_changed_publishes_updated_when_locked() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
 
+  // Use non-delay effect so Pot1 overlay works
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
   service.init();
   clearEventBus();
 
-  // Try to use pot while locked
-  service.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 512, 1000));
+  // Lock
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
+  clearEventBus();
 
+  // Move pot
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 2000));
+
+  assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
 }
 
@@ -326,7 +382,22 @@ void test_tempo_change_publishes_updated_when_unlocked() {
   service.init();
   clearEventBus();
 
-  // Unlock
+  // Tempo change
+  service.handleEvent(makeLogicTempoValueChangedEvent(500, 2000));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_tempo_change_publishes_updated_when_locked() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Lock
   service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
   clearEventBus();
 
@@ -337,7 +408,11 @@ void test_tempo_change_publishes_updated_when_unlocked() {
   assertNoMoreEvents();
 }
 
-void test_tempo_ignored_when_locked() {
+// =============================================================================
+// Preset Save Overlay Tests
+// =============================================================================
+
+void test_menu_encoder_long_press_publishes_updated_when_unlocked() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
@@ -345,9 +420,48 @@ void test_tempo_ignored_when_locked() {
   service.init();
   clearEventBus();
 
-  // Try tempo change while locked
-  service.handleEvent(makeLogicTempoValueChangedEvent(500, 1000));
+  // Menu encoder long press
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuEncoder));
 
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_ui_preset_setting_changed_sets_logical_state_target_preset() {
+  LogicalState logicalState;
+  logicalState.m_currentPresetBank = 2;
+  logicalState.m_currentPreset = 1;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Menu encoder long press
+  service.handleEvent(makeUIPresetSettingChangeEvent(SavePresetParam::kTargetPreset, 1));
+
+  TEST_ASSERT_EQUAL(2, logicalState.m_saveTargetPreset);
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_ui_preset_setting_changed_sets_logical_state_target_bank() {
+  LogicalState logicalState;
+  logicalState.m_currentPresetBank = 2;
+  logicalState.m_currentPreset = 1;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Menu encoder long press
+  service.handleEvent(makeUIPresetSettingChangeEvent(SavePresetParam::kTargetBank, 1));
+
+  TEST_ASSERT_EQUAL(3, logicalState.m_saveTargetBank);
+
+  assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
 }
 
@@ -363,12 +477,8 @@ void test_editing_encoder_delta_publishes_updated() {
   service.init();
   clearEventBus();
 
-  // Unlock
-  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
-  clearEventBus();
-
   // Press to enter editing (first item has onMove)
-  service.handleEvent(makePhysicalEncoderPressEvent(EncoderId::kMenuEncoder, 2000));
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder, 2000));
   clearEventBus();
 
   // Move encoder in editing mode
@@ -394,16 +504,12 @@ void test_editing_encoder_press_exits_editing() {
   service.init();
   clearEventBus();
 
-  // Unlock
-  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
-  clearEventBus();
-
   // Enter editing
-  service.handleEvent(makePhysicalEncoderPressEvent(EncoderId::kMenuEncoder, 2000));
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder, 2000));
   clearEventBus();
 
   // Press again to exit editing
-  service.handleEvent(makePhysicalEncoderPressEvent(EncoderId::kMenuEncoder, 3000));
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder, 3000));
 
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
@@ -413,11 +519,30 @@ void test_editing_encoder_press_exits_editing() {
 // Timeout Tests
 // =============================================================================
 
-void test_update_locks_menu_after_timeout() {
+void test_update_not_locks_menu_after_timeout_program_mode() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
 
+  service.init();
+  clearEventBus();
+
+  // Set clock at 1000
+  mockClock.setClock(1000);
+
+  // Advance time past timeout (default is 10000ms)
+  mockClock.setClock(1000 + ui::MenuConstants::c_menuTimeout + 1);
+  service.update();
+
+  assertNoMoreEvents();
+}
+
+void test_update_locks_menu_after_timeout_preset_mode() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
   service.init();
   clearEventBus();
 
@@ -435,11 +560,12 @@ void test_update_locks_menu_after_timeout() {
   assertNoMoreEvents();
 }
 
-void test_update_does_not_lock_before_timeout() {
+void test_update_does_not_lock_before_timeout_preset_mode() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
 
+  logicalState.m_programMode = ProgramMode::kPreset;
   service.init();
   clearEventBus();
 
@@ -465,14 +591,12 @@ void test_update_pops_pot_overlay_after_timeout() {
   service.init();
   clearEventBus();
 
-  // Unlock at time 1000
+  // Set clock at 1000
   mockClock.setClock(1000);
-  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
-  clearEventBus();
 
   // Push pot overlay at time 2000
   mockClock.setClock(2000);
-  service.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 512, 2000));
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 2000));
   clearEventBus();
 
   // Advance time past pot overlay timeout
@@ -491,10 +615,8 @@ void test_update_pops_tempo_overlay_after_timeout() {
   service.init();
   clearEventBus();
 
-  // Unlock at time 1000
+  // Set clock at 1000
   mockClock.setClock(1000);
-  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 1000));
-  clearEventBus();
 
   // Push tempo overlay at time 2000
   mockClock.setClock(2000);
@@ -517,11 +639,68 @@ void test_update_does_nothing_when_locked() {
   service.init();
   clearEventBus();
 
+  // Lock
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 0));
+  clearEventBus();
+
   // Stay locked, advance time
   mockClock.setClock(100000);
   service.update();
 
   assertNoMoreEvents();
+}
+
+// =============================================================================
+// Program change
+// =============================================================================
+
+void test_program_change_publishes_updated() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  service.handleEvent(makeLogicProgramChangedEvent(1));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_program_change_syncs_save_bank_preset_to_logical_state_preset_mode() {
+  LogicalState logicalState;
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentPresetBank = 3;
+  logicalState.m_currentPreset = 2;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  logicalState.m_currentPreset = 1;
+  service.handleEvent(makeLogicProgramChangedEvent(1));
+
+  TEST_ASSERT_EQUAL(3, logicalState.m_saveTargetBank);
+  TEST_ASSERT_EQUAL(1, logicalState.m_saveTargetPreset);
+}
+
+void test_program_change_not_syncs_save_bank_preset_to_logical_state_program_mode() {
+  LogicalState logicalState;
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentPresetBank = 3;
+  logicalState.m_currentPreset = 2;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  service.handleEvent(makeLogicProgramChangedEvent(1));
+
+  TEST_ASSERT_EQUAL(3, logicalState.m_saveTargetBank);
+  TEST_ASSERT_EQUAL(2, logicalState.m_saveTargetPreset);
 }
 
 // =============================================================================
@@ -537,24 +716,30 @@ void test_interested_in_physical_switch_long_press_menu_lock() {
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
-void test_interested_in_physical_encoder_menu_encoder() {
+void test_interested_in_physical_switch_press_menu_encoder() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  Event e = makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder);
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
+void test_interested_in_physical_encoder_move_menu_encoder() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
 
   Event e = makePhysicalEncoderDeltaEvent(EncoderId::kMenuEncoder, 1);
   TEST_ASSERT_TRUE(service.interestedIn(e));
-
-  e = makePhysicalEncoderPressEvent(EncoderId::kMenuEncoder);
-  TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
-void test_interested_in_physical_pot_value_changed() {
+void test_interested_in_logic_pot_value_changed() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
 
-  Event e = makePhysicalPotValueChangedEvent(PotId::kPot1, 512);
+  Event e = makeLogicPotValueChangedEvent(PotId::kPot1, 512);
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
@@ -585,14 +770,12 @@ void test_interested_in_logic_program_changed() {
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
-void test_interested_in_ui_expr() {
+void test_interested_in_ui_preset_seting_changed() {
   LogicalState logicalState;
   MockedClock mockClock;
   MenuService service(logicalState, mockClock);
 
-  Event e;
-  e.m_domain = EventDomain::kUI;
-  e.m_subject = EventSubject::kExpr;
+  Event e = makeUIPresetSettingChangeEvent(SavePresetParam::kTargetBank);
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
@@ -683,12 +866,15 @@ int main() {
 
   // Init
   RUN_TEST(test_init_publishes_updated_event);
-  RUN_TEST(test_init_starts_locked);
+  RUN_TEST(test_init_starts_unlocked_program_mode);
+  RUN_TEST(test_init_starts_locked_preset_mode);
+  RUN_TEST(test_init_syncs_save_bank_preset_to_logical_state);
 
   // Lock/Unlock
-  RUN_TEST(test_long_press_unlocks_menu);
-  RUN_TEST(test_long_press_locks_menu_when_unlocked);
+  RUN_TEST(test_menu_lock_long_press_locks_menu);
+  RUN_TEST(test_menu_lock_long_press_unlocks_menu);
   RUN_TEST(test_bypass_toggled_locks_menu);
+  RUN_TEST(test_bypass_toggled_ignored_when_locked);
 
   // Navigation (Selecting Mode)
   RUN_TEST(test_encoder_delta_publishes_updated_when_unlocked);
@@ -697,31 +883,43 @@ int main() {
 
   // Pot Overlay
   RUN_TEST(test_pot_value_changed_publishes_updated_when_unlocked);
-  RUN_TEST(test_pot_ignored_when_locked);
+  RUN_TEST(test_pot_value_changed_publishes_updated_when_locked);
 
   // Tempo Overlay
   RUN_TEST(test_tempo_change_publishes_updated_when_unlocked);
-  RUN_TEST(test_tempo_ignored_when_locked);
+  RUN_TEST(test_tempo_change_publishes_updated_when_locked);
+
+  // Preset Save Overlay
+  RUN_TEST(test_menu_encoder_long_press_publishes_updated_when_unlocked);
+  RUN_TEST(test_ui_preset_setting_changed_sets_logical_state_target_bank);
+  RUN_TEST(test_ui_preset_setting_changed_sets_logical_state_target_preset);
 
   // Editing Mode
   RUN_TEST(test_editing_encoder_delta_publishes_updated);
   RUN_TEST(test_editing_encoder_press_exits_editing);
 
   // Timeout
-  RUN_TEST(test_update_locks_menu_after_timeout);
-  RUN_TEST(test_update_does_not_lock_before_timeout);
+  RUN_TEST(test_update_not_locks_menu_after_timeout_program_mode);
+  RUN_TEST(test_update_locks_menu_after_timeout_preset_mode);
+  RUN_TEST(test_update_does_not_lock_before_timeout_preset_mode);
   RUN_TEST(test_update_pops_pot_overlay_after_timeout);
   RUN_TEST(test_update_pops_tempo_overlay_after_timeout);
   RUN_TEST(test_update_does_nothing_when_locked);
 
+  // Program change
+  RUN_TEST(test_program_change_publishes_updated);
+  RUN_TEST(test_program_change_syncs_save_bank_preset_to_logical_state_preset_mode);
+  RUN_TEST(test_program_change_not_syncs_save_bank_preset_to_logical_state_program_mode);
+
   // interestedIn
   RUN_TEST(test_interested_in_physical_switch_long_press_menu_lock);
-  RUN_TEST(test_interested_in_physical_encoder_menu_encoder);
-  RUN_TEST(test_interested_in_physical_pot_value_changed);
+  RUN_TEST(test_interested_in_physical_switch_press_menu_encoder);
+  RUN_TEST(test_interested_in_physical_encoder_move_menu_encoder);
+  RUN_TEST(test_interested_in_logic_pot_value_changed);
   RUN_TEST(test_interested_in_logic_tempo_value_changed);
   RUN_TEST(test_interested_in_logic_bypass_toggled);
   RUN_TEST(test_interested_in_logic_program_changed);
-  RUN_TEST(test_interested_in_ui_expr);
+  RUN_TEST(test_interested_in_ui_preset_seting_changed);
   RUN_TEST(test_not_interested_in_other_switches);
   RUN_TEST(test_not_interested_in_switch_press);
   RUN_TEST(test_not_interested_in_other_encoders);

@@ -190,6 +190,18 @@ inline constexpr const char* labelPotSettings(const LogicalState* t_state) {
   return "Pot settings";
 }
 
+inline constexpr const char* labelPresetBankSaveTarget(const LogicalState* t_state) {
+  return "Bank";
+}
+
+inline constexpr const char* labelPresetSaveTarget(const LogicalState* t_state) {
+  return "Preset";
+}
+
+inline constexpr const char* labelSave(const LogicalState* t_state) {
+  return "Save";
+}
+
 const char* valuePresetBank(const LogicalState* t_state) {
   static char buffer[8];
   snprintf(buffer, sizeof(buffer), "%u", t_state->m_currentPresetBank);
@@ -409,6 +421,40 @@ const char* valueMixPotMaxValue(const LogicalState* t_state) {
   return buffer;
 }
 
+const char* valuePresetBankSaveTarget(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_saveTargetBank);
+
+  return buffer;
+}
+
+const char* valuePresetSaveTarget(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_saveTargetPreset);
+
+  return buffer;
+}
+
+void onMovePresetBank(int8_t t_delta) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPresetBank;
+  e.m_action = EventAction::kValueChanged;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
+void onMovePreset(int8_t t_delta) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kValueChanged;
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
 void onMoveProgram(int8_t t_delta) {
   Event e;
   e.m_domain = EventDomain::kUI;
@@ -614,6 +660,37 @@ void onClickExprDirection() {
   EventBus::publish(e);
 }
 
+void onClickSavePreset() {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSave;
+  e.m_timestamp = 0; /*millis()*/
+  EventBus::publish(e);
+}
+
+void onMovePresetBankSaveTarget(int8_t t_delta) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = static_cast<uint8_t>(SavePresetParam::kTargetBank);
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
+void onMovePresetSaveTarget(int8_t t_delta) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = static_cast<uint8_t>(SavePresetParam::kTargetPreset);
+  e.m_timestamp = 0; /*millis()*/
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
 constexpr MenuPage BlankMenuPage = {
   "Back",
   nullptr,
@@ -661,13 +738,15 @@ constexpr MenuPage ProgramMenuPage = {
 };
 
 constexpr MenuItem PresetMenuItems[] = {
-
+  { labelPresetBank, isAlwaysVisible, valuePresetBank, onMovePresetBank, nullptr, nullptr },
+  { labelPreset, isAlwaysVisible, valuePreset, onMovePreset, nullptr, nullptr }
 };
 
 constexpr MenuPage PresetMenuPage = {
   "Preset mode",
   PresetMenuItems,
-  0
+  sizeof(PresetMenuItems) / sizeof(PresetMenuItems[0]),
+  ui::MenuLayout::kList
 };
 
 constexpr MenuItem ExprSettingsMenuItems[] = {
@@ -749,9 +828,9 @@ constexpr MenuItem PotSettingsMenuItems[] = {
   { labelPot1State, isAlwaysVisible, valuePot1State, nullptr, nullptr, nullptr },
   { labelPot1MinValue, isAlwaysVisible, valuePot1MinValue, onMovePot1MinValue, nullptr, nullptr },
   { labelPot1MaxValue, isAlwaysVisible, valuePot1MaxValue, onMovePot1MaxValue, nullptr, nullptr },
-  { labelPot2State, isAlwaysVisible, valuePot1State, nullptr, nullptr, nullptr },
-  { labelPot2MinValue, isAlwaysVisible, valuePot1MinValue, onMovePot2MinValue, nullptr, nullptr },
-  { labelPot2MaxValue, isAlwaysVisible, valuePot1MaxValue, onMovePot2MaxValue, nullptr, nullptr },
+  { labelPot2State, isAlwaysVisible, valuePot2State, nullptr, nullptr, nullptr },
+  { labelPot2MinValue, isAlwaysVisible, valuePot2MinValue, onMovePot2MinValue, nullptr, nullptr },
+  { labelPot2MaxValue, isAlwaysVisible, valuePot2MaxValue, onMovePot2MaxValue, nullptr, nullptr },
   { labelMixPotState, isAlwaysVisible, valueMixPotState, nullptr, nullptr, nullptr },
   { labelMixPotMinValue, isAlwaysVisible, valueMixPotMinValue, onMoveMixPotMinValue, nullptr, nullptr },
   { labelMixPotMaxValue, isAlwaysVisible, valueMixPotMaxValue, onMoveMixPotMaxValue, nullptr, nullptr },
@@ -762,6 +841,20 @@ constexpr MenuPage PotSettingsMenuPage = {
   "Pot settings",
   PotSettingsMenuItems,
   sizeof(PotSettingsMenuItems) / sizeof(PotSettingsMenuItems[0]),
+  ui::MenuLayout::kList
+};
+
+constexpr MenuItem SavePresetMenuItems[] = {
+  { labelPresetBankSaveTarget, isAlwaysVisible, valuePresetBankSaveTarget, onMovePresetBankSaveTarget, nullptr, nullptr },
+  { labelPresetSaveTarget, isAlwaysVisible, valuePresetSaveTarget, onMovePresetSaveTarget, nullptr, nullptr },
+  { labelSave, isAlwaysVisible, nullptr, nullptr, onClickSavePreset, nullptr },
+  { labelBack, isAlwaysVisible, nullptr, nullptr, nullptr, &BlankMenuPage }
+};
+
+constexpr MenuPage SavePresetMenuPage = {
+  "Preset save",
+  SavePresetMenuItems,
+  sizeof(SavePresetMenuItems) / sizeof(SavePresetMenuItems[0]),
   ui::MenuLayout::kList
 };
 

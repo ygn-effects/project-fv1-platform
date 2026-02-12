@@ -662,6 +662,52 @@ void test_build_view_scrolls_with_first() {
   TEST_ASSERT_EQUAL(0, view.m_selected); // cursor 2 - first 2 = selected 0
 }
 
+// =============================================================================
+// Resolve Header (Preset Dirty Indicator)
+// =============================================================================
+
+void test_resolve_header_shows_dirty_indicator_in_preset_mode() {
+  MenuHandler handler;
+  LogicalState state;
+
+  state.m_programMode = ProgramMode::kPreset;
+  state.m_presetDirty = true;
+
+  handler.init();
+  handler.unlock(state);
+  handler.buildView(state);
+
+  TEST_ASSERT_EQUAL_STRING("Preset mode *", handler.m_view.m_header);
+}
+
+void test_resolve_header_no_indicator_when_clean() {
+  MenuHandler handler;
+  LogicalState state;
+
+  state.m_programMode = ProgramMode::kPreset;
+  state.m_presetDirty = false;
+
+  handler.init();
+  handler.unlock(state);
+  handler.buildView(state);
+
+  TEST_ASSERT_EQUAL_STRING("Preset mode", handler.m_view.m_header);
+}
+
+void test_resolve_header_no_indicator_in_program_mode() {
+  MenuHandler handler;
+  LogicalState state;
+
+  state.m_programMode = ProgramMode::kProgram;
+  state.m_presetDirty = true;
+
+  handler.init();
+  handler.unlock(state);
+  handler.buildView(state);
+
+  TEST_ASSERT_EQUAL_STRING("Program mode", handler.m_view.m_header);
+}
+
 int main() {
   UNITY_BEGIN();
 
@@ -711,6 +757,11 @@ int main() {
   RUN_TEST(test_build_view_editing_flag);
   RUN_TEST(test_build_view_respects_visibility);
   RUN_TEST(test_build_view_scrolls_with_first);
+
+  // Resolve Header (Preset Dirty Indicator)
+  RUN_TEST(test_resolve_header_shows_dirty_indicator_in_preset_mode);
+  RUN_TEST(test_resolve_header_no_indicator_when_clean);
+  RUN_TEST(test_resolve_header_no_indicator_in_program_mode);
 
   UNITY_END();
 }

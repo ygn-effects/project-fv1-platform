@@ -7,6 +7,7 @@
 #include "logic/memory_handler.h"
 #include "logic/preset_handler.h"
 #include "periphs/eeprom.h"
+#include "ui/inputs.h"
 #include "utils/utils.h"
 
 class PresetService : public Service {

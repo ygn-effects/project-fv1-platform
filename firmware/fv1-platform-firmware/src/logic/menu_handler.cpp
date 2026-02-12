@@ -1,5 +1,23 @@
 #include "logic/menu_handler.h"
 
+void MenuHandler::resolveHeader(const ui::MenuPage& t_page, const LogicalState& t_state) {
+  if (t_state.m_presetDirty && t_state.m_programMode == ProgramMode::kPreset
+      && &t_page == &ui::PresetMenuPage) {
+    size_t len = strlen(t_page.m_header);
+
+    if (len + 3 <= sizeof(m_headerBuffer)) {
+      memcpy(m_headerBuffer, t_page.m_header, len);
+      m_headerBuffer[len] = ' ';
+      m_headerBuffer[len + 1] = '*';
+      m_headerBuffer[len + 2] = '\0';
+    }
+    m_view.m_header = m_headerBuffer;
+  }
+  else {
+    m_view.m_header = t_page.m_header;
+  }
+}
+
 uint8_t MenuHandler::getVisibleItemCount(const LogicalState& t_state) const {
   const ui::MenuPage& page = *m_menuStack.top();
   uint8_t count = 0;
@@ -58,7 +76,7 @@ void MenuHandler::buildListView(const ui::MenuPage& t_page, const LogicalState& 
   }
 
   m_view.m_count = sliceCount;
-  m_view.m_header = t_page.m_header;
+  resolveHeader(t_page, t_state);
   m_view.m_layout = t_page.m_layout;
   m_view.m_editing = (m_subState == SubState::kEditing);
 }
@@ -81,7 +99,7 @@ void MenuHandler::buildTwoColumnsView(const ui::MenuPage& t_page, const LogicalS
     sliceCount++;
   }
 
-  m_view.m_header = t_page.m_header;
+  resolveHeader(t_page, t_state);
   m_view.m_count = sliceCount;
   m_view.m_layout = t_page.m_layout;
   m_view.m_selected = 0;
@@ -102,7 +120,7 @@ void MenuHandler::buildLabelValueView(const ui::MenuPage& t_page, const LogicalS
     sliceCount++;
   }
 
-  m_view.m_header = t_page.m_header;
+  resolveHeader(t_page, t_state);
   m_view.m_count = sliceCount;
   m_view.m_layout = t_page.m_layout;
   m_view.m_selected = 0;
@@ -219,6 +237,10 @@ void MenuHandler::pushPotOverlay(uint8_t t_potId, const LogicalState& t_state) {
 
 void MenuHandler::pushTempoOverlay() {
   m_menuStack.push(&ui::TempoMenuPage);
+}
+
+void MenuHandler::pushPresetSaveOverlay() {
+  m_menuStack.push(&ui::SavePresetMenuPage);
 }
 
 void MenuHandler::popOverlay() {

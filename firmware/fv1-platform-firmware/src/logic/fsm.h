@@ -8,5 +8,6 @@ enum class AppState : uint8_t {
   kBypassed,
   kProgramIdle,
   kProgramEdit,
-  kPresetIdle
+  kPresetIdle,
+  kPresetEdit
 };

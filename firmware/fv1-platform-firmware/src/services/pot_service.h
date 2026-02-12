@@ -12,10 +12,13 @@ class PotService : public Service {
   private:
     LogicalState& m_logicalState;
     PotHandler m_handler;
+    uint8_t m_lastSyncedProgram = 0;
 
     void syncHandler();
-    void publishPotValueChangedEvent(uint8_t t_potIndex);
+    void copyPotValues(uint8_t t_targetProgram);
+    void publishPotValueChangedEvent(uint8_t t_potIndex, uint32_t t_timestamp);
     void publishSavePotEvent(uint8_t t_potIndex);
+    void publishTempoInputEvent(uint16_t t_value, uint32_t t_timestamp);
 
     void handlePhysicalEvent(const Event& t_event);
     void handleMenuEvent(const Event& t_event);

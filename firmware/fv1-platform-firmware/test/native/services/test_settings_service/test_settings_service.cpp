@@ -263,6 +263,207 @@ void test_memory_save_pot() {
 }
 
 // =============================================================================
+// Preset Mode: Program parameter saves suppressed
+// =============================================================================
+
+void test_preset_mode_ignores_pot_save() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  // Save pot in program mode
+  logicalState.m_currentProgram = 1;
+  logicalState.m_potParams[1][0].m_value = 512;
+  logicalState.m_potParams[1][0].m_minValue = 100;
+  logicalState.m_potParams[1][0].m_maxValue = 900;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, PotId::kPot0));
+
+  // Switch to preset mode and try to save different pot values
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_potParams[1][0].m_value = 999;
+  logicalState.m_potParams[1][0].m_minValue = 0;
+  logicalState.m_potParams[1][0].m_maxValue = 1023;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, PotId::kPot0));
+
+  // Load back and verify original values persisted
+  logicalState.m_potParams[1][0].m_value = 0;
+  logicalState.m_potParams[1][0].m_minValue = 0;
+  logicalState.m_potParams[1][0].m_maxValue = 0;
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[1][0].m_value);
+  TEST_ASSERT_EQUAL(100, logicalState.m_potParams[1][0].m_minValue);
+  TEST_ASSERT_EQUAL(900, logicalState.m_potParams[1][0].m_maxValue);
+}
+
+void test_preset_mode_ignores_expr_save() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  // Save expr in program mode
+  logicalState.m_currentProgram = 2;
+  logicalState.m_exprParams[2].m_state = ExprState::kActive;
+  logicalState.m_exprParams[2].m_mappedPot = MappedPot::kPot1;
+  logicalState.m_exprParams[2].m_heelValue = 256;
+  logicalState.m_exprParams[2].m_toeValue = 512;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kExpr));
+
+  // Switch to preset mode and try to save different expr values
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_exprParams[2].m_state = ExprState::kInactive;
+  logicalState.m_exprParams[2].m_mappedPot = MappedPot::kPot0;
+  logicalState.m_exprParams[2].m_heelValue = 0;
+  logicalState.m_exprParams[2].m_toeValue = 1023;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kExpr));
+
+  // Load back and verify original values persisted
+  logicalState.m_exprParams[2].m_state = ExprState::kInactive;
+  logicalState.m_exprParams[2].m_mappedPot = MappedPot::kPot0;
+  logicalState.m_exprParams[2].m_heelValue = 0;
+  logicalState.m_exprParams[2].m_toeValue = 0;
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  TEST_ASSERT_EQUAL(ExprState::kActive, logicalState.m_exprParams[2].m_state);
+  TEST_ASSERT_EQUAL(MappedPot::kPot1, logicalState.m_exprParams[2].m_mappedPot);
+  TEST_ASSERT_EQUAL(256, logicalState.m_exprParams[2].m_heelValue);
+  TEST_ASSERT_EQUAL(512, logicalState.m_exprParams[2].m_toeValue);
+}
+
+void test_preset_mode_ignores_tap_save() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  // Save tap in program mode
+  logicalState.m_tapState = TapState::kEnabled;
+  logicalState.m_divState = DivState::kEnabled;
+  logicalState.m_interval = 400;
+  logicalState.m_divInterval = 200;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTap));
+
+  // Switch to preset mode and try to save different tap values
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_tapState = TapState::kDisabled;
+  logicalState.m_divState = DivState::kDisabled;
+  logicalState.m_interval = 800;
+  logicalState.m_divInterval = 100;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTap));
+
+  // Load back and verify original values persisted
+  logicalState.m_tapState = TapState::kDisabled;
+  logicalState.m_divState = DivState::kDisabled;
+  logicalState.m_interval = 0;
+  logicalState.m_divInterval = 0;
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  TEST_ASSERT_EQUAL(TapState::kEnabled, logicalState.m_tapState);
+  TEST_ASSERT_EQUAL(DivState::kEnabled, logicalState.m_divState);
+  TEST_ASSERT_EQUAL(400, logicalState.m_interval);
+  TEST_ASSERT_EQUAL(200, logicalState.m_divInterval);
+}
+
+void test_preset_mode_ignores_tempo_save() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  // Save tempo in program mode
+  logicalState.m_tempo = 500;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTempo));
+
+  // Switch to preset mode and try to save different tempo
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_tempo = 999;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTempo));
+
+  // Load back and verify original value persisted
+  logicalState.m_tempo = 0;
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  TEST_ASSERT_EQUAL(500, logicalState.m_tempo);
+}
+
+// =============================================================================
+// Preset Mode: Global saves still persist
+// =============================================================================
+
+void test_preset_mode_still_saves_bypass() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  // Save bypass in preset mode
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_bypassState = BypassState::kBypassed;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kBypass));
+
+  // Modify and reload
+  logicalState.m_bypassState = BypassState::kActive;
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
+}
+
+void test_preset_mode_still_saves_program() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  // Save program in preset mode
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentProgram = 5;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kProgram));
+
+  // Modify and reload
+  logicalState.m_currentProgram = 0;
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  TEST_ASSERT_EQUAL(5, logicalState.m_currentProgram);
+}
+
+void test_preset_mode_still_saves_program_mode() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  // Save program mode while in preset mode
+  logicalState.m_programMode = ProgramMode::kPreset;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kProgramMode));
+
+  // Modify and reload
+  logicalState.m_programMode = ProgramMode::kProgram;
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  TEST_ASSERT_EQUAL(ProgramMode::kPreset, logicalState.m_programMode);
+}
+
+void test_preset_mode_still_saves_general() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  // Save general in preset mode
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_midiChannel = 5;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kGeneral));
+
+  // Modify and reload
+  logicalState.m_midiChannel = 0;
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  TEST_ASSERT_EQUAL(5, logicalState.m_midiChannel);
+}
+
+// =============================================================================
 // interestedIn Tests
 // =============================================================================
 
@@ -341,6 +542,75 @@ void test_not_interested_in_other_events() {
   TEST_ASSERT_FALSE(settingsService.interestedIn(e));
 }
 
+// =============================================================================
+// Preset Dirty Flag tests
+// =============================================================================
+
+void test_preset_dirty_flag_starts_false() {
+  LogicalState logicalState;
+  TEST_ASSERT_FALSE(logicalState.m_presetDirty);
+}
+
+void test_preset_mode_pot_save_sets_dirty() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, PotId::kPot0));
+
+  TEST_ASSERT_TRUE(logicalState.m_presetDirty);
+}
+
+void test_preset_mode_tap_save_sets_dirty() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTap));
+
+  TEST_ASSERT_TRUE(logicalState.m_presetDirty);
+}
+
+void test_preset_mode_tempo_save_sets_dirty() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTempo));
+
+  TEST_ASSERT_TRUE(logicalState.m_presetDirty);
+}
+
+void test_preset_mode_expr_save_sets_dirty() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kExpr));
+
+  TEST_ASSERT_TRUE(logicalState.m_presetDirty);
+}
+
+void test_program_mode_pot_save_does_not_set_dirty() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  eeprom.reset();
+  SettingsService settingsService(logicalState, eeprom);
+
+  logicalState.m_programMode = ProgramMode::kProgram;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, PotId::kPot0));
+
+  TEST_ASSERT_FALSE(logicalState.m_presetDirty);
+}
+
 int main() {
   UNITY_BEGIN();
 
@@ -355,6 +625,26 @@ int main() {
   RUN_TEST(test_memory_save_tempo);
   RUN_TEST(test_memory_save_expr);
   RUN_TEST(test_memory_save_pot);
+
+  // Preset Mode: Program parameter saves suppressed
+  RUN_TEST(test_preset_mode_ignores_pot_save);
+  RUN_TEST(test_preset_mode_ignores_expr_save);
+  RUN_TEST(test_preset_mode_ignores_tap_save);
+  RUN_TEST(test_preset_mode_ignores_tempo_save);
+
+  // Preset Mode: Global saves still persist
+  RUN_TEST(test_preset_mode_still_saves_bypass);
+  RUN_TEST(test_preset_mode_still_saves_program);
+  RUN_TEST(test_preset_mode_still_saves_program_mode);
+  RUN_TEST(test_preset_mode_still_saves_general);
+
+  // Preset Dirty Flag
+  RUN_TEST(test_preset_dirty_flag_starts_false);
+  RUN_TEST(test_preset_mode_pot_save_sets_dirty);
+  RUN_TEST(test_preset_mode_tap_save_sets_dirty);
+  RUN_TEST(test_preset_mode_tempo_save_sets_dirty);
+  RUN_TEST(test_preset_mode_expr_save_sets_dirty);
+  RUN_TEST(test_program_mode_pot_save_does_not_set_dirty);
 
   //interestedIn Tests
   RUN_TEST(test_interested_in_memory);

@@ -204,7 +204,7 @@ void test_div_values() {
   TEST_ASSERT_EQUAL(DivState::kDisabled, tapHandler.m_divState);
   TEST_ASSERT_EQUAL(DivValue::kQuarter, tapHandler.m_divValue);
   TEST_ASSERT_EQUAL(200, tapHandler.m_interval);
-  TEST_ASSERT_EQUAL(200, tapHandler.m_divInterval);
+  TEST_ASSERT_EQUAL(0, tapHandler.m_divInterval);
 }
 
 // =============================================================================

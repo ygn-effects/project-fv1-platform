@@ -196,6 +196,158 @@ void test_change_max_value() {
   TEST_ASSERT_EQUAL(1023, potHandler.changePotMaxValue(1, 0));
 }
 
+// =============================================================================
+// Pickup Mode - Initialization
+// =============================================================================
+
+void test_pickup_default_all_pots_picked_up() {
+  PotHandler potHandler;
+
+  for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
+    TEST_ASSERT_TRUE(potHandler.m_pickedUp[i]);
+  }
+}
+
+// =============================================================================
+// Pickup Mode - resetPickup
+// =============================================================================
+
+void test_resetPickup_marks_all_pots_not_picked_up() {
+  PotHandler potHandler;
+
+  potHandler.resetPickup();
+
+  for (uint8_t i = 0; i < PotConstants::c_potCount; i++) {
+    TEST_ASSERT_FALSE(potHandler.m_pickedUp[i]);
+  }
+}
+
+// =============================================================================
+// Pickup Mode - checkPickup
+// =============================================================================
+
+void test_checkPickup_returns_true_when_already_picked_up() {
+  PotHandler potHandler;
+  // Default state: all picked up
+
+  TEST_ASSERT_TRUE(potHandler.checkPickup(500, 300, 0));
+}
+
+void test_checkPickup_first_reading_stores_reference_returns_false() {
+  PotHandler potHandler;
+  potHandler.resetPickup();
+
+  // First reading after reset: stores reference, returns false
+  TEST_ASSERT_FALSE(potHandler.checkPickup(200, 500, 0));
+  TEST_ASSERT_FALSE(potHandler.m_pickedUp[0]);
+}
+
+void test_checkPickup_no_crossover_returns_false() {
+  PotHandler potHandler;
+  potHandler.resetPickup();
+
+  // Stored value is 500, physical pot is below at 200
+  potHandler.checkPickup(200, 500, 0);  // First reading (reference)
+
+  // Moving further below stored value - no crossover
+  TEST_ASSERT_FALSE(potHandler.checkPickup(100, 500, 0));
+  TEST_ASSERT_FALSE(potHandler.checkPickup(150, 500, 0));
+  TEST_ASSERT_FALSE(potHandler.checkPickup(300, 500, 0));
+  TEST_ASSERT_FALSE(potHandler.m_pickedUp[0]);
+}
+
+void test_checkPickup_crossover_from_below_picks_up() {
+  PotHandler potHandler;
+  potHandler.resetPickup();
+
+  // Stored value is 500, physical pot starts below
+  potHandler.checkPickup(200, 500, 0);  // Reference: below stored
+  potHandler.checkPickup(400, 500, 0);  // Still below
+
+  // Crosses over stored value
+  TEST_ASSERT_TRUE(potHandler.checkPickup(550, 500, 0));
+  TEST_ASSERT_TRUE(potHandler.m_pickedUp[0]);
+}
+
+void test_checkPickup_crossover_from_above_picks_up() {
+  PotHandler potHandler;
+  potHandler.resetPickup();
+
+  // Stored value is 300, physical pot starts above
+  potHandler.checkPickup(700, 300, 0);  // Reference: above stored
+  potHandler.checkPickup(500, 300, 0);  // Still above
+
+  // Crosses over stored value
+  TEST_ASSERT_TRUE(potHandler.checkPickup(250, 300, 0));
+  TEST_ASSERT_TRUE(potHandler.m_pickedUp[0]);
+}
+
+void test_checkPickup_exact_match_picks_up() {
+  PotHandler potHandler;
+  potHandler.resetPickup();
+
+  // Stored value is 500, physical pot starts below
+  potHandler.checkPickup(200, 500, 0);  // Reference: below stored
+
+  // Lands exactly on stored value
+  TEST_ASSERT_TRUE(potHandler.checkPickup(500, 500, 0));
+  TEST_ASSERT_TRUE(potHandler.m_pickedUp[0]);
+}
+
+void test_checkPickup_independent_per_pot() {
+  PotHandler potHandler;
+  potHandler.resetPickup();
+
+  // Pot 0: set reference below stored
+  potHandler.checkPickup(200, 500, 0);
+  // Pot 1: set reference above stored
+  potHandler.checkPickup(800, 400, 1);
+
+  // Pot 0 crosses over - picks up
+  TEST_ASSERT_TRUE(potHandler.checkPickup(600, 500, 0));
+  TEST_ASSERT_TRUE(potHandler.m_pickedUp[0]);
+
+  // Pot 1 still hasn't crossed
+  TEST_ASSERT_FALSE(potHandler.checkPickup(600, 400, 1));
+  TEST_ASSERT_FALSE(potHandler.m_pickedUp[1]);
+
+  // Pot 1 crosses over
+  TEST_ASSERT_TRUE(potHandler.checkPickup(350, 400, 1));
+  TEST_ASSERT_TRUE(potHandler.m_pickedUp[1]);
+}
+
+void test_checkPickup_stays_picked_up_after_crossover() {
+  PotHandler potHandler;
+  potHandler.resetPickup();
+
+  potHandler.checkPickup(200, 500, 0);  // Reference
+  potHandler.checkPickup(600, 500, 0);  // Crossover - picked up
+
+  // Subsequent calls always return true
+  TEST_ASSERT_TRUE(potHandler.checkPickup(700, 500, 0));
+  TEST_ASSERT_TRUE(potHandler.checkPickup(100, 500, 0));
+  TEST_ASSERT_TRUE(potHandler.checkPickup(500, 500, 0));
+}
+
+void test_resetPickup_after_pickup_resets_again() {
+  PotHandler potHandler;
+  potHandler.resetPickup();
+
+  // Pick up pot 0
+  potHandler.checkPickup(200, 500, 0);
+  potHandler.checkPickup(600, 500, 0);
+  TEST_ASSERT_TRUE(potHandler.m_pickedUp[0]);
+
+  // Reset again (simulates another program change)
+  potHandler.resetPickup();
+  TEST_ASSERT_FALSE(potHandler.m_pickedUp[0]);
+
+  // Needs crossover again
+  potHandler.checkPickup(800, 500, 0);  // Reference: above
+  TEST_ASSERT_FALSE(potHandler.checkPickup(600, 500, 0));  // Still above
+  TEST_ASSERT_TRUE(potHandler.checkPickup(400, 500, 0));   // Crossed over
+}
+
 int main() {
   UNITY_BEGIN();
 
@@ -225,6 +377,23 @@ int main() {
   // changePotMinValue / changePotMaxValue
   RUN_TEST(test_change_min_value);
   RUN_TEST(test_change_max_value);
+
+  // Pickup mode - initialization
+  RUN_TEST(test_pickup_default_all_pots_picked_up);
+
+  // Pickup mode - resetPickup
+  RUN_TEST(test_resetPickup_marks_all_pots_not_picked_up);
+
+  // Pickup mode - checkPickup
+  RUN_TEST(test_checkPickup_returns_true_when_already_picked_up);
+  RUN_TEST(test_checkPickup_first_reading_stores_reference_returns_false);
+  RUN_TEST(test_checkPickup_no_crossover_returns_false);
+  RUN_TEST(test_checkPickup_crossover_from_below_picks_up);
+  RUN_TEST(test_checkPickup_crossover_from_above_picks_up);
+  RUN_TEST(test_checkPickup_exact_match_picks_up);
+  RUN_TEST(test_checkPickup_independent_per_pot);
+  RUN_TEST(test_checkPickup_stays_picked_up_after_crossover);
+  RUN_TEST(test_resetPickup_after_pickup_resets_again);
 
   UNITY_END();
 }

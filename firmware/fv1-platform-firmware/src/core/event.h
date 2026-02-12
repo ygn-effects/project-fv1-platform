@@ -38,6 +38,7 @@ enum class EventAction {
   kLongPressed,
   kValueChanged,
   kDeltaChanged,
+  kInputChanged,
   kToggled,
   kSave,
   kLoad,

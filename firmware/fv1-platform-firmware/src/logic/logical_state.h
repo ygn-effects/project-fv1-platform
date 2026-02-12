@@ -31,6 +31,8 @@ struct LogicalState {
   uint8_t m_currentPresetBank = 0;
   uint8_t m_currentPreset = 0;
   PresetBank m_loadedPresetBank;
+  uint8_t m_saveTargetBank = 0;
+  uint8_t m_saveTargetPreset = 0;
   uint8_t m_midiChannel = 0;
 
   TapState m_tapState = TapState::kDisabled;
@@ -59,4 +61,6 @@ struct LogicalState {
   };
 
   ExprParams m_exprParams[ProgramConstants::c_maxPrograms];
+
+  bool m_presetDirty = false;
 };

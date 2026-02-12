@@ -10,6 +10,7 @@ enum class Fv1Pot : uint8_t {
 
 class Fv1 {
   public:
+    virtual void init() = 0;
     virtual void sendProgramChange(uint8_t t_program) = 0;
     virtual void sendPotValue(Fv1Pot t_pot, uint16_t t_value) = 0;
 };

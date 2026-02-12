@@ -14,6 +14,11 @@ constexpr Program kPrograms[ProgramConstants::c_maxPrograms]{
       { "Tone LPF",       100, 10000, 1, 5, ParamUnit::kHz,      true },
       { "Mix",            0,     100, 1, 5, ParamUnit::kPercent, true }
     },
+    {
+      MixCurve::kConstantPower,
+      0,
+      512
+    },
     true,   /* isDelayEffect   */
     20,     /* minDelayMs      */
     1000,   /* maxDelayMs      */
@@ -29,6 +34,11 @@ constexpr Program kPrograms[ProgramConstants::c_maxPrograms]{
       { "Feedback",         0,  100, 1, 5, ParamUnit::kPercent, true },
       { "Clock-grit",       0,  100, 1, 5, ParamUnit::kPercent, true },
       { "Mix",              0,  100, 1, 5, ParamUnit::kPercent, true }
+    },
+    {
+      MixCurve::kConstantPower,
+      0,
+      512
     },
     true,
     100,
@@ -46,6 +56,11 @@ constexpr Program kPrograms[ProgramConstants::c_maxPrograms]{
       { "Band-centre",    500, 3000, 5, 25, ParamUnit::kHz,      true },
       { "Mix",              0,  100, 1,  5, ParamUnit::kPercent, true }
     },
+    {
+      MixCurve::kConstantPower,
+      0,
+      512
+    },
     true,
     40,
     400,
@@ -61,6 +76,11 @@ constexpr Program kPrograms[ProgramConstants::c_maxPrograms]{
       { "Feedback",         0,  100, 1, 5, ParamUnit::kPercent, true },
       { "Duck thresh",      0,  100, 1, 5, ParamUnit::kPercent, true },
       { "Mix",              0,  100, 1, 5, ParamUnit::kPercent, true }
+    },
+    {
+      MixCurve::kConstantPower,
+      0,
+      512
     },
     true,
     80,
@@ -78,6 +98,11 @@ constexpr Program kPrograms[ProgramConstants::c_maxPrograms]{
       { "Verb mix",         0,  100, 1, 5, ParamUnit::kPercent, true },
       { "Mix",              0,  100, 1, 5, ParamUnit::kPercent, true }
     },
+    {
+      MixCurve::kTransition,
+      0,
+      768
+    },
     true,
     30,
     200,
@@ -93,6 +118,11 @@ constexpr Program kPrograms[ProgramConstants::c_maxPrograms]{
       { "Pre-delay",        0,  100,  1,  5, ParamUnit::kMs,      true },
       { "Damp freq",      200, 8000, 10, 50, ParamUnit::kHz,      true },
       { "Mix",              0,  100,  1,  5, ParamUnit::kPercent, true }
+    },
+    {
+      MixCurve::kTransition,
+      0,
+      1023
     },
     false,
     0,
@@ -110,6 +140,11 @@ constexpr Program kPrograms[ProgramConstants::c_maxPrograms]{
       { "Drip",             0, 100, 1, 5, ParamUnit::kPercent, true },
       { "Mix",              0, 100, 1, 5, ParamUnit::kPercent, true }
     },
+    {
+      MixCurve::kTransition,
+      0,
+      1023
+    },
     false,
     0,
     0,
@@ -125,6 +160,11 @@ constexpr Program kPrograms[ProgramConstants::c_maxPrograms]{
       { "Shimmer lvl",      0,  100, 1, 5, ParamUnit::kPercent, true },
       { "Freeze",           0,  100, 1, 5, ParamUnit::kPercent, true }, /* >95% engages hold */
       { "Mix",              0,  100, 1, 5, ParamUnit::kPercent, true }
+    },
+    {
+      MixCurve::kLogarithmic,
+      0,
+      1023
     },
     false,
     0,
