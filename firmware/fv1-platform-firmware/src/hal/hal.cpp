@@ -12,6 +12,8 @@ DigitalGpioDriver bypassOptoCouplerPin(22, GpioConfig::kOutput);
 DigitalGpioDriver bypassLedPin(12, GpioConfig::kOutput);
 Bypass bypass(bypassRelayPin, bypassOptoCouplerPin, bypassLedPin);
 
+SerialDriver midiSerial(31250);
+
 SSD1306Driver display;
 
 Pcf8574Expander expander(0x20);
@@ -55,6 +57,20 @@ PotDriver pot2(pot2Pin, PotId::kPot2);
 
 AnalogGpioDriver mixPotPin(27, GpioConfig::kInput);
 PotDriver mixPot(mixPotPin, PotId::kMixPot);
+
+DigitalGpioDriver fv1S0Pin(15, GpioConfig::kOutput);
+DigitalGpioDriver fv1S1Pin(0, GpioConfig::kOutput);
+DigitalGpioDriver fv1S2Pin(1, GpioConfig::kOutput);
+DigitalGpioDriver fv1Dac1CsPin(1, GpioConfig::kOutput);
+DigitalGpioDriver fv1Dac2CsPin(14, GpioConfig::kOutput);
+Mcp4912 fv1P0Dac(fv1Dac1CsPin, Channel::kB);
+Mcp4912 fv1P1Dac(fv1Dac1CsPin, Channel::kA);
+Mcp4911 fv1P2Dac(fv1Dac2CsPin);
+Fv1Driver fv1(fv1S0Pin, fv1S1Pin, fv1S2Pin, fv1P0Dac, fv1P1Dac, fv1P2Dac);
+
+DigitalGpioDriver vcaDac3CsPin(3, GpioConfig::kOutput);
+Mcp4912 vcaWetDac(vcaDac3CsPin, Channel::kA);
+Mcp4912 vcaDryDac(vcaDac3CsPin, Channel::kB);
 
 PollManager pollManager;
 
