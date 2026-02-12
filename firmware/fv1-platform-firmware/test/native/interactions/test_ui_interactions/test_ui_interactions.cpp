@@ -1077,6 +1077,88 @@ void test_tempo_overlay_active_pot_move_timeout_returns_to_menu() {
 }
 
 // =============================================================================
+// Preset Editing
+// =============================================================================
+
+void test_pot0_move_preset_editing_changes_menu_header() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_loadedPresetBank.m_presets[0].m_potParams[0].m_state = PotState::kActive;
+  fix.syncEepromWithState();
+  fix.SyncEepromWithLoadedPresetBank();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.updateAllServices();
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot0, 512));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Set the clock
+  fix.mockClock.advanceBy(ui::MenuConstants::c_tempoMenuTimeout + 1);
+
+  // update and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Preset mode *"));
+}
+
+void test_pot_move_preset_editing_changes_menu_header() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_loadedPresetBank.m_presets[0].m_potParams[0].m_state = PotState::kActive;
+  fix.syncEepromWithState();
+  fix.SyncEepromWithLoadedPresetBank();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.updateAllServices();
+
+  // Menu unlock
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuLock));
+  fix.updateAllServices();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot2, 0));
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Set the clock
+  fix.mockClock.advanceBy(ui::MenuConstants::c_tempoMenuTimeout + 1);
+
+  // update and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Preset mode *"));
+}
+
+// =============================================================================
 // Preset Saving
 // =============================================================================
 
@@ -1670,6 +1752,10 @@ int main() {
   RUN_TEST(test_pot_overlay_active_preset_save_replaces_with_save_overlay);
   RUN_TEST(test_tempo_overlay_active_preset_save_replaces_with_save_overlay);
   RUN_TEST(test_tempo_overlay_active_pot_move_timeout_returns_to_menu);
+
+  // Preset Editing
+  RUN_TEST(test_pot0_move_preset_editing_changes_menu_header);
+  RUN_TEST(test_pot_move_preset_editing_changes_menu_header);
 
   // Preset Saving
   RUN_TEST(test_menu_encoder_long_press_show_preset_saving_menu_unlocked);
