@@ -32,18 +32,22 @@ void TempoService::init() {
 }
 
 void TempoService::handleEvent(const Event& t_event) {
-  if (m_logicState.m_programMode != ProgramMode::kProgram) return;
 
   if (t_event.m_domain == EventDomain::kLogic
       && t_event.m_subject == EventSubject::kProgram
       && t_event.m_action == EventAction::kValueChanged) {
     if (m_logicState.m_activeProgram->m_isDelayEffect) {
-      syncHandler();
-      m_handler.m_source = TempoSource::kTap;
-      m_logicState.m_tempo = m_handler.mapInterval(m_handler.m_interval);
+      if (m_logicState.m_programMode == ProgramMode::kProgram) {
+        syncHandler();
+        m_handler.m_source = TempoSource::kTap;
+        m_logicState.m_tempo = m_handler.mapInterval(m_handler.m_interval);
 
-      // publishTempoEvent(m_logicState.m_tempo);
-      publishSaveTempoEvent(m_logicState.m_tempo);
+        // publishTempoEvent(m_logicState.m_tempo);
+        publishSaveTempoEvent(m_logicState.m_tempo);
+      }
+      else {
+        syncHandler();
+      }
     }
     else {
       m_tempoLed.off();

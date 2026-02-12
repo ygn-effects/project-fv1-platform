@@ -131,7 +131,7 @@ void test_init_mock_led_initialized() {
 // Program Change Tests
 // =============================================================================
 
-void test_program_change_to_delay_program_syncs_handler() {
+void test_program_change_to_delay_program_syncs_handler_program_mode() {
   LogicalState logicalState;
   MackAdjustbleLed led;
   MockedClock clock;
@@ -152,6 +152,28 @@ void test_program_change_to_delay_program_syncs_handler() {
 
   // Check logicalState
   TEST_ASSERT_EQUAL(800, logicalState.m_tempo);
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+}
+
+void test_program_change_to_delay_program_syncs_handler_preset_mode() {
+  LogicalState logicalState;
+  MackAdjustbleLed led;
+  MockedClock clock;
+  TempoService tempoService(logicalState, led, clock);
+
+  // Set specific tempo
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_tempo = 900;
+
+  tempoService.init();
+
+  // Send a program change event
+  tempoService.handleEvent(makeProgramChangedEvent());
+
+  // Check logicalState
+  TEST_ASSERT_EQUAL(900, logicalState.m_tempo);
 
   // Event bus should be empty
   assertEventBusEmpty();
@@ -508,7 +530,8 @@ int main() {
   RUN_TEST(test_init_mock_led_initialized);
 
   // Program Change
-  RUN_TEST(test_program_change_to_delay_program_syncs_handler);
+  RUN_TEST(test_program_change_to_delay_program_syncs_handler_program_mode);
+  RUN_TEST(test_program_change_to_delay_program_syncs_handler_preset_mode);
   RUN_TEST(test_program_change_to_not_delay_program_disables_led);
   RUN_TEST(test_program_change_clamps_tempo_below_minimum);
   RUN_TEST(test_program_change_in_preset_mode_does_nothing);
