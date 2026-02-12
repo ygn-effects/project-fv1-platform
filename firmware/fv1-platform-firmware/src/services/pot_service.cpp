@@ -55,6 +55,10 @@ void PotService::handlePhysicalEvent(const Event& t_event) {
       && m_handler.checkPickup(scaledValue, params[t_event.m_id].m_value, t_event.m_id)) {
     params[t_event.m_id].m_value = scaledValue;
     publishPotValueChangedEvent(t_event.m_id, t_event.m_timestamp);
+
+    if (m_logicalState.m_programMode == ProgramMode::kPreset) {
+      m_logicalState.m_presetDirty = true;
+    }
   }
 }
 

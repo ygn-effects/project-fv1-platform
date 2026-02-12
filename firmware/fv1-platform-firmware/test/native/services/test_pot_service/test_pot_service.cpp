@@ -284,6 +284,54 @@ void test_disabled_pot_ignores_physical_input() {
   TEST_ASSERT_EQUAL(0, logicalState.m_potParams[0][0].m_value);
 }
 
+void test_physical_pot0_value_changed_preset_mode_not_sets_preset_dirty() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set logical state
+  logicalState.m_programMode = ProgramMode::kPreset;
+
+  // Init
+  potService.init();
+
+  // Send physical event
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 512));
+
+  // Check logical state
+  TEST_ASSERT_FALSE(logicalState.m_presetDirty);
+}
+
+void test_physical_pot_value_changed_preset_mode_sets_preset_dirty() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set logical state
+  logicalState.m_programMode = ProgramMode::kPreset;
+
+  // Init
+  potService.init();
+
+  // Send physical event
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 512));
+
+  // Check logical state
+  TEST_ASSERT_TRUE(logicalState.m_presetDirty);
+}
+
+void test_physical_pot_value_changed_program_mode_not_sets_preset_dirty() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Init
+  potService.init();
+
+  // Send physical event
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 512));
+
+  // Check logical state
+  TEST_ASSERT_FALSE(logicalState.m_presetDirty);
+}
+
 // =============================================================================
 // Program Change Tests
 // =============================================================================
@@ -1079,6 +1127,9 @@ int main() {
   RUN_TEST(test_midi_pot0_publishes_tempo_input_when_using_delay_effect);
   RUN_TEST(test_expr_pot0_publishes_tempo_input_when_using_delay_effect);
   RUN_TEST(test_disabled_pot_ignores_physical_input);
+  RUN_TEST(test_physical_pot0_value_changed_preset_mode_not_sets_preset_dirty);
+  RUN_TEST(test_physical_pot_value_changed_preset_mode_sets_preset_dirty);
+  RUN_TEST(test_physical_pot_value_changed_program_mode_not_sets_preset_dirty);
 
   // Program Change Tests
   RUN_TEST(test_program_change_syncs_handler_from_logical_state);
