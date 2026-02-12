@@ -42,14 +42,14 @@ class MidiService : public Service {
   private:
     LogicalState& m_logicalState;
     MidiHandler m_midiHandler;
-    Serial& m_serial;
+    SerialInterface& m_serial;
     Clock& m_clock;
 
     void syncHandler();
     void publishSaveMidiChannelEvent(const Event& t_event);
 
   public:
-    MidiService(LogicalState& t_lState, Serial& t_serial, Clock& t_clock) :
+    MidiService(LogicalState& t_lState, SerialInterface& t_serial, Clock& t_clock) :
       m_logicalState(t_lState),
       m_serial(t_serial),
       m_clock(t_clock) {}
