@@ -1,0 +1,25 @@
+{
+    "gates": {
+        "2633d399-c153-4329-a761-431cc9dafc02": {
+            "name": "LED",
+            "suffix": "B",
+            "swap_group": 0,
+            "unit": "e6f7ccfd-1cbe-498e-b644-6af905f5fb70"
+        },
+        "51568aef-5e94-44d0-8be5-e83cbbab4656": {
+            "name": "SWITCH",
+            "suffix": "A",
+            "swap_group": 0,
+            "unit": "ba1bcb42-1217-4470-8795-dd98b4935987"
+        }
+    },
+    "manufacturer": "",
+    "name": "Switch SPST with LED",
+    "prefix": "SW",
+    "tags": [
+        "led",
+        "swi"
+    ],
+    "type": "entity",
+    "uuid": "b6bdd1fe-ce1f-481a-aa29-15317a64fb27"
+}

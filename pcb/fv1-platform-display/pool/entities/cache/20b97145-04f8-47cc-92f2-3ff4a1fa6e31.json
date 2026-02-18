@@ -1,0 +1,25 @@
+{
+    "gates": {
+        "44115417-b009-46d4-b3c0-743f836e4caf": {
+            "name": "ENCODER",
+            "suffix": "A",
+            "swap_group": 0,
+            "unit": "18497f27-9ca3-4fba-a15a-3330eb39c05f"
+        },
+        "9cc2eaef-dd10-45c2-b111-229d163fcce4": {
+            "name": "SWITCH",
+            "suffix": "B",
+            "swap_group": 0,
+            "unit": "ba1bcb42-1217-4470-8795-dd98b4935987"
+        }
+    },
+    "manufacturer": "ALPS",
+    "name": "Encoder rotary incremental with switch",
+    "prefix": "ENC",
+    "tags": [
+        "encoder",
+        "switch"
+    ],
+    "type": "entity",
+    "uuid": "20b97145-04f8-47cc-92f2-3ff4a1fa6e31"
+}

@@ -1,0 +1,18 @@
+{
+    "gates": {
+        "a3532230-532a-42c1-b196-b10b4c890b8c": {
+            "name": "Main",
+            "suffix": "",
+            "swap_group": 0,
+            "unit": "3be4a33e-cdbe-4a80-8227-82abbafcac75"
+        }
+    },
+    "manufacturer": "",
+    "name": "Connector 4 pins",
+    "prefix": "J",
+    "tags": [
+        "connector"
+    ],
+    "type": "entity",
+    "uuid": "278ef14c-9aa2-41af-8497-f29f96d294e5"
+}

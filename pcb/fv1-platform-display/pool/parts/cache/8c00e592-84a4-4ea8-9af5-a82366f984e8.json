@@ -1,0 +1,69 @@
+{
+    "MPN": [
+        false,
+        "TS27-68-24-WT-260-D"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "TACTILE SWITCH SPST WHITE"
+    ],
+    "entity": "b6bdd1fe-ce1f-481a-aa29-15317a64fb27",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Same Sky"
+    ],
+    "model": "5379db43-5383-454c-ae54-047533438c06",
+    "package": "607b6be9-3c4c-423c-a094-9ec2d236b7d3",
+    "pad_map": {
+        "3980672c-bc24-4965-9b58-cec0d906ca70": {
+            "gate": "2633d399-c153-4329-a761-431cc9dafc02",
+            "pin": "da62449c-1c9b-4d92-b968-41d17eb71605"
+        },
+        "919b9344-b308-4728-a42a-cae5921f0fe1": {
+            "gate": "51568aef-5e94-44d0-8be5-e83cbbab4656",
+            "pin": "538308f7-7b68-49b3-8650-992660e58f5d"
+        },
+        "c31d49c4-0f88-4341-a249-cbcc4f6a95fd": {
+            "gate": "2633d399-c153-4329-a761-431cc9dafc02",
+            "pin": "09552127-78eb-44b7-b6eb-38cc164badb5"
+        },
+        "cc794262-0df9-4c94-b3af-6524f4b8d1e1": {
+            "gate": "51568aef-5e94-44d0-8be5-e83cbbab4656",
+            "pin": "c5b968b9-680d-4e74-9d35-c2048075ed18"
+        },
+        "cfcb45a3-8df1-435a-8819-fc700e48a28d": {
+            "gate": "51568aef-5e94-44d0-8be5-e83cbbab4656",
+            "pin": "c5b968b9-680d-4e74-9d35-c2048075ed18"
+        },
+        "e9873130-f0be-479a-888a-de9e23a4cdfd": {
+            "gate": "51568aef-5e94-44d0-8be5-e83cbbab4656",
+            "pin": "538308f7-7b68-49b3-8650-992660e58f5d"
+        }
+    },
+    "parametric": {
+        "contact_form": "SPST",
+        "contact_material": "",
+        "contact_type": "ON-OFF",
+        "current_rating": "0.05",
+        "mechanical_life": "100000",
+        "mounting_angle": "Straight",
+        "mounting_type": "Through Hole",
+        "price": "0.621",
+        "switch_type": "Push Button",
+        "table": "switches",
+        "voltage_rating": "12"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "8c00e592-84a4-4ea8-9af5-a82366f984e8",
+    "value": [
+        false,
+        ""
+    ]
+}

@@ -1,0 +1,230 @@
+{
+    "block_instance_mappings": {},
+    "block_instances": {},
+    "bom_export_settings": {
+        "concrete_parts": {},
+        "csv_settings": {
+            "columns": [
+                "MPN",
+                "refdes",
+                "value",
+                "manufacturer",
+                "description",
+                "package",
+                "QTY"
+            ],
+            "order": "asc",
+            "sort_column": "refdes"
+        },
+        "orderable_MPNs": {},
+        "output_filename": "/home/yann/_ygn/effect-sexy-rodent/pcb/bom/sexy-rodent.csv"
+    },
+    "buses": {},
+    "components": {
+        "485178fa-8e20-4a22-b735-fd5e0fbd02ee": {
+            "alt_pins": {},
+            "connections": {},
+            "entity": "b6bdd1fe-ce1f-481a-aa29-15317a64fb27",
+            "group": "00000000-0000-0000-0000-000000000000",
+            "part": "8c00e592-84a4-4ea8-9af5-a82366f984e8",
+            "pin_names": {},
+            "refdes": "SW102",
+            "tag": "051bc1e2-9e77-4219-bd78-7aaa346f40f3",
+            "value": ""
+        },
+        "4b64ec31-b345-4536-ba3e-a3b23f7ce10f": {
+            "alt_pins": {},
+            "connections": {
+                "a3532230-532a-42c1-b196-b10b4c890b8c/82a7e37c-9b1d-4930-b8da-fa8035e6a757": {
+                    "net": "ec858618-2ed0-4eb3-8570-a4fef1ed1652"
+                },
+                "a3532230-532a-42c1-b196-b10b4c890b8c/b683c934-469e-44df-9b3f-faa281710d00": {
+                    "net": "7f8519c5-cc34-40fd-87b8-734b580eecb7"
+                },
+                "a3532230-532a-42c1-b196-b10b4c890b8c/b787f728-bdd2-4890-a3c1-e9cbba66bb3d": {
+                    "net": "5250e92b-1451-4fde-b6d4-cb9959f3c147"
+                },
+                "a3532230-532a-42c1-b196-b10b4c890b8c/c65dc90f-fb6a-4093-bc7c-586fbf00d8b5": {
+                    "net": "a24c8e0f-ccc9-4006-bab6-c5019699f064"
+                }
+            },
+            "entity": "278ef14c-9aa2-41af-8497-f29f96d294e5",
+            "group": "00000000-0000-0000-0000-000000000000",
+            "part": "a017a55a-db58-47a1-91a9-0a9a9ef81019",
+            "pin_names": {},
+            "refdes": "J102",
+            "tag": "192acf96-952c-4617-9195-76e6a20d2700",
+            "value": ""
+        },
+        "924c5e26-3631-4c22-928c-9d5c025e70ee": {
+            "alt_pins": {},
+            "connections": {
+                "a3532230-532a-42c1-b196-b10b4c890b8c/82a7e37c-9b1d-4930-b8da-fa8035e6a757": {
+                    "net": "5250e92b-1451-4fde-b6d4-cb9959f3c147"
+                },
+                "a3532230-532a-42c1-b196-b10b4c890b8c/b683c934-469e-44df-9b3f-faa281710d00": {
+                    "net": "a24c8e0f-ccc9-4006-bab6-c5019699f064"
+                },
+                "a3532230-532a-42c1-b196-b10b4c890b8c/b787f728-bdd2-4890-a3c1-e9cbba66bb3d": {
+                    "net": "ec858618-2ed0-4eb3-8570-a4fef1ed1652"
+                },
+                "a3532230-532a-42c1-b196-b10b4c890b8c/c65dc90f-fb6a-4093-bc7c-586fbf00d8b5": {
+                    "net": "7f8519c5-cc34-40fd-87b8-734b580eecb7"
+                }
+            },
+            "entity": "278ef14c-9aa2-41af-8497-f29f96d294e5",
+            "group": "00000000-0000-0000-0000-000000000000",
+            "part": "8d1fe076-c41a-4359-9021-70e6212de6f0",
+            "pin_names": {},
+            "refdes": "J101",
+            "tag": "a965b89a-eba0-46a4-929e-8051e539a597",
+            "value": ""
+        },
+        "a13b12bb-16bd-4fd6-93d8-a1623955c5f7": {
+            "alt_pins": {},
+            "connections": {},
+            "entity": "20b97145-04f8-47cc-92f2-3ff4a1fa6e31",
+            "group": "00000000-0000-0000-0000-000000000000",
+            "part": "c42a4dc6-c585-4244-9040-f90daac988c0",
+            "pin_names": {},
+            "refdes": "ENC101",
+            "tag": "03cbfaf7-37b8-4b55-a3b9-bb8112f35313",
+            "value": ""
+        },
+        "d37ae6e8-f97d-499c-8127-632a330f36e7": {
+            "alt_pins": {},
+            "connections": {},
+            "entity": "b6bdd1fe-ce1f-481a-aa29-15317a64fb27",
+            "group": "00000000-0000-0000-0000-000000000000",
+            "part": "8c00e592-84a4-4ea8-9af5-a82366f984e8",
+            "pin_names": {},
+            "refdes": "SW101",
+            "tag": "b6c7dbd9-db7b-4d1a-b6d7-4c6c267b8101",
+            "value": ""
+        }
+    },
+    "group_names": {},
+    "name": "Top",
+    "net_class_default": "a48123af-5897-4ccf-b2a6-126b8069075e",
+    "net_classes": {
+        "762d94af-ebf9-487f-8459-589b72cb6c3e": {
+            "name": "Digital"
+        },
+        "8876c9d4-a55d-49ea-9272-2f5228ec55f5": {
+            "name": "Analog"
+        },
+        "a48123af-5897-4ccf-b2a6-126b8069075e": {
+            "name": "default"
+        },
+        "db4ec8e0-0bcd-45cc-9312-1d188e5b815f": {
+            "name": "Power"
+        }
+    },
+    "nets": {
+        "5250e92b-1451-4fde-b6d4-cb9959f3c147": {
+            "is_port": false,
+            "is_power": true,
+            "name": "GND",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "gnd"
+        },
+        "7f8519c5-cc34-40fd-87b8-734b580eecb7": {
+            "is_port": false,
+            "is_power": false,
+            "name": "SCL",
+            "net_class": "a48123af-5897-4ccf-b2a6-126b8069075e",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "gnd"
+        },
+        "8498ea5d-f77d-4120-b7fe-462820666f58": {
+            "is_port": false,
+            "is_power": true,
+            "name": "+REG",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "86e48f21-266e-41f0-be8c-9f13912bd3e8": {
+            "is_port": false,
+            "is_power": true,
+            "name": "+",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "936f0572-b515-4dd7-9524-bc4c5b0d957c": {
+            "is_port": false,
+            "is_power": true,
+            "name": "-REG",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "953f378e-f368-4a22-9560-090233556068": {
+            "is_port": false,
+            "is_power": true,
+            "name": "+REG_F",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "9ce24954-fc0f-453c-a163-0114dfd8569a": {
+            "is_port": false,
+            "is_power": true,
+            "name": "-REG_F",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "a24c8e0f-ccc9-4006-bab6-c5019699f064": {
+            "is_port": false,
+            "is_power": true,
+            "name": "+3.3V",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "e3d054cc-677e-4dac-8ee3-76f67b09fca2": {
+            "is_port": false,
+            "is_power": true,
+            "name": "+5V",
+            "net_class": "db4ec8e0-0bcd-45cc-9312-1d188e5b815f",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "antenna"
+        },
+        "ec858618-2ed0-4eb3-8570-a4fef1ed1652": {
+            "is_port": false,
+            "is_power": false,
+            "name": "SDA",
+            "net_class": "a48123af-5897-4ccf-b2a6-126b8069075e",
+            "port_direction": "bidirectional",
+            "power_symbol_name_visible": true,
+            "power_symbol_style": "gnd"
+        }
+    },
+    "project_meta": {
+        "author": "yann-ygn",
+        "date": "2024-08-18",
+        "project_name": "fv1-platform-display",
+        "project_title": "fv1-platform-display",
+        "rev": "1"
+    },
+    "tag_names": {
+        "03cbfaf7-37b8-4b55-a3b9-bb8112f35313": "4",
+        "051bc1e2-9e77-4219-bd78-7aaa346f40f3": "3",
+        "192acf96-952c-4617-9195-76e6a20d2700": "4",
+        "a965b89a-eba0-46a4-929e-8051e539a597": "0",
+        "b6c7dbd9-db7b-4d1a-b6d7-4c6c267b8101": "2"
+    },
+    "uuid": "7dd99e06-2a2d-44db-b3e1-39a57ea92d62"
+}

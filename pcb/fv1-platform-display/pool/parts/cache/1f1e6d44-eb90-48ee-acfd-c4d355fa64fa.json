@@ -1,0 +1,60 @@
+{
+    "MPN": [
+        false,
+        "S4B-XH-A"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER XH MALE 1X4 PINS 2.5MM PITCH ANGLED"
+    ],
+    "entity": "278ef14c-9aa2-41af-8497-f29f96d294e5",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "JST"
+    ],
+    "model": "fd16daa8-fb27-4678-be17-0aa9e24b9948",
+    "package": "40303d3e-e9f5-485e-b31d-004171541b02",
+    "pad_map": {
+        "3dd93623-ca5e-43b5-8300-a128a9b63d63": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "b787f728-bdd2-4890-a3c1-e9cbba66bb3d"
+        },
+        "5209727d-aa46-4e8d-9a74-86fa9d3e331f": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "c65dc90f-fb6a-4093-bc7c-586fbf00d8b5"
+        },
+        "559e0c60-a9ed-45b7-b7c6-005cc542476d": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "b683c934-469e-44df-9b3f-faa281710d00"
+        },
+        "6e35d537-6591-4eba-890e-a160716ff21b": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "82a7e37c-9b1d-4930-b8da-fa8035e6a757"
+        }
+    },
+    "parametric": {
+        "contact_material": "Tin",
+        "current_rating": "3",
+        "mounting_angle": "Right Angle",
+        "mounting_style": "Through Hole",
+        "pitch": "2.5",
+        "positions": "4",
+        "price": "0.175",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "250"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "1f1e6d44-eb90-48ee-acfd-c4d355fa64fa",
+    "value": [
+        false,
+        ""
+    ]
+}

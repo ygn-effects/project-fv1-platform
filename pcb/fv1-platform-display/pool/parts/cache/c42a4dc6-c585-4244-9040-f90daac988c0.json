@@ -1,0 +1,64 @@
+{
+    "MPN": [
+        false,
+        "EC11E1820402"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "ENCODER 11MM 18 RES 36 DTENT"
+    ],
+    "entity": "20b97145-04f8-47cc-92f2-3ff4a1fa6e31",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "ALPS"
+    ],
+    "model": "ed4cc335-74e2-427f-9e31-8bd661cf823c",
+    "package": "df671583-2699-45b4-ab98-3f850ed08c81",
+    "pad_map": {
+        "072531ae-e83e-4dd6-abec-fe1f9ea55365": {
+            "gate": "44115417-b009-46d4-b3c0-743f836e4caf",
+            "pin": "ec9cbd8b-fae2-4726-8a5f-9419c23ec5c2"
+        },
+        "4e5bfc5a-2696-4b1b-aafc-f8670836d02f": {
+            "gate": "9cc2eaef-dd10-45c2-b111-229d163fcce4",
+            "pin": "538308f7-7b68-49b3-8650-992660e58f5d"
+        },
+        "98575fda-61a3-4444-8fc5-d4160a49d51a": {
+            "gate": "44115417-b009-46d4-b3c0-743f836e4caf",
+            "pin": "38fb573b-24f4-4df9-96b9-e99cabeabcf0"
+        },
+        "c030a110-3416-4008-8f5b-bdee83123635": {
+            "gate": "44115417-b009-46d4-b3c0-743f836e4caf",
+            "pin": "7e800f19-728b-43a7-b715-f7581b9f4554"
+        },
+        "ddae987a-026e-477d-ad33-c13b76e09eb4": {
+            "gate": "9cc2eaef-dd10-45c2-b111-229d163fcce4",
+            "pin": "c5b968b9-680d-4e74-9d35-c2048075ed18"
+        }
+    },
+    "parametric": {
+        "detents": "36",
+        "max_current": "0.1",
+        "max_voltage": "5",
+        "mounting": "Through-Hole",
+        "ppr": "18",
+        "price": "2.62",
+        "shaft": "Flatted Shaft",
+        "table": "encoders_rotary",
+        "type": "Incremental",
+        "with_switch": "Yes"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "c42a4dc6-c585-4244-9040-f90daac988c0",
+    "value": [
+        false,
+        ""
+    ]
+}
