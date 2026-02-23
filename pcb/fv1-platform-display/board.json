@@ -97,7 +97,7 @@
                 1000000,
                 1000000
             ],
-            "spacing_square": 1000000
+            "spacing_square": 500000
         },
         "grids": {}
     },
@@ -115,17 +115,17 @@
     },
     "output_format": "gerber",
     "packages": {
-        "0636fea8-44d3-4651-a688-f45225fbb106": {
-            "component": "924c5e26-3631-4c22-928c-9d5c025e70ee",
+        "18be59e8-b428-4fd2-a01a-2c3484149e8f": {
+            "component": "4599a283-c6fd-42f3-8847-7eef585ce339",
             "fixed": false,
             "flip": true,
             "omit_silkscreen": false,
             "placement": {
-                "angle": 0,
+                "angle": 32768,
                 "mirror": true,
                 "shift": [
-                    39097083,
-                    29050263
+                    30100000,
+                    28400000
                 ]
             },
             "smashed": false,
@@ -133,15 +133,15 @@
         },
         "6c183b37-df8f-4f59-89af-ec35f6b871ba": {
             "component": "d37ae6e8-f97d-499c-8127-632a330f36e7",
-            "fixed": false,
+            "fixed": true,
             "flip": false,
             "omit_silkscreen": false,
             "placement": {
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    34400000,
-                    5000000
+                    41000000,
+                    11500000
                 ]
             },
             "smashed": false,
@@ -149,15 +149,15 @@
         },
         "6f3d707c-dc5c-4a62-ad8c-59734be301d5": {
             "component": "485178fa-8e20-4a22-b735-fd5e0fbd02ee",
-            "fixed": false,
+            "fixed": true,
             "flip": false,
             "omit_silkscreen": false,
             "placement": {
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    44000000,
-                    5000000
+                    52000000,
+                    11500000
                 ]
             },
             "smashed": false,
@@ -165,15 +165,15 @@
         },
         "8900e172-9ffb-422f-8c49-a45bd7716570": {
             "component": "4b64ec31-b345-4536-ba3e-a3b23f7ce10f",
-            "fixed": false,
+            "fixed": true,
             "flip": false,
             "omit_silkscreen": false,
             "placement": {
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    14000000,
-                    28000000
+                    16500000,
+                    28800000
                 ]
             },
             "smashed": false,
@@ -181,15 +181,15 @@
         },
         "f5aeb7cd-6539-42fc-a630-d958144e3b02": {
             "component": "a13b12bb-16bd-4fd6-93d8-a1623955c5f7",
-            "fixed": false,
+            "fixed": true,
             "flip": false,
             "omit_silkscreen": false,
             "placement": {
                 "angle": 49152,
                 "mirror": false,
                 "shift": [
-                    39200000,
-                    18000000
+                    46500000,
+                    26000000
                 ]
             },
             "smashed": false,
@@ -414,7 +414,7 @@
                     "arc_reverse": false,
                     "position": [
                         0,
-                        33000000
+                        34000000
                     ],
                     "type": "line"
                 },
@@ -425,8 +425,8 @@
                     ],
                     "arc_reverse": false,
                     "position": [
-                        49000000,
-                        33000000
+                        59000000,
+                        34000000
                     ],
                     "type": "line"
                 },
@@ -437,7 +437,7 @@
                     ],
                     "arc_reverse": false,
                     "position": [
-                        49000000,
+                        59000000,
                         0
                     ],
                     "type": "line"
