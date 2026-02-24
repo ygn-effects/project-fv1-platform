@@ -1,0 +1,84 @@
+{
+    "MPN": [
+        false,
+        "B10B-PH-K-S"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER PH MALE 1X10 PINS 2MM PITCH STRAIGHT"
+    ],
+    "entity": "7abf55fb-0508-4cec-aabd-9b04e892cdb0",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "JST"
+    ],
+    "model": "616a05b0-98c5-426a-8926-cd5120c765d0",
+    "package": "d4b5ca99-854a-4e23-9715-9ce60e188fe8",
+    "pad_map": {
+        "1113c982-f6a7-486b-8ef1-e954202ad596": {
+            "gate": "13981606-2bf8-4098-ac63-1eb693f1f826",
+            "pin": "7bfb4de8-65a9-4146-b5d1-f43b59e3a27a"
+        },
+        "3d36d355-e252-4c68-b845-96f05eaff599": {
+            "gate": "13981606-2bf8-4098-ac63-1eb693f1f826",
+            "pin": "5a2e72af-e69f-47a9-9b28-56c0dc48f606"
+        },
+        "60a6bb2b-ccfd-4d7a-94ad-119b989388bd": {
+            "gate": "13981606-2bf8-4098-ac63-1eb693f1f826",
+            "pin": "5c1f00e4-b1d4-4284-bd13-3200933a0d53"
+        },
+        "6319b5cd-3b47-493a-b3fb-3574976557d5": {
+            "gate": "13981606-2bf8-4098-ac63-1eb693f1f826",
+            "pin": "724ecdb9-7d04-44f0-939a-8e779a748548"
+        },
+        "8386c52b-6161-4745-bbaf-e28041910e02": {
+            "gate": "13981606-2bf8-4098-ac63-1eb693f1f826",
+            "pin": "044bd2ee-104e-4077-af30-64681a5ed484"
+        },
+        "b27c7227-8c08-4422-a0c5-073807f30bcb": {
+            "gate": "13981606-2bf8-4098-ac63-1eb693f1f826",
+            "pin": "29df8f59-78e5-4da7-9dd8-6eb8cde05ed6"
+        },
+        "ba5f90ee-c416-43f2-8d97-74dbbc4b7fab": {
+            "gate": "13981606-2bf8-4098-ac63-1eb693f1f826",
+            "pin": "853736ac-ca3a-4f1b-b28f-5304e86c2bc5"
+        },
+        "c527a191-0849-49c4-beac-bde14c8b955a": {
+            "gate": "13981606-2bf8-4098-ac63-1eb693f1f826",
+            "pin": "13f3f0aa-5e48-4f09-94eb-692ba2fd99f7"
+        },
+        "cb8fcaf1-f82c-4e74-86b7-60cf83b04125": {
+            "gate": "13981606-2bf8-4098-ac63-1eb693f1f826",
+            "pin": "20b53414-8838-4b88-af9b-83f8155e3294"
+        },
+        "f79f1b44-9ad4-460f-ac48-875dd6c6cc71": {
+            "gate": "13981606-2bf8-4098-ac63-1eb693f1f826",
+            "pin": "d6969be1-a236-4b1f-a6be-3e73f559cfd4"
+        }
+    },
+    "parametric": {
+        "contact_material": "Tin",
+        "current_rating": "2",
+        "mounting_angle": "Straight",
+        "mounting_style": "Through Hole",
+        "pitch": "2",
+        "positions": "10",
+        "price": "0.221",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "100"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "6d73f47b-3bf7-470e-9c27-6d35b2af9855",
+    "value": [
+        false,
+        ""
+    ]
+}

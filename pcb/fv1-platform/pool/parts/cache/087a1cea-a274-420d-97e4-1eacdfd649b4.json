@@ -1,0 +1,60 @@
+{
+    "MPN": [
+        false,
+        "S4B-PH-K-S"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER PH MALE 1X4 PINS 2MM PITCH ANGLED"
+    ],
+    "entity": "278ef14c-9aa2-41af-8497-f29f96d294e5",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "KNOCKOFF"
+    ],
+    "model": "b5e1d6d1-1258-4ecb-99eb-3008a4c27617",
+    "package": "48077942-14d4-442c-8d41-0f0c019ffff9",
+    "pad_map": {
+        "57587fa3-0180-4ae3-ba95-6e8bf2d91b0a": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "b683c934-469e-44df-9b3f-faa281710d00"
+        },
+        "8aff4737-2def-4b32-bd8e-2ca96a4754d1": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "b787f728-bdd2-4890-a3c1-e9cbba66bb3d"
+        },
+        "9baf41e1-f73a-461e-8ca9-b4adcc3e1c39": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "82a7e37c-9b1d-4930-b8da-fa8035e6a757"
+        },
+        "f4d3b963-0605-47d8-a1cd-b0fa27157ab0": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "c65dc90f-fb6a-4093-bc7c-586fbf00d8b5"
+        }
+    },
+    "parametric": {
+        "contact_material": "Tin",
+        "current_rating": "1",
+        "mounting_angle": "Right Angle",
+        "mounting_style": "Through Hole",
+        "pitch": "2",
+        "positions": "4",
+        "price": "0.11",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "100"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "087a1cea-a274-420d-97e4-1eacdfd649b4",
+    "value": [
+        false,
+        ""
+    ]
+}
