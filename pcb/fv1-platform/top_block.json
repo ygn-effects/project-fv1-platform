@@ -156,8 +156,14 @@
                 "5b705be2-9f09-450b-9374-cac9000d8722/64586298-ba6e-48de-8ed1-0014b2c05c96": {
                     "net": "a24c8e0f-ccc9-4006-bab6-c5019699f064"
                 },
+                "5b705be2-9f09-450b-9374-cac9000d8722/77e3b871-c004-41ac-bd5d-1403afcf4674": {
+                    "net": "df4b509d-2e09-40d9-8b9e-0829801a4246"
+                },
                 "5b705be2-9f09-450b-9374-cac9000d8722/7806c8a0-c26c-428a-93cb-c4803bce3df4": {
                     "net": "5250e92b-1451-4fde-b6d4-cb9959f3c147"
+                },
+                "5b705be2-9f09-450b-9374-cac9000d8722/7c7199a1-db1c-4935-997b-09559395e0c7": {
+                    "net": "092a9a87-a7e6-401c-af97-a9d381363877"
                 },
                 "5b705be2-9f09-450b-9374-cac9000d8722/82358216-2124-486a-a0b3-d6862e9940e7": {
                     "net": "dbb2db6a-7419-4bd8-9f99-70eacab8517f"
@@ -195,6 +201,9 @@
                 "5b705be2-9f09-450b-9374-cac9000d8722/d904223b-acb8-4a20-a586-7abf913c9e92": {
                     "net": "a2d81044-ed48-445d-9181-fa050ed911d7"
                 },
+                "5b705be2-9f09-450b-9374-cac9000d8722/df0e3718-8149-495c-bd8c-de7ebfac881f": {
+                    "net": "27879178-a7ff-4340-bb78-f283102013bb"
+                },
                 "5b705be2-9f09-450b-9374-cac9000d8722/edcde066-3e8e-49b3-b2b1-bc776d570e28": {
                     "net": "d90948e4-c214-4f64-abcb-bf39ad899d93"
                 },
@@ -203,6 +212,9 @@
                 },
                 "5b705be2-9f09-450b-9374-cac9000d8722/f0db5836-4056-4e7e-ac6d-6b37665c2859": {
                     "net": "bc76142b-8ec0-49ac-b39b-4ae654bbbb63"
+                },
+                "5b705be2-9f09-450b-9374-cac9000d8722/febf355d-cec0-4117-8ade-216676269a6c": {
+                    "net": "315c089f-b478-49fd-8744-758e59165fb4"
                 }
             },
             "entity": "ffd27c73-48e8-4cf2-ae02-b5b0755f1c27",
@@ -1739,7 +1751,23 @@
         },
         "bbdaf5cd-d299-425b-8775-2d7244a56bbb": {
             "alt_pins": {},
-            "connections": {},
+            "connections": {
+                "8046b835-531d-474b-b930-4cb749a5df7e/013c9306-3b86-499c-98dd-458b52ad73b3": {
+                    "net": "a24c8e0f-ccc9-4006-bab6-c5019699f064"
+                },
+                "8046b835-531d-474b-b930-4cb749a5df7e/0e9faa10-b8a3-407f-987a-153cfe31f87b": {
+                    "net": "5250e92b-1451-4fde-b6d4-cb9959f3c147"
+                },
+                "8046b835-531d-474b-b930-4cb749a5df7e/b0b785dd-2675-450c-b81a-c5e8361a2864": {
+                    "net": "78978f71-ce2f-46ff-bf22-14f64a247abb"
+                },
+                "8046b835-531d-474b-b930-4cb749a5df7e/e6ac0a44-63e0-4f23-8f57-4acaf5174dda": {
+                    "net": "6fb8ec81-143b-4c0b-9f7e-f25021447a5a"
+                },
+                "8046b835-531d-474b-b930-4cb749a5df7e/ecc64fbf-8c2f-4221-afd3-050c7de56f7a": {
+                    "net": "9d7eac16-2379-472a-b77a-0cd9e2c4e934"
+                }
+            },
             "entity": "d5a916c3-77dc-46e9-bdcf-7619785722c2",
             "group": "00000000-0000-0000-0000-000000000000",
             "part": "55bbf755-0af7-4e6e-96f4-8b10cd468607",
@@ -2086,7 +2114,7 @@
             "is_port": false,
             "is_power": false,
             "name": "BYP_LED",
-            "net_class": "a48123af-5897-4ccf-b2a6-126b8069075e",
+            "net_class": "8876c9d4-a55d-49ea-9272-2f5228ec55f5",
             "port_direction": "bidirectional",
             "power_symbol_name_visible": true,
             "power_symbol_style": "gnd"
@@ -2149,7 +2177,7 @@
             "is_port": false,
             "is_power": false,
             "name": "BYP_FSW",
-            "net_class": "a48123af-5897-4ccf-b2a6-126b8069075e",
+            "net_class": "762d94af-ebf9-487f-8459-589b72cb6c3e",
             "port_direction": "bidirectional",
             "power_symbol_name_visible": true,
             "power_symbol_style": "gnd"
@@ -2185,7 +2213,7 @@
             "is_port": false,
             "is_power": false,
             "name": "TAP_FSW",
-            "net_class": "a48123af-5897-4ccf-b2a6-126b8069075e",
+            "net_class": "762d94af-ebf9-487f-8459-589b72cb6c3e",
             "port_direction": "bidirectional",
             "power_symbol_name_visible": true,
             "power_symbol_style": "gnd"
@@ -2725,7 +2753,7 @@
             "is_port": false,
             "is_power": false,
             "name": "TAP_LED",
-            "net_class": "a48123af-5897-4ccf-b2a6-126b8069075e",
+            "net_class": "8876c9d4-a55d-49ea-9272-2f5228ec55f5",
             "port_direction": "bidirectional",
             "power_symbol_name_visible": true,
             "power_symbol_style": "gnd"
