@@ -1,0 +1,151 @@
+{
+    "arcs": {},
+    "can_expand": false,
+    "junctions": {
+        "1446b2a5-164f-4381-92bd-dc402344127d": {
+            "position": [
+                -5000000,
+                5000000
+            ]
+        },
+        "1e34fdc4-7048-491b-9edc-de435c1455b2": {
+            "position": [
+                2500000,
+                -5000000
+            ]
+        },
+        "2d8733a9-bde0-4bd0-ad1e-f567928e3645": {
+            "position": [
+                2500000,
+                5000000
+            ]
+        },
+        "c4327161-3676-4709-8538-2598abfe7ff0": {
+            "position": [
+                -5000000,
+                -5000000
+            ]
+        }
+    },
+    "lines": {
+        "01fe3835-4ba5-49d5-b8e4-98dd016e42fb": {
+            "from": "c4327161-3676-4709-8538-2598abfe7ff0",
+            "layer": 0,
+            "to": "1446b2a5-164f-4381-92bd-dc402344127d",
+            "width": 0
+        },
+        "8fa62e3b-88ea-4b8f-84d3-d088cc21e3fe": {
+            "from": "1446b2a5-164f-4381-92bd-dc402344127d",
+            "layer": 0,
+            "to": "2d8733a9-bde0-4bd0-ad1e-f567928e3645",
+            "width": 0
+        },
+        "def2a079-67c0-4d55-a14f-fd396764031e": {
+            "from": "1e34fdc4-7048-491b-9edc-de435c1455b2",
+            "layer": 0,
+            "to": "c4327161-3676-4709-8538-2598abfe7ff0",
+            "width": 0
+        },
+        "ea7915c2-d726-4990-a0d6-70d64f782e8e": {
+            "from": "2d8733a9-bde0-4bd0-ad1e-f567928e3645",
+            "layer": 0,
+            "to": "1e34fdc4-7048-491b-9edc-de435c1455b2",
+            "width": 0
+        }
+    },
+    "name": "I²C address",
+    "pins": {
+        "1a3ce679-91de-4979-a8ba-75145b3d7c26": {
+            "decoration": {
+                "clock": false,
+                "dot": false,
+                "driver": "default",
+                "schmitt": false
+            },
+            "length": 2500000,
+            "name_orientation": "in_line",
+            "name_visible": true,
+            "orientation": "right",
+            "pad_visible": false,
+            "position": [
+                5000000,
+                2500000
+            ]
+        },
+        "82911baa-98fc-4b8f-9866-ec791e2c96b9": {
+            "decoration": {
+                "clock": false,
+                "dot": false,
+                "driver": "default",
+                "schmitt": false
+            },
+            "length": 2500000,
+            "name_orientation": "in_line",
+            "name_visible": true,
+            "orientation": "right",
+            "pad_visible": false,
+            "position": [
+                5000000,
+                0
+            ]
+        },
+        "dd0824bb-d47b-4173-8229-3f8e4c39dc6f": {
+            "decoration": {
+                "clock": false,
+                "dot": false,
+                "driver": "default",
+                "schmitt": false
+            },
+            "length": 2500000,
+            "name_orientation": "in_line",
+            "name_visible": true,
+            "orientation": "right",
+            "pad_visible": false,
+            "position": [
+                5000000,
+                -2500000
+            ]
+        }
+    },
+    "polygons": {},
+    "text_placements": {},
+    "texts": {
+        "02b72450-ae68-45b4-b819-bca4217db894": {
+            "font": "simplex",
+            "from_smash": false,
+            "layer": 0,
+            "origin": "center",
+            "placement": {
+                "angle": 0,
+                "mirror": false,
+                "shift": [
+                    -5000000,
+                    6250000
+                ]
+            },
+            "size": 1500000,
+            "text": "$REFDES",
+            "width": 0
+        },
+        "34c51c1a-62de-42bf-a80e-cac6faf7999c": {
+            "font": "simplex",
+            "from_smash": false,
+            "layer": 0,
+            "origin": "center",
+            "placement": {
+                "angle": 0,
+                "mirror": false,
+                "shift": [
+                    -5000000,
+                    -6250000
+                ]
+            },
+            "size": 1500000,
+            "text": "$VALUE",
+            "width": 0
+        }
+    },
+    "type": "symbol",
+    "unit": "9e6f0f9b-3d1b-4cb9-bc33-3b051e2bf4e0",
+    "uuid": "880f2a84-11bc-4169-83d0-f57394aeddee"
+}

@@ -1,0 +1,38 @@
+{
+    "gates": {
+        "2a8818ed-2e47-48f8-99fb-c79afabfeda3": {
+            "name": "Expander",
+            "suffix": "1",
+            "swap_group": 0,
+            "unit": "608b5822-090e-4683-9724-01586baff8b3"
+        },
+        "4090364a-f9e7-4d8f-84ba-125850d11902": {
+            "name": "Address",
+            "suffix": "3",
+            "swap_group": 0,
+            "unit": "9e6f0f9b-3d1b-4cb9-bc33-3b051e2bf4e0"
+        },
+        "9b630977-b467-4d0b-8df7-1bd3eb1a7a5f": {
+            "name": "Bus",
+            "suffix": "2",
+            "swap_group": 0,
+            "unit": "718d58c4-c86f-4601-b45d-da363cd7ad40"
+        },
+        "b9e879d8-2ac9-44c8-99da-8ab6e6602756": {
+            "name": "Power",
+            "suffix": "P",
+            "swap_group": 0,
+            "unit": "d74b6471-1ef3-4dc0-b9ad-37ec94994e92"
+        }
+    },
+    "manufacturer": "Texas Instrument",
+    "name": "PCF8574A",
+    "prefix": "U",
+    "tags": [
+        "expander",
+        "gpio",
+        "interrupt"
+    ],
+    "type": "entity",
+    "uuid": "6b4a92ae-8ed9-40e2-909e-3dd4f06635ba"
+}

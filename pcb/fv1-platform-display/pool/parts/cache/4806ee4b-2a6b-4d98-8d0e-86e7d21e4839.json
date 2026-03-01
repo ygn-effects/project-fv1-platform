@@ -1,0 +1,107 @@
+{
+    "MPN": [
+        false,
+        "PCF8574ADWR"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "I/O EXPANDER 8BIT"
+    ],
+    "entity": "6b4a92ae-8ed9-40e2-909e-3dd4f06635ba",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Texas Instrument"
+    ],
+    "model": "874bee1f-dd21-4a16-b0f9-7402251d36b0",
+    "package": "e556d27d-abd7-4e70-a39e-a49f2944a857",
+    "pad_map": {
+        "051cb5bf-f26d-4541-a111-bd75f73f6ed6": {
+            "gate": "2a8818ed-2e47-48f8-99fb-c79afabfeda3",
+            "pin": "d823c159-4f4c-4e81-9087-0addd7934fef"
+        },
+        "20b89831-d9f2-4c38-a310-ce3d1ff05bcb": {
+            "gate": "2a8818ed-2e47-48f8-99fb-c79afabfeda3",
+            "pin": "ef1db964-6618-47e4-a649-0ca6310eec67"
+        },
+        "22acbda1-c8ae-4403-a0a1-f59665e7d6d6": {
+            "gate": "2a8818ed-2e47-48f8-99fb-c79afabfeda3",
+            "pin": "edad9cbe-ee6d-4e5f-8c92-37885eb94b6f"
+        },
+        "2587503b-57c2-4463-848d-a49a180d9a1d": {
+            "gate": "9b630977-b467-4d0b-8df7-1bd3eb1a7a5f",
+            "pin": "e354a8d0-f681-407b-ab31-f2e88b01a5b4"
+        },
+        "30ad7763-5724-46f3-9506-5f7cc0af1800": {
+            "gate": "2a8818ed-2e47-48f8-99fb-c79afabfeda3",
+            "pin": "4b94b1a9-ca1a-4c87-a94e-b6d6bead668c"
+        },
+        "31675b40-bc35-4478-b4aa-09772736b61a": {
+            "gate": "9b630977-b467-4d0b-8df7-1bd3eb1a7a5f",
+            "pin": "ae4dc965-8899-4980-9db2-fa7606821e8f"
+        },
+        "795217ae-6792-4181-bb8d-676dbc2cc83d": {
+            "gate": "b9e879d8-2ac9-44c8-99da-8ab6e6602756",
+            "pin": "75d1face-4dfe-4e9e-ae1c-2a084c3b81df"
+        },
+        "79abfcf6-0417-4b05-a255-8ac69a692c60": {
+            "gate": "2a8818ed-2e47-48f8-99fb-c79afabfeda3",
+            "pin": "f0ddc4de-88a4-4b19-baa3-8e7ec4a4e80c"
+        },
+        "7cf88371-211f-46c1-a257-7140ad51c467": {
+            "gate": "2a8818ed-2e47-48f8-99fb-c79afabfeda3",
+            "pin": "59376bce-fec7-487b-8da1-0826cc7fd18b"
+        },
+        "895fd5d9-84da-4744-8abc-6c70f72076f6": {
+            "gate": "4090364a-f9e7-4d8f-84ba-125850d11902",
+            "pin": "82911baa-98fc-4b8f-9866-ec791e2c96b9"
+        },
+        "8cc15a18-2b7b-406a-b981-fb22ee955d22": {
+            "gate": "2a8818ed-2e47-48f8-99fb-c79afabfeda3",
+            "pin": "299522d4-760b-4758-867c-29280dae0497"
+        },
+        "8e6184ed-6271-4a81-afee-e2deb92b031b": {
+            "gate": "2a8818ed-2e47-48f8-99fb-c79afabfeda3",
+            "pin": "2770063c-e036-4bd1-b081-613a8a84317a"
+        },
+        "a9ba47ff-602d-4215-b013-7af4deabdf8b": {
+            "gate": "4090364a-f9e7-4d8f-84ba-125850d11902",
+            "pin": "1a3ce679-91de-4979-a8ba-75145b3d7c26"
+        },
+        "ada62b0b-5772-42e6-a3f4-bf9f7bea24a6": {
+            "gate": "4090364a-f9e7-4d8f-84ba-125850d11902",
+            "pin": "dd0824bb-d47b-4173-8229-3f8e4c39dc6f"
+        },
+        "b3a91186-7606-4ab3-860c-f91f7b853547": {
+            "gate": "2a8818ed-2e47-48f8-99fb-c79afabfeda3",
+            "pin": "59ad3128-7bf8-4668-92f4-95622d112ab7"
+        },
+        "ca3db555-7846-43b2-8c94-8f0d1aecb345": {
+            "gate": "b9e879d8-2ac9-44c8-99da-8ab6e6602756",
+            "pin": "b0e11638-94ee-4ff0-98ac-b2a4bee8e2ad"
+        }
+    },
+    "parametric": {
+        "addr_bits": "8",
+        "channels": "8",
+        "interface": "I2C",
+        "interrupt": "Yes",
+        "output_type": "Push-Pull",
+        "package": "SOIC-16",
+        "price": "1.01",
+        "table": "io_expanders",
+        "vcc_max": "6"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "4806ee4b-2a6b-4d98-8d0e-86e7d21e4839",
+    "value": [
+        false,
+        ""
+    ]
+}

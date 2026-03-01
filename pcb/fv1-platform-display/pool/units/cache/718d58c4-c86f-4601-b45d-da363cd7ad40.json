@@ -1,0 +1,20 @@
+{
+    "manufacturer": "",
+    "name": "I²C bus",
+    "pins": {
+        "ae4dc965-8899-4980-9db2-fa7606821e8f": {
+            "direction": "bidirectional",
+            "names": [],
+            "primary_name": "SDA",
+            "swap_group": 0
+        },
+        "e354a8d0-f681-407b-ab31-f2e88b01a5b4": {
+            "direction": "bidirectional",
+            "names": [],
+            "primary_name": "SCL",
+            "swap_group": 0
+        }
+    },
+    "type": "unit",
+    "uuid": "718d58c4-c86f-4601-b45d-da363cd7ad40"
+}

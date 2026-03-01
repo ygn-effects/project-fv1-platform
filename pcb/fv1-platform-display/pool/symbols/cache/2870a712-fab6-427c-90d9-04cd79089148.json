@@ -228,9 +228,9 @@
             },
             "length": 2500000,
             "name_orientation": "in_line",
-            "name_visible": true,
+            "name_visible": false,
             "orientation": "right",
-            "pad_visible": true,
+            "pad_visible": false,
             "position": [
                 5000000,
                 0
