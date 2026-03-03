@@ -1198,7 +1198,7 @@
             "net_labels": {
                 "0f4e8daf-ac9e-4c6b-85b2-1d2404b0a49f": {
                     "junction": "3e06ba47-2fa7-4543-a33d-db5736931ff2",
-                    "last_net": "7f8519c5-cc34-40fd-87b8-734b580eecb7",
+                    "last_net": "ec858618-2ed0-4eb3-8570-a4fef1ed1652",
                     "offsheet_refs": true,
                     "orientation": "right",
                     "show_port": false,
@@ -1206,7 +1206,7 @@
                 },
                 "2279f9d2-30d2-4e07-91a5-ce209c20b94d": {
                     "junction": "1d2ac7b5-dd89-461b-bb63-d12937405915",
-                    "last_net": "ec858618-2ed0-4eb3-8570-a4fef1ed1652",
+                    "last_net": "7f8519c5-cc34-40fd-87b8-734b580eecb7",
                     "offsheet_refs": true,
                     "orientation": "right",
                     "show_port": false,
