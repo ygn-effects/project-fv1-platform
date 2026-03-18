@@ -1238,7 +1238,7 @@
                 },
                 "81c2dd3c-7537-428e-b5b4-fe4f804df32e": {
                     "junction": "80e58b2e-8d46-4650-9523-a6d068cc3ca4",
-                    "last_net": "dd124315-f864-41e2-b012-1b6492a66ec7",
+                    "last_net": "6b26806c-61b0-4d5f-bef7-e1a20166f618",
                     "offsheet_refs": true,
                     "orientation": "left",
                     "show_port": false,
@@ -1254,7 +1254,7 @@
                 },
                 "c09cef8d-10aa-46e9-b310-5e1981c03998": {
                     "junction": "ca66db69-7004-4f14-9cc8-ac32c5206e54",
-                    "last_net": "6b26806c-61b0-4d5f-bef7-e1a20166f618",
+                    "last_net": "dd124315-f864-41e2-b012-1b6492a66ec7",
                     "offsheet_refs": true,
                     "orientation": "left",
                     "show_port": false,
