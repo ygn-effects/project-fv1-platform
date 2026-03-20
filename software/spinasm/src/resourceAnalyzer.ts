@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { isInstruction } from "./spinasmLanguage";
 
 /**
  * @interface ResourceUsage
@@ -66,7 +67,7 @@ export class ResourceAnalyzer {
       this.parseMemoryAllocation(codeOnly, memoryAllocations);
 
       // Track instructions
-      if (this.isInstruction(codeOnly)) {
+      if (isInstruction(codeOnly)) {
         instructionCount++;
         // Also track direct register usage in instructions
         this.parseDirectRegisterUsage(codeOnly, registers);
@@ -165,25 +166,6 @@ export class ResourceAnalyzer {
         registers.add(registerNum);
       }
     }
-  }
-
-  /**
-   * @brief Check if a line is an instruction (not equ, mem, or label)
-   */
-  private static isInstruction(line: string): boolean {
-    // Skip empty lines
-    if (!line.trim()) return false;
-
-    // Skip directives
-    if (/^\s*(equ|mem)\b/i.test(line)) return false;
-
-    // Skip labels
-    if (/^\s*[a-zA-Z_][a-zA-Z0-9_]*:\s*$/.test(line)) return false;
-
-    // Check if it starts with a known instruction
-    const instructionPattern = /^\s*\b(wra|rda|rdax|wrax|sof|and|or|xor|skp|ldax|log|exp|mulx|rdfx|wrlx|wrhx|wrap|cho|wlds|wldr|jam|not|clr|absa)\b/i;
-
-    return instructionPattern.test(line);
   }
 
   /**

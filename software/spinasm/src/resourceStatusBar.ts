@@ -112,34 +112,45 @@ function updateResourceStatusBar(document: vscode.TextDocument): void {
   }
 }
 
+// Track which warnings have already been shown to avoid spam
+const shownWarnings = new Set<string>();
+
 /**
- * @brief Show warning messages if resources are running low
+ * @brief Show warning messages if resources are running low (once per resource)
  */
 function showWarningsIfNeeded(usage: ResourceUsage): void {
-  const regSeverity = ResourceAnalyzer.getSeverity(usage.registers.percentage);
   const instSeverity = ResourceAnalyzer.getSeverity(usage.instructions.percentage);
   const memSeverity = ResourceAnalyzer.getSeverity(usage.memory.percentage);
+  const regSeverity = ResourceAnalyzer.getSeverity(usage.registers.percentage);
 
-  // Only show critical warnings (not every warning, that would be annoying)
-  if (instSeverity === 'critical') {
+  if (instSeverity === 'critical' && !shownWarnings.has('instructions')) {
+    shownWarnings.add('instructions');
     const remaining = usage.instructions.limit - usage.instructions.count;
     vscode.window.showWarningMessage(
-      `⚠️ SpinASM: Approaching instruction limit! Only ${remaining} instructions remaining (${usage.instructions.count}/128)`
+      `SpinASM: Approaching instruction limit! Only ${remaining} instructions remaining (${usage.instructions.count}/128)`
     );
+  } else if (instSeverity !== 'critical') {
+    shownWarnings.delete('instructions');
   }
 
-  if (memSeverity === 'critical') {
+  if (memSeverity === 'critical' && !shownWarnings.has('memory')) {
+    shownWarnings.add('memory');
     const remaining = usage.memory.total - usage.memory.used;
     vscode.window.showWarningMessage(
-      `⚠️ SpinASM: Approaching memory limit! Only ${remaining} samples remaining (${usage.memory.used}/32768)`
+      `SpinASM: Approaching memory limit! Only ${remaining} samples remaining (${usage.memory.used}/32768)`
     );
+  } else if (memSeverity !== 'critical') {
+    shownWarnings.delete('memory');
   }
 
-  if (regSeverity === 'critical') {
+  if (regSeverity === 'critical' && !shownWarnings.has('registers')) {
+    shownWarnings.add('registers');
     const remaining = usage.registers.total - usage.registers.used.size;
     vscode.window.showWarningMessage(
-      `⚠️ SpinASM: Approaching register limit! Only ${remaining} registers remaining (${usage.registers.used.size}/32)`
+      `SpinASM: Approaching register limit! Only ${remaining} registers remaining (${usage.registers.used.size}/32)`
     );
+  } else if (regSeverity !== 'critical') {
+    shownWarnings.delete('registers');
   }
 }
 

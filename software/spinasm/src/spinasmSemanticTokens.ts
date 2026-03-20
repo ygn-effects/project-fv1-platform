@@ -119,7 +119,7 @@ export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTok
    * @brief Parse the document to extract all symbol definitions
    * Keys are stored lowercase for case-insensitive matching.
    */
-  private parseSymbols(document: vscode.TextDocument): Map<string, SpinASMSymbol> {
+  parseSymbols(document: vscode.TextDocument): Map<string, SpinASMSymbol> {
     const symbols = new Map<string, SpinASMSymbol>();
     const text = document.getText();
 
@@ -193,6 +193,8 @@ export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTok
  */
 export class SpinASMHoverProvider implements vscode.HoverProvider {
 
+  private symbolParser = new SpinASMSemanticTokensProvider();
+
   provideHover(
     document: vscode.TextDocument,
     position: vscode.Position,
@@ -205,7 +207,7 @@ export class SpinASMHoverProvider implements vscode.HoverProvider {
     }
 
     const word = document.getText(wordRange);
-    const symbols = this.parseSymbols(document);
+    const symbols = this.symbolParser.parseSymbols(document);
     const symbol = symbols.get(word.toLowerCase());
 
     if (!symbol) {
@@ -234,52 +236,4 @@ export class SpinASMHoverProvider implements vscode.HoverProvider {
     return new vscode.Hover(markdown, wordRange);
   }
 
-  /**
-   * @brief Parse symbols (same logic as semantic tokens provider, lowercase keys)
-   */
-  private parseSymbols(document: vscode.TextDocument): Map<string, SpinASMSymbol> {
-    const symbols = new Map<string, SpinASMSymbol>();
-    const text = document.getText();
-
-    const equRegex = /^\s*equ\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+?)(?:;.*)?$/gmi;
-    let match;
-
-    while ((match = equRegex.exec(text)) !== null) {
-      const symbolName = match[1];
-      const symbolValue = match[2].trim();
-      const isRegister = /^(?:reg\d+|adcl|adcr|dacl|dacr|pot[0-2])$/i.test(symbolValue);
-
-      symbols.set(symbolName.toLowerCase(), {
-        name: symbolName,
-        type: isRegister ? 'register' : 'constant',
-        value: symbolValue,
-        line: 0
-      });
-    }
-
-    const memRegex = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+\d+/gmi;
-
-    while ((match = memRegex.exec(text)) !== null) {
-      symbols.set(match[1].toLowerCase(), {
-        name: match[1],
-        type: 'memory',
-        line: 0
-      });
-    }
-
-    const labelRegex = /^\s*([a-zA-Z_][a-zA-Z0-9_]*):/gm;
-
-    while ((match = labelRegex.exec(text)) !== null) {
-      const key = match[1].toLowerCase();
-      if (!symbols.has(key)) {
-        symbols.set(key, {
-          name: match[1],
-          type: 'label',
-          line: 0
-        });
-      }
-    }
-
-    return symbols;
-  }
 }

@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { ResourceAnalyzer } from "./resourceAnalyzer";
+import { BUILT_IN_SYMBOLS, isInstruction, isBuiltInSymbol } from "./spinasmLanguage";
 
 /**
  * @interface SymbolDefinition
@@ -95,7 +96,7 @@ export class SpinASMValidator {
       }
 
       // Validate instructions
-      if (this.isInstruction(codeOnly)) {
+      if (isInstruction(codeOnly)) {
         this.validateInstruction(line, symbols, diagnostics);
       }
     }
@@ -117,23 +118,7 @@ export class SpinASMValidator {
     const symbols = new Map<string, SymbolDefinition>();
     const text = document.getText();
 
-    // Reserved symbols (built-in registers, LFO names, etc.)
-    const reserved = new Set([
-      'ADCL', 'ADCR', 'DACL', 'DACR',
-      'POT0', 'POT1', 'POT2',
-      'SIN0', 'SIN1', 'RMP0', 'RMP1',
-      'SIN0_RATE', 'SIN0_RANGE', 'SIN1_RATE', 'SIN1_RANGE',
-      'RMP0_RATE', 'RMP0_RANGE', 'RMP1_RATE', 'RMP1_RANGE',
-      'ADDR_PTR',
-      'SIN', 'COS', 'REG', 'COMPC', 'COMPA', 'RPTR2', 'NA',
-      'RUN', 'ZRC', 'ZRO', 'GEZ', 'NEG',
-      'RDA', 'SOF', 'RDAL'  // Reserved as per asfv1 compiler
-    ]);
-
-    // Add REG0-REG31 to reserved
-    for (let i = 0; i <= 31; i++) {
-      reserved.add(`REG${i}`);
-    }
+    const reserved = BUILT_IN_SYMBOLS;
 
     // Parse EQU declarations
     const equRegex = /^\s*equ\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+?)(?:;.*)?$/gmi;
@@ -273,14 +258,6 @@ export class SpinASMValidator {
   }
 
   /**
-   * @brief Check if a line contains an instruction
-   */
-  private isInstruction(line: string): boolean {
-    const instructionPattern = /^\s*\b(wra|rda|rdax|wrax|sof|and|or|xor|skp|ldax|log|exp|mulx|rdfx|wrlx|wrhx|wrap|cho|wlds|wldr|jam|not|clr|absa|rmpa|maxx|nop|jmp|raw)\b/i;
-    return instructionPattern.test(line);
-  }
-
-  /**
    * @brief Validate an instruction line
    */
   private validateInstruction(
@@ -308,7 +285,7 @@ export class SpinASMValidator {
       const symbolUpper = symbolName.toUpperCase();
 
       // Skip if it's a built-in register or keyword
-      if (this.isBuiltInSymbol(symbolUpper)) {
+      if (isBuiltInSymbol(symbolUpper)) {
         continue;
       }
 
@@ -332,30 +309,6 @@ export class SpinASMValidator {
 
     // Basic syntax validation
     this.validateInstructionSyntax(line, instruction, operands, diagnostics);
-  }
-
-  /**
-   * @brief Check if a symbol is a built-in (register, LFO, etc.)
-   */
-  private isBuiltInSymbol(symbol: string): boolean {
-    const builtIns = new Set([
-      'ADCL', 'ADCR', 'DACL', 'DACR',
-      'POT0', 'POT1', 'POT2',
-      'SIN0', 'SIN1', 'RMP0', 'RMP1',
-      'SIN0_RATE', 'SIN0_RANGE', 'SIN1_RATE', 'SIN1_RANGE',
-      'RMP0_RATE', 'RMP0_RANGE', 'RMP1_RATE', 'RMP1_RANGE',
-      'ADDR_PTR',
-      'SIN', 'COS', 'REG', 'COMPC', 'COMPA', 'RPTR2', 'NA',
-      'RUN', 'ZRC', 'ZRO', 'GEZ', 'NEG',
-      'RDA', 'SOF', 'RDAL'
-    ]);
-
-    // Check for REGxx pattern
-    if (/^REG\d+$/i.test(symbol)) {
-      return true;
-    }
-
-    return builtIns.has(symbol);
   }
 
   /**
