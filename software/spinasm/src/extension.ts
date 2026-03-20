@@ -18,40 +18,53 @@ export function activate(context: vscode.ExtensionContext): void {
   validator = new SpinASMValidator();
   context.subscriptions.push(validator);
 
-  // Validate on document open
-  vscode.workspace.onDidOpenTextDocument((doc) => {
-    if (doc.languageId === 'spinasm') {
-      validator.validateDocument(doc);
+  // Shared debounce for all validation triggers
+  let validationTimer: NodeJS.Timeout | null = null;
+  function scheduleValidation(doc: vscode.TextDocument): void {
+    if (validationTimer) {
+      clearTimeout(validationTimer);
     }
-  });
+    validationTimer = setTimeout(() => {
+      validator.validateDocument(doc);
+    }, 500);
+  }
+
+  // Validate on document open (debounced)
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument((doc) => {
+      if (doc.languageId === 'spinasm') {
+        scheduleValidation(doc);
+      }
+    })
+  );
 
   // Validate on change (debounced)
-  let validationTimer: NodeJS.Timeout | null = null;
-  vscode.workspace.onDidChangeTextDocument((event) => {
-    if (event.document.languageId === 'spinasm') {
-      if (validationTimer) {
-        clearTimeout(validationTimer);
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      if (event.document.languageId === 'spinasm') {
+        scheduleValidation(event.document);
       }
+    })
+  );
 
-      validationTimer = setTimeout(() => {
-        validator.validateDocument(event.document);
-      }, 500);
-    }
-  });
-
-  // Validate on save
-  vscode.workspace.onDidSaveTextDocument((doc) => {
-    if (doc.languageId === 'spinasm') {
-      validator.validateDocument(doc);
-    }
-  });
+  // Validate on save (immediate)
+  context.subscriptions.push(
+    vscode.workspace.onDidSaveTextDocument((doc) => {
+      if (doc.languageId === 'spinasm') {
+        if (validationTimer) { clearTimeout(validationTimer); }
+        validator.validateDocument(doc);
+      }
+    })
+  );
 
   // Clear on close
-  vscode.workspace.onDidCloseTextDocument((doc) => {
-    if (doc.languageId === 'spinasm') {
-      validator.clearDocument(doc);
-    }
-  });
+  context.subscriptions.push(
+    vscode.workspace.onDidCloseTextDocument((doc) => {
+      if (doc.languageId === 'spinasm') {
+        validator.clearDocument(doc);
+      }
+    })
+  );
 
   // Create status bar item
   initializeBankStatusBar(context);

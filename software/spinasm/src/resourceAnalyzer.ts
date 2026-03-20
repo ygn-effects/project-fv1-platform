@@ -30,10 +30,20 @@ export interface ResourceUsage {
  */
 export class ResourceAnalyzer {
 
+  // Cache keyed by document URI + version to avoid redundant analysis
+  private static cache = new Map<string, { version: number; usage: ResourceUsage }>();
+
   /**
-   * @brief Analyze a SpinASM document for resource usage
+   * @brief Analyze a SpinASM document for resource usage (cached by document version)
    */
   public static analyze(document: vscode.TextDocument): ResourceUsage {
+    const cacheKey = document.uri.toString();
+    const cached = this.cache.get(cacheKey);
+
+    if (cached && cached.version === document.version) {
+      return cached.usage;
+    }
+
     const text = document.getText();
     const lines = text.split('\n');
 
@@ -70,7 +80,7 @@ export class ResourceAnalyzer {
     const totalMemory = Array.from(memoryAllocations.values()).reduce((a, b) => a + b, 0);
     const memoryPercentage = (totalMemory / 32768) * 100;
 
-    return {
+    const usage: ResourceUsage = {
       registers: {
         used: registers,
         aliases: registerAliases,
@@ -89,6 +99,9 @@ export class ResourceAnalyzer {
         percentage: memoryPercentage
       }
     };
+
+    this.cache.set(cacheKey, { version: document.version, usage });
+    return usage;
   }
 
   /**

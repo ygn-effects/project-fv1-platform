@@ -52,17 +52,64 @@ export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTok
       SpinASMSemanticTokensProvider.legend
     );
 
-    // Parse the document to find all symbol definitions
+    // Parse the document to find all symbol definitions (keyed by lowercase name)
     const symbols = this.parseSymbols(document);
 
-    // Highlight all occurrences of these symbols
+    if (symbols.size === 0) {
+      return tokensBuilder.build();
+    }
+
+    // Build a single combined regex for all symbols (case-insensitive)
+    const escapedNames = Array.from(symbols.keys()).map(name => this.escapeRegex(name));
+    const combinedRegex = new RegExp(`\\b(${escapedNames.join('|')})\\b`, 'gi');
+
+    // Scan each line once with the combined regex
     for (let lineIndex = 0; lineIndex < document.lineCount; lineIndex++) {
       if (token.isCancellationRequested) {
         return;
       }
 
-      const line = document.lineAt(lineIndex);
-      this.tokenizeLine(line, lineIndex, symbols, tokensBuilder);
+      const lineText = document.lineAt(lineIndex).text;
+
+      // Strip comments
+      const commentStart = lineText.indexOf(';');
+      const codeText = commentStart !== -1 ? lineText.substring(0, commentStart) : lineText;
+
+      // Definition line detection
+      const isEquLine = /^\s*equ\s+/i.test(lineText);
+      const isMemLine = /^\s*mem\s+/i.test(lineText);
+      const isLabelLine = /^\s*[a-zA-Z_][a-zA-Z0-9_]*:/.test(lineText);
+
+      combinedRegex.lastIndex = 0;
+      let match;
+
+      while ((match = combinedRegex.exec(codeText)) !== null) {
+        const symbol = symbols.get(match[1].toLowerCase());
+        if (!symbol) { continue; }
+
+        // Determine token type and modifiers
+        let tokenType = 0;
+        let tokenModifiers = 0;
+
+        switch (symbol.type) {
+          case 'register':  tokenType = 0; break;
+          case 'memory':    tokenType = 1; break;
+          case 'label':     tokenType = 2; break;
+          case 'constant':  tokenType = 3; tokenModifiers = 1; break;
+        }
+
+        // Declaration modifier
+        if (lineIndex === symbol.line) {
+          if ((isEquLine || isMemLine) && match.index === codeText.search(new RegExp(`\\b${this.escapeRegex(symbol.name)}\\b`, 'i'))) {
+            tokenModifiers |= 1 << 0;
+          }
+          if (isLabelLine && new RegExp(`^\\s*${this.escapeRegex(symbol.name)}:`, 'i').test(lineText)) {
+            tokenModifiers |= 1 << 0;
+          }
+        }
+
+        tokensBuilder.push(lineIndex, match.index, match[1].length, tokenType, tokenModifiers);
+      }
     }
 
     return tokensBuilder.build();
@@ -70,24 +117,22 @@ export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTok
 
   /**
    * @brief Parse the document to extract all symbol definitions
+   * Keys are stored lowercase for case-insensitive matching.
    */
   private parseSymbols(document: vscode.TextDocument): Map<string, SpinASMSymbol> {
     const symbols = new Map<string, SpinASMSymbol>();
     const text = document.getText();
 
     // Parse EQU declarations: equ <name> <value>
-    // Example: equ mono reg0
-    const equRegex = /^\s*equ\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+?)(?:;.*)?$/gm;
+    const equRegex = /^\s*equ\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+?)(?:;.*)?$/gmi;
     let match;
 
     while ((match = equRegex.exec(text)) !== null) {
       const symbolName = match[1];
       const symbolValue = match[2].trim();
-
-      // Determine if this is a register alias or constant
       const isRegister = /^(?:reg\d+|adcl|adcr|dacl|dacr|pot[0-2])$/i.test(symbolValue);
 
-      symbols.set(symbolName, {
+      symbols.set(symbolName.toLowerCase(), {
         name: symbolName,
         type: isRegister ? 'register' : 'constant',
         value: symbolValue,
@@ -96,30 +141,25 @@ export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTok
     }
 
     // Parse MEM declarations: mem <name> <size>
-    // Example: mem chodel 4096
-    const memRegex = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+\d+/gm;
+    const memRegex = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+\d+/gmi;
 
     while ((match = memRegex.exec(text)) !== null) {
-      const symbolName = match[1];
-
-      symbols.set(symbolName, {
-        name: symbolName,
+      const key = match[1].toLowerCase();
+      symbols.set(key, {
+        name: match[1],
         type: 'memory',
         line: this.getLineNumber(text, match.index)
       });
     }
 
     // Parse label definitions: <name>:
-    // Example: LOOP:
     const labelRegex = /^\s*([a-zA-Z_][a-zA-Z0-9_]*):/gm;
 
     while ((match = labelRegex.exec(text)) !== null) {
-      const symbolName = match[1];
-
-      // Skip if already defined (equ/mem takes precedence)
-      if (!symbols.has(symbolName)) {
-        symbols.set(symbolName, {
-          name: symbolName,
+      const key = match[1].toLowerCase();
+      if (!symbols.has(key)) {
+        symbols.set(key, {
+          name: match[1],
           type: 'label',
           line: this.getLineNumber(text, match.index)
         });
@@ -134,78 +174,6 @@ export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTok
    */
   private getLineNumber(text: string, index: number): number {
     return text.substring(0, index).split('\n').length - 1;
-  }
-
-  /**
-   * @brief Tokenize a single line, highlighting user-defined symbols
-   */
-  private tokenizeLine(
-    line: vscode.TextLine,
-    lineIndex: number,
-    symbols: Map<string, SpinASMSymbol>,
-    builder: vscode.SemanticTokensBuilder
-  ): void {
-    const lineText = line.text;
-
-    // Check if this line is a symbol definition
-    const isEquLine = /^\s*equ\s+/i.test(lineText);
-    const isMemLine = /^\s*mem\s+/i.test(lineText);
-    const isLabelLine = /^\s*[a-zA-Z_][a-zA-Z0-9_]*:/.test(lineText);
-
-    // Highlight each symbol occurrence in this line
-    for (const [symbolName, symbol] of symbols) {
-
-      // Create regex to find this symbol (word boundaries)
-      const symbolRegex = new RegExp(`\\b${this.escapeRegex(symbolName)}\\b`, 'g');
-      let match;
-
-      while ((match = symbolRegex.exec(lineText)) !== null) {
-        // Skip if we're in a comment
-        const commentStart = lineText.indexOf(';');
-        if (commentStart !== -1 && match.index >= commentStart) {
-          continue;
-        }
-
-        // Determine token type and modifiers
-        let tokenType = 0;  // Default: variable
-        let tokenModifiers = 0;
-
-        switch (symbol.type) {
-          case 'register':
-            tokenType = 0;  // variable
-            break;
-          case 'memory':
-            tokenType = 1;  // property
-            break;
-          case 'label':
-            tokenType = 2;  // function
-            break;
-          case 'constant':
-            tokenType = 3;  // parameter
-            tokenModifiers = 1;  // readonly
-            break;
-        }
-
-        // If this is the definition line, add 'declaration' modifier
-        if (lineIndex === symbol.line) {
-          if ((isEquLine || isMemLine) && match.index === lineText.indexOf(symbolName)) {
-            tokenModifiers |= 1 << 0;  // Add 'declaration' modifier
-          }
-          if (isLabelLine && lineText.startsWith(symbolName + ':')) {
-            tokenModifiers |= 1 << 0;  // Add 'declaration' modifier
-          }
-        }
-
-        // Add the token
-        builder.push(
-          lineIndex,
-          match.index,
-          symbolName.length,
-          tokenType,
-          tokenModifiers
-        );
-      }
-    }
   }
 
   /**
@@ -238,7 +206,7 @@ export class SpinASMHoverProvider implements vscode.HoverProvider {
 
     const word = document.getText(wordRange);
     const symbols = this.parseSymbols(document);
-    const symbol = symbols.get(word);
+    const symbol = symbols.get(word.toLowerCase());
 
     if (!symbol) {
       return;
@@ -267,14 +235,13 @@ export class SpinASMHoverProvider implements vscode.HoverProvider {
   }
 
   /**
-   * @brief Parse symbols (same logic as semantic tokens provider)
+   * @brief Parse symbols (same logic as semantic tokens provider, lowercase keys)
    */
   private parseSymbols(document: vscode.TextDocument): Map<string, SpinASMSymbol> {
     const symbols = new Map<string, SpinASMSymbol>();
     const text = document.getText();
 
-    // Parse EQU declarations
-    const equRegex = /^\s*equ\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+?)(?:;.*)?$/gm;
+    const equRegex = /^\s*equ\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+?)(?:;.*)?$/gmi;
     let match;
 
     while ((match = equRegex.exec(text)) !== null) {
@@ -282,7 +249,7 @@ export class SpinASMHoverProvider implements vscode.HoverProvider {
       const symbolValue = match[2].trim();
       const isRegister = /^(?:reg\d+|adcl|adcr|dacl|dacr|pot[0-2])$/i.test(symbolValue);
 
-      symbols.set(symbolName, {
+      symbols.set(symbolName.toLowerCase(), {
         name: symbolName,
         type: isRegister ? 'register' : 'constant',
         value: symbolValue,
@@ -290,23 +257,22 @@ export class SpinASMHoverProvider implements vscode.HoverProvider {
       });
     }
 
-    // Parse MEM declarations
-    const memRegex = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+\d+/gm;
+    const memRegex = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+\d+/gmi;
 
     while ((match = memRegex.exec(text)) !== null) {
-      symbols.set(match[1], {
+      symbols.set(match[1].toLowerCase(), {
         name: match[1],
         type: 'memory',
         line: 0
       });
     }
 
-    // Parse labels
     const labelRegex = /^\s*([a-zA-Z_][a-zA-Z0-9_]*):/gm;
 
     while ((match = labelRegex.exec(text)) !== null) {
-      if (!symbols.has(match[1])) {
-        symbols.set(match[1], {
+      const key = match[1].toLowerCase();
+      if (!symbols.has(key)) {
+        symbols.set(key, {
           name: match[1],
           type: 'label',
           line: 0
