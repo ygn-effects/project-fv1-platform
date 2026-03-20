@@ -72,16 +72,6 @@ export function activate(context: vscode.ExtensionContext): void {
     await updateBankStatusBar();
   });
 
-  // Update status bar when active editor changes
-  context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(() => updateBankStatusBar())
-  );
-
-  // Update status bar when document changes (for initial load)
-  context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument(() => updateBankStatusBar())
-  );
-
   // Register SpinASM semantic token provider
   context.subscriptions.push(
     vscode.languages.registerDocumentSemanticTokensProvider(

@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import * as fs from "fs";
+import * as fsPromises from "fs/promises";
 import * as path from "path";
 import Project from "./project";
 import Config from "./config";
@@ -88,7 +88,7 @@ async function getBankStatus(
 
   const hexFile = project.getOutput(bankIndex);
 
-  if (!hexFile || !fs.existsSync(hexFile)) {
+  if (!hexFile) {
     return {
       status: BankStatus.NotCompiled,
       spnFile
@@ -97,8 +97,12 @@ async function getBankStatus(
 
   // Both files exist - compare modification times
   try {
-    const spnStats = fs.statSync(spnFile);
-    const hexStats = fs.statSync(hexFile);
+    await fsPromises.access(hexFile);
+
+    const [spnStats, hexStats] = await Promise.all([
+      fsPromises.stat(spnFile),
+      fsPromises.stat(hexFile)
+    ]);
 
     const spnTime = spnStats.mtime;
     const hexTime = hexStats.mtime;
@@ -150,10 +154,29 @@ function getStatusSymbol(status: BankStatus): string {
   }
 }
 
+// Debounce timer for bank status bar updates
+let bankUpdateTimer: NodeJS.Timeout | null = null;
+
 /**
- * @brief Updates the status bar with current bank compilation status
+ * @brief Updates the status bar with current bank compilation status (debounced)
  */
 export async function updateBankStatusBar(): Promise<void> {
+  if (bankUpdateTimer) {
+    clearTimeout(bankUpdateTimer);
+  }
+
+  return new Promise((resolve) => {
+    bankUpdateTimer = setTimeout(async () => {
+      await updateBankStatusBarImmediate();
+      resolve();
+    }, 300);
+  });
+}
+
+/**
+ * @brief Actual status bar update logic
+ */
+async function updateBankStatusBarImmediate(): Promise<void> {
   // Check if status bar is enabled
   if (!Config.getStatusBarEnabled()) {
     bankStatusBar.hide();
