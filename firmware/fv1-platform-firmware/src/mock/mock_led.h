@@ -40,7 +40,7 @@ class MackAdjustbleLed : public Adjustable {
 
     void off() override {
       if (!initialized) return;
-      m_pinValue = 255;
+      m_pinValue = 0;
     }
 
     void setValue(uint8_t t_value) override {
