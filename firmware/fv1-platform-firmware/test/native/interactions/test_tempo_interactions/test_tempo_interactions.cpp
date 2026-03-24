@@ -203,10 +203,11 @@ void test_logic_program_value_changed_not_delay_turns_off_led() {
   // Boot
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send logic event
-  fix.publishAndDispatchAllEvents(makeUIProgramValueChanged(6));
+  fix.publishAndDispatchAllEvents(makeUIProgramValueChanged(7));
   fix.updateAllServices();
 
   // Test logical state
+  TEST_ASSERT_EQUAL(0, fix.mockTapLed.m_value);
   TEST_ASSERT_EQUAL(0, fix.mockTapLed.m_value);
 }
 

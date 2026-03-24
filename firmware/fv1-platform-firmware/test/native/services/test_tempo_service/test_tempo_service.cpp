@@ -198,7 +198,7 @@ void test_program_change_to_not_delay_program_disables_led() {
   tempoService.handleEvent(makeProgramChangedEvent());
 
   // LED should be disabled
-  TEST_ASSERT_EQUAL(255, led.m_pinValue);
+  TEST_ASSERT_EQUAL(0, led.m_pinValue);
 
   // Event bus should be empty
   assertEventBusEmpty();
