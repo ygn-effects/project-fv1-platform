@@ -7,9 +7,9 @@ ArduinoClock clock;
 DigitalGpioDriver eepromCsPin(4, GpioConfig::kOutput);
 M95Driver eeprom(eepromCsPin);
 
-DigitalGpioDriver bypassRelayPin(23, GpioConfig::kOutput);
-DigitalGpioDriver bypassOptoCouplerPin(22, GpioConfig::kOutput);
-DigitalGpioDriver bypassSwitchLedPin(19, GpioConfig::kOutput);
+DigitalGpioDriver bypassRelayPin(8, GpioConfig::kOutput);
+DigitalGpioDriver bypassOptoCouplerPin(11, GpioConfig::kOutput);
+DigitalGpioDriver bypassSwitchLedPin(21, GpioConfig::kOutput);
 Bypass bypass(bypassRelayPin, bypassOptoCouplerPin, bypassSwitchLedPin);
 
 SerialDriver midiSerial(31250);
@@ -37,13 +37,13 @@ SwitchDriver menuLockSwitch(menuLockSwitchPin, SwitchId::kMenuLock);
 ExpanderGpioDriver menuLockLedPin(6, GpioConfig::kOutput, expander);
 LedDriver menuLockLed(menuLockLedPin);
 
-DigitalGpioDriver bypassSwitchPin(18, GpioConfig::kInputPullup);
+DigitalGpioDriver bypassSwitchPin(22, GpioConfig::kInputPullup);
 SwitchDriver bypassSwitch(bypassSwitchPin, SwitchId::kBypass);
 
 DigitalGpioDriver tapSwitchPin(20, GpioConfig::kInputPullup);
 SwitchDriver tapSwitch(tapSwitchPin, SwitchId::kTap);
 
-AnalogGpioDriver tapSwitchLedPin(21, GpioConfig::kOutput);
+AnalogGpioDriver tapSwitchLedPin(15, GpioConfig::kOutput);
 AdjustableLedDriver tapSwitchLed(tapSwitchLedPin);
 
 AnalogGpioDriver pot0Pin(28, GpioConfig::kInput);
@@ -58,7 +58,7 @@ PotDriver pot2(pot2Pin, PotId::kPot2);
 AnalogGpioDriver mixPotPin(26, GpioConfig::kInput);
 PotDriver mixPot(mixPotPin, PotId::kMixPot);
 
-DigitalGpioDriver fv1S0Pin(15, GpioConfig::kOutput);
+DigitalGpioDriver fv1S0Pin(13, GpioConfig::kOutput);
 DigitalGpioDriver fv1S1Pin(0, GpioConfig::kOutput);
 DigitalGpioDriver fv1S2Pin(1, GpioConfig::kOutput);
 DigitalGpioDriver fv1Dac1CsPin(2, GpioConfig::kOutput);
