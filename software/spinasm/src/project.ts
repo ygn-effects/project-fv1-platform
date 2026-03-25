@@ -216,7 +216,7 @@ export default class Project {
     }
   }
 
-  public async removeHexProgram(path: any): Promise<void> {
+  public async removeHexProgram(path: string): Promise<void> {
     if (! path) {
       return;
     }

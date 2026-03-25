@@ -286,7 +286,7 @@ async function autoDetectProgrammer(): Promise<void> {
   }, async () => {
     try {
       const baudRate = Config.getBaudRate();
-      const detectedPort = await require('./utils').default.detectProgrammer(baudRate);
+      const detectedPort = await Utils.detectProgrammer(baudRate);
 
       if (detectedPort) {
         await Config.setSerialPort(detectedPort);
@@ -419,7 +419,6 @@ async function compileAllPrograms(): Promise<void> {
       }
 
       const bank = project.getProgramBankByPath(programPath);
-      await project.buildSetup(settings.compilerPath, settings.compilerArgs);
       await project.compileProgramToHex(bank);
     }
 
@@ -440,7 +439,6 @@ async function compileAllProgramsToBin(): Promise<void> {
       }
 
       const bank = project.getProgramBankByPath(programPath);
-      await project.buildSetup(settings.compilerPath, settings.compilerArgs);
       await project.compileProgramToBin(bank);
     }
 
