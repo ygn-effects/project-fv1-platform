@@ -4,13 +4,13 @@ namespace hal {
 
 ArduinoClock clock;
 
-DigitalGpioDriver eepromCsPin(0, GpioConfig::kOutput);
+DigitalGpioDriver eepromCsPin(4, GpioConfig::kOutput);
 M95Driver eeprom(eepromCsPin);
 
 DigitalGpioDriver bypassRelayPin(23, GpioConfig::kOutput);
 DigitalGpioDriver bypassOptoCouplerPin(22, GpioConfig::kOutput);
-DigitalGpioDriver bypassLedPin(12, GpioConfig::kOutput);
-Bypass bypass(bypassRelayPin, bypassOptoCouplerPin, bypassLedPin);
+DigitalGpioDriver bypassSwitchLedPin(19, GpioConfig::kOutput);
+Bypass bypass(bypassRelayPin, bypassOptoCouplerPin, bypassSwitchLedPin);
 
 SerialDriver midiSerial(31250);
 
@@ -37,31 +37,31 @@ SwitchDriver menuLockSwitch(menuLockSwitchPin, SwitchId::kMenuLock);
 ExpanderGpioDriver menuLockLedPin(6, GpioConfig::kOutput, expander);
 LedDriver menuLockLed(menuLockLedPin);
 
-DigitalGpioDriver bypassSwitchPin(1, GpioConfig::kInputPullup);
+DigitalGpioDriver bypassSwitchPin(18, GpioConfig::kInputPullup);
 SwitchDriver bypassSwitch(bypassSwitchPin, SwitchId::kBypass);
 
-DigitalGpioDriver tapSwitchPin(3, GpioConfig::kInputPullup);
+DigitalGpioDriver tapSwitchPin(20, GpioConfig::kInputPullup);
 SwitchDriver tapSwitch(tapSwitchPin, SwitchId::kTap);
 
-AnalogGpioDriver tapSwitchLedPin(15, GpioConfig::kOutput);
+AnalogGpioDriver tapSwitchLedPin(21, GpioConfig::kOutput);
 AdjustableLedDriver tapSwitchLed(tapSwitchLedPin);
 
-AnalogGpioDriver pot0Pin(24, GpioConfig::kInput);
+AnalogGpioDriver pot0Pin(28, GpioConfig::kInput);
 PotDriver pot0(pot0Pin, PotId::kPot0);
 
-AnalogGpioDriver pot1Pin(25, GpioConfig::kInput);
+AnalogGpioDriver pot1Pin(27, GpioConfig::kInput);
 PotDriver pot1(pot1Pin, PotId::kPot1);
 
-AnalogGpioDriver pot2Pin(26, GpioConfig::kInput);
+AnalogGpioDriver pot2Pin(25, GpioConfig::kInput);
 PotDriver pot2(pot2Pin, PotId::kPot2);
 
-AnalogGpioDriver mixPotPin(27, GpioConfig::kInput);
+AnalogGpioDriver mixPotPin(26, GpioConfig::kInput);
 PotDriver mixPot(mixPotPin, PotId::kMixPot);
 
 DigitalGpioDriver fv1S0Pin(15, GpioConfig::kOutput);
 DigitalGpioDriver fv1S1Pin(0, GpioConfig::kOutput);
 DigitalGpioDriver fv1S2Pin(1, GpioConfig::kOutput);
-DigitalGpioDriver fv1Dac1CsPin(1, GpioConfig::kOutput);
+DigitalGpioDriver fv1Dac1CsPin(2, GpioConfig::kOutput);
 DigitalGpioDriver fv1Dac2CsPin(14, GpioConfig::kOutput);
 Mcp4912 fv1P0Dac(fv1Dac1CsPin, Channel::kB);
 Mcp4912 fv1P1Dac(fv1Dac1CsPin, Channel::kA);
