@@ -445,6 +445,45 @@ void test_menu_lock_bypass_toggle_transition_to_lock_screen() {
   TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Lock screen"));
 }
 
+void test_menu_unlocked_stays_unlocked_bypass_cyled() {
+  InteractionFixture fix;
+  fix.logicalState.m_programMode = ProgramMode::kProgram;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Bypass toggle
+  fix.publishAndDispatchAllEvents(makeLogicBypassToggledEvent());
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Lock screen"));
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Bypass toggle
+  fix.publishAndDispatchAllEvents(makeLogicBypassToggledEvent());
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Program mode"));
+}
+
 void test_menu_encoder_delta_changed_moves_cursor() {
   InteractionFixture fix;
   fix.logicalState.m_bypassState = BypassState::kActive;
@@ -1731,6 +1770,7 @@ int main() {
   RUN_TEST(test_menu_lock_menu_lock_switch_long_press_transition_to_lock_screen);
   RUN_TEST(test_menu_lock_timeout_preset_mode_transition_to_lock_screen);
   RUN_TEST(test_menu_lock_bypass_toggle_transition_to_lock_screen);
+  RUN_TEST(test_menu_unlocked_stays_unlocked_bypass_cyled);
   RUN_TEST(test_menu_encoder_delta_changed_moves_cursor);
   RUN_TEST(test_menu_encoder_press_on_submenu_transition_to_submenu);
   RUN_TEST(test_menu_encoder_press_on_back_transition_to_previous_menu);

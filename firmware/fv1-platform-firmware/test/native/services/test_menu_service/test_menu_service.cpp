@@ -273,6 +273,30 @@ void test_bypass_toggled_ignored_when_locked() {
   assertNoMoreEvents();
 }
 
+void test_bypass_toggled_restored_when_unlocked() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MenuService service(logicalState, mockClock);
+
+  // Start active
+  logicalState.m_bypassState = BypassState::kActive;
+
+  service.init();
+  clearEventBus();
+
+  // Program mode starts unlocked, bypass
+  service.handleEvent(makeLogicBypassToggledEvent(2000));
+  assertMenuLockedEventPublished();
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+
+  // Active
+  service.handleEvent(makeLogicBypassToggledEvent(2000));
+  assertMenuUnlockedEventPublished();
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
 // =============================================================================
 // Navigation Tests (Selecting Mode)
 // =============================================================================
@@ -875,6 +899,7 @@ int main() {
   RUN_TEST(test_menu_lock_long_press_unlocks_menu);
   RUN_TEST(test_bypass_toggled_locks_menu);
   RUN_TEST(test_bypass_toggled_ignored_when_locked);
+  RUN_TEST(test_bypass_toggled_restored_when_unlocked);
 
   // Navigation (Selecting Mode)
   RUN_TEST(test_encoder_delta_publishes_updated_when_unlocked);

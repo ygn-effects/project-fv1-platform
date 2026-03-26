@@ -61,6 +61,21 @@ void MenuService::handleLocked(const Event& t_event) {
         && t_event.m_action == EventAction::kValueChanged) {
       publishViewUpdate();
     }
+
+    if (t_event.m_subject == EventSubject::kBypass
+        && t_event.m_action == EventAction::kToggled) {
+      if (m_logicState.m_bypassState == BypassState::kBypassed) {
+        m_previousMenuStateUnlocked = false;
+      }
+      else {
+        if (m_previousMenuStateUnlocked) {
+          m_handler.unlock(m_logicState);
+
+          publishUIMenuUnlockedEvent();
+          publishViewUpdate();
+        }
+      }
+    }
   }
 }
 
@@ -110,6 +125,7 @@ void MenuService::handleUnlocked(const Event& t_event) {
       if (t_event.m_subject == EventSubject::kBypass
           && t_event.m_action == EventAction::kToggled) {
         m_handler.lock();
+        m_previousMenuStateUnlocked = true;
         publishUIMenuLockedEvent();
         publishViewUpdate();
         return;

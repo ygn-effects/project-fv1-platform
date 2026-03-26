@@ -25,6 +25,7 @@ class MenuService : public Service {
     Clock& m_clock;
     MenuHandler m_handler;
 
+    bool m_previousMenuStateUnlocked{false};
     uint32_t m_lastInputTime{0};
     uint32_t m_lastPotMoveTime{0};
     uint32_t m_lastTempoChangeTime{0};
