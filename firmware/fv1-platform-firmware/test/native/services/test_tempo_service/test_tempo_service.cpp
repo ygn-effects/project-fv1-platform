@@ -55,6 +55,14 @@ Event makeUITempoChangedEvent(int16_t t_delta = 0) {
   return e;
 }
 
+Event makeBypassToggledEvent() {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kBypass;
+  e.m_action = EventAction::kToggled;
+  return e;
+}
+
 void assertTempoSaveEventPublished() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   Event e;
@@ -367,6 +375,25 @@ void test_ui_tempo_value_changed_triggers_tempo_event() {
 // Tempo LED tests
 // =============================================================================
 
+void test_update_does_not_set_led_when_bypassed() {
+  LogicalState logicalState;
+  MackAdjustbleLed led;
+  MockedClock clock;
+  TempoService tempoService(logicalState, led, clock);
+
+  // Set up delay effect with tempo
+  logicalState.m_bypassState = BypassState::kBypassed;
+  logicalState.m_currentProgram = 1;
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[1];
+  logicalState.m_tempo = 500;
+
+  tempoService.init();
+  tempoService.update();
+
+  // LED should be off
+  TEST_ASSERT_EQUAL(0, led.m_pinValue);
+}
+
 void test_update_sets_led_when_delay_effect_and_tempo_set() {
   LogicalState logicalState;
   MackAdjustbleLed led;
@@ -374,6 +401,7 @@ void test_update_sets_led_when_delay_effect_and_tempo_set() {
   TempoService tempoService(logicalState, led, clock);
 
   // Set up delay effect with tempo
+  logicalState.m_bypassState = BypassState::kActive;
   logicalState.m_currentProgram = 1;
   logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[1];
   logicalState.m_tempo = 500;
@@ -393,6 +421,7 @@ void test_update_does_not_set_led_when_not_delay_effect() {
   TempoService tempoService(logicalState, led, clock);
 
   // Set up non-delay effect
+  logicalState.m_bypassState = BypassState::kActive;
   logicalState.m_currentProgram = 7;
   logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
   logicalState.m_tempo = 500;
@@ -414,6 +443,7 @@ void test_update_does_not_set_led_when_tempo_is_zero() {
   TempoService tempoService(logicalState, led, clock);
 
   // Set up delay effect but no tempo
+  logicalState.m_bypassState = BypassState::kActive;
   logicalState.m_currentProgram = 1;
   logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[1];
   logicalState.m_tempo = 0;
@@ -424,6 +454,85 @@ void test_update_does_not_set_led_when_tempo_is_zero() {
   tempoService.update();
 
   TEST_ASSERT_EQUAL(100, led.m_pinValue);
+}
+
+// =============================================================================
+// Bypass Tests
+// =============================================================================
+
+void test_bypassed_disables_led() {
+  LogicalState logicalState;
+  MackAdjustbleLed led;
+  MockedClock clock;
+  TempoService tempoService(logicalState, led, clock);
+
+  // Program 0 is delay so set the tempo
+  logicalState.m_tempo = 100;
+  logicalState.m_bypassState = BypassState::kActive;
+
+  tempoService.init();
+  tempoService.update();
+
+  // Verify LED was set
+  TEST_ASSERT_GREATER_OR_EQUAL(32, led.m_pinValue);
+  TEST_ASSERT_LESS_OR_EQUAL(255, led.m_pinValue);
+
+  logicalState.m_bypassState = BypassState::kBypassed;
+  tempoService.handleEvent(makeBypassToggledEvent());
+  tempoService.update();
+
+  // LED should be off
+  TEST_ASSERT_EQUAL(0, led.m_pinValue);
+}
+
+void test_active_delay_effect_sets_led() {
+  LogicalState logicalState;
+  MackAdjustbleLed led;
+  MockedClock clock;
+  TempoService tempoService(logicalState, led, clock);
+
+  // Program 0 is delay so set the tempo
+  logicalState.m_tempo = 100;
+  logicalState.m_bypassState = BypassState::kBypassed;
+
+  tempoService.init();
+  tempoService.update();
+
+  // LED should be off
+  TEST_ASSERT_EQUAL(0, led.m_pinValue);
+
+  logicalState.m_bypassState = BypassState::kActive;
+  tempoService.handleEvent(makeBypassToggledEvent());
+  tempoService.update();
+
+  // Verify LED was set
+  TEST_ASSERT_GREATER_OR_EQUAL(32, led.m_pinValue);
+  TEST_ASSERT_LESS_OR_EQUAL(255, led.m_pinValue);
+}
+
+void test_active_non_delay_effect_disables_led() {
+  LogicalState logicalState;
+  MackAdjustbleLed led;
+  MockedClock clock;
+  TempoService tempoService(logicalState, led, clock);
+
+  // Program 7 is not delay
+  logicalState.m_currentProgram = 7;
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  logicalState.m_bypassState = BypassState::kBypassed;
+
+  tempoService.init();
+  tempoService.update();
+
+  // LED should be off
+  TEST_ASSERT_EQUAL(0, led.m_pinValue);
+
+  logicalState.m_bypassState = BypassState::kActive;
+  tempoService.handleEvent(makeBypassToggledEvent());
+  tempoService.update();
+
+  // LED should be off
+  TEST_ASSERT_EQUAL(0, led.m_pinValue);
 }
 
 // =============================================================================
@@ -482,6 +591,20 @@ void test_interested_in_ui_tempo() {
   e.m_domain = EventDomain::kUI;
   e.m_subject = EventSubject::kTempo;
   e.m_action = EventAction::kValueChanged;
+
+  TEST_ASSERT_TRUE(tempoService.interestedIn(e));
+}
+
+void test_interested_in_logic_bypass_toggled() {
+  LogicalState logicalState;
+  MackAdjustbleLed led;
+  MockedClock clock;
+  TempoService tempoService(logicalState, led, clock);
+
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kBypass;
+  e.m_action = EventAction::kToggled;
 
   TEST_ASSERT_TRUE(tempoService.interestedIn(e));
 }
@@ -549,15 +672,22 @@ int main() {
   RUN_TEST(test_ui_tempo_value_changed_triggers_tempo_event);
 
   // Tempo LED tests
+  RUN_TEST(test_update_does_not_set_led_when_bypassed);
   RUN_TEST(test_update_sets_led_when_delay_effect_and_tempo_set);
   RUN_TEST(test_update_does_not_set_led_when_not_delay_effect);
   RUN_TEST(test_update_does_not_set_led_when_tempo_is_zero);
+
+  // Bypass tests
+  RUN_TEST(test_bypassed_disables_led);
+  RUN_TEST(test_active_delay_effect_sets_led);
+  RUN_TEST(test_active_non_delay_effect_disables_led);
 
   // Tests interestedIn
   RUN_TEST(test_interested_in_logic_program_changed);
   RUN_TEST(test_interested_in_tap_value_changed_event);
   RUN_TEST(test_interested_in_logic_tempo_input_changed);
   RUN_TEST(test_interested_in_ui_tempo);
+  RUN_TEST(test_interested_in_logic_bypass_toggled);
   RUN_TEST(test_not_interested_in_other_events);
 
   UNITY_END();

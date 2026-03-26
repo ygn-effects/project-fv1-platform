@@ -78,6 +78,15 @@ void TempoService::handleEvent(const Event& t_event) {
 
       return;
     }
+
+    if (t_event.m_subject == EventSubject::kBypass
+        && t_event.m_action == EventAction::kToggled) {
+      if (m_logicState.m_bypassState == BypassState::kBypassed) {
+        m_tempoLed.off();
+
+        return;
+      }
+    }
   }
 
   if (t_event.m_domain == EventDomain::kUI) {
@@ -95,7 +104,9 @@ void TempoService::handleEvent(const Event& t_event) {
 }
 
 void TempoService::update() {
-  if (m_logicState.m_activeProgram->m_isDelayEffect && m_logicState.m_tempo > 0) {
+  if (m_logicState.m_activeProgram->m_isDelayEffect
+      && m_logicState.m_tempo > 0
+      && m_logicState.m_bypassState == BypassState::kActive) {
     m_tempoLed.setValue(m_handler.calculateTempoLedValue(m_clock.now()));
   }
 }
@@ -108,6 +119,8 @@ bool TempoService::interestedIn(const Event& t_event) const {
         && t_event.m_action == EventAction::kValueChanged) return true;
     if (t_event.m_subject == EventSubject::kTempo
         && t_event.m_action == EventAction::kInputChanged) return true;
+    if (t_event.m_subject == EventSubject::kBypass
+        && t_event.m_action == EventAction::kToggled) return true;
   }
 
   if (t_event.m_domain == EventDomain::kUI) {
