@@ -36,18 +36,23 @@ namespace Utils {
     return (val < min_val) ? min_val : (val > max_val) ? max_val : val;
   }
 
-  template<typename T>
-  static inline T mapValue(T x, T in_min, T in_max, T out_min, T out_max) {
-    return (in_max == in_min)
-      ? out_min  // Error value
-      : (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+template<typename T>
+static inline T mapValue(T x, T in_min, T in_max, T out_min, T out_max) {
+  if (in_max == in_min) {
+    return out_min; // Error value
   }
 
-  template<typename T>
-  constexpr T mapClamped(T x, T in_min, T in_max, T out_min, T out_max) {
-    x = clamp(x, in_min, in_max);
-    return mapValue(x, in_min, in_max, out_min, out_max);
-  }
+  int32_t numerator = static_cast<int32_t>(x - in_min) * static_cast<int32_t>(out_max - out_min);
+  int32_t denominator = static_cast<int32_t>(in_max - in_min);
+
+  return static_cast<T>((numerator / denominator) + out_min);
+}
+
+template<typename T>
+constexpr T mapClamped(T x, T in_min, T in_max, T out_min, T out_max) {
+  x = clamp(x, in_min, in_max);
+  return mapValue(x, in_min, in_max, out_min, out_max);
+}
 
   inline uint16_t wrappedAdd(uint16_t current, int16_t delta, uint16_t max) {
     int next = static_cast<int>(current) + static_cast<int>(delta);
