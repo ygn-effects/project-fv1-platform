@@ -42,7 +42,9 @@ void ProgramModeService::publishProgramModeToggledEvent(const Event& t_event) co
 }
 
 void ProgramModeService::init() {
+  m_programModeLed.init();
 
+  if (m_logicalState.m_bypassState == BypassState::kActive) m_programModeLed.on();
 }
 
 void ProgramModeService::handleEvent(const Event& t_event) {
@@ -90,6 +92,15 @@ void ProgramModeService::handleEvent(const Event& t_event) {
       m_logicalState.m_programMode == ProgramMode::kProgram
         ? m_logicalState.m_programMode = ProgramMode::kPreset
         : m_logicalState.m_programMode = ProgramMode::kProgram;
+
+      return;
+    }
+
+    if (t_event.m_subject == EventSubject::kBypass
+        && t_event.m_action == EventAction::kToggled) {
+      m_logicalState.m_bypassState == BypassState::kActive
+        ? m_programModeLed.on()
+        : m_programModeLed.off();
     }
   }
 }
@@ -107,6 +118,9 @@ bool ProgramModeService::interestedIn(const Event& t_event) const {
 
   if (t_event.m_domain == EventDomain::kLogic) {
     if (t_event.m_subject == EventSubject::kProgramMode
+        && t_event.m_action == EventAction::kToggled) return true;
+
+    if (t_event.m_subject == EventSubject::kBypass
         && t_event.m_action == EventAction::kToggled) return true;
   }
 

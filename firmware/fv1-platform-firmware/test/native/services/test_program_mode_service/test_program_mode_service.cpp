@@ -1,6 +1,7 @@
 #include <unity.h>
 #include "core/event_bus.h"
 #include "logic/logical_state.h"
+#include "mock/mock_led.h"
 #include "services/program_mode_service.h"
 
 #include "../src/services/program_mode_service.cpp"
@@ -22,6 +23,14 @@ Event makePhysicalProgramModeLongPressEvent() {
   e.m_subject = EventSubject::kSwitch;
   e.m_action = EventAction::kLongPressed;
   e.m_id = static_cast<uint8_t>(SwitchId::kProgramMode);
+  return e;
+}
+
+Event makeLogicBypassToggledEvent() {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kBypass;
+  e.m_action = EventAction::kToggled;
   return e;
 }
 
@@ -93,14 +102,37 @@ void tearDown() {
 // Init Tests
 // =============================================================================
 
-void test_init_does_nothing() {
+void test_init_initializes_led() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   service.init();
 
-  // init() is empty, state should remain unchanged
-  TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
+  TEST_ASSERT_TRUE(led.initialized);
+  assertNoMoreEvents();
+}
+
+void test_init_active_sets_led_on() {
+  LogicalState logicalState;
+  MockLed led;
+  ProgramModeService service(logicalState, led);
+
+  service.init();
+
+  TEST_ASSERT_EQUAL(1, led.m_pinState);
+  assertNoMoreEvents();
+}
+
+void test_init_bypass_sets_led_off() {
+  LogicalState logicalState;
+  MockLed led;
+  ProgramModeService service(logicalState, led);
+
+  logicalState.m_bypassState = BypassState::kBypassed;
+  service.init();
+
+  TEST_ASSERT_EQUAL(0, led.m_pinState);
   assertNoMoreEvents();
 }
 
@@ -110,7 +142,8 @@ void test_init_does_nothing() {
 
 void test_physical_long_press_when_program_mode_publishes_save_then_toggled_then_save_mode() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   // Start in program mode (default)
   TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
@@ -129,7 +162,8 @@ void test_physical_long_press_when_program_mode_publishes_save_then_toggled_then
 
 void test_physical_long_press_when_preset_mode_publishes_load_then_toggled_then_save_mode() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   // Start in preset mode
   logicalState.m_programMode = ProgramMode::kPreset;
@@ -147,12 +181,49 @@ void test_physical_long_press_when_preset_mode_publishes_load_then_toggled_then_
 }
 
 // =============================================================================
+// Logic Bypass Toggled Event
+// =============================================================================
+
+void test_logic_bypass_toggled_bypass_sets_led_off() {
+  LogicalState logicalState;
+  MockLed led;
+  ProgramModeService service(logicalState, led);
+
+  logicalState.m_bypassState = BypassState::kActive;
+  service.init();
+
+  logicalState.m_bypassState = BypassState::kBypassed;
+  service.handleEvent(makeLogicBypassToggledEvent());
+
+  // LED should be off
+  TEST_ASSERT_EQUAL(0, led.m_pinState);
+  assertNoMoreEvents();
+}
+
+void test_logic_bypass_toggled_active_sets_led_on() {
+  LogicalState logicalState;
+  MockLed led;
+  ProgramModeService service(logicalState, led);
+
+  logicalState.m_bypassState = BypassState::kBypassed;
+  service.init();
+
+  logicalState.m_bypassState = BypassState::kActive;
+  service.handleEvent(makeLogicBypassToggledEvent());
+
+  // LED should be on
+  TEST_ASSERT_EQUAL(1, led.m_pinState);
+  assertNoMoreEvents();
+}
+
+// =============================================================================
 // Logic Toggled Event Tests (State Update)
 // =============================================================================
 
 void test_logic_toggled_event_toggles_program_to_preset() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   // Start in program mode (default)
   TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
@@ -166,7 +237,8 @@ void test_logic_toggled_event_toggles_program_to_preset() {
 
 void test_logic_toggled_event_toggles_preset_to_program() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   // Start in preset mode
   logicalState.m_programMode = ProgramMode::kPreset;
@@ -184,7 +256,8 @@ void test_logic_toggled_event_toggles_preset_to_program() {
 
 void test_midi_program_mode_changed_to_preset_when_program_mode_publishes_save_then_toggled_then_save_mode() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   // Start in program mode (default)
   TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
@@ -203,7 +276,8 @@ void test_midi_program_mode_changed_to_preset_when_program_mode_publishes_save_t
 
 void test_midi_program_mode_changed_to_program_when_program_mode_no_events() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   // Start in program mode (default)
   TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
@@ -216,7 +290,8 @@ void test_midi_program_mode_changed_to_program_when_program_mode_no_events() {
 
 void test_midi_program_mode_changed_to_program_when_preset_mode_publishes_save_then_toggled_then_save_mode() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   // Start in preset mode
   logicalState.m_programMode = ProgramMode::kPreset;
@@ -235,7 +310,8 @@ void test_midi_program_mode_changed_to_program_when_preset_mode_publishes_save_t
 
 void test_midi_program_mode_changed_to_preset_when_preset_mode_no_events() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   // Start in preset mode
   logicalState.m_programMode = ProgramMode::kPreset;
@@ -248,7 +324,8 @@ void test_midi_program_mode_changed_to_preset_when_preset_mode_no_events() {
 
 void test_midi_value_changed_invalid_value_not_changed() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   // Start in program mode (default)
   TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
@@ -266,7 +343,8 @@ void test_midi_value_changed_invalid_value_not_changed() {
 
 void test_full_toggle_sequence_program_to_preset() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   // Start in program mode (default)
   TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
@@ -289,7 +367,8 @@ void test_full_toggle_sequence_program_to_preset() {
 
 void test_full_toggle_sequence_preset_to_program() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   // Start in preset mode
   logicalState.m_programMode = ProgramMode::kPreset;
@@ -312,7 +391,8 @@ void test_full_toggle_sequence_preset_to_program() {
 
 void test_multiple_toggles() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   // Start in program mode
   TEST_ASSERT_EQUAL(ProgramMode::kProgram, logicalState.m_programMode);
@@ -342,7 +422,8 @@ void test_multiple_toggles() {
 
 void test_interested_in_physical_program_mode_long_press() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   Event e;
   e.m_domain = EventDomain::kPhysical;
@@ -353,9 +434,23 @@ void test_interested_in_physical_program_mode_long_press() {
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
+void test_interested_in_logic_bypass_toggled() {
+  LogicalState logicalState;
+  MockLed led;
+  ProgramModeService service(logicalState, led);
+
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kBypass;
+  e.m_action = EventAction::kToggled;
+
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
 void test_interested_in_logic_program_mode_toggled() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   Event e;
   e.m_domain = EventDomain::kLogic;
@@ -367,7 +462,8 @@ void test_interested_in_logic_program_mode_toggled() {
 
 void test_interested_in_midi_program_mode_value_changed() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   Event e;
   e.m_domain = EventDomain::kMidi;
@@ -379,7 +475,8 @@ void test_interested_in_midi_program_mode_value_changed() {
 
 void test_not_interested_in_physical_program_mode_short_press() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   Event e;
   e.m_domain = EventDomain::kPhysical;
@@ -392,7 +489,8 @@ void test_not_interested_in_physical_program_mode_short_press() {
 
 void test_not_interested_in_other_switch_long_press() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   Event e;
   e.m_domain = EventDomain::kPhysical;
@@ -405,7 +503,8 @@ void test_not_interested_in_other_switch_long_press() {
 
 void test_not_interested_in_memory_events() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   // Not interested in memory events (outputs them)
   Event e;
@@ -421,7 +520,8 @@ void test_not_interested_in_memory_events() {
 
 void test_not_interested_in_other_logic_events() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   Event e;
   e.m_domain = EventDomain::kLogic;
@@ -433,7 +533,8 @@ void test_not_interested_in_other_logic_events() {
 
 void test_not_interested_in_unrelated_events() {
   LogicalState logicalState;
-  ProgramModeService service(logicalState);
+  MockLed led;
+  ProgramModeService service(logicalState, led);
 
   Event e;
 
@@ -464,11 +565,17 @@ int main() {
   UNITY_BEGIN();
 
   // Init
-  RUN_TEST(test_init_does_nothing);
+  RUN_TEST(test_init_initializes_led);
+  RUN_TEST(test_init_active_sets_led_on);
+  RUN_TEST(test_init_bypass_sets_led_off);
 
   // Physical Long Press
   RUN_TEST(test_physical_long_press_when_program_mode_publishes_save_then_toggled_then_save_mode);
   RUN_TEST(test_physical_long_press_when_preset_mode_publishes_load_then_toggled_then_save_mode);
+
+  // Bypass Toggled Event
+  RUN_TEST(test_logic_bypass_toggled_bypass_sets_led_off);
+  RUN_TEST(test_logic_bypass_toggled_active_sets_led_on);
 
   // Logic Toggled Event
   RUN_TEST(test_logic_toggled_event_toggles_program_to_preset);
@@ -489,6 +596,7 @@ int main() {
   // interestedIn
   RUN_TEST(test_interested_in_physical_program_mode_long_press);
   RUN_TEST(test_interested_in_logic_program_mode_toggled);
+  RUN_TEST(test_interested_in_logic_bypass_toggled);
   RUN_TEST(test_interested_in_midi_program_mode_value_changed);
   RUN_TEST(test_not_interested_in_physical_program_mode_short_press);
   RUN_TEST(test_not_interested_in_other_switch_long_press);

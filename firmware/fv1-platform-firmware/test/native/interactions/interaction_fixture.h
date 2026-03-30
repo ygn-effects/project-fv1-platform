@@ -27,6 +27,7 @@
 #include "mock/mock_clock.h"
 #include "mock/mock_dac.h"
 #include "mock/mock_adjustable.h"
+#include "mock/mock_led.h"
 #include "mock/mock_display.h"
 #include "mock/mock_serial.h"
 
@@ -44,6 +45,7 @@ class InteractionFixture {
     MockedSerial mockSerial;
     MockDac mockDacDry;
     MockDac mockDacWet;
+    MockLed mockProgramModeLed;
 
     FsmService fsmService;
     MidiService midiService;
@@ -71,7 +73,7 @@ class InteractionFixture {
       , settingsService(logicalState, mockEeprom)
       , presetBankService(logicalState, mockEeprom)
       , presetService(logicalState, mockEeprom)
-      , programModeService(logicalState)
+      , programModeService(logicalState, mockProgramModeLed)
       , programService(logicalState)
       , bypassService(logicalState, mockBypass)
       , exprService(logicalState)
