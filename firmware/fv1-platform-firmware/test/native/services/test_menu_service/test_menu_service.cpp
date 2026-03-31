@@ -4,6 +4,7 @@
 #include "services/menu_service.h"
 #include "ui/menu_model.h"
 #include "mock/mock_clock.h"
+#include "mock/mock_led.h"
 
 #include "../src/services/menu_service.cpp"
 #include "../src/logic/menu_handler.cpp"
@@ -145,7 +146,8 @@ void tearDown() {}
 void test_init_publishes_updated_event() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   logicalState.m_programMode = ProgramMode::kPreset;
   service.init();
@@ -157,7 +159,8 @@ void test_init_publishes_updated_event() {
 void test_init_starts_unlocked_program_mode() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -173,7 +176,8 @@ void test_init_starts_unlocked_program_mode() {
 void test_init_starts_locked_preset_mode() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   logicalState.m_programMode = ProgramMode::kPreset;
   service.init();
@@ -191,13 +195,90 @@ void test_init_syncs_save_bank_preset_to_logical_state() {
   logicalState.m_currentPresetBank = 2;
   logicalState.m_currentPreset = 1;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
 
   TEST_ASSERT_EQUAL(2, logicalState.m_saveTargetBank);
   TEST_ASSERT_EQUAL(1, logicalState.m_saveTargetPreset);
+}
+
+void test_init_initializes_led() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  TEST_ASSERT_TRUE(mockLed.initialized);
+}
+
+void test_init_active_sets_led_on() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_bypassState = BypassState::kActive;
+  service.init();
+  clearEventBus();
+
+  TEST_ASSERT_EQUAL(1, mockLed.m_pinState);
+}
+
+void test_init_bypass_sets_led_off() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_bypassState = BypassState::kBypassed;
+  service.init();
+  clearEventBus();
+
+  TEST_ASSERT_EQUAL(0, mockLed.m_pinState);
+}
+
+// =============================================================================
+// Bypass Toggled
+// =============================================================================
+
+void test_logic_bypass_toggled_bypass_sets_led_off() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_bypassState = BypassState::kActive;
+  service.init();
+  clearEventBus();
+
+  logicalState.m_bypassState = BypassState::kBypassed;
+  service.handleEvent(makeLogicBypassToggledEvent());
+  clearEventBus();
+
+  TEST_ASSERT_EQUAL(0, mockLed.m_pinState);
+}
+
+void test_logic_bypass_toggled_active_sets_led_on() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_bypassState = BypassState::kBypassed;
+  service.init();
+  clearEventBus();
+
+  logicalState.m_bypassState = BypassState::kActive;
+  service.handleEvent(makeLogicBypassToggledEvent());
+  clearEventBus();
+
+  TEST_ASSERT_EQUAL(1, mockLed.m_pinState);
 }
 
 // =============================================================================
@@ -207,7 +288,8 @@ void test_init_syncs_save_bank_preset_to_logical_state() {
 void test_menu_lock_long_press_locks_menu() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -222,7 +304,8 @@ void test_menu_lock_long_press_locks_menu() {
 void test_menu_lock_long_press_unlocks_menu() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -242,7 +325,8 @@ void test_menu_lock_long_press_unlocks_menu() {
 void test_bypass_toggled_locks_menu() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -258,7 +342,8 @@ void test_bypass_toggled_locks_menu() {
 void test_bypass_toggled_ignored_when_locked() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -276,7 +361,8 @@ void test_bypass_toggled_ignored_when_locked() {
 void test_bypass_toggled_restored_when_unlocked() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   // Start active
   logicalState.m_bypassState = BypassState::kActive;
@@ -304,7 +390,8 @@ void test_bypass_toggled_restored_when_unlocked() {
 void test_encoder_delta_publishes_updated_when_unlocked() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -319,7 +406,8 @@ void test_encoder_delta_publishes_updated_when_unlocked() {
 void test_encoder_press_publishes_updated_when_unlocked() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -334,7 +422,8 @@ void test_encoder_press_publishes_updated_when_unlocked() {
 void test_encoder_ignored_when_locked() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -357,7 +446,8 @@ void test_encoder_ignored_when_locked() {
 void test_pot_value_changed_publishes_updated_when_unlocked() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   // Use non-delay effect so Pot1 overlay works
   logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
@@ -375,7 +465,8 @@ void test_pot_value_changed_publishes_updated_when_unlocked() {
 void test_pot_value_changed_publishes_updated_when_locked() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   // Use non-delay effect so Pot1 overlay works
   logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
@@ -401,7 +492,8 @@ void test_pot_value_changed_publishes_updated_when_locked() {
 void test_tempo_change_publishes_updated_when_unlocked() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -416,7 +508,8 @@ void test_tempo_change_publishes_updated_when_unlocked() {
 void test_tempo_change_publishes_updated_when_locked() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -439,7 +532,8 @@ void test_tempo_change_publishes_updated_when_locked() {
 void test_menu_encoder_long_press_publishes_updated_when_unlocked() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -456,7 +550,8 @@ void test_ui_preset_setting_changed_sets_logical_state_target_preset() {
   logicalState.m_currentPresetBank = 2;
   logicalState.m_currentPreset = 1;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -475,7 +570,8 @@ void test_ui_preset_setting_changed_sets_logical_state_target_bank() {
   logicalState.m_currentPresetBank = 2;
   logicalState.m_currentPreset = 1;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -496,7 +592,8 @@ void test_ui_preset_setting_changed_sets_logical_state_target_bank() {
 void test_editing_encoder_delta_publishes_updated() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -523,7 +620,8 @@ void test_editing_encoder_delta_publishes_updated() {
 void test_editing_encoder_press_exits_editing() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -546,7 +644,8 @@ void test_editing_encoder_press_exits_editing() {
 void test_update_not_locks_menu_after_timeout_program_mode() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -564,7 +663,8 @@ void test_update_not_locks_menu_after_timeout_program_mode() {
 void test_update_locks_menu_after_timeout_preset_mode() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   logicalState.m_programMode = ProgramMode::kPreset;
   service.init();
@@ -587,7 +687,8 @@ void test_update_locks_menu_after_timeout_preset_mode() {
 void test_update_does_not_lock_before_timeout_preset_mode() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   logicalState.m_programMode = ProgramMode::kPreset;
   service.init();
@@ -608,7 +709,8 @@ void test_update_does_not_lock_before_timeout_preset_mode() {
 void test_update_pops_pot_overlay_after_timeout() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
 
@@ -634,7 +736,8 @@ void test_update_pops_pot_overlay_after_timeout() {
 void test_update_pops_tempo_overlay_after_timeout() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -658,7 +761,8 @@ void test_update_pops_tempo_overlay_after_timeout() {
 void test_update_does_nothing_when_locked() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -681,7 +785,8 @@ void test_update_does_nothing_when_locked() {
 void test_program_change_publishes_updated() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -698,7 +803,8 @@ void test_program_change_syncs_save_bank_preset_to_logical_state_preset_mode() {
   logicalState.m_currentPresetBank = 3;
   logicalState.m_currentPreset = 2;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -716,7 +822,8 @@ void test_program_change_not_syncs_save_bank_preset_to_logical_state_program_mod
   logicalState.m_currentPresetBank = 3;
   logicalState.m_currentPreset = 2;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   service.init();
   clearEventBus();
@@ -734,7 +841,8 @@ void test_program_change_not_syncs_save_bank_preset_to_logical_state_program_mod
 void test_interested_in_physical_switch_long_press_menu_lock() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   Event e = makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock);
   TEST_ASSERT_TRUE(service.interestedIn(e));
@@ -743,7 +851,8 @@ void test_interested_in_physical_switch_long_press_menu_lock() {
 void test_interested_in_physical_switch_press_menu_encoder() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   Event e = makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder);
   TEST_ASSERT_TRUE(service.interestedIn(e));
@@ -752,7 +861,8 @@ void test_interested_in_physical_switch_press_menu_encoder() {
 void test_interested_in_physical_encoder_move_menu_encoder() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   Event e = makePhysicalEncoderDeltaEvent(EncoderId::kMenuEncoder, 1);
   TEST_ASSERT_TRUE(service.interestedIn(e));
@@ -761,7 +871,8 @@ void test_interested_in_physical_encoder_move_menu_encoder() {
 void test_interested_in_logic_pot_value_changed() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   Event e = makeLogicPotValueChangedEvent(PotId::kPot1, 512);
   TEST_ASSERT_TRUE(service.interestedIn(e));
@@ -770,7 +881,8 @@ void test_interested_in_logic_pot_value_changed() {
 void test_interested_in_logic_tempo_value_changed() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   Event e = makeLogicTempoValueChangedEvent(500);
   TEST_ASSERT_TRUE(service.interestedIn(e));
@@ -779,7 +891,8 @@ void test_interested_in_logic_tempo_value_changed() {
 void test_interested_in_logic_bypass_toggled() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   Event e = makeLogicBypassToggledEvent();
   TEST_ASSERT_TRUE(service.interestedIn(e));
@@ -788,7 +901,8 @@ void test_interested_in_logic_bypass_toggled() {
 void test_interested_in_logic_program_changed() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   Event e = makeLogicProgramChangedEvent(0);
   TEST_ASSERT_TRUE(service.interestedIn(e));
@@ -797,7 +911,8 @@ void test_interested_in_logic_program_changed() {
 void test_interested_in_ui_preset_seting_changed() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   Event e = makeUIPresetSettingChangeEvent(SavePresetParam::kTargetBank);
   TEST_ASSERT_TRUE(service.interestedIn(e));
@@ -806,7 +921,8 @@ void test_interested_in_ui_preset_seting_changed() {
 void test_not_interested_in_other_switches() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   Event e = makePhysicalSwitchLongPressEvent(SwitchId::kBypass);
   TEST_ASSERT_FALSE(service.interestedIn(e));
@@ -818,7 +934,8 @@ void test_not_interested_in_other_switches() {
 void test_not_interested_in_switch_press() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   Event e;
   e.m_domain = EventDomain::kPhysical;
@@ -831,7 +948,8 @@ void test_not_interested_in_switch_press() {
 void test_not_interested_in_other_encoders() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   // Use an invalid encoder ID (cast from a number that's not kMenuEncoder)
   Event e;
@@ -846,7 +964,8 @@ void test_not_interested_in_other_encoders() {
 void test_not_interested_in_events_it_publishes() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   // Service publishes to kUI/kMenu - should not listen to these
   Event e;
@@ -865,7 +984,8 @@ void test_not_interested_in_events_it_publishes() {
 void test_not_interested_in_logic_tempo_save() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   Event e;
   e.m_domain = EventDomain::kLogic;
@@ -877,7 +997,8 @@ void test_not_interested_in_logic_tempo_save() {
 void test_not_interested_in_memory_events() {
   LogicalState logicalState;
   MockedClock mockClock;
-  MenuService service(logicalState, mockClock);
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
 
   Event e;
   e.m_domain = EventDomain::kMemory;
@@ -893,6 +1014,13 @@ int main() {
   RUN_TEST(test_init_starts_unlocked_program_mode);
   RUN_TEST(test_init_starts_locked_preset_mode);
   RUN_TEST(test_init_syncs_save_bank_preset_to_logical_state);
+  RUN_TEST(test_init_initializes_led);
+  RUN_TEST(test_init_active_sets_led_on);
+  RUN_TEST(test_init_bypass_sets_led_off);
+
+  // Bypass Toggled
+  RUN_TEST(test_logic_bypass_toggled_bypass_sets_led_off);
+  RUN_TEST(test_logic_bypass_toggled_active_sets_led_on);
 
   // Lock/Unlock
   RUN_TEST(test_menu_lock_long_press_locks_menu);

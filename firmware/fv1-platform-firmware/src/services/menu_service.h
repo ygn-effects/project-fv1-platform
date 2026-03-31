@@ -7,6 +7,7 @@
 #include "logic/logical_state.h"
 #include "logic/menu_handler.h"
 #include "periphs/clock.h"
+#include "periphs/toggleable.h"
 
 /**
  * @brief Manages menu navigation, UI state, and user input routing.
@@ -23,6 +24,7 @@ class MenuService : public Service {
   private:
     LogicalState& m_logicState;
     Clock& m_clock;
+    Toggleable& m_menuLockLed;
     MenuHandler m_handler;
 
     bool m_previousMenuStateUnlocked{false};
@@ -49,7 +51,10 @@ class MenuService : public Service {
     void handlePresetSaving(const Event& t_event);
 
   public:
-    MenuService(LogicalState& t_lState, Clock& t_clock);
+    MenuService(LogicalState& t_lState, Toggleable& t_led, Clock& t_clock) :
+      m_logicState(t_lState),
+      m_menuLockLed(t_led),
+      m_clock(t_clock) {}
 
     void init() override;
     void handleEvent(const Event& t_event) override;

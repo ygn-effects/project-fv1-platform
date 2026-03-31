@@ -1,8 +1,5 @@
 #include "services/menu_service.h"
 
-MenuService::MenuService(LogicalState& t_lState, Clock& t_clock)
-    : m_logicState(t_lState), m_clock(t_clock) {}
-
 void MenuService::syncSavePresetState() {
   m_logicState.m_saveTargetBank = m_logicState.m_currentPresetBank;
   m_logicState.m_saveTargetPreset = m_logicState.m_currentPreset;
@@ -65,9 +62,12 @@ void MenuService::handleLocked(const Event& t_event) {
     if (t_event.m_subject == EventSubject::kBypass
         && t_event.m_action == EventAction::kToggled) {
       if (m_logicState.m_bypassState == BypassState::kBypassed) {
+        m_menuLockLed.off();
         m_previousMenuStateUnlocked = false;
       }
       else {
+        m_menuLockLed.on();
+
         if (m_previousMenuStateUnlocked) {
           m_handler.unlock(m_logicState);
 
@@ -124,6 +124,10 @@ void MenuService::handleUnlocked(const Event& t_event) {
 
       if (t_event.m_subject == EventSubject::kBypass
           && t_event.m_action == EventAction::kToggled) {
+        m_logicState.m_bypassState == BypassState::kActive
+          ? m_menuLockLed.on()
+          : m_menuLockLed.off();
+
         m_handler.lock();
         m_previousMenuStateUnlocked = true;
         publishUIMenuLockedEvent();
@@ -258,7 +262,12 @@ void MenuService::handlePresetSaving(const Event& t_event) {
 }
 
 void MenuService::init() {
+  m_menuLockLed.init();
   m_handler.init();
+
+  if (m_logicState.m_bypassState == BypassState::kActive) {
+    m_menuLockLed.on();
+  }
 
   if (m_logicState.m_programMode == ProgramMode::kProgram) {
     m_handler.unlock(m_logicState);

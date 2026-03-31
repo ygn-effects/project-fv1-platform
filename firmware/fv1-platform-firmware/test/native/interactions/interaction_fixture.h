@@ -46,6 +46,7 @@ class InteractionFixture {
     MockDac mockDacDry;
     MockDac mockDacWet;
     MockLed mockProgramModeLed;
+    MockLed mockMenuLockLed;
 
     FsmService fsmService;
     MidiService midiService;
@@ -82,7 +83,7 @@ class InteractionFixture {
       , tempoService(logicalState, mockTapLed, mockClock)
       , fv1Service(logicalState, mockFv1)
       , crossfadeService(logicalState, mockDacDry, mockDacWet)
-      , menuService(logicalState, mockClock)
+      , menuService(logicalState, mockMenuLockLed, mockClock)
       , displayService(logicalState, mockDisplay)
     {
       clearEventBus();
