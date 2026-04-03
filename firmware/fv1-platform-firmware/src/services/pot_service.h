@@ -1,0 +1,40 @@
+#pragma once
+
+#include <stdint.h>
+#include "core/service.h"
+#include "core/event_bus.h"
+#include "logic/logical_state.h"
+#include "logic/pot_handler.h"
+#include "ui/inputs.h"
+#include "ui/settings.h"
+
+class PotService : public Service {
+  private:
+    LogicalState& m_logicalState;
+    PotHandler m_handler;
+    uint8_t m_lastSyncedProgram = 0;
+
+    void syncHandler();
+    void copyPotValues(uint8_t t_targetProgram);
+    void publishPotValueChangedEvent(uint8_t t_potIndex, uint32_t t_timestamp);
+    void publishSavePotEvent(uint8_t t_potIndex);
+    void publishTempoInputEvent(uint16_t t_value, uint32_t t_timestamp);
+
+    void handlePhysicalEvent(const Event& t_event);
+    void handleMenuEvent(const Event& t_event);
+    void handleMidiEvent(const Event& t_event);
+    void handleExprEvent(const Event& t_event);
+
+    void handleMenuPotStateToggleEvent(const Event& t_event, uint8_t t_potIndex);
+    void handleMenuPotMinValueMove(const Event& t_event, uint8_t t_potIndex);
+    void handleMenuPotMaxValueMove(const Event& t_event, uint8_t t_potIndex);
+
+  public:
+  PotService(LogicalState& t_lState) :
+      m_logicalState(t_lState) {}
+
+    void init() override;
+    void handleEvent(const Event& t_event) override;
+    void update() override;
+    bool interestedIn(const Event& t_event) const override;
+};

@@ -1,0 +1,40 @@
+#pragma once
+
+#include <stdint.h>
+#include "logic/midi_handler.h"
+#include "periphs/dac.h"
+#include "utils/enum_utils.h"
+#include "utils/utils.h"
+
+namespace PotConstants {
+  static constexpr uint8_t c_potCount = 4;
+  static constexpr uint16_t c_potMinValue = 0;
+  static constexpr uint16_t c_potMaxValue = 1023;
+}
+
+enum class PotState : uint8_t {
+  kDisabled,
+  kActive
+};
+
+using PotStateValidator = EnumUtils::EnumValidator<PotState, PotState::kDisabled, PotState::kActive>;
+
+struct PotHandler {
+  PotState m_state[PotConstants::c_potCount] = {PotState::kActive, PotState::kActive, PotState::kActive, PotState::kActive};
+  uint16_t m_minValue[PotConstants::c_potCount] = {0, 0, 0, 0};
+  uint16_t m_maxValue[PotConstants::c_potCount] = {1023, 1023, 1023, 1023};
+
+  bool m_pickedUp[PotConstants::c_potCount] = {true, true, true, true};
+  bool m_hasReference[PotConstants::c_potCount] = {false, false, false, false};
+  uint16_t m_lastMappedValue[PotConstants::c_potCount] = {0, 0, 0, 0};
+
+  uint16_t mapMidiValue(uint8_t t_midiValue, uint8_t t_potIndex);
+  uint16_t mapAdcValue(uint16_t t_adcValue, uint8_t t_potIndex);
+  uint16_t mapMenuValue(uint16_t t_currentValue, int8_t t_delta, uint8_t t_potIndex);
+  PotState togglePotState(uint8_t t_potIndex);
+  uint16_t changePotMinValue(int8_t delta, uint8_t t_potIndex);
+  uint16_t changePotMaxValue(int8_t delta, uint8_t t_potIndex);
+
+  bool checkPickup(uint16_t t_mappedValue, uint16_t t_storedValue, uint8_t t_potIndex);
+  void resetPickup();
+};

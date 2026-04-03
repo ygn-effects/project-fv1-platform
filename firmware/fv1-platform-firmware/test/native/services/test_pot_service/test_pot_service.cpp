@@ -1,0 +1,1173 @@
+#include <unity.h>
+#include "core/event_bus.h"
+#include "logic/logical_state.h"
+#include "services/pot_service.h"
+
+#include "../src/services/pot_service.cpp"
+#include "../src/logic/pot_handler.cpp"
+
+// =============================================================================
+// Helper functions
+// =============================================================================
+
+Event makePhysicalPotValueChangedEvent(PotId t_id, uint16_t t_value = 512) {
+  Event e;
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(t_id);
+  e.m_data.value = t_value;
+  return e;
+}
+
+Event makeLogicProgramChangedEvent(uint8_t t_programId) {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = t_programId;
+  return e;
+}
+
+Event makeLogicExprValueChangedEvent(PotId t_id, uint16_t t_value = 0) {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(t_id);
+  e.m_data.value = t_value;
+  return e;
+}
+
+Event makeUIPotSettingChangedEvent(PotId t_id, PotParam t_setting, int16_t t_delta = 0) {
+  uint8_t id = 0;
+  Utils::unpack8(static_cast<uint8_t>(t_id), static_cast<uint8_t>(t_setting), id);
+
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = id;
+  e.m_data.delta = t_delta;
+  return e;
+}
+
+Event makeMenuPotValueChangedEvent(PotId t_id, int16_t t_delta) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(t_id);
+  e.m_data.delta = t_delta;
+  return e;
+}
+
+Event makeMidiPotValueChanged(PotId t_id, uint16_t t_value) {
+  Event e;
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(t_id);
+  e.m_data.value = t_value;
+  return e;
+}
+
+void assertPotValueChangedEventPublished(PotId t_id) {
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  Event e;
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventDomain::kLogic, e.m_domain);
+  TEST_ASSERT_EQUAL(EventSubject::kPot, e.m_subject);
+  TEST_ASSERT_EQUAL(EventAction::kValueChanged, e.m_action);
+  TEST_ASSERT_EQUAL(static_cast<uint8_t>(t_id), e.m_id);
+}
+
+void assertSavePotEventPublished(PotId t_id) {
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  Event e;
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventDomain::kMemory, e.m_domain);
+  TEST_ASSERT_EQUAL(EventSubject::kPot, e.m_subject);
+  TEST_ASSERT_EQUAL(EventAction::kSave, e.m_action);
+  TEST_ASSERT_EQUAL(static_cast<uint8_t>(t_id), e.m_id);
+}
+
+void assertTempoInputChangedEventPublished(uint16_t t_expectedValue) {
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  Event e;
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventDomain::kLogic, e.m_domain);
+  TEST_ASSERT_EQUAL(EventSubject::kTempo, e.m_subject);
+  TEST_ASSERT_EQUAL(EventAction::kInputChanged, e.m_action);
+  TEST_ASSERT_EQUAL(t_expectedValue, e.m_data.value);
+}
+
+void assertEventBusEmpty() {
+  TEST_ASSERT_FALSE(EventBus::hasEvent());
+}
+
+void clearEventBus() {
+  Event e;
+  while (EventBus::hasEvent()) {
+    EventBus::recall(e);
+  }
+}
+
+void setUp() {
+  clearEventBus();
+}
+
+void tearDown() {
+
+}
+
+// =============================================================================
+// Init Tests
+// =============================================================================
+
+void test_init_syncs_handler_from_logical_state() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set to a non delay effect
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  // Set pot states
+  logicalState.m_currentProgram = 0;
+  logicalState.m_potParams[logicalState.m_currentProgram][0].m_state = PotState::kActive;
+  logicalState.m_potParams[logicalState.m_currentProgram][1].m_state = PotState::kDisabled;
+  logicalState.m_potParams[logicalState.m_currentProgram][2].m_state = PotState::kDisabled;
+  logicalState.m_potParams[logicalState.m_currentProgram][3].m_state = PotState::kActive;
+
+  // Set pot values
+  logicalState.m_potParams[logicalState.m_currentProgram][0].m_value = 0;
+  logicalState.m_potParams[logicalState.m_currentProgram][1].m_value = 0;
+  logicalState.m_potParams[logicalState.m_currentProgram][2].m_value = 0;
+  logicalState.m_potParams[logicalState.m_currentProgram][3].m_value = 0;
+
+  // Init
+  potService.init();
+
+  // Send physical events
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 512));
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 128));
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot2, 64));
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kMixPot, 768));
+
+  // Check logicalState values
+  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
+  TEST_ASSERT_EQUAL(0, logicalState.m_potParams[logicalState.m_currentProgram][1].m_value);
+  TEST_ASSERT_EQUAL(0, logicalState.m_potParams[logicalState.m_currentProgram][2].m_value);
+  TEST_ASSERT_EQUAL(768, logicalState.m_potParams[logicalState.m_currentProgram][3].m_value);
+}
+
+// =============================================================================
+// Physical pots tests
+// =============================================================================
+
+void test_physical_pot_value_changed_changes_logical_state() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set to a non delay effect
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  // Init
+  potService.init();
+
+  // Send physical events
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 512));
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 128));
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot2, 64));
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kMixPot, 768));
+
+  // Check logicalState values, all pots are active and 0-1023 by default
+  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
+  TEST_ASSERT_EQUAL(128, logicalState.m_potParams[logicalState.m_currentProgram][1].m_value);
+  TEST_ASSERT_EQUAL(64, logicalState.m_potParams[logicalState.m_currentProgram][2].m_value);
+  TEST_ASSERT_EQUAL(768, logicalState.m_potParams[logicalState.m_currentProgram][3].m_value);
+
+  // Assert published events
+  assertPotValueChangedEventPublished(PotId::kPot0);
+  assertPotValueChangedEventPublished(PotId::kPot1);
+  assertPotValueChangedEventPublished(PotId::kPot2);
+  assertPotValueChangedEventPublished(PotId::kMixPot);
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+}
+
+void test_pot0_publishes_tempo_input_when_using_delay_effect() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Default program is delay effect (program 0)
+  // Init
+  potService.init();
+
+  // Send physical event for POT0
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 512));
+
+  // Should publish tempo input event with raw ADC value
+  assertTempoInputChangedEventPublished(512);
+
+  // Event bus should be empty now
+  assertEventBusEmpty();
+
+  // m_potParams should NOT be updated for POT0 on delay effects
+  TEST_ASSERT_EQUAL(0, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
+}
+
+void test_midi_pot0_publishes_tempo_input_when_using_delay_effect() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Default program is delay effect (program 0)
+  // Init
+  potService.init();
+
+  // Send MIDI event for POT0 (value 64 = half range)
+  potService.handleEvent(makeMidiPotValueChanged(PotId::kPot0, 64));
+
+  // Should publish tempo input event with scaled value (64 * 1023 / 127 ≈ 515)
+  assertTempoInputChangedEventPublished(515);
+
+  // Event bus should be empty now
+  assertEventBusEmpty();
+
+  // m_potParams should NOT be updated for POT0 on delay effects
+  TEST_ASSERT_EQUAL(0, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
+}
+
+void test_expr_pot0_publishes_tempo_input_when_using_delay_effect() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Default program is delay effect (program 0)
+  // Init
+  potService.init();
+
+  // Send expression event mapped to POT0
+  potService.handleEvent(makeLogicExprValueChangedEvent(PotId::kPot0, 768));
+
+  // Should publish tempo input event with the mapped value
+  assertTempoInputChangedEventPublished(768);
+
+  // Event bus should be empty now
+  assertEventBusEmpty();
+
+  // m_potParams should NOT be updated for POT0 on delay effects
+  TEST_ASSERT_EQUAL(0, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
+}
+
+void test_disabled_pot_ignores_physical_input() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set to a non delay effect
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  // Disable POT0 for program0
+  logicalState.m_potParams[0][0].m_state = PotState::kDisabled;
+  logicalState.m_potParams[0][0].m_value = 0;
+
+  // Init
+  potService.init();
+
+  // Send physical event
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 512));
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+
+  // Check logicalState value
+  TEST_ASSERT_EQUAL(0, logicalState.m_potParams[0][0].m_value);
+}
+
+void test_physical_pot0_value_changed_preset_mode_not_sets_preset_dirty() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set logical state
+  logicalState.m_programMode = ProgramMode::kPreset;
+
+  // Init
+  potService.init();
+
+  // Send physical event
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 512));
+
+  // Check logical state
+  TEST_ASSERT_FALSE(logicalState.m_presetDirty);
+}
+
+void test_physical_pot_value_changed_preset_mode_sets_preset_dirty() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set logical state
+  logicalState.m_programMode = ProgramMode::kPreset;
+
+  // Init
+  potService.init();
+
+  // Send physical event
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 512));
+
+  // Check logical state
+  TEST_ASSERT_TRUE(logicalState.m_presetDirty);
+}
+
+void test_physical_pot_value_changed_program_mode_not_sets_preset_dirty() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Init
+  potService.init();
+
+  // Send physical event
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 512));
+
+  // Check logical state
+  TEST_ASSERT_FALSE(logicalState.m_presetDirty);
+}
+
+// =============================================================================
+// Program Change Tests
+// =============================================================================
+
+void test_program_change_syncs_handler_from_logical_state() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set current program
+  logicalState.m_currentProgram = 0;
+
+  // Set pot states for program 0
+  logicalState.m_potParams[logicalState.m_currentProgram][0].m_state = PotState::kActive;
+  logicalState.m_potParams[logicalState.m_currentProgram][1].m_state = PotState::kDisabled;
+  logicalState.m_potParams[logicalState.m_currentProgram][2].m_state = PotState::kActive;
+  logicalState.m_potParams[logicalState.m_currentProgram][3].m_state = PotState::kActive;
+
+  // Set pot values for program 0
+  logicalState.m_potParams[logicalState.m_currentProgram][0].m_value = 0;
+  logicalState.m_potParams[logicalState.m_currentProgram][1].m_value = 768;
+  logicalState.m_potParams[logicalState.m_currentProgram][2].m_value = 1023;
+  logicalState.m_potParams[logicalState.m_currentProgram][3].m_value = 0;
+
+  // Init
+  potService.init();
+
+  // Set current program
+  logicalState.m_currentProgram = 7;
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  // Set pot states for program 1
+  logicalState.m_potParams[logicalState.m_currentProgram][0].m_state = PotState::kActive;
+  logicalState.m_potParams[logicalState.m_currentProgram][1].m_state = PotState::kActive;
+  logicalState.m_potParams[logicalState.m_currentProgram][2].m_state = PotState::kDisabled;
+  logicalState.m_potParams[logicalState.m_currentProgram][3].m_state = PotState::kActive;
+
+  // Init
+  potService.init();
+
+  // Send physical events
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 512));
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 128));
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot2, 64));
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kMixPot, 768));
+
+  // Set pot values for program 0
+  logicalState.m_potParams[logicalState.m_currentProgram][0].m_value = 512;
+  logicalState.m_potParams[logicalState.m_currentProgram][1].m_value = 128;
+  logicalState.m_potParams[logicalState.m_currentProgram][2].m_value = 1023;
+  logicalState.m_potParams[logicalState.m_currentProgram][3].m_value = 768;
+
+  // Assert published events, POT2 is disabled so no event
+  assertPotValueChangedEventPublished(PotId::kPot0);
+  assertPotValueChangedEventPublished(PotId::kPot1);
+  assertPotValueChangedEventPublished(PotId::kMixPot);
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+}
+
+void test_program_change_copies_pot_values_in_program_mode() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set to a non delay effect
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  // Ensure program mode
+  logicalState.m_programMode = ProgramMode::kProgram;
+  logicalState.m_currentProgram = 0;
+
+  // Set pot values for program 0
+  logicalState.m_potParams[0][0].m_value = 100;
+  logicalState.m_potParams[0][1].m_value = 200;
+  logicalState.m_potParams[0][2].m_value = 300;
+  logicalState.m_potParams[0][3].m_value = 400;
+
+  // Set different pot values for program 3
+  logicalState.m_potParams[3][0].m_value = 900;
+  logicalState.m_potParams[3][1].m_value = 800;
+  logicalState.m_potParams[3][2].m_value = 700;
+  logicalState.m_potParams[3][3].m_value = 600;
+
+  // Init (sets m_lastSyncedProgram = 0)
+  potService.init();
+
+  // Simulate ProgramService having already updated currentProgram
+  logicalState.m_currentProgram = 3;
+
+  // Send program change event
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+
+  // Verify program 3's pot values now match program 0's values
+  TEST_ASSERT_EQUAL(100, logicalState.m_potParams[3][0].m_value);
+  TEST_ASSERT_EQUAL(200, logicalState.m_potParams[3][1].m_value);
+  TEST_ASSERT_EQUAL(300, logicalState.m_potParams[3][2].m_value);
+  TEST_ASSERT_EQUAL(400, logicalState.m_potParams[3][3].m_value);
+}
+
+void test_program_change_does_not_copy_in_preset_mode() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set to a non delay effect
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  // Set preset mode
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentProgram = 0;
+
+  // Set pot values for program 0
+  logicalState.m_potParams[0][0].m_value = 100;
+  logicalState.m_potParams[0][1].m_value = 200;
+  logicalState.m_potParams[0][2].m_value = 300;
+  logicalState.m_potParams[0][3].m_value = 400;
+
+  // Set different pot values for program 3
+  logicalState.m_potParams[3][0].m_value = 900;
+  logicalState.m_potParams[3][1].m_value = 800;
+  logicalState.m_potParams[3][2].m_value = 700;
+  logicalState.m_potParams[3][3].m_value = 600;
+
+  // Init
+  potService.init();
+
+  // Simulate ProgramService having already updated currentProgram
+  logicalState.m_currentProgram = 3;
+
+  // Send program change event
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+
+  // Verify program 3's pot values are NOT overwritten
+  TEST_ASSERT_EQUAL(900, logicalState.m_potParams[3][0].m_value);
+  TEST_ASSERT_EQUAL(800, logicalState.m_potParams[3][1].m_value);
+  TEST_ASSERT_EQUAL(700, logicalState.m_potParams[3][2].m_value);
+  TEST_ASSERT_EQUAL(600, logicalState.m_potParams[3][3].m_value);
+}
+
+void test_program_change_does_not_publish_events() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set to a non delay effect
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  // Ensure program mode
+  logicalState.m_programMode = ProgramMode::kProgram;
+  logicalState.m_currentProgram = 0;
+
+  // Set pot values for program 0
+  logicalState.m_potParams[0][0].m_value = 100;
+  logicalState.m_potParams[0][1].m_value = 200;
+  logicalState.m_potParams[0][2].m_value = 300;
+  logicalState.m_potParams[0][3].m_value = 400;
+
+  // Init
+  potService.init();
+
+  // Simulate ProgramService having already updated currentProgram
+  logicalState.m_currentProgram = 3;
+
+  // Clear event bus before the action under test
+  clearEventBus();
+
+  // Send program change event
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+
+  // No events should have been published
+  assertEventBusEmpty();
+}
+
+// =============================================================================
+// Midi tests
+// =============================================================================
+
+void test_midi_pot_value_changed_changes_logical_state() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set to a non-delay effect so POT0 is handled as a regular pot
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  // Set pot values for program 0
+  logicalState.m_potParams[logicalState.m_currentProgram][0].m_value = 0;
+  logicalState.m_potParams[logicalState.m_currentProgram][1].m_value = 768;
+  logicalState.m_potParams[logicalState.m_currentProgram][2].m_value = 1023;
+  logicalState.m_potParams[logicalState.m_currentProgram][3].m_value = 0;
+
+  potService.init();
+
+  potService.handleEvent(makeMidiPotValueChanged(PotId::kPot0, 16));
+  potService.handleEvent(makeMidiPotValueChanged(PotId::kPot1, 32));
+  potService.handleEvent(makeMidiPotValueChanged(PotId::kPot2, 64));
+  potService.handleEvent(makeMidiPotValueChanged(PotId::kMixPot, 127));
+
+  // Check logicalState values, all pots are active and 0-1023 by default
+  TEST_ASSERT_NOT_EQUAL(0, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
+  TEST_ASSERT_NOT_EQUAL(768, logicalState.m_potParams[logicalState.m_currentProgram][1].m_value);
+  TEST_ASSERT_NOT_EQUAL(1023, logicalState.m_potParams[logicalState.m_currentProgram][2].m_value);
+  TEST_ASSERT_NOT_EQUAL(0, logicalState.m_potParams[logicalState.m_currentProgram][3].m_value);
+
+  // Assert published events
+  assertPotValueChangedEventPublished(PotId::kPot0);
+  assertPotValueChangedEventPublished(PotId::kPot1);
+  assertPotValueChangedEventPublished(PotId::kPot2);
+  assertPotValueChangedEventPublished(PotId::kMixPot);
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+}
+
+// =============================================================================
+// Expr tests
+// =============================================================================
+
+void test_expr_value_changed_changes_logical_state() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set to a non-delay effect so POT0 is handled as a regular pot
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  // Set pot values for program 0
+  logicalState.m_potParams[logicalState.m_currentProgram][0].m_value = 0;
+  logicalState.m_potParams[logicalState.m_currentProgram][1].m_value = 768;
+  logicalState.m_potParams[logicalState.m_currentProgram][2].m_value = 1023;
+  logicalState.m_potParams[logicalState.m_currentProgram][3].m_value = 0;
+
+  potService.init();
+
+  // Send expr events
+  potService.handleEvent(makeLogicExprValueChangedEvent(PotId::kPot0, 128));
+  potService.handleEvent(makeLogicExprValueChangedEvent(PotId::kPot1, 384));
+  potService.handleEvent(makeLogicExprValueChangedEvent(PotId::kPot2, 768));
+  potService.handleEvent(makeLogicExprValueChangedEvent(PotId::kMixPot, 1023));
+
+  // Check logicalState values, all pots are active and 0-1023 by default
+  TEST_ASSERT_EQUAL(128, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
+  TEST_ASSERT_EQUAL(384, logicalState.m_potParams[logicalState.m_currentProgram][1].m_value);
+  TEST_ASSERT_EQUAL(768, logicalState.m_potParams[logicalState.m_currentProgram][2].m_value);
+  TEST_ASSERT_EQUAL(1023, logicalState.m_potParams[logicalState.m_currentProgram][3].m_value);
+
+  // Assert published events
+  assertPotValueChangedEventPublished(PotId::kPot0);
+  assertPotValueChangedEventPublished(PotId::kPot1);
+  assertPotValueChangedEventPublished(PotId::kPot2);
+  assertPotValueChangedEventPublished(PotId::kMixPot);
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+}
+
+// =============================================================================
+// Menu tests
+// =============================================================================
+
+void test_menu_pot_value_changed_changes_logical_state() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set pot values for program 0
+  logicalState.m_potParams[logicalState.m_currentProgram][0].m_value = 0;
+  logicalState.m_potParams[logicalState.m_currentProgram][1].m_value = 768;
+  logicalState.m_potParams[logicalState.m_currentProgram][2].m_value = 512;
+  logicalState.m_potParams[logicalState.m_currentProgram][3].m_value = 128;
+
+  potService.init();
+
+  // Send menu events
+  potService.handleEvent(makeMenuPotValueChangedEvent(PotId::kPot0, 10));
+  potService.handleEvent(makeMenuPotValueChangedEvent(PotId::kPot1, 10));
+  potService.handleEvent(makeMenuPotValueChangedEvent(PotId::kPot2, 10));
+  potService.handleEvent(makeMenuPotValueChangedEvent(PotId::kMixPot, 10));
+
+  // Check logicalState values, all pots are active and 0-1023 by default
+  TEST_ASSERT_EQUAL(10, logicalState.m_potParams[logicalState.m_currentProgram][0].m_value);
+  TEST_ASSERT_EQUAL(778, logicalState.m_potParams[logicalState.m_currentProgram][1].m_value);
+  TEST_ASSERT_EQUAL(522, logicalState.m_potParams[logicalState.m_currentProgram][2].m_value);
+  TEST_ASSERT_EQUAL(138, logicalState.m_potParams[logicalState.m_currentProgram][3].m_value);
+
+  // Assert published events
+  assertPotValueChangedEventPublished(PotId::kPot0);
+  assertPotValueChangedEventPublished(PotId::kPot1);
+  assertPotValueChangedEventPublished(PotId::kPot2);
+  assertPotValueChangedEventPublished(PotId::kMixPot);
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+}
+
+void test_ui_toggle_state() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set pot states
+  logicalState.m_potParams[logicalState.m_currentProgram][0].m_state = PotState::kActive;
+  logicalState.m_potParams[logicalState.m_currentProgram][1].m_state = PotState::kDisabled;
+  logicalState.m_potParams[logicalState.m_currentProgram][2].m_state = PotState::kDisabled;
+  logicalState.m_potParams[logicalState.m_currentProgram][3].m_state = PotState::kActive;
+
+  potService.init();
+
+  // Send UI toggle events
+  potService.handleEvent(makeUIPotSettingChangedEvent(PotId::kPot0, PotParam::kState));
+  potService.handleEvent(makeUIPotSettingChangedEvent(PotId::kPot1, PotParam::kState));
+  potService.handleEvent(makeUIPotSettingChangedEvent(PotId::kPot2, PotParam::kState));
+  potService.handleEvent(makeUIPotSettingChangedEvent(PotId::kMixPot, PotParam::kState));
+
+  // Check logicalState states
+  TEST_ASSERT_EQUAL(PotState::kDisabled, logicalState.m_potParams[logicalState.m_currentProgram][0].m_state);
+  TEST_ASSERT_EQUAL(PotState::kActive, logicalState.m_potParams[logicalState.m_currentProgram][1].m_state);
+  TEST_ASSERT_EQUAL(PotState::kActive, logicalState.m_potParams[logicalState.m_currentProgram][2].m_state);
+  TEST_ASSERT_EQUAL(PotState::kDisabled, logicalState.m_potParams[logicalState.m_currentProgram][3].m_state);
+
+  // Assert published event
+  assertSavePotEventPublished(PotId::kPot0);
+  assertSavePotEventPublished(PotId::kPot1);
+  assertSavePotEventPublished(PotId::kPot2);
+  assertSavePotEventPublished(PotId::kMixPot);
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+}
+
+void test_ui_change_min_value() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set pot states
+  logicalState.m_potParams[logicalState.m_currentProgram][0].m_minValue = 10;
+  logicalState.m_potParams[logicalState.m_currentProgram][1].m_minValue = 20;
+  logicalState.m_potParams[logicalState.m_currentProgram][2].m_minValue = 30;
+  logicalState.m_potParams[logicalState.m_currentProgram][3].m_minValue = 40;
+
+  potService.init();
+
+  // Send UI toggle events
+  potService.handleEvent(makeUIPotSettingChangedEvent(PotId::kPot0, PotParam::kMinValue, 10));
+  potService.handleEvent(makeUIPotSettingChangedEvent(PotId::kPot1, PotParam::kMinValue, 10));
+  potService.handleEvent(makeUIPotSettingChangedEvent(PotId::kPot2, PotParam::kMinValue, 10));
+  potService.handleEvent(makeUIPotSettingChangedEvent(PotId::kMixPot, PotParam::kMinValue, 10));
+
+  // Check logicalState states
+  TEST_ASSERT_EQUAL(20, logicalState.m_potParams[logicalState.m_currentProgram][0].m_minValue);
+  TEST_ASSERT_EQUAL(30, logicalState.m_potParams[logicalState.m_currentProgram][1].m_minValue);
+  TEST_ASSERT_EQUAL(40, logicalState.m_potParams[logicalState.m_currentProgram][2].m_minValue);
+  TEST_ASSERT_EQUAL(50, logicalState.m_potParams[logicalState.m_currentProgram][3].m_minValue);
+
+  // Assert published event
+  assertSavePotEventPublished(PotId::kPot0);
+  assertSavePotEventPublished(PotId::kPot1);
+  assertSavePotEventPublished(PotId::kPot2);
+  assertSavePotEventPublished(PotId::kMixPot);
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+}
+
+void test_ui_change_max_value() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Set pot states
+  logicalState.m_potParams[logicalState.m_currentProgram][0].m_maxValue = 600;
+  logicalState.m_potParams[logicalState.m_currentProgram][1].m_maxValue = 700;
+  logicalState.m_potParams[logicalState.m_currentProgram][2].m_maxValue = 800;
+  logicalState.m_potParams[logicalState.m_currentProgram][3].m_maxValue = 900;
+
+  potService.init();
+
+  // Send UI toggle events
+  potService.handleEvent(makeUIPotSettingChangedEvent(PotId::kPot0, PotParam::kMaxValue, 10));
+  potService.handleEvent(makeUIPotSettingChangedEvent(PotId::kPot1, PotParam::kMaxValue, 10));
+  potService.handleEvent(makeUIPotSettingChangedEvent(PotId::kPot2, PotParam::kMaxValue, 10));
+  potService.handleEvent(makeUIPotSettingChangedEvent(PotId::kMixPot, PotParam::kMaxValue, 10));
+
+  // Check logicalState states
+  TEST_ASSERT_EQUAL(610, logicalState.m_potParams[logicalState.m_currentProgram][0].m_maxValue);
+  TEST_ASSERT_EQUAL(710, logicalState.m_potParams[logicalState.m_currentProgram][1].m_maxValue);
+  TEST_ASSERT_EQUAL(810, logicalState.m_potParams[logicalState.m_currentProgram][2].m_maxValue);
+  TEST_ASSERT_EQUAL(910, logicalState.m_potParams[logicalState.m_currentProgram][3].m_maxValue);
+
+  // Assert published event
+  assertSavePotEventPublished(PotId::kPot0);
+  assertSavePotEventPublished(PotId::kPot1);
+  assertSavePotEventPublished(PotId::kPot2);
+  assertSavePotEventPublished(PotId::kMixPot);
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+}
+
+// =============================================================================
+// Pickup Mode Tests
+// =============================================================================
+
+void test_pickup_physical_pot_blocked_after_program_change_in_preset_mode() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Non-delay effect
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentProgram = 0;
+
+  // Stored pot value is 500
+  logicalState.m_potParams[0][0].m_value = 500;
+
+  potService.init();
+
+  // Simulate program change (ProgramService already updated currentProgram)
+  logicalState.m_currentProgram = 3;
+  logicalState.m_potParams[3][0].m_value = 500;
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+  clearEventBus();
+
+  // Physical pot at 200 — far from stored 500, not picked up
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 200));
+
+  // Value should NOT change
+  TEST_ASSERT_EQUAL(500, logicalState.m_potParams[3][0].m_value);
+  assertEventBusEmpty();
+}
+
+void test_pickup_physical_pot_allowed_after_crossover() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentProgram = 0;
+
+  potService.init();
+
+  // Program change — stored value for pot0 is 500
+  logicalState.m_currentProgram = 3;
+  logicalState.m_potParams[3][0].m_value = 500;
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+  clearEventBus();
+
+  // Physical pot starts below stored value
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 200));
+  TEST_ASSERT_EQUAL(500, logicalState.m_potParams[3][0].m_value);
+  assertEventBusEmpty();
+
+  // Still below — not picked up
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 400));
+  TEST_ASSERT_EQUAL(500, logicalState.m_potParams[3][0].m_value);
+  assertEventBusEmpty();
+
+  // Crosses over stored value — picks up
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 550));
+  TEST_ASSERT_EQUAL(550, logicalState.m_potParams[3][0].m_value);
+  assertPotValueChangedEventPublished(PotId::kPot0);
+  assertEventBusEmpty();
+
+  // Subsequent physical events work normally
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 700));
+  TEST_ASSERT_EQUAL(700, logicalState.m_potParams[3][0].m_value);
+  assertPotValueChangedEventPublished(PotId::kPot0);
+  assertEventBusEmpty();
+}
+
+void test_pickup_crossover_from_above() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentProgram = 0;
+
+  potService.init();
+
+  // Program change — stored value for pot0 is 300
+  logicalState.m_currentProgram = 3;
+  logicalState.m_potParams[3][0].m_value = 300;
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+  clearEventBus();
+
+  // Physical pot starts above stored value
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 700));
+  TEST_ASSERT_EQUAL(300, logicalState.m_potParams[3][0].m_value);
+  assertEventBusEmpty();
+
+  // Crosses over downward
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 250));
+  TEST_ASSERT_EQUAL(250, logicalState.m_potParams[3][0].m_value);
+  assertPotValueChangedEventPublished(PotId::kPot0);
+  assertEventBusEmpty();
+}
+
+void test_pickup_resets_on_each_program_change() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentProgram = 0;
+
+  potService.init();
+
+  // First program change
+  logicalState.m_currentProgram = 3;
+  logicalState.m_potParams[3][0].m_value = 500;
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+  clearEventBus();
+
+  // Pick up pot0
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 200));
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 600));
+  TEST_ASSERT_EQUAL(600, logicalState.m_potParams[3][0].m_value);
+  clearEventBus();
+
+  // Second program change — pickup resets
+  logicalState.m_currentProgram = 5;
+  logicalState.m_potParams[5][0].m_value = 800;
+  potService.handleEvent(makeLogicProgramChangedEvent(5));
+  clearEventBus();
+
+  // Physical pot is blocked again
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 600));
+  TEST_ASSERT_EQUAL(800, logicalState.m_potParams[5][0].m_value);
+  assertEventBusEmpty();
+}
+
+void test_pickup_independent_per_pot() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentProgram = 0;
+
+  potService.init();
+
+  // Program change
+  logicalState.m_currentProgram = 3;
+  logicalState.m_potParams[3][0].m_value = 500;
+  logicalState.m_potParams[3][1].m_value = 300;
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+  clearEventBus();
+
+  // Set references for both pots (below stored)
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 200));
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 100));
+  assertEventBusEmpty();
+
+  // Pot0 crosses over — picked up
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 600));
+  TEST_ASSERT_EQUAL(600, logicalState.m_potParams[3][0].m_value);
+  assertPotValueChangedEventPublished(PotId::kPot0);
+  assertEventBusEmpty();
+
+  // Pot1 still blocked
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot1, 200));
+  TEST_ASSERT_EQUAL(300, logicalState.m_potParams[3][1].m_value);
+  assertEventBusEmpty();
+}
+
+void test_pickup_does_not_affect_midi_input() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentProgram = 0;
+
+  potService.init();
+
+  // Program change — pickup reset
+  logicalState.m_currentProgram = 3;
+  logicalState.m_potParams[3][0].m_value = 500;
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+  clearEventBus();
+
+  // MIDI should bypass pickup entirely
+  potService.handleEvent(makeMidiPotValueChanged(PotId::kPot0, 64));
+
+  TEST_ASSERT_NOT_EQUAL(500, logicalState.m_potParams[3][0].m_value);
+  assertPotValueChangedEventPublished(PotId::kPot0);
+  assertEventBusEmpty();
+}
+
+void test_pickup_does_not_affect_expr_input() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentProgram = 0;
+
+  potService.init();
+
+  // Program change — pickup reset
+  logicalState.m_currentProgram = 3;
+  logicalState.m_potParams[3][0].m_value = 500;
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+  clearEventBus();
+
+  // Expression pedal should bypass pickup
+  potService.handleEvent(makeLogicExprValueChangedEvent(PotId::kPot0, 768));
+
+  TEST_ASSERT_EQUAL(768, logicalState.m_potParams[3][0].m_value);
+  assertPotValueChangedEventPublished(PotId::kPot0);
+  assertEventBusEmpty();
+}
+
+void test_pickup_does_not_affect_menu_input() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentProgram = 0;
+
+  potService.init();
+
+  // Program change — pickup reset
+  logicalState.m_currentProgram = 3;
+  logicalState.m_potParams[3][0].m_value = 500;
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+  clearEventBus();
+
+  // Menu encoder should bypass pickup
+  potService.handleEvent(makeMenuPotValueChangedEvent(PotId::kPot0, 10));
+
+  TEST_ASSERT_EQUAL(510, logicalState.m_potParams[3][0].m_value);
+  assertPotValueChangedEventPublished(PotId::kPot0);
+  assertEventBusEmpty();
+}
+
+void test_pickup_also_resets_in_program_mode() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  logicalState.m_programMode = ProgramMode::kProgram;
+  logicalState.m_currentProgram = 0;
+
+  // Set pot values for program 0
+  logicalState.m_potParams[0][0].m_value = 500;
+
+  potService.init();
+
+  // Program change — values are copied, but pickup still resets
+  logicalState.m_currentProgram = 3;
+  potService.handleEvent(makeLogicProgramChangedEvent(3));
+  clearEventBus();
+
+  // In program mode, values were copied (500), so stored is 500
+  // Physical pot at 200 — should be blocked
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 200));
+  TEST_ASSERT_EQUAL(500, logicalState.m_potParams[3][0].m_value);
+  assertEventBusEmpty();
+
+  // Cross over to pick up
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 550));
+  TEST_ASSERT_EQUAL(550, logicalState.m_potParams[3][0].m_value);
+  assertPotValueChangedEventPublished(PotId::kPot0);
+}
+
+void test_pickup_pot0_delay_tempo_not_blocked() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  // Default program IS a delay effect
+  logicalState.m_programMode = ProgramMode::kPreset;
+  logicalState.m_currentProgram = 0;
+
+  potService.init();
+
+  // Program change
+  logicalState.m_currentProgram = 1;
+  potService.handleEvent(makeLogicProgramChangedEvent(1));
+  clearEventBus();
+
+  // Physical pot0 on a delay effect routes to tempo — should NOT be blocked by pickup
+  potService.handleEvent(makePhysicalPotValueChangedEvent(PotId::kPot0, 512));
+  assertTempoInputChangedEventPublished(512);
+  assertEventBusEmpty();
+}
+
+// =============================================================================
+// interestedIn Tests
+// =============================================================================
+
+void test_interested_in_physical_pot_value_changed() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  Event e;
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+
+  TEST_ASSERT_TRUE(potService.interestedIn(e));
+}
+
+void test_interested_in_logic_program_changed() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kValueChanged;
+
+  TEST_ASSERT_TRUE(potService.interestedIn(e));
+}
+
+void test_interested_in_logic_expr_value_changed() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kValueChanged;
+
+  TEST_ASSERT_TRUE(potService.interestedIn(e));
+}
+
+void test_interested_in_ui_pot() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+
+  TEST_ASSERT_TRUE(potService.interestedIn(e));
+}
+
+void test_interested_in_midi_pot() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  Event e;
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kPot;
+
+  TEST_ASSERT_TRUE(potService.interestedIn(e));
+}
+
+void test_not_interested_in_other_events() {
+  LogicalState logicalState;
+  PotService potService(logicalState);
+
+  Event e;
+
+  // Not interested in physical switch events
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kSwitch;
+  TEST_ASSERT_FALSE(potService.interestedIn(e));
+
+  // Not interested in logic expr events (outputs them, doesn't consume)
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kPot;
+  TEST_ASSERT_FALSE(potService.interestedIn(e));
+
+  // Not interested in other MIDI events
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kExpr;
+  TEST_ASSERT_FALSE(potService.interestedIn(e));
+
+  // Not interested in memory events
+  e.m_domain = EventDomain::kMemory;
+  e.m_subject = EventSubject::kExpr;
+  TEST_ASSERT_FALSE(potService.interestedIn(e));
+
+  // Not interested in logic program with different action
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kSave;
+  TEST_ASSERT_FALSE(potService.interestedIn(e));
+
+  // Not interested in nonsensical event
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kPressed;
+  TEST_ASSERT_FALSE(potService.interestedIn(e));
+}
+
+int main() {
+  UNITY_BEGIN();
+
+  // Init
+  RUN_TEST(test_init_syncs_handler_from_logical_state);
+
+  // Physical pots tests
+  RUN_TEST(test_physical_pot_value_changed_changes_logical_state);
+  RUN_TEST(test_pot0_publishes_tempo_input_when_using_delay_effect);
+  RUN_TEST(test_midi_pot0_publishes_tempo_input_when_using_delay_effect);
+  RUN_TEST(test_expr_pot0_publishes_tempo_input_when_using_delay_effect);
+  RUN_TEST(test_disabled_pot_ignores_physical_input);
+  RUN_TEST(test_physical_pot0_value_changed_preset_mode_not_sets_preset_dirty);
+  RUN_TEST(test_physical_pot_value_changed_preset_mode_sets_preset_dirty);
+  RUN_TEST(test_physical_pot_value_changed_program_mode_not_sets_preset_dirty);
+
+  // Program Change Tests
+  RUN_TEST(test_program_change_syncs_handler_from_logical_state);
+  RUN_TEST(test_program_change_copies_pot_values_in_program_mode);
+  RUN_TEST(test_program_change_does_not_copy_in_preset_mode);
+  RUN_TEST(test_program_change_does_not_publish_events);
+
+  // Midi tests
+  RUN_TEST(test_midi_pot_value_changed_changes_logical_state);
+
+  // Expr test
+  RUN_TEST(test_expr_value_changed_changes_logical_state);
+
+  // Menu tests
+  RUN_TEST(test_menu_pot_value_changed_changes_logical_state);
+  RUN_TEST(test_ui_toggle_state);
+  RUN_TEST(test_ui_change_min_value);
+  RUN_TEST(test_ui_change_max_value);
+
+  // Pickup Mode Tests
+  RUN_TEST(test_pickup_physical_pot_blocked_after_program_change_in_preset_mode);
+  RUN_TEST(test_pickup_physical_pot_allowed_after_crossover);
+  RUN_TEST(test_pickup_crossover_from_above);
+  RUN_TEST(test_pickup_resets_on_each_program_change);
+  RUN_TEST(test_pickup_independent_per_pot);
+  RUN_TEST(test_pickup_does_not_affect_midi_input);
+  RUN_TEST(test_pickup_does_not_affect_expr_input);
+  RUN_TEST(test_pickup_does_not_affect_menu_input);
+  RUN_TEST(test_pickup_also_resets_in_program_mode);
+  RUN_TEST(test_pickup_pot0_delay_tempo_not_blocked);
+
+  // interestedIn Tests
+  RUN_TEST(test_interested_in_physical_pot_value_changed);
+  RUN_TEST(test_interested_in_logic_program_changed);
+  RUN_TEST(test_interested_in_logic_expr_value_changed);
+  RUN_TEST(test_interested_in_ui_pot);
+  RUN_TEST(test_interested_in_midi_pot);
+  RUN_TEST(test_not_interested_in_other_events);
+
+  UNITY_END();
+}

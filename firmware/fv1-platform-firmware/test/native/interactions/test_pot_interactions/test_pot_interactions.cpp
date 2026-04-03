@@ -1,0 +1,525 @@
+#include <unity.h>
+#include "../interaction_fixture.h"
+#include "../src/logic/programs.h"
+#include "../src/logic/crossfade_handler.cpp"
+#include "../src/logic/expr_handler.cpp"
+#include "../src/logic/fv1_handler.cpp"
+#include "../src/logic/memory_handler.cpp"
+#include "../src/logic/menu_handler.cpp"
+#include "../src/logic/midi_handler.cpp"
+#include "../src/logic/pot_handler.cpp"
+#include "../src/logic/preset_handler.cpp"
+#include "../src/logic/tempo_handler.cpp"
+#include "../src/logic/tap_handler.cpp"
+#include "../src/services/fsm_service.cpp"
+#include "../src/services/midi_service.cpp"
+#include "../src/services/settings_service.cpp"
+#include "../src/services/preset_bank_service.cpp"
+#include "../src/services/preset_service.cpp"
+#include "../src/services/program_mode_service.cpp"
+#include "../src/services/program_service.cpp"
+#include "../src/services/bypass_service.cpp"
+#include "../src/services/expr_service.cpp"
+#include "../src/services/pot_service.cpp"
+#include "../src/services/tap_service.cpp"
+#include "../src/services/tempo_service.cpp"
+#include "../src/services/fv1_service.cpp"
+#include "../src/services/crossfade_service.cpp"
+#include "../src/services/menu_service.cpp"
+#include "../src/services/display_service.cpp"
+#include "../src/ui/menu_model.cpp"
+
+// =============================================================================
+// Test Helpers
+// =============================================================================
+
+Event makeBootEvent() {
+  Event e{};
+  e.m_domain = EventDomain::kSystem;
+  e.m_subject = EventSubject::kGeneral;
+  e.m_action = EventAction::kBooted;
+  return e;
+}
+
+Event makeLogicProgramValueChangedEvent() {
+  Event e{};
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kValueChanged;
+  return e;
+}
+
+Event makeLogicExprValueChangedEvent(PotId t_id, uint16_t t_value = 0) {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(t_id);
+  e.m_data.value = t_value;
+  return e;
+}
+
+Event makeDriverPotValueChangedEvent(PotId t_id, uint16_t t_value) {
+  Event e{};
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(t_id);
+  e.m_data.value = t_value;
+  return e;
+}
+
+Event makeUIPotValueChangedEvent(PotId t_id, int16_t t_delta) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kValueChanged;
+  e.m_id = static_cast<uint8_t>(t_id);
+  e.m_data.delta = t_delta;
+  return e;
+}
+
+Event makeUIPotSettingChangedEvent(PotId t_id, PotParam t_setting, int16_t t_delta = 0) {
+  uint8_t id = 0;
+  Utils::unpack8(static_cast<uint8_t>(t_id), static_cast<uint8_t>(t_setting), id);
+
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = id;
+  e.m_data.delta = t_delta;
+  return e;
+}
+
+Event makeUiProgramValueChangedEvent(int8_t t_delta) {
+  Event e{};
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kProgram;
+  e.m_action = EventAction::kValueChanged;
+  e.m_data.delta = t_delta;
+  return e;
+}
+
+Event makeUIPresetValueChangedEvent(int8_t t_delta) {
+  Event e{};
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kValueChanged;
+  e.m_data.delta = t_delta;
+  return e;
+}
+
+void makeMidiCCPotValueChangedMessage(MockedSerial& t_serial, PotId t_id, uint8_t t_value) {
+  t_serial.feedByte(0xB0);
+  t_serial.feedByte(static_cast<uint8_t>(t_id));
+  t_serial.feedByte(t_value);
+}
+
+void setUp() {
+
+}
+
+void tearDown() {
+
+}
+
+// =============================================================================
+// Physical Pot Input
+// =============================================================================
+
+void test_driver_pot_value_changed_sets_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 7;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Sent events
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 128));
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot1, 256));
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot2, 384));
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kMixPot, 512));
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(128, fix.logicalState.m_potParams[7][0].m_value);
+  TEST_ASSERT_EQUAL(256, fix.logicalState.m_potParams[7][1].m_value);
+  TEST_ASSERT_EQUAL(384, fix.logicalState.m_potParams[7][2].m_value);
+  TEST_ASSERT_EQUAL(512, fix.logicalState.m_potParams[7][3].m_value);
+}
+
+void test_driver_pot_value_changed_not_sets_logical_state_disabled_pot() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_potParams[7][1].m_state = PotState::kDisabled;
+  fix.logicalState.m_potParams[7][3].m_state = PotState::kDisabled;
+  fix.logicalState.m_currentProgram = 7;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Sent events
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 128));
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot1, 256));
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot2, 384));
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kMixPot, 512));
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(128, fix.logicalState.m_potParams[7][0].m_value);
+  TEST_ASSERT_EQUAL(0, fix.logicalState.m_potParams[7][1].m_value);
+  TEST_ASSERT_EQUAL(384, fix.logicalState.m_potParams[7][2].m_value);
+  TEST_ASSERT_EQUAL(0, fix.logicalState.m_potParams[7][3].m_value);
+}
+
+void test_driver_pot0_value_changed_sets_tempo_on_delay_effect() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 0;  // Delay effect
+  fix.logicalState.m_tempo = 500;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send POT0 event - should go through PotService → TempoService
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 512));
+
+  // m_potParams should NOT be updated for POT0 on delay effects
+  TEST_ASSERT_EQUAL(0, fix.logicalState.m_potParams[0][0].m_value);
+
+  // But m_tempo SHOULD be updated (program 0 is 20-1000ms, 512/1023 maps to ~510ms)
+  TEST_ASSERT_NOT_EQUAL(500, fix.logicalState.m_tempo);
+}
+
+void test_midi_cc_pot0_sets_tempo_on_delay_effect() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 0;  // Delay effect
+  fix.logicalState.m_tempo = 500;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Send MIDI CC#0 message
+  makeMidiCCPotValueChangedMessage(fix.mockSerial, PotId::kPot0, 64);
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // m_potParams should NOT be updated for POT0 on delay effects
+  TEST_ASSERT_EQUAL(0, fix.logicalState.m_potParams[0][0].m_value);
+
+  // But m_tempo SHOULD be updated
+  TEST_ASSERT_NOT_EQUAL(500, fix.logicalState.m_tempo);
+}
+
+void test_expr_pot0_sets_tempo_on_delay_effect() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 0;  // Delay effect
+  fix.logicalState.m_tempo = 500;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send expression event mapped to POT0
+  fix.publishAndDispatchAllEvents(makeLogicExprValueChangedEvent(PotId::kPot0, 768));
+
+  // m_potParams should NOT be updated for POT0 on delay effects
+  TEST_ASSERT_EQUAL(0, fix.logicalState.m_potParams[0][0].m_value);
+
+  // But m_tempo SHOULD be updated
+  TEST_ASSERT_NOT_EQUAL(500, fix.logicalState.m_tempo);
+}
+
+// =============================================================================
+// Main
+// =============================================================================
+
+void test_logic_expr_value_changed_sets_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 7;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Sent events
+  fix.publishAndDispatchAllEvents(makeLogicExprValueChangedEvent(PotId::kPot0, 128));
+  fix.publishAndDispatchAllEvents(makeLogicExprValueChangedEvent(PotId::kPot1, 256));
+  fix.publishAndDispatchAllEvents(makeLogicExprValueChangedEvent(PotId::kPot2, 384));
+  fix.publishAndDispatchAllEvents(makeLogicExprValueChangedEvent(PotId::kMixPot, 512));
+
+  // Expression Pedal Input
+  TEST_ASSERT_EQUAL(128, fix.logicalState.m_potParams[7][0].m_value);
+  TEST_ASSERT_EQUAL(256, fix.logicalState.m_potParams[7][1].m_value);
+  TEST_ASSERT_EQUAL(384, fix.logicalState.m_potParams[7][2].m_value);
+  TEST_ASSERT_EQUAL(512, fix.logicalState.m_potParams[7][3].m_value);
+}
+
+void test_logic_expr_value_changed_sets_logical_state_disabled_pot() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_potParams[7][1].m_state = PotState::kDisabled;
+  fix.logicalState.m_potParams[7][3].m_state = PotState::kDisabled;
+  fix.logicalState.m_currentProgram = 7;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Sent events
+  fix.publishAndDispatchAllEvents(makeLogicExprValueChangedEvent(PotId::kPot0, 128));
+  fix.publishAndDispatchAllEvents(makeLogicExprValueChangedEvent(PotId::kPot1, 256));
+  fix.publishAndDispatchAllEvents(makeLogicExprValueChangedEvent(PotId::kPot2, 384));
+  fix.publishAndDispatchAllEvents(makeLogicExprValueChangedEvent(PotId::kMixPot, 512));
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(128, fix.logicalState.m_potParams[7][0].m_value);
+  TEST_ASSERT_EQUAL(256, fix.logicalState.m_potParams[7][1].m_value);
+  TEST_ASSERT_EQUAL(384, fix.logicalState.m_potParams[7][2].m_value);
+  TEST_ASSERT_EQUAL(512, fix.logicalState.m_potParams[7][3].m_value);
+}
+
+// =============================================================================
+// Menu Pot Edit
+// =============================================================================
+
+void test_ui_pot_value_changed_sets_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Sent events
+  fix.publishAndDispatchAllEvents(makeUIPotValueChangedEvent(PotId::kPot0, 10));
+  fix.publishAndDispatchAllEvents(makeUIPotValueChangedEvent(PotId::kPot1, 20));
+  fix.publishAndDispatchAllEvents(makeUIPotValueChangedEvent(PotId::kPot2, 30));
+  fix.publishAndDispatchAllEvents(makeUIPotValueChangedEvent(PotId::kMixPot, 40));
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(10, fix.logicalState.m_potParams[0][0].m_value);
+  TEST_ASSERT_EQUAL(20, fix.logicalState.m_potParams[0][1].m_value);
+  TEST_ASSERT_EQUAL(30, fix.logicalState.m_potParams[0][2].m_value);
+  TEST_ASSERT_EQUAL(40, fix.logicalState.m_potParams[0][3].m_value);
+}
+
+// =============================================================================
+// MIDI Pot Control
+// =============================================================================
+
+void test_midi_cc_pot_value_sets_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  // Use non-delay program so POT0 is handled as a regular pot
+  fix.logicalState.m_currentProgram = 7;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send CC message
+  makeMidiCCPotValueChangedMessage(fix.mockSerial, PotId::kPot0, 16);
+
+  // Update services and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(128, fix.logicalState.m_potParams[7][0].m_value);
+
+  // Send CC message
+  makeMidiCCPotValueChangedMessage(fix.mockSerial, PotId::kPot1, 32);
+
+  // Update services and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(257, fix.logicalState.m_potParams[7][1].m_value);
+
+  // Send CC message
+  makeMidiCCPotValueChangedMessage(fix.mockSerial, PotId::kPot2, 48);
+
+  // Update services and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(386, fix.logicalState.m_potParams[7][2].m_value);
+
+  // Send CC message
+  makeMidiCCPotValueChangedMessage(fix.mockSerial, PotId::kMixPot, 64);
+
+  // Update services and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(515, fix.logicalState.m_potParams[7][3].m_value);
+}
+
+// =============================================================================
+// Pickup Mode
+// =============================================================================
+
+void test_pickup_blocks_physical_pot_after_program_change() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 7;
+  fix.logicalState.m_potParams[7][0].m_value = 800;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Change program (7 → 6). In program mode, copyPotValues copies 800 to program 6.
+  fix.publishAndDispatchAllEvents(makeUiProgramValueChangedEvent(-1));
+  TEST_ASSERT_EQUAL(800, fix.logicalState.m_potParams[6][0].m_value);
+
+  // Physical pot at 100 — far from stored 800, should be blocked
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 100));
+  TEST_ASSERT_EQUAL(800, fix.logicalState.m_potParams[6][0].m_value);
+}
+
+void test_pickup_allows_physical_pot_after_crossover() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 7;
+  fix.logicalState.m_potParams[7][0].m_value = 800;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Change program. copyPotValues copies 800 to program 6.
+  fix.publishAndDispatchAllEvents(makeUiProgramValueChangedEvent(-1));
+
+  // Physical pot above stored — blocked (reference)
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 900));
+  TEST_ASSERT_EQUAL(800, fix.logicalState.m_potParams[6][0].m_value);
+
+  // Cross over stored value downward — picks up
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 750));
+  TEST_ASSERT_EQUAL(750, fix.logicalState.m_potParams[6][0].m_value);
+
+  // Subsequent moves work normally
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 500));
+  TEST_ASSERT_EQUAL(500, fix.logicalState.m_potParams[6][0].m_value);
+}
+
+void test_pickup_midi_bypasses_pickup_after_program_change() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_currentProgram = 7;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Change program
+  fix.publishAndDispatchAllEvents(makeUiProgramValueChangedEvent(-1));
+
+  // MIDI CC should always work regardless of pickup state
+  makeMidiCCPotValueChangedMessage(fix.mockSerial, PotId::kPot0, 64);
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  TEST_ASSERT_NOT_EQUAL(0, fix.logicalState.m_potParams[6][0].m_value);
+}
+
+void test_pickup_preset_change_blocks_then_crossover_allows() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_currentProgram = 7;
+
+  // Set up preset 1 with specific pot value
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_programIndex = 7;
+  fix.logicalState.m_loadedPresetBank.m_presets[1].m_potParams[0].m_value = 600;
+
+  fix.syncEepromWithState();
+  fix.SyncEepromWithLoadedPresetBank();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Change to preset 1
+  fix.publishAndDispatchAllEvents(makeUIPresetValueChangedEvent(1));
+
+  // Physical pot at 200 — far from stored 600, blocked
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 200));
+  TEST_ASSERT_EQUAL(600, fix.logicalState.m_potParams[7][0].m_value);
+
+  // Cross over — picks up
+  fix.publishAndDispatchAllEvents(makeDriverPotValueChangedEvent(PotId::kPot0, 650));
+  TEST_ASSERT_EQUAL(650, fix.logicalState.m_potParams[7][0].m_value);
+}
+
+// =============================================================================
+// Persistence
+// =============================================================================
+
+void test_pot_params_persists() {
+  InteractionFixture fix;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Set settings
+  fix.publishAndDispatchAllEvents(makeUIPotSettingChangedEvent(PotId::kPot0, PotParam::kState));
+  fix.publishAndDispatchAllEvents(makeUIPotSettingChangedEvent(PotId::kPot2, PotParam::kState));
+  fix.publishAndDispatchAllEvents(makeUIPotSettingChangedEvent(PotId::kPot1, PotParam::kMinValue, 20));
+  fix.publishAndDispatchAllEvents(makeUIPotSettingChangedEvent(PotId::kMixPot, PotParam::kMaxValue, -100));
+
+  // Reset
+  fix.init();
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(PotState::kDisabled, fix.logicalState.m_potParams[0][0].m_state);
+  TEST_ASSERT_EQUAL(PotState::kDisabled, fix.logicalState.m_potParams[0][2].m_state);
+  TEST_ASSERT_EQUAL(20, fix.logicalState.m_potParams[0][1].m_minValue);
+  TEST_ASSERT_EQUAL(923, fix.logicalState.m_potParams[0][3].m_maxValue);
+}
+
+// =============================================================================
+// Main
+// =============================================================================
+
+int main() {
+  UNITY_BEGIN();
+
+  // Physical Pot Input
+  RUN_TEST(test_driver_pot_value_changed_sets_logical_state);
+  RUN_TEST(test_driver_pot_value_changed_not_sets_logical_state_disabled_pot);
+  RUN_TEST(test_driver_pot0_value_changed_sets_tempo_on_delay_effect);
+  RUN_TEST(test_midi_cc_pot0_sets_tempo_on_delay_effect);
+  RUN_TEST(test_expr_pot0_sets_tempo_on_delay_effect);
+
+  // Expression Pedal Input
+  RUN_TEST(test_logic_expr_value_changed_sets_logical_state);
+  RUN_TEST(test_logic_expr_value_changed_sets_logical_state_disabled_pot);
+
+  // Menu Pot Edit
+  RUN_TEST(test_ui_pot_value_changed_sets_logical_state);
+
+  // MIDI Pot Control
+  RUN_TEST(test_midi_cc_pot_value_sets_logical_state);
+
+  // Pickup Mode
+  RUN_TEST(test_pickup_blocks_physical_pot_after_program_change);
+  RUN_TEST(test_pickup_allows_physical_pot_after_crossover);
+  RUN_TEST(test_pickup_midi_bypasses_pickup_after_program_change);
+  RUN_TEST(test_pickup_preset_change_blocks_then_crossover_allows);
+
+  // Persistence
+  RUN_TEST(test_pot_params_persists);
+
+  return UNITY_END();
+}
+
