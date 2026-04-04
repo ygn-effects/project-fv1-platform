@@ -14,34 +14,56 @@ void tearDown() {
 }
 
 void test_publish_one_recall_one() {
-  Event publishTempoEvent{EventType::kTempoChanged, 500, {}};
-  publishTempoEvent.m_data.value = 300;
+  Event published;
+  published.m_domain = EventDomain::kLogic;
+  published.m_subject = EventSubject::kTempo;
+  published.m_action = EventAction::kValueChanged;
+  published.m_timestamp = 500;
+  published.m_data.value = 300;
 
-  EventBus::publish(publishTempoEvent);
+  EventBus::publish(published);
   TEST_ASSERT_TRUE(EventBus::hasEvent());
 
-  Event recallTempoEvent;
-  EventBus::recall(recallTempoEvent);
+  Event recalled;
+  EventBus::recall(recalled);
 
-  TEST_ASSERT_EQUAL(EventType::kTempoChanged, recallTempoEvent.m_type);
-  TEST_ASSERT_EQUAL(300, recallTempoEvent.m_data.value);
+  TEST_ASSERT_EQUAL(EventDomain::kLogic, recalled.m_domain);
+  TEST_ASSERT_EQUAL(EventSubject::kTempo, recalled.m_subject);
+  TEST_ASSERT_EQUAL(EventAction::kValueChanged, recalled.m_action);
+  TEST_ASSERT_EQUAL(300, recalled.m_data.value);
 
   TEST_ASSERT_FALSE(EventBus::hasEvent());
 }
 
 void test_clear() {
-  Event publishTempoEvent{EventType::kTempoChanged, 500, {}};
-  publishTempoEvent.m_data.value = 300;
+  Event published;
+  published.m_domain = EventDomain::kLogic;
+  published.m_subject = EventSubject::kTempo;
+  published.m_action = EventAction::kValueChanged;
+  published.m_timestamp = 500;
+  published.m_data.value = 300;
 
-  EventBus::publish(publishTempoEvent);
+  EventBus::publish(published);
   EventBus::clear();
 
   TEST_ASSERT_FALSE(EventBus::hasEvent());
 }
 
 void test_fifo() {
-  EventBus::publish({EventType::kTapPressed, 100, {}});
-  EventBus::publish({EventType::kTapPressed, 200, {}});
+  Event first;
+  first.m_domain = EventDomain::kPhysical;
+  first.m_subject = EventSubject::kTap;
+  first.m_action = EventAction::kPressed;
+  first.m_timestamp = 100;
+
+  Event second;
+  second.m_domain = EventDomain::kPhysical;
+  second.m_subject = EventSubject::kTap;
+  second.m_action = EventAction::kPressed;
+  second.m_timestamp = 200;
+
+  EventBus::publish(first);
+  EventBus::publish(second);
 
   Event one, two;
   EventBus::recall(one);
@@ -52,21 +74,13 @@ void test_fifo() {
 }
 
 void test_empty_recall() {
-  Event event {EventType::kTapPressed, 0, {}};
+  Event event;
+  event.m_domain = EventDomain::kPhysical;
+  event.m_subject = EventSubject::kTap;
+  event.m_action = EventAction::kPressed;
+  event.m_timestamp = 0;
 
   TEST_ASSERT_FALSE(EventBus::recall(event));
-}
-
-void test_event_category() {
-  TEST_ASSERT_EQUAL(EventCategory::kRawPhysicalEvent, eventToCategory(EventType::kRawBypassPressed));
-  TEST_ASSERT_EQUAL(EventCategory::kMenuEvent, eventToCategory(EventType::kMenuLocked));
-  TEST_ASSERT_EQUAL(EventCategory::kPhysicalEvent, eventToCategory(EventType::kTapPressed));
-}
-
-void test_event_sub_category() {
-  TEST_ASSERT_EQUAL(EventSubCategory::kBypassEvent, eventToCategory(EventType::kRawBypassPressed));
-  TEST_ASSERT_EQUAL(EventSubCategory::kMenuLockEvent, eventToCategory(EventType::kMenuLocked));
-  TEST_ASSERT_EQUAL(EventSubCategory::kTapEvent, eventToCategory(EventType::kTapPressed));
 }
 
 int main() {
@@ -75,6 +89,5 @@ int main() {
   RUN_TEST(test_clear);
   RUN_TEST(test_fifo);
   RUN_TEST(test_empty_recall);
-  RUN_TEST(test_event_category);
   UNITY_END();
 }
