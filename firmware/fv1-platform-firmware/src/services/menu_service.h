@@ -23,8 +23,8 @@
 class MenuService : public Service {
   private:
     LogicalState& m_logicState;
-    Clock& m_clock;
     Toggleable& m_menuLockLed;
+    Clock& m_clock;
     MenuHandler m_handler;
 
     bool m_previousMenuStateUnlocked{false};
