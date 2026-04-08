@@ -28,15 +28,15 @@ void SettingsService::handleEvent(const Event& t_event) {
 
     switch (t_event.m_subject) {
       case EventSubject::kBypass:
-        saveRegion(MemoryRegion::kBypass);
+
         break;
 
       case EventSubject::kProgramMode:
-        saveRegion(MemoryRegion::kProgramMode);
+
         break;
 
       case EventSubject::kProgram:
-        saveRegion(MemoryRegion::kCurrentProgram);
+
         break;
 
       case EventSubject::kTap:
@@ -44,7 +44,7 @@ void SettingsService::handleEvent(const Event& t_event) {
           m_logicalState.m_presetDirty = true;
         }
         else {
-          saveRegion(MemoryRegion::kTap);
+
         }
         break;
 
@@ -53,7 +53,7 @@ void SettingsService::handleEvent(const Event& t_event) {
           m_logicalState.m_presetDirty = true;
         }
         else {
-          saveRegion(MemoryRegion::kTempo);
+
         }
         break;
 
@@ -62,7 +62,7 @@ void SettingsService::handleEvent(const Event& t_event) {
           m_logicalState.m_presetDirty = true;
         }
         else {
-          saveRegion(MemoryRegion::kExpr, m_logicalState.m_currentProgram);
+
         }
         break;
 
@@ -71,12 +71,12 @@ void SettingsService::handleEvent(const Event& t_event) {
           m_logicalState.m_presetDirty = true;
         }
         else {
-          saveRegion(MemoryRegion::kPot, m_logicalState.m_currentProgram, t_event.m_id);
+
         }
         break;
 
       case EventSubject::kGeneral:
-        saveRegion(MemoryRegion::kLogicalState);
+
         break;
 
       default:
