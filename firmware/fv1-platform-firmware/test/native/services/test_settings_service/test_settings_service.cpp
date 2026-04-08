@@ -68,7 +68,7 @@ void test_init_loads_logical_state_from_eeprom() {
     logicalState.m_tempo = 750;
 
     SettingsService settingsService(logicalState, eeprom);
-    settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kGeneral));
+    settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kGeneral, 0));
   }
 
   // Create new service with different state
@@ -93,6 +93,41 @@ void test_init_loads_logical_state_from_eeprom() {
 // =============================================================================
 // Edit timeout tests
 // =============================================================================
+
+void test_system_state_request_committed_immediately() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
+
+  // Set state
+  logicalState.m_bypassState = BypassState::kBypassed;
+  logicalState.m_currentProgram = 1;
+  logicalState.m_tempo = 500;
+  logicalState.m_tapState = TapState::kEnabled;
+  logicalState.m_interval = 500;
+
+  // Send the save event
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kGeneral, 0));
+  settingsService.update();
+
+  // Reset values
+  logicalState.m_bypassState = BypassState::kActive;
+  logicalState.m_currentProgram = 0;
+  logicalState.m_tempo = 0;
+  logicalState.m_tapState = TapState::kDisabled;
+  logicalState.m_interval = 0;
+
+  // Reload from persistence
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Check logical state
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
+  TEST_ASSERT_EQUAL(1, logicalState.m_currentProgram);
+  TEST_ASSERT_EQUAL(500, logicalState.m_tempo);
+  TEST_ASSERT_EQUAL(TapState::kEnabled, logicalState.m_tapState);
+  TEST_ASSERT_EQUAL(500, logicalState.m_interval);
+}
 
 void test_request_not_committed_if_not_edit_timeout() {
   LogicalState logicalState;
@@ -235,7 +270,52 @@ void test_successive_requests_committed_if_edit_timeout() {
 }
 
 void test_only_requests_committed_if_edit_timeout() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
+  // Set state
+  logicalState.m_tapState = TapState::kEnabled;
+  logicalState.m_interval = 500;
+
+  // Set bypass state and send the save event
+  logicalState.m_bypassState = BypassState::kBypassed;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kBypass, 0));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(0);
+  settingsService.update();
+
+  // Set current program and send the save event
+  logicalState.m_currentProgram = 2;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kProgram, 500));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(500);
+  settingsService.update();
+
+  // Set tempo and send the save event
+  logicalState.m_tempo = 200;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTempo, 1000));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(1000);
+  settingsService.update();
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
+
+  // Restore
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
+  TEST_ASSERT_EQUAL(2, logicalState.m_currentProgram);
+  TEST_ASSERT_EQUAL(500, logicalState.m_tempo);
+  TEST_ASSERT_EQUAL(TapState::kEnabled, logicalState.m_tapState);
+  TEST_ASSERT_EQUAL(500, logicalState.m_interval);
 }
 
 // =============================================================================
@@ -245,11 +325,16 @@ void test_only_requests_committed_if_edit_timeout() {
 void test_memory_save_bypass() {
   LogicalState logicalState;
   MockEEPROM eeprom;
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Set bypass state and send the save event
   logicalState.m_bypassState = BypassState::kBypassed;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kBypass, 0));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
 
   // Modify the bypass state
   logicalState.m_bypassState = BypassState::kActive;
@@ -264,11 +349,16 @@ void test_memory_save_bypass() {
 void test_memory_save_program_mode() {
   LogicalState logicalState;
   MockEEPROM eeprom;
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Set program modeand send the save event
   logicalState.m_programMode = ProgramMode::kPreset;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kProgramMode, 0));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
 
   // Modify the program mode
   logicalState.m_programMode = ProgramMode::kProgram;
@@ -283,11 +373,16 @@ void test_memory_save_program_mode() {
 void test_memory_save_program() {
   LogicalState logicalState;
   MockEEPROM eeprom;
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Set program and send the save event
   logicalState.m_currentProgram = 1;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kProgram, 0));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
 
   // Modify the program
   logicalState.m_currentProgram = 0;
@@ -302,7 +397,8 @@ void test_memory_save_program() {
 void test_memory_save_tap() {
   LogicalState logicalState;
   MockEEPROM eeprom;
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Set tap parameters and send the save event
   logicalState.m_tapState = TapState::kEnabled;
@@ -311,6 +407,10 @@ void test_memory_save_tap() {
   logicalState.m_interval = 400;
   logicalState.m_divInterval = 200;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTap, 0));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
 
   // Modify the tap parameters
   logicalState.m_tapState = TapState::kDisabled;
@@ -333,11 +433,16 @@ void test_memory_save_tap() {
 void test_memory_save_tempo() {
   LogicalState logicalState;
   MockEEPROM eeprom;
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Set tempo and send the save event
   logicalState.m_tempo = 500;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTempo, 0));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
 
   // Modify the tempo
   logicalState.m_tempo = 0;
@@ -352,7 +457,8 @@ void test_memory_save_tempo() {
 void test_memory_save_expr() {
   LogicalState logicalState;
   MockEEPROM eeprom;
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Set expr parameters and send the save event
   logicalState.m_currentProgram = 2;
@@ -362,6 +468,10 @@ void test_memory_save_expr() {
   logicalState.m_exprParams[2].m_heelValue = 256;
   logicalState.m_exprParams[2].m_toeValue = 512;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kExpr, 0));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
 
   // Modify the expr parameters
   logicalState.m_currentProgram = 0;
@@ -385,7 +495,8 @@ void test_memory_save_expr() {
 void test_memory_save_pot() {
   LogicalState logicalState;
   MockEEPROM eeprom;
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Set pot parameters and send the save event
   logicalState.m_currentProgram = 3;
@@ -394,6 +505,10 @@ void test_memory_save_pot() {
   logicalState.m_potParams[3][2].m_minValue = 256;
   logicalState.m_potParams[3][2].m_maxValue = 768;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, 0, PotId::kPot2));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
 
   // Modify the pot parameters
   logicalState.m_currentProgram = 0;
@@ -420,7 +535,8 @@ void test_preset_mode_ignores_pot_save() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   eeprom.reset();
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Save pot in program mode
   logicalState.m_currentProgram = 1;
@@ -429,12 +545,21 @@ void test_preset_mode_ignores_pot_save() {
   logicalState.m_potParams[1][0].m_maxValue = 900;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, 0, PotId::kPot0));
 
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
+
   // Switch to preset mode and try to save different pot values
   logicalState.m_programMode = ProgramMode::kPreset;
   logicalState.m_potParams[1][0].m_value = 999;
   logicalState.m_potParams[1][0].m_minValue = 0;
   logicalState.m_potParams[1][0].m_maxValue = 1023;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, 0, PotId::kPot0));
+
+  // Set the clock and update to trigger the commit
+  clock.setClock(0);
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
 
   // Load back and verify original values persisted
   logicalState.m_potParams[1][0].m_value = 0;
@@ -451,7 +576,8 @@ void test_preset_mode_ignores_expr_save() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   eeprom.reset();
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Save expr in program mode
   logicalState.m_currentProgram = 2;
@@ -461,6 +587,10 @@ void test_preset_mode_ignores_expr_save() {
   logicalState.m_exprParams[2].m_toeValue = 512;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kExpr, 0));
 
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
+
   // Switch to preset mode and try to save different expr values
   logicalState.m_programMode = ProgramMode::kPreset;
   logicalState.m_exprParams[2].m_state = ExprState::kInactive;
@@ -468,6 +598,11 @@ void test_preset_mode_ignores_expr_save() {
   logicalState.m_exprParams[2].m_heelValue = 0;
   logicalState.m_exprParams[2].m_toeValue = 1023;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kExpr, 0));
+
+  // Set the clock and update to trigger the commit
+  clock.setClock(0);
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
 
   // Load back and verify original values persisted
   logicalState.m_exprParams[2].m_state = ExprState::kInactive;
@@ -486,7 +621,8 @@ void test_preset_mode_ignores_tap_save() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   eeprom.reset();
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Save tap in program mode
   logicalState.m_tapState = TapState::kEnabled;
@@ -495,6 +631,10 @@ void test_preset_mode_ignores_tap_save() {
   logicalState.m_divInterval = 200;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTap, 0));
 
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
+
   // Switch to preset mode and try to save different tap values
   logicalState.m_programMode = ProgramMode::kPreset;
   logicalState.m_tapState = TapState::kDisabled;
@@ -502,6 +642,11 @@ void test_preset_mode_ignores_tap_save() {
   logicalState.m_interval = 800;
   logicalState.m_divInterval = 100;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTap, 0));
+
+  // Set the clock and update to trigger the commit
+  clock.setClock(0);
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
 
   // Load back and verify original values persisted
   logicalState.m_tapState = TapState::kDisabled;
@@ -520,16 +665,27 @@ void test_preset_mode_ignores_tempo_save() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   eeprom.reset();
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Save tempo in program mode
   logicalState.m_tempo = 500;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTempo, 0));
 
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
+
   // Switch to preset mode and try to save different tempo
   logicalState.m_programMode = ProgramMode::kPreset;
   logicalState.m_tempo = 999;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTempo, 0));
+
+  // Set the clock and update to trigger the commit
+  clock.setClock(0);
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
+
 
   // Load back and verify original value persisted
   logicalState.m_tempo = 0;
@@ -546,12 +702,17 @@ void test_preset_mode_still_saves_bypass() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   eeprom.reset();
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Save bypass in preset mode
   logicalState.m_programMode = ProgramMode::kPreset;
   logicalState.m_bypassState = BypassState::kBypassed;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kBypass, 0));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
 
   // Modify and reload
   logicalState.m_bypassState = BypassState::kActive;
@@ -571,6 +732,10 @@ void test_preset_mode_still_saves_program() {
   logicalState.m_currentProgram = 5;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kProgram, 0));
 
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
+
   // Modify and reload
   logicalState.m_currentProgram = 0;
   settingsService.handleEvent(makeMemoryLoadGeneralEvent());
@@ -582,11 +747,16 @@ void test_preset_mode_still_saves_program_mode() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   eeprom.reset();
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Save program mode while in preset mode
   logicalState.m_programMode = ProgramMode::kPreset;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kProgramMode, 0));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
 
   // Modify and reload
   logicalState.m_programMode = ProgramMode::kProgram;
@@ -599,7 +769,12 @@ void test_preset_mode_still_saves_general() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   eeprom.reset();
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
 
   // Save general in preset mode
   logicalState.m_programMode = ProgramMode::kPreset;
@@ -620,7 +795,8 @@ void test_preset_mode_still_saves_general() {
 void test_interested_in_memory() {
   LogicalState logicalState;
   MockEEPROM eeprom;
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   Event e;
   e.m_domain = EventDomain::kMemory;
@@ -631,7 +807,8 @@ void test_interested_in_memory() {
 void test_interested_in_memory_but_not_preset() {
   LogicalState logicalState;
   MockEEPROM eeprom;
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   Event e;
   e.m_domain = EventDomain::kMemory;
@@ -643,7 +820,8 @@ void test_interested_in_memory_but_not_preset() {
 void test_interested_in_memory_but_not_preset_bank() {
   LogicalState logicalState;
   MockEEPROM eeprom;
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   Event e;
   e.m_domain = EventDomain::kMemory;
@@ -655,7 +833,8 @@ void test_interested_in_memory_but_not_preset_bank() {
 void test_not_interested_in_other_events() {
   LogicalState logicalState;
   MockEEPROM eeprom;
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   Event e;
 
@@ -705,7 +884,8 @@ void test_preset_mode_pot_save_sets_dirty() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   eeprom.reset();
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   logicalState.m_programMode = ProgramMode::kPreset;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, 0, PotId::kPot0));
@@ -717,7 +897,8 @@ void test_preset_mode_tap_save_sets_dirty() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   eeprom.reset();
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   logicalState.m_programMode = ProgramMode::kPreset;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTap, 0));
@@ -729,7 +910,8 @@ void test_preset_mode_tempo_save_sets_dirty() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   eeprom.reset();
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   logicalState.m_programMode = ProgramMode::kPreset;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTempo, 0));
@@ -741,7 +923,8 @@ void test_preset_mode_expr_save_sets_dirty() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   eeprom.reset();
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   logicalState.m_programMode = ProgramMode::kPreset;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kExpr, 0));
@@ -753,7 +936,8 @@ void test_program_mode_pot_save_does_not_set_dirty() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   eeprom.reset();
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   logicalState.m_programMode = ProgramMode::kProgram;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, 0, PotId::kPot0));
@@ -768,6 +952,7 @@ int main() {
   RUN_TEST(test_init_loads_logical_state_from_eeprom);
 
   // Edit timeout tests
+  RUN_TEST(test_system_state_request_committed_immediately);
   RUN_TEST(test_request_not_committed_if_not_edit_timeout);
   RUN_TEST(test_request_committed_if_edit_timeout);
   RUN_TEST(test_successive_requests_not_commited_if_not_edit_timeout);
