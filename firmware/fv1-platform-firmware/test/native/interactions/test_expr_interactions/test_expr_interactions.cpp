@@ -132,14 +132,38 @@ void test_expr_params_persist() {
 
   // Set some params
   fix.publishAndDispatchAllEvents(makeUIExprEvent(ExprParam::kState));
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
+
   fix.logicalState.m_currentProgram = 2;
   fix.publishAndDispatchAllEvents(makeUIExprEvent(ExprParam::kDirection));
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
+
   fix.logicalState.m_currentProgram = 4;
   fix.publishAndDispatchAllEvents(makeUIExprEvent(ExprParam::kHeel, 20));
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
+
   fix.logicalState.m_currentProgram = 5;
   fix.publishAndDispatchAllEvents(makeUIExprEvent(ExprParam::kToe, -20));
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
+
   fix.logicalState.m_currentProgram = 7;
   fix.publishAndDispatchAllEvents(makeUIExprEvent(ExprParam::kMappedPot, 2));
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
 
   // Reset
   fix.init();
