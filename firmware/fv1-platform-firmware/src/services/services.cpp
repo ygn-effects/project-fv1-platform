@@ -6,7 +6,7 @@ LogicalState logicalState;
 
 FsmService fsmService(logicalState);
 MidiService midiService(logicalState, hal::midiSerial, hal::clock);
-SettingsService settingsService(logicalState, hal::eeprom);
+SettingsService settingsService(logicalState, hal::eeprom, hal::clock);
 PresetBankService presetBankService(logicalState, hal::eeprom);
 PresetBankService presetService(logicalState, hal::eeprom);
 ProgramModeService programModeService(logicalState, hal::programModeLed);
