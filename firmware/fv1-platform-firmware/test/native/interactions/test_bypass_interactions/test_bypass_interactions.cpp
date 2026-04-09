@@ -311,6 +311,10 @@ void test_toggle_bypass_on_persists() {
   // Send footswitch event
   fix.publishAndDispatchAllEvents(makeDriverSwitchPressedEvent(SwitchId::kBypass));
 
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
+
   // Reset EEPROM
   fix.init();
 
@@ -328,6 +332,10 @@ void test_toggle_bypass_off_persists() {
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Send footswitch event
   fix.publishAndDispatchAllEvents(makeDriverSwitchPressedEvent(SwitchId::kBypass));
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
 
   // Reset EEPROM
   fix.init();

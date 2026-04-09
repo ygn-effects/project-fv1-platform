@@ -28,15 +28,18 @@ void SettingsService::handleEvent(const Event& t_event) {
 
     switch (t_event.m_subject) {
       case EventSubject::kBypass:
-
+        m_dirtyFlags |= static_cast<uint8_t>(DirtyBits::kBypass);
+        m_lastEditTime = t_event.m_timestamp;
         break;
 
       case EventSubject::kProgramMode:
-
+        m_dirtyFlags |= static_cast<uint8_t>(DirtyBits::kProgramMode);
+        m_lastEditTime = t_event.m_timestamp;
         break;
 
       case EventSubject::kProgram:
-
+          m_dirtyFlags |= static_cast<uint8_t>(DirtyBits::kProgram);
+          m_lastEditTime = t_event.m_timestamp;
         break;
 
       case EventSubject::kTap:
@@ -44,7 +47,8 @@ void SettingsService::handleEvent(const Event& t_event) {
           m_logicalState.m_presetDirty = true;
         }
         else {
-
+          m_dirtyFlags |= static_cast<uint8_t>(DirtyBits::kTap);
+          m_lastEditTime = t_event.m_timestamp;
         }
         break;
 
@@ -53,7 +57,8 @@ void SettingsService::handleEvent(const Event& t_event) {
           m_logicalState.m_presetDirty = true;
         }
         else {
-
+          m_dirtyFlags |= static_cast<uint8_t>(DirtyBits::kTempo);
+          m_lastEditTime = t_event.m_timestamp;
         }
         break;
 
@@ -62,7 +67,8 @@ void SettingsService::handleEvent(const Event& t_event) {
           m_logicalState.m_presetDirty = true;
         }
         else {
-
+          m_dirtyFlags |= static_cast<uint8_t>(DirtyBits::kExpr);
+          m_lastEditTime = t_event.m_timestamp;
         }
         break;
 
@@ -71,12 +77,35 @@ void SettingsService::handleEvent(const Event& t_event) {
           m_logicalState.m_presetDirty = true;
         }
         else {
+          m_dirtyFlags |= static_cast<uint8_t>(DirtyBits::kPot);
 
+          switch (static_cast<PotId>(t_event.m_id)) {
+            case PotId::kPot0:
+              m_dirtyPotFlags |= static_cast<uint8_t>(DirtyPotBits::kPot0);
+              break;
+
+            case PotId::kPot1:
+              m_dirtyPotFlags |= static_cast<uint8_t>(DirtyPotBits::kPot1);
+              break;
+
+            case PotId::kPot2:
+              m_dirtyPotFlags |= static_cast<uint8_t>(DirtyPotBits::kPot2);
+              break;
+
+            case PotId::kMixPot:
+              m_dirtyPotFlags |= static_cast<uint8_t>(DirtyPotBits::kMixPot);
+              break;
+
+            default:
+              break;
+          }
+
+          m_lastEditTime = t_event.m_timestamp;
         }
         break;
 
       case EventSubject::kGeneral:
-
+        saveRegion(MemoryRegion::kLogicalState);
         break;
 
       default:
@@ -97,7 +126,63 @@ void SettingsService::handleEvent(const Event& t_event) {
 }
 
 void SettingsService::update() {
+  if (m_dirtyFlags) {
+    uint32_t now = m_clock.now();
 
+    if ((now - m_lastEditTime) >= SettingsServiceConstants::c_editTimeout) {
+      if (m_dirtyFlags & static_cast<uint8_t>(DirtyBits::kBypass)) {
+        saveRegion(MemoryRegion::kBypass);
+        m_dirtyFlags &= ~static_cast<uint8_t>(DirtyBits::kBypass);
+      }
+
+      if (m_dirtyFlags & static_cast<uint8_t>(DirtyBits::kProgramMode)) {
+        saveRegion(MemoryRegion::kProgramMode);
+        m_dirtyFlags &= ~static_cast<uint8_t>(DirtyBits::kProgramMode);
+      }
+
+      if (m_dirtyFlags & static_cast<uint8_t>(DirtyBits::kProgram)) {
+        saveRegion(MemoryRegion::kCurrentProgram);
+        m_dirtyFlags &= ~static_cast<uint8_t>(DirtyBits::kProgram);
+      }
+
+      if (m_dirtyFlags & static_cast<uint8_t>(DirtyBits::kTap)) {
+        saveRegion(MemoryRegion::kTap);
+        m_dirtyFlags &= ~static_cast<uint8_t>(DirtyBits::kTap);
+      }
+
+      if (m_dirtyFlags & static_cast<uint8_t>(DirtyBits::kTempo)) {
+        saveRegion(MemoryRegion::kTempo);
+        m_dirtyFlags &= ~static_cast<uint8_t>(DirtyBits::kTempo);
+      }
+
+      if (m_dirtyFlags & static_cast<uint8_t>(DirtyBits::kExpr)) {
+        saveRegion(MemoryRegion::kExpr, m_logicalState.m_currentProgram);
+        m_dirtyFlags &= ~static_cast<uint8_t>(DirtyBits::kExpr);
+      }
+
+      if (m_dirtyFlags & static_cast<uint8_t>(DirtyBits::kPot)) {
+        if (m_dirtyPotFlags & static_cast<uint8_t>(DirtyPotBits::kPot0)) {
+          saveRegion(MemoryRegion::kPot, m_logicalState.m_currentProgram, static_cast<uint8_t>(PotId::kPot0));
+          m_dirtyPotFlags &= ~static_cast<uint8_t>(DirtyPotBits::kPot0);
+        }
+
+        if (m_dirtyPotFlags & static_cast<uint8_t>(DirtyPotBits::kPot1)) {
+          saveRegion(MemoryRegion::kPot, m_logicalState.m_currentProgram, static_cast<uint8_t>(PotId::kPot1));
+          m_dirtyPotFlags &= ~static_cast<uint8_t>(DirtyPotBits::kPot1);
+        }
+
+        if (m_dirtyPotFlags & static_cast<uint8_t>(DirtyPotBits::kPot2)) {
+          saveRegion(MemoryRegion::kPot, m_logicalState.m_currentProgram, static_cast<uint8_t>(PotId::kPot2));
+          m_dirtyPotFlags &= ~static_cast<uint8_t>(DirtyPotBits::kPot2);
+        }
+
+        if (m_dirtyPotFlags & static_cast<uint8_t>(DirtyPotBits::kMixPot)) {
+          saveRegion(MemoryRegion::kPot, m_logicalState.m_currentProgram, static_cast<uint8_t>(PotId::kMixPot));
+          m_dirtyPotFlags &= ~static_cast<uint8_t>(DirtyPotBits::kMixPot);
+        }
+      }
+    }
+  }
 }
 
 bool SettingsService::interestedIn(const Event& t_event) const {

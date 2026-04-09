@@ -130,6 +130,15 @@ Event makeMemoryGeneralLoadEvent() {
   return e;
 }
 
+Event makeTempoInputValueChanged(uint16_t t_value) {
+  Event e{};
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kTempo;
+  e.m_action = EventAction::kInputChanged;
+  e.m_data.value = t_value;
+  return e;
+}
+
 void setUp() {
 
 }
@@ -153,6 +162,10 @@ void test_bypass_save_persists_on_reinit() {
   fix.logicalState.m_bypassState = BypassState::kActive;
   fix.publishAndDispatchAllEvents(makeMemoryBypassSaveEvent());
 
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
+
   // Reinit and verify state loaded from EEPROM
   fix.init();
   TEST_ASSERT_EQUAL(BypassState::kActive, fix.logicalState.m_bypassState);
@@ -173,6 +186,10 @@ void test_program_mode_save_persists_on_reinit() {
   fix.logicalState.m_programMode = ProgramMode::kPreset;
   fix.publishAndDispatchAllEvents(makeMemoryProgramModeSaveEvent());
 
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
+
   // Reinit and verify state loaded from EEPROM
   fix.init();
   TEST_ASSERT_EQUAL(ProgramMode::kPreset, fix.logicalState.m_programMode);
@@ -192,6 +209,10 @@ void test_current_program_save_persists_on_reinit() {
   // Change program and save
   fix.logicalState.m_currentProgram = 7;
   fix.publishAndDispatchAllEvents(makeMemoryProgramSaveEvent());
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
 
   // Reinit and verify state loaded from EEPROM
   fix.init();
@@ -214,6 +235,10 @@ void test_tap_save_persists_on_reinit() {
   fix.logicalState.m_interval = 600;
   fix.publishAndDispatchAllEvents(makeMemoryTapSaveEvent());
 
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
+
   // Reinit and verify state loaded from EEPROM
   fix.init();
   TEST_ASSERT_EQUAL(TapState::kEnabled, fix.logicalState.m_tapState);
@@ -232,12 +257,17 @@ void test_tempo_save_persists_on_reinit() {
   fix.clearEventBus();
 
   // Change tempo and save
-  fix.logicalState.m_tempo = 800;
+  fix.publishAndDispatchAllEvents(makeTempoInputValueChanged(800));
   fix.publishAndDispatchAllEvents(makeMemoryTempoSaveEvent());
+
+  for (uint16_t i = 0; i <= SettingsServiceConstants::c_editTimeout; i +=20) {
+    fix.mockClock.setClock(i);
+    fix.updateAllServices();
+  }
 
   // Reinit and verify state loaded from EEPROM
   fix.init();
-  TEST_ASSERT_EQUAL(800, fix.logicalState.m_tempo);
+  TEST_ASSERT_EQUAL(786, fix.logicalState.m_tempo);
 }
 
 // =============================================================================
@@ -256,6 +286,10 @@ void test_expr_save_persists_on_reinit() {
   fix.logicalState.m_exprParams[3].m_state = ExprState::kActive;
   fix.logicalState.m_exprParams[3].m_heelValue = 200;
   fix.publishAndDispatchAllEvents(makeMemoryExprSaveEvent());
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
 
   // Reinit and verify state loaded from EEPROM
   fix.init();
@@ -278,6 +312,10 @@ void test_pot_save_persists_on_reinit() {
   // Change pot value and save
   fix.logicalState.m_potParams[4][1].m_value = 768;
   fix.publishAndDispatchAllEvents(makeMemoryPotSaveEvent(1));
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
 
   // Reinit and verify state loaded from EEPROM
   fix.init();
@@ -341,24 +379,28 @@ void test_save_after_load_round_trip() {
   InteractionFixture fix;
 
   // Initial state
-  fix.logicalState.m_tempo = 500;
+  fix.logicalState.m_currentProgram = 1;
   fix.syncEepromWithState();
 
   // Modify in memory
-  fix.logicalState.m_tempo = 0;
+  fix.logicalState.m_currentProgram = 0;
 
   // Load from EEPROM
   fix.publishAndDispatchAllEvents(makeMemoryGeneralLoadEvent());
-  TEST_ASSERT_EQUAL(500, fix.logicalState.m_tempo);
+  TEST_ASSERT_EQUAL(1, fix.logicalState.m_currentProgram);
 
   // Modify and save
-  fix.logicalState.m_tempo = 750;
-  fix.publishAndDispatchAllEvents(makeMemoryTempoSaveEvent());
+  fix.logicalState.m_currentProgram = 2;
+  fix.publishAndDispatchAllEvents(makeMemoryProgramSaveEvent());
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
 
   // Reset state and load again
-  fix.logicalState.m_tempo = 0;
+  fix.logicalState.m_currentProgram = 1;
   fix.publishAndDispatchAllEvents(makeMemoryGeneralLoadEvent());
-  TEST_ASSERT_EQUAL(750, fix.logicalState.m_tempo);
+  TEST_ASSERT_EQUAL(2, fix.logicalState.m_currentProgram);
 }
 
 // =============================================================================

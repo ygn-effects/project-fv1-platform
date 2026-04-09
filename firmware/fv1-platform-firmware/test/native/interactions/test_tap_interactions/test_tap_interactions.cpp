@@ -154,6 +154,10 @@ void test_driver_tap_switch_two_taps_persist() {
   // Send second tap
   fix.publishAndDispatchAllEvents(makeDriverSwitchPressedEvent(SwitchId::kTap, 400));
 
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
+
   // Reset EEPROM
   fix.init();
 
@@ -271,6 +275,10 @@ void test_driver_tap_switch_long_press_persists() {
   fix.publishAndDispatchAllEvents(makeBootEvent());
   // Long press
   fix.publishAndDispatchAllEvents(makeDriverSwitchLongPressedEvent(SwitchId::kTap, 200));
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
 
   // Reset EEPROM
   fix.init();
@@ -545,6 +553,10 @@ void test_tap_persist() {
   fix.publishAndDispatchAllEvents(makeDriverSwitchPressedEvent(SwitchId::kTap, 400));
   // Long press
   fix.publishAndDispatchAllEvents(makeDriverSwitchLongPressedEvent(SwitchId::kTap, 600));
+
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
 
   // Reset
   fix.init();

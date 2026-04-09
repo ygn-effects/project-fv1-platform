@@ -266,6 +266,10 @@ void test_tempo_persists() {
   fix.publishAndDispatchAllEvents(makeLogicTapValueChangedEvent(500));
   fix.updateAllServices();
 
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
+
   // Reset
   fix.init();
 
