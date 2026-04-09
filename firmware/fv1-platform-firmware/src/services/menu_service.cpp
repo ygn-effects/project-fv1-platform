@@ -10,6 +10,7 @@ void MenuService::publishUIMenuLockedEvent() const {
   e.m_domain = EventDomain::kUI;
   e.m_subject = EventSubject::kMenu;
   e.m_action = EventAction::kLocked;
+  e.m_timestamp = m_clock.now();
 
   EventBus::publish(e);
 }
@@ -19,6 +20,7 @@ void MenuService::publishUIMenuUnlockedEvent() const {
   e.m_domain = EventDomain::kUI;
   e.m_subject = EventSubject::kMenu;
   e.m_action = EventAction::kUnlocked;
+  e.m_timestamp = m_clock.now();
 
   EventBus::publish(e);
 }
@@ -29,6 +31,7 @@ void MenuService::publishUIMenuUpdatedEvent() {
   e.m_subject = EventSubject::kMenu;
   e.m_action = EventAction::kUpdated;
   e.m_data.ptr = static_cast<void*>(&m_handler.m_view);
+  e.m_timestamp = m_clock.now();
 
   EventBus::publish(e);
 }

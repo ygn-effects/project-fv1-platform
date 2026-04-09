@@ -71,7 +71,7 @@ class InteractionFixture {
     InteractionFixture()
       : fsmService(logicalState)
       , midiService(logicalState, mockSerial, mockClock)
-      , settingsService(logicalState, mockEeprom)
+      , settingsService(logicalState, mockEeprom, mockClock)
       , presetBankService(logicalState, mockEeprom)
       , presetService(logicalState, mockEeprom)
       , programModeService(logicalState, mockProgramModeLed)

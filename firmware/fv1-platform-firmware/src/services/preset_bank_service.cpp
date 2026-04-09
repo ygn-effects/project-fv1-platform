@@ -15,6 +15,7 @@ void PresetBankService::publishSavePresetBankEvent(const Event& t_event) const {
   e.m_domain = EventDomain::kMemory;
   e.m_subject = EventSubject::kPresetBank;
   e.m_action = EventAction::kSave;
+  e.m_timestamp = t_event.m_timestamp;
 
   EventBus::publish(e);
 }
@@ -24,6 +25,7 @@ void PresetBankService::publishPresetBankValueChangedEvent(const Event& t_event)
   e.m_domain = EventDomain::kLogic;
   e.m_subject = EventSubject::kPresetBank;
   e.m_action = EventAction::kValueChanged;
+  e.m_timestamp = t_event.m_timestamp;
 
   EventBus::publish(e);
 }

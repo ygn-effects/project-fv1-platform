@@ -477,6 +477,10 @@ void test_pot_params_persists() {
   fix.publishAndDispatchAllEvents(makeUIPotSettingChangedEvent(PotId::kPot1, PotParam::kMinValue, 20));
   fix.publishAndDispatchAllEvents(makeUIPotSettingChangedEvent(PotId::kMixPot, PotParam::kMaxValue, -100));
 
+  // Advance clock and update
+  fix.mockClock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  fix.updateAllServices();
+
   // Reset
   fix.init();
 

@@ -22,6 +22,7 @@ void TempoService::publishSaveTempoEvent(uint16_t t_interval) const {
   e.m_domain = EventDomain::kMemory;
   e.m_subject = EventSubject::kTempo;
   e.m_action = EventAction::kSave;
+  e.m_timestamp = m_clock.now();
 
   EventBus::publish(e);
 }

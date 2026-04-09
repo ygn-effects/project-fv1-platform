@@ -13,6 +13,7 @@ void TapService::publishTapIntervalEvent(const Event& t_event) const {
   e.m_domain = EventDomain::kLogic;
   e.m_subject = EventSubject::kTap;
   e.m_action = EventAction::kValueChanged;
+  e.m_timestamp = t_event.m_timestamp;
   e.m_data.value = m_tapHandler.m_divState == DivState::kDisabled
                     ? m_tapHandler.m_interval
                     : m_tapHandler.m_divInterval;
@@ -25,6 +26,7 @@ void TapService::publishSaveTapEvent(const Event& t_event) const {
   e.m_domain = EventDomain::kMemory;
   e.m_subject = EventSubject::kTap;
   e.m_action = EventAction::kSave;
+  e.m_timestamp = t_event.m_timestamp;
 
   EventBus::publish(e);
 }

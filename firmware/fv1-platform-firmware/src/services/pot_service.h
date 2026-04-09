@@ -17,7 +17,7 @@ class PotService : public Service {
     void syncHandler();
     void copyPotValues(uint8_t t_targetProgram);
     void publishPotValueChangedEvent(uint8_t t_potIndex, uint32_t t_timestamp);
-    void publishSavePotEvent(uint8_t t_potIndex);
+    void publishSavePotEvent(uint8_t t_potIndex, uint32_t t_timestamp);
     void publishTempoInputEvent(uint16_t t_value, uint32_t t_timestamp);
 
     void handlePhysicalEvent(const Event& t_event);
