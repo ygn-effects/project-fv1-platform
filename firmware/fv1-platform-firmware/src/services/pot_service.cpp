@@ -19,13 +19,13 @@ void PotService::publishPotValueChangedEvent(uint8_t t_potIndex, uint32_t t_time
   EventBus::publish(e);
 }
 
-void PotService::publishSavePotEvent(uint8_t t_potIndex) {
+void PotService::publishSavePotEvent(uint8_t t_potIndex, uint32_t t_timestamp) {
   Event e;
   e.m_domain = EventDomain::kMemory;
   e.m_subject = EventSubject::kPot;
   e.m_action = EventAction::kSave;
   e.m_id = t_potIndex;
-  e.m_timestamp = 0; // millis()
+  e.m_timestamp = t_timestamp;
 
   EventBus::publish(e);
 }
@@ -98,21 +98,21 @@ void PotService::handleMenuPotStateToggleEvent(const Event& t_event, uint8_t t_p
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
   params[t_potIndex].m_state = m_handler.togglePotState(t_potIndex);
 
-  publishSavePotEvent(t_potIndex);
+  publishSavePotEvent(t_potIndex, t_event.m_timestamp);
 }
 
 void PotService::handleMenuPotMinValueMove(const Event& t_event, uint8_t t_potIndex) {
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
   params[t_potIndex].m_minValue = m_handler.changePotMinValue(t_event.m_data.delta, t_potIndex);
 
-  publishSavePotEvent(t_potIndex);
+  publishSavePotEvent(t_potIndex, t_event.m_timestamp);
 }
 
 void PotService::handleMenuPotMaxValueMove(const Event& t_event, uint8_t t_potIndex) {
   auto& params = m_logicalState.m_potParams[m_logicalState.m_currentProgram];
   params[t_potIndex].m_maxValue = m_handler.changePotMaxValue(t_event.m_data.delta, t_potIndex);
 
-  publishSavePotEvent(t_potIndex);
+  publishSavePotEvent(t_potIndex, t_event.m_timestamp);
 }
 
 void PotService::copyPotValues(uint8_t t_targetProgram) {

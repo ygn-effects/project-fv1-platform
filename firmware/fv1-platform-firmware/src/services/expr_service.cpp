@@ -15,7 +15,7 @@ void ExprService::publishSaveExprEvent(const Event& t_event) {
   e.m_domain = EventDomain::kMemory;
   e.m_subject = EventSubject::kExpr;
   e.m_action = EventAction::kSave;
-  e.m_timestamp = t_event.m_timestamp; // millis()
+  e.m_timestamp = t_event.m_timestamp;
 
   EventBus::publish(e);
 }

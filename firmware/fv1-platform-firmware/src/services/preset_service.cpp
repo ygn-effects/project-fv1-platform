@@ -18,6 +18,7 @@ void PresetService::publishSavePresetEvent(const Event& t_event) {
   e.m_domain = EventDomain::kMemory;
   e.m_subject = EventSubject::kPreset;
   e.m_action = EventAction::kSave;
+  e.m_timestamp = t_event.m_timestamp;
 
   EventBus::publish(e);
 }
