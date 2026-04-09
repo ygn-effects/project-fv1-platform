@@ -67,7 +67,8 @@ void test_init_loads_logical_state_from_eeprom() {
     logicalState.m_programMode = ProgramMode::kPreset;
     logicalState.m_tempo = 750;
 
-    SettingsService settingsService(logicalState, eeprom);
+    MockedClock clock;
+    SettingsService settingsService(logicalState, eeprom, clock);
     settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kGeneral, 0));
   }
 
@@ -78,7 +79,8 @@ void test_init_loads_logical_state_from_eeprom() {
   newLogicalState.m_programMode = ProgramMode::kProgram;
   newLogicalState.m_tempo = 0;
 
-  SettingsService newSettingsService(newLogicalState, eeprom);
+  MockedClock clock;
+  SettingsService newSettingsService(newLogicalState, eeprom, clock);
 
   // Init should load from EEPROM
   newSettingsService.init();
@@ -135,6 +137,16 @@ void test_request_not_committed_if_not_edit_timeout() {
   MockedClock clock;
   SettingsService settingsService(logicalState, eeprom, clock);
 
+  // Create first service and save some state to EEPROM
+  {
+    LogicalState logicalState;
+    logicalState.m_bypassState = BypassState::kActive;
+
+    MockedClock clock;
+    SettingsService settingsService(logicalState, eeprom, clock);
+    settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kGeneral, 0));
+  }
+
   // Set bypass state and send the save event
   logicalState.m_bypassState = BypassState::kBypassed;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kBypass, 0));
@@ -183,6 +195,18 @@ void test_successive_requests_not_commited_if_not_edit_timeout() {
   MockedClock clock;
   SettingsService settingsService(logicalState, eeprom, clock);
 
+  // Create first service and save some state to EEPROM
+  {
+    LogicalState logicalState;
+    logicalState.m_bypassState = BypassState::kActive;
+    logicalState.m_currentProgram = 0;
+    logicalState.m_tempo = 0;
+
+    MockedClock clock;
+    SettingsService settingsService(logicalState, eeprom, clock);
+    settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kGeneral, 0));
+  }
+
   // Set bypass state and send the save event
   logicalState.m_bypassState = BypassState::kBypassed;
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kBypass, 0));
@@ -204,7 +228,7 @@ void test_successive_requests_not_commited_if_not_edit_timeout() {
   settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTempo, 1000));
 
   // Set the clock and update to trigger the commit
-  clock.advanceBy(1000);
+  clock.advanceBy(500);
   settingsService.update();
 
   // Set the clock and update to trigger the commit
@@ -275,6 +299,20 @@ void test_only_requests_committed_if_edit_timeout() {
   MockedClock clock;
   SettingsService settingsService(logicalState, eeprom, clock);
 
+  // Create first service and save some state to EEPROM
+  {
+    LogicalState logicalState;
+    logicalState.m_bypassState = BypassState::kActive;
+    logicalState.m_currentProgram = 1;
+    logicalState.m_tempo = 100;
+    logicalState.m_tapState = TapState::kEnabled;
+    logicalState.m_interval = 500;
+
+    MockedClock clock;
+    SettingsService settingsService(logicalState, eeprom, clock);
+    settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kGeneral, 0));
+  }
+
   // Set state
   logicalState.m_tapState = TapState::kEnabled;
   logicalState.m_interval = 500;
@@ -313,7 +351,7 @@ void test_only_requests_committed_if_edit_timeout() {
   // Test logical state
   TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
   TEST_ASSERT_EQUAL(2, logicalState.m_currentProgram);
-  TEST_ASSERT_EQUAL(500, logicalState.m_tempo);
+  TEST_ASSERT_EQUAL(200, logicalState.m_tempo);
   TEST_ASSERT_EQUAL(TapState::kEnabled, logicalState.m_tapState);
   TEST_ASSERT_EQUAL(500, logicalState.m_interval);
 }
@@ -725,7 +763,8 @@ void test_preset_mode_still_saves_program() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   eeprom.reset();
-  SettingsService settingsService(logicalState, eeprom);
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
 
   // Save program in preset mode
   logicalState.m_programMode = ProgramMode::kPreset;
