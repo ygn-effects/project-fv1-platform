@@ -1,10 +1,5 @@
 #include "services/menu_service.h"
 
-void MenuService::syncSavePresetState() {
-  m_logicState.m_saveTargetBank = m_logicState.m_currentPresetBank;
-  m_logicState.m_saveTargetPreset = m_logicState.m_currentPreset;
-}
-
 void MenuService::publishUIMenuLockedEvent() const {
   Event e;
   e.m_domain = EventDomain::kUI;
@@ -147,21 +142,7 @@ void MenuService::handleUnlocked(const Event& t_event) {
     }
 
     if (t_event.m_domain == EventDomain::kUI) {
-      if (t_event.m_subject == EventSubject::kPreset
-          && t_event.m_action == EventAction::kSettingChanged) {
-        switch (static_cast<SavePresetParam>(t_event.m_id)) {
-          case SavePresetParam::kTargetBank:
-            m_logicState.m_saveTargetBank = Utils::clampedAdd(m_logicState.m_saveTargetBank, t_event.m_data.delta, PresetConstants::c_presetBankCount - 1);
-            break;
-
-          case SavePresetParam::kTargetPreset:
-            m_logicState.m_saveTargetPreset = Utils::clampedAdd(m_logicState.m_saveTargetPreset, t_event.m_data.delta, PresetConstants::c_presetPerBank - 1);
-            break;
-
-          default:
-            break;
-        }
-
+      if (t_event.m_action == EventAction::kSettingChanged) {
         publishViewUpdate();
         return;
       }
@@ -276,7 +257,6 @@ void MenuService::init() {
     m_handler.unlock(m_logicState);
   }
 
-  syncSavePresetState();
   publishViewUpdate();
 }
 
@@ -285,10 +265,6 @@ void MenuService::handleEvent(const Event& t_event) {
     if (t_event.m_subject == EventSubject::kProgram
         && t_event.m_action == EventAction::kValueChanged) {
       publishViewUpdate();
-
-      if (m_logicState.m_programMode == ProgramMode::kPreset) {
-        syncSavePresetState();
-      }
     }
   }
 
@@ -364,8 +340,7 @@ bool MenuService::interestedIn(const Event& t_event) const {
   }
 
   if (t_event.m_domain == EventDomain::kUI) {
-    if (t_event.m_subject == EventSubject::kPreset
-        && t_event.m_action == EventAction::kSettingChanged) return true;
+    if (t_event.m_action == EventAction::kSettingChanged) return true;
   }
 
   return false;
