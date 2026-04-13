@@ -1,5 +1,9 @@
 #include "services/preset_bank_service.h"
 
+void PresetBankService::syncSavePresetState() {
+  m_logicalState.m_saveTargetBank = m_logicalState.m_currentPresetBank;
+}
+
 void PresetBankService::loadPresetBank(uint8_t t_bankIndex, PresetBank& t_presetBank) {
   RegionInfo info = m_handler.calculateRegionInfo(MemoryRegion::kPresetBank, t_bankIndex);
 
@@ -31,6 +35,7 @@ void PresetBankService::publishPresetBankValueChangedEvent(const Event& t_event)
 }
 
 void PresetBankService::init() {
+  syncSavePresetState();
   loadPresetBank(m_logicalState.m_currentPresetBank, m_logicalState.m_loadedPresetBank);
 }
 
@@ -41,6 +46,7 @@ void PresetBankService::handleEvent(const Event& t_event) {
       uint8_t bank = Utils::wrappedAdd(m_logicalState.m_currentPresetBank, t_event.m_data.delta, PresetConstants::c_presetBankCount);
 
       loadPresetBank(bank, m_logicalState.m_loadedPresetBank);
+      syncSavePresetState();
       publishPresetBankValueChangedEvent(t_event);
       publishSavePresetBankEvent(t_event);
 
@@ -57,6 +63,13 @@ void PresetBankService::handleEvent(const Event& t_event) {
         return;
       }
     }
+
+    if (t_event.m_subject == EventSubject::kPreset
+        && t_event.m_action == EventAction::kSettingChanged) {
+      if (static_cast<SavePresetParam>(t_event.m_id) == SavePresetParam::kTargetBank) {
+        m_logicalState.m_saveTargetBank = Utils::clampedAdd(m_logicalState.m_saveTargetBank, t_event.m_data.delta, PresetConstants::c_presetBankCount - 1);
+      }
+    }
   }
 
   if (t_event.m_domain == EventDomain::kMidi) {
@@ -68,6 +81,7 @@ void PresetBankService::handleEvent(const Event& t_event) {
 
       if (targetBank != m_logicalState.m_currentPresetBank) {
         loadPresetBank(targetBank, m_logicalState.m_loadedPresetBank);
+        syncSavePresetState();
         publishSavePresetBankEvent(t_event);
 
         return;
@@ -87,6 +101,9 @@ bool PresetBankService::interestedIn(const Event& t_event) const {
 
     if (t_event.m_subject == EventSubject::kPreset
         && t_event.m_action == EventAction::kSave) return true;
+
+    if (t_event.m_subject == EventSubject::kPreset
+        && t_event.m_action == EventAction::kSettingChanged) return true;
   }
 
   if (t_event.m_domain == EventDomain::kMidi) {

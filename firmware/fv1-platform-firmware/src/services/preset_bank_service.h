@@ -15,6 +15,7 @@ class PresetBankService : public Service {
     MemoryHandler m_handler;
     EEPROM& m_eeprom;
 
+    void syncSavePresetState();
     void loadPresetBank(uint8_t t_bankIndex, PresetBank& t_bank);
     void publishSavePresetBankEvent(const Event& t_event) const;
     void publishPresetBankValueChangedEvent(const Event& t_event) const;
