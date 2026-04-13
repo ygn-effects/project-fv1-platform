@@ -146,6 +146,11 @@ void MenuService::handleUnlocked(const Event& t_event) {
         publishViewUpdate();
         return;
       }
+
+      if (t_event.m_action == EventAction::kSettingToggled) {
+        publishViewUpdate();
+        return;
+      }
     }
   }
   else {
@@ -341,6 +346,8 @@ bool MenuService::interestedIn(const Event& t_event) const {
 
   if (t_event.m_domain == EventDomain::kUI) {
     if (t_event.m_action == EventAction::kSettingChanged) return true;
+
+    if (t_event.m_action == EventAction::kSettingToggled) return true;
   }
 
   return false;
