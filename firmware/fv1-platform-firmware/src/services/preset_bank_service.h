@@ -8,6 +8,7 @@
 #include "logic/memory_handler.h"
 #include "logic/preset.h"
 #include "ui/inputs.h"
+#include "ui/settings.h"
 
 class PresetBankService : public Service {
   private:
