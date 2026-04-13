@@ -1,5 +1,9 @@
 #include "services/preset_service.h"
 
+void PresetService::syncSavePresetState() {
+  m_logicalState.m_saveTargetPreset = m_logicalState.m_currentPreset;
+}
+
 void PresetService::applyPreset() {
   m_presetHandler.applyToState(m_logicalState, m_logicalState.m_currentPreset);
   m_logicalState.m_presetDirty = false;
@@ -24,6 +28,8 @@ void PresetService::publishSavePresetEvent(const Event& t_event) {
 }
 
 void PresetService::init() {
+  syncSavePresetState();
+
   if (m_logicalState.m_programMode == ProgramMode::kPreset) {
     applyPreset();
   }
@@ -34,10 +40,18 @@ void PresetService::handleEvent(const Event& t_event) {
     if (t_event.m_subject == EventSubject::kPreset
         && t_event.m_action == EventAction::kValueChanged) {
       m_logicalState.m_currentPreset = Utils::wrappedAdd(m_logicalState.m_currentPreset, t_event.m_data.delta, PresetConstants::c_presetPerBank);
+      syncSavePresetState();
       applyPreset();
       publishSavePresetEvent(t_event);
 
       return;
+    }
+
+    if (t_event.m_subject == EventSubject::kPreset
+        && t_event.m_action == EventAction::kSettingChanged) {
+      if (static_cast<SavePresetParam>(t_event.m_id) == SavePresetParam::kTargetPreset) {
+        m_logicalState.m_saveTargetPreset = Utils::clampedAdd(m_logicalState.m_saveTargetPreset, t_event.m_data.delta, PresetConstants::c_presetPerBank - 1);
+      }
     }
 
     if (t_event.m_subject == EventSubject::kPreset
@@ -61,6 +75,7 @@ void PresetService::handleEvent(const Event& t_event) {
       if (targetPreset >= PresetConstants::c_presetPerBank) return;
 
       m_logicalState.m_currentPreset = targetPreset;
+      syncSavePresetState();
       applyPreset();
       publishSavePresetEvent(t_event);
 
@@ -72,6 +87,7 @@ void PresetService::handleEvent(const Event& t_event) {
     if (t_event.m_subject == EventSubject::kSwitch
         && t_event.m_action == EventAction::kPressed) {
       m_logicalState.m_currentPreset = Utils::wrappedAdd(m_logicalState.m_currentPreset, 1, PresetConstants::c_presetPerBank);
+      syncSavePresetState();
       applyPreset();
       publishSavePresetEvent(t_event);
 
@@ -81,6 +97,7 @@ void PresetService::handleEvent(const Event& t_event) {
     if (t_event.m_subject == EventSubject::kSwitch
         && t_event.m_action == EventAction::kLongPressed) {
       m_logicalState.m_currentPreset = Utils::wrappedAdd(m_logicalState.m_currentPreset, -1, PresetConstants::c_presetPerBank);
+      syncSavePresetState();
       applyPreset();
       publishSavePresetEvent(t_event);
 
@@ -97,6 +114,7 @@ void PresetService::handleEvent(const Event& t_event) {
     if (t_event.m_subject == EventSubject::kPresetBank
         && t_event.m_action == EventAction::kValueChanged) {
       m_logicalState.m_currentPreset = 0;
+      syncSavePresetState();
       applyPreset();
       publishSavePresetEvent(t_event);
 
@@ -116,6 +134,9 @@ bool PresetService::interestedIn(const Event& t_event) const {
 
     if (t_event.m_subject == EventSubject::kPreset
         && t_event.m_action == EventAction::kSave) return true;
+
+    if (t_event.m_subject == EventSubject::kPreset
+        && t_event.m_action == EventAction::kSettingChanged) return true;
   }
 
   if (t_event.m_domain == EventDomain::kMidi) {

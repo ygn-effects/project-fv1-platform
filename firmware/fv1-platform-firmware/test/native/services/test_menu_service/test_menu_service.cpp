@@ -101,6 +101,26 @@ Event makeUIPresetSettingChangeEvent(SavePresetParam t_param, int16_t t_delta = 
   return e;
 }
 
+Event makeUIExprSettingChangeEvent(ExprParam t_param, int16_t t_delta = 0) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = static_cast<uint8_t>(t_param);
+  e.m_data.delta = t_delta;
+  return e;
+}
+
+Event makeUIPotSettingChangeEvent(PotParam t_param, int16_t t_delta = 0) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = static_cast<uint8_t>(t_param);
+  e.m_data.delta = t_delta;
+  return e;
+}
+
 void assertMenuLockedEventPublished() {
   TEST_ASSERT_TRUE_MESSAGE(EventBus::hasEvent(), "Expected kLocked event but bus was empty");
   Event e;
@@ -188,21 +208,6 @@ void test_init_starts_locked_preset_mode() {
 
   // Menu locked so no events
   assertNoMoreEvents();
-}
-
-void test_init_syncs_save_bank_preset_to_logical_state() {
-  LogicalState logicalState;
-  logicalState.m_currentPresetBank = 2;
-  logicalState.m_currentPreset = 1;
-  MockedClock mockClock;
-  MockLed mockLed;
-  MenuService service(logicalState, mockLed, mockClock);
-
-  service.init();
-  clearEventBus();
-
-  TEST_ASSERT_EQUAL(2, logicalState.m_saveTargetBank);
-  TEST_ASSERT_EQUAL(1, logicalState.m_saveTargetPreset);
 }
 
 void test_init_initializes_led() {
@@ -545,46 +550,6 @@ void test_menu_encoder_long_press_publishes_updated_when_unlocked() {
   assertNoMoreEvents();
 }
 
-void test_ui_preset_setting_changed_sets_logical_state_target_preset() {
-  LogicalState logicalState;
-  logicalState.m_currentPresetBank = 2;
-  logicalState.m_currentPreset = 1;
-  MockedClock mockClock;
-  MockLed mockLed;
-  MenuService service(logicalState, mockLed, mockClock);
-
-  service.init();
-  clearEventBus();
-
-  // Menu encoder long press
-  service.handleEvent(makeUIPresetSettingChangeEvent(SavePresetParam::kTargetPreset, 1));
-
-  TEST_ASSERT_EQUAL(2, logicalState.m_saveTargetPreset);
-
-  assertMenuUpdatedEventPublished();
-  assertNoMoreEvents();
-}
-
-void test_ui_preset_setting_changed_sets_logical_state_target_bank() {
-  LogicalState logicalState;
-  logicalState.m_currentPresetBank = 2;
-  logicalState.m_currentPreset = 1;
-  MockedClock mockClock;
-  MockLed mockLed;
-  MenuService service(logicalState, mockLed, mockClock);
-
-  service.init();
-  clearEventBus();
-
-  // Menu encoder long press
-  service.handleEvent(makeUIPresetSettingChangeEvent(SavePresetParam::kTargetBank, 1));
-
-  TEST_ASSERT_EQUAL(3, logicalState.m_saveTargetBank);
-
-  assertMenuUpdatedEventPublished();
-  assertNoMoreEvents();
-}
-
 // =============================================================================
 // Editing Mode Tests
 // =============================================================================
@@ -797,11 +762,12 @@ void test_program_change_publishes_updated() {
   assertNoMoreEvents();
 }
 
-void test_program_change_syncs_save_bank_preset_to_logical_state_preset_mode() {
+// =============================================================================
+// Settings change
+// =============================================================================
+
+void test_expr_setting_change_publishes_updated_event() {
   LogicalState logicalState;
-  logicalState.m_programMode = ProgramMode::kPreset;
-  logicalState.m_currentPresetBank = 3;
-  logicalState.m_currentPreset = 2;
   MockedClock mockClock;
   MockLed mockLed;
   MenuService service(logicalState, mockLed, mockClock);
@@ -809,18 +775,14 @@ void test_program_change_syncs_save_bank_preset_to_logical_state_preset_mode() {
   service.init();
   clearEventBus();
 
-  logicalState.m_currentPreset = 1;
-  service.handleEvent(makeLogicProgramChangedEvent(1));
+  service.handleEvent(makeUIExprSettingChangeEvent(ExprParam::kState));
 
-  TEST_ASSERT_EQUAL(3, logicalState.m_saveTargetBank);
-  TEST_ASSERT_EQUAL(1, logicalState.m_saveTargetPreset);
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
 }
 
-void test_program_change_not_syncs_save_bank_preset_to_logical_state_program_mode() {
+void test_pot_setting_change_publishes_updated_event() {
   LogicalState logicalState;
-  logicalState.m_programMode = ProgramMode::kPreset;
-  logicalState.m_currentPresetBank = 3;
-  logicalState.m_currentPreset = 2;
   MockedClock mockClock;
   MockLed mockLed;
   MenuService service(logicalState, mockLed, mockClock);
@@ -828,10 +790,25 @@ void test_program_change_not_syncs_save_bank_preset_to_logical_state_program_mod
   service.init();
   clearEventBus();
 
-  service.handleEvent(makeLogicProgramChangedEvent(1));
+  service.handleEvent(makeUIPotSettingChangeEvent(PotParam::kState));
 
-  TEST_ASSERT_EQUAL(3, logicalState.m_saveTargetBank);
-  TEST_ASSERT_EQUAL(2, logicalState.m_saveTargetPreset);
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_preset_save_setting_change_publishes_updated_event() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  service.handleEvent(makeUIPresetSettingChangeEvent(SavePresetParam::kTargetBank));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
 }
 
 // =============================================================================
@@ -908,13 +885,33 @@ void test_interested_in_logic_program_changed() {
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
-void test_interested_in_ui_preset_seting_changed() {
+void test_interested_in_ui_preset_setting_changed() {
   LogicalState logicalState;
   MockedClock mockClock;
   MockLed mockLed;
   MenuService service(logicalState, mockLed, mockClock);
 
   Event e = makeUIPresetSettingChangeEvent(SavePresetParam::kTargetBank);
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
+void test_interested_in_ui_expr_setting_changed() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  Event e = makeUIExprSettingChangeEvent(ExprParam::kState);
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
+void test_interested_in_ui_pot_setting_changed() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  Event e = makeUIPotSettingChangeEvent(PotParam::kState);
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
@@ -1013,7 +1010,6 @@ int main() {
   RUN_TEST(test_init_publishes_updated_event);
   RUN_TEST(test_init_starts_unlocked_program_mode);
   RUN_TEST(test_init_starts_locked_preset_mode);
-  RUN_TEST(test_init_syncs_save_bank_preset_to_logical_state);
   RUN_TEST(test_init_initializes_led);
   RUN_TEST(test_init_active_sets_led_on);
   RUN_TEST(test_init_bypass_sets_led_off);
@@ -1044,8 +1040,6 @@ int main() {
 
   // Preset Save Overlay
   RUN_TEST(test_menu_encoder_long_press_publishes_updated_when_unlocked);
-  RUN_TEST(test_ui_preset_setting_changed_sets_logical_state_target_bank);
-  RUN_TEST(test_ui_preset_setting_changed_sets_logical_state_target_preset);
 
   // Editing Mode
   RUN_TEST(test_editing_encoder_delta_publishes_updated);
@@ -1061,8 +1055,11 @@ int main() {
 
   // Program change
   RUN_TEST(test_program_change_publishes_updated);
-  RUN_TEST(test_program_change_syncs_save_bank_preset_to_logical_state_preset_mode);
-  RUN_TEST(test_program_change_not_syncs_save_bank_preset_to_logical_state_program_mode);
+
+  // Settings change
+  RUN_TEST(test_expr_setting_change_publishes_updated_event);
+  RUN_TEST(test_pot_setting_change_publishes_updated_event);
+  RUN_TEST(test_preset_save_setting_change_publishes_updated_event);
 
   // interestedIn
   RUN_TEST(test_interested_in_physical_switch_long_press_menu_lock);
@@ -1072,7 +1069,9 @@ int main() {
   RUN_TEST(test_interested_in_logic_tempo_value_changed);
   RUN_TEST(test_interested_in_logic_bypass_toggled);
   RUN_TEST(test_interested_in_logic_program_changed);
-  RUN_TEST(test_interested_in_ui_preset_seting_changed);
+  RUN_TEST(test_interested_in_ui_preset_setting_changed);
+  RUN_TEST(test_interested_in_ui_expr_setting_changed);
+  RUN_TEST(test_interested_in_ui_pot_setting_changed);
   RUN_TEST(test_not_interested_in_other_switches);
   RUN_TEST(test_not_interested_in_switch_press);
   RUN_TEST(test_not_interested_in_other_encoders);
