@@ -16,25 +16,25 @@ SerialDriver midiSerial(31250);
 
 SSD1306Driver display;
 
-Pcf8574Expander expander(0x20);
+Pcf8574Expander expander(0x38);
 
 ExpanderGpioDriver menuEncoderPinA(1, GpioConfig::kInputPullup, expander);
 ExpanderGpioDriver menuEncoderPinB(2, GpioConfig::kInputPullup, expander);
 EncoderDriver menuEncoder(menuEncoderPinA, menuEncoderPinB, EncoderId::kMenuEncoder);
 
-ExpanderGpioDriver menuEncoderSwitchPin(4, GpioConfig::kInputPullup, expander);
+ExpanderGpioDriver menuEncoderSwitchPin(3, GpioConfig::kInputPullup, expander);
 SwitchDriver menuEncoderSwitch(menuEncoderSwitchPin, SwitchId::kMenuEncoder);
 
-ExpanderGpioDriver programModeSwitchPin(3, GpioConfig::kInputPullup, expander);
+ExpanderGpioDriver programModeSwitchPin(4, GpioConfig::kInputPullup, expander);
 SwitchDriver programModeSwitch(programModeSwitchPin, SwitchId::kProgramMode);
 
-ExpanderGpioDriver programModeLedPin(0, GpioConfig::kOutput, expander);
+ExpanderGpioDriver programModeLedPin(6, GpioConfig::kOutput, expander);
 LedDriver programModeLed(programModeLedPin);
 
 ExpanderGpioDriver menuLockSwitchPin(5, GpioConfig::kInputPullup, expander);
 SwitchDriver menuLockSwitch(menuLockSwitchPin, SwitchId::kMenuLock);
 
-ExpanderGpioDriver menuLockLedPin(6, GpioConfig::kOutput, expander);
+ExpanderGpioDriver menuLockLedPin(7, GpioConfig::kOutput, expander);
 LedDriver menuLockLed(menuLockLedPin);
 
 DigitalGpioDriver bypassSwitchPin(22, GpioConfig::kInputPullup);
