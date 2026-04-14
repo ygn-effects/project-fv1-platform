@@ -111,6 +111,16 @@ Event makeUIExprSettingChangeEvent(ExprParam t_param, int16_t t_delta = 0) {
   return e;
 }
 
+Event makeUIExprSettingToggleEvent(ExprParam t_param, int16_t t_delta = 0) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kSettingToggled;
+  e.m_id = static_cast<uint8_t>(t_param);
+  e.m_data.delta = t_delta;
+  return e;
+}
+
 Event makeUIPotSettingChangeEvent(PotParam t_param, int16_t t_delta = 0) {
   Event e;
   e.m_domain = EventDomain::kUI;
@@ -118,6 +128,24 @@ Event makeUIPotSettingChangeEvent(PotParam t_param, int16_t t_delta = 0) {
   e.m_action = EventAction::kSettingChanged;
   e.m_id = static_cast<uint8_t>(t_param);
   e.m_data.delta = t_delta;
+  return e;
+}
+
+Event makeUIPotSettingToggleEvent(PotParam t_param, int16_t t_delta = 0) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPot;
+  e.m_action = EventAction::kSettingToggled;
+  e.m_id = static_cast<uint8_t>(t_param);
+  e.m_data.delta = t_delta;
+  return e;
+}
+
+Event makeUIPresetSaveEvent() {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSave;
   return e;
 }
 
@@ -550,6 +578,27 @@ void test_menu_encoder_long_press_publishes_updated_when_unlocked() {
   assertNoMoreEvents();
 }
 
+void test_preset_save_event_publishes_updated() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Menu encoder long press to bring up the overlay
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuEncoder));
+
+  clearEventBus();
+
+  // UI save preset event
+  service.handleEvent(makeUIPresetSaveEvent());
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
 // =============================================================================
 // Editing Mode Tests
 // =============================================================================
@@ -781,6 +830,21 @@ void test_expr_setting_change_publishes_updated_event() {
   assertNoMoreEvents();
 }
 
+void test_expr_setting_toggle_publishes_updated_event() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  service.handleEvent(makeUIExprSettingToggleEvent(ExprParam::kState));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
 void test_pot_setting_change_publishes_updated_event() {
   LogicalState logicalState;
   MockedClock mockClock;
@@ -791,6 +855,21 @@ void test_pot_setting_change_publishes_updated_event() {
   clearEventBus();
 
   service.handleEvent(makeUIPotSettingChangeEvent(PotParam::kState));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_pot_setting_toggle_publishes_updated_event() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  service.handleEvent(makeUIPotSettingToggleEvent(PotParam::kState));
 
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
@@ -905,6 +984,16 @@ void test_interested_in_ui_expr_setting_changed() {
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
+void test_interested_in_ui_expr_setting_toggled() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  Event e = makeUIExprSettingToggleEvent(ExprParam::kState);
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
 void test_interested_in_ui_pot_setting_changed() {
   LogicalState logicalState;
   MockedClock mockClock;
@@ -912,6 +1001,26 @@ void test_interested_in_ui_pot_setting_changed() {
   MenuService service(logicalState, mockLed, mockClock);
 
   Event e = makeUIPotSettingChangeEvent(PotParam::kState);
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
+void test_interested_in_ui_pot_setting_toggled() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  Event e = makeUIPotSettingToggleEvent(PotParam::kState);
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
+void test_interested_in_ui_preset_saved() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  Event e = makeUIPresetSaveEvent();
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
@@ -1040,6 +1149,7 @@ int main() {
 
   // Preset Save Overlay
   RUN_TEST(test_menu_encoder_long_press_publishes_updated_when_unlocked);
+  RUN_TEST(test_preset_save_event_publishes_updated);
 
   // Editing Mode
   RUN_TEST(test_editing_encoder_delta_publishes_updated);
@@ -1058,7 +1168,9 @@ int main() {
 
   // Settings change
   RUN_TEST(test_expr_setting_change_publishes_updated_event);
+  RUN_TEST(test_expr_setting_toggle_publishes_updated_event);
   RUN_TEST(test_pot_setting_change_publishes_updated_event);
+  RUN_TEST(test_pot_setting_toggle_publishes_updated_event);
   RUN_TEST(test_preset_save_setting_change_publishes_updated_event);
 
   // interestedIn
@@ -1071,7 +1183,10 @@ int main() {
   RUN_TEST(test_interested_in_logic_program_changed);
   RUN_TEST(test_interested_in_ui_preset_setting_changed);
   RUN_TEST(test_interested_in_ui_expr_setting_changed);
+  RUN_TEST(test_interested_in_ui_expr_setting_toggled);
   RUN_TEST(test_interested_in_ui_pot_setting_changed);
+  RUN_TEST(test_interested_in_ui_pot_setting_toggled);
+  RUN_TEST(test_interested_in_ui_preset_saved);
   RUN_TEST(test_not_interested_in_other_switches);
   RUN_TEST(test_not_interested_in_switch_press);
   RUN_TEST(test_not_interested_in_other_encoders);
