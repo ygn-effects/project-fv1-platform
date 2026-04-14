@@ -164,6 +164,14 @@ Event makeUIPresetSettingChangeEvent(SavePresetParam t_param, int16_t t_delta = 
   return e;
 }
 
+Event makeUIPresetSaveEvent() {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSave;
+  return e;
+}
+
 void setUp() {
 
 }
@@ -1226,6 +1234,38 @@ void test_menu_encoder_long_press_show_preset_saving_menu_unlocked() {
   TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Preset save"));
 }
 
+void test_ui_preset_save_pops_save_overlay() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Encoder long press to bring the save overlay
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kMenuEncoder));
+  fix.updateAllServices();
+
+    // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Send the save event
+  fix.publishAndDispatchAllEvents(makeUIPresetSaveEvent());
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Header
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Program mode"));
+}
+
 // =============================================================================
 // Value Change Display Updates
 // =============================================================================
@@ -1799,6 +1839,7 @@ int main() {
 
   // Preset Saving
   RUN_TEST(test_menu_encoder_long_press_show_preset_saving_menu_unlocked);
+  RUN_TEST(test_ui_preset_save_pops_save_overlay);
 
   // Value Change Display Updates
   RUN_TEST(test_program_value_change_update_display_unlocked);

@@ -141,6 +141,14 @@ Event makeUIPotSettingToggleEvent(PotParam t_param, int16_t t_delta = 0) {
   return e;
 }
 
+Event makeUIPresetSaveEvent() {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSave;
+  return e;
+}
+
 void assertMenuLockedEventPublished() {
   TEST_ASSERT_TRUE_MESSAGE(EventBus::hasEvent(), "Expected kLocked event but bus was empty");
   Event e;
@@ -570,6 +578,27 @@ void test_menu_encoder_long_press_publishes_updated_when_unlocked() {
   assertNoMoreEvents();
 }
 
+void test_preset_save_event_publishes_updated() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Menu encoder long press to bring up the overlay
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuEncoder));
+
+  clearEventBus();
+
+  // UI save preset event
+  service.handleEvent(makeUIPresetSaveEvent());
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
 // =============================================================================
 // Editing Mode Tests
 // =============================================================================
@@ -985,6 +1014,16 @@ void test_interested_in_ui_pot_setting_toggled() {
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
+void test_interested_in_ui_preset_saved() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  Event e = makeUIPresetSaveEvent();
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
 void test_not_interested_in_other_switches() {
   LogicalState logicalState;
   MockedClock mockClock;
@@ -1110,6 +1149,7 @@ int main() {
 
   // Preset Save Overlay
   RUN_TEST(test_menu_encoder_long_press_publishes_updated_when_unlocked);
+  RUN_TEST(test_preset_save_event_publishes_updated);
 
   // Editing Mode
   RUN_TEST(test_editing_encoder_delta_publishes_updated);
@@ -1146,6 +1186,7 @@ int main() {
   RUN_TEST(test_interested_in_ui_expr_setting_toggled);
   RUN_TEST(test_interested_in_ui_pot_setting_changed);
   RUN_TEST(test_interested_in_ui_pot_setting_toggled);
+  RUN_TEST(test_interested_in_ui_preset_saved);
   RUN_TEST(test_not_interested_in_other_switches);
   RUN_TEST(test_not_interested_in_switch_press);
   RUN_TEST(test_not_interested_in_other_encoders);

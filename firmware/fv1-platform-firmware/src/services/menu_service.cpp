@@ -151,6 +151,15 @@ void MenuService::handleUnlocked(const Event& t_event) {
         publishViewUpdate();
         return;
       }
+
+      if (t_event.m_subject == EventSubject::kPreset
+          && t_event.m_action == EventAction::kSave) {
+        if (m_savePresetMenuActive) {
+          m_handler.popOverlay();
+          publishViewUpdate();
+          return;
+        }
+      }
     }
   }
   else {
@@ -348,6 +357,9 @@ bool MenuService::interestedIn(const Event& t_event) const {
     if (t_event.m_action == EventAction::kSettingChanged) return true;
 
     if (t_event.m_action == EventAction::kSettingToggled) return true;
+
+    if (t_event.m_subject == EventSubject::kPreset
+        && t_event.m_action == EventAction::kSave) return true;
   }
 
   return false;
