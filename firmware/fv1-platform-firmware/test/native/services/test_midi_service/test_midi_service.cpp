@@ -55,11 +55,11 @@ Event makeLogicProgramChangedEvent(uint8_t t_programId) {
   return e;
 }
 
-Event makeMidiChannelChangeEvent(int16_t t_delta) {
+Event makeUIMidiChannelSettingChanged(int16_t t_delta) {
   Event e;
-  e.m_domain = EventDomain::kMidi;
-  e.m_subject = EventSubject::kGeneral;
-  e.m_action = EventAction::kValueChanged;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kMidiChannel;
+  e.m_action = EventAction::kSettingChanged;
   e.m_data.delta = t_delta;
   return e;
 }
@@ -487,35 +487,6 @@ void test_successive_cc_messages_processed() {
 }
 
 // =============================================================================
-// handleEvent Tests - Program Change Sync
-// =============================================================================
-
-void test_program_change_syncs_handler() {
-  LogicalState logicalState;
-  MockedClock clock;
-  MockedSerial serial;
-  MidiService midiService(logicalState, serial, clock);
-
-  // Change MIDI channel in logical state
-  logicalState.m_midiChannel = 3;
-
-  midiService.init();
-
-  // Trigger program change event
-  midiService.handleEvent(makeLogicProgramChangedEvent(1));
-
-  // Handler should now be synced with channel 3
-  serial.feedByte(0xB3);  // CC on channel 3
-  serial.feedByte(MidiBytes::c_ccPot0);
-  serial.feedByte(50);
-
-  midiService.update();
-
-  assertMidiPotEventPublished(PotId::kPot0, 50);
-  assertEventBusEmpty();
-}
-
-// =============================================================================
 // handleEvent Tests - MIDI Channel Change
 // =============================================================================
 
@@ -528,7 +499,7 @@ void test_midi_channel_change_updates_state() {
   logicalState.m_midiChannel = 0;
   midiService.init();
 
-  midiService.handleEvent(makeMidiChannelChangeEvent(1));
+  midiService.handleEvent(makeUIMidiChannelSettingChanged(1));
 
   TEST_ASSERT_EQUAL(1, logicalState.m_midiChannel);
   assertMemorySaveEventPublished();
@@ -545,7 +516,7 @@ void test_midi_channel_change_wraps_at_max() {
   logicalState.m_midiChannel = MidiHandlerConstants::c_maxMidiChannels - 1;
   midiService.init();
 
-  midiService.handleEvent(makeMidiChannelChangeEvent(1));
+  midiService.handleEvent(makeUIMidiChannelSettingChanged(1));
 
   TEST_ASSERT_EQUAL(0, logicalState.m_midiChannel);
   assertMemorySaveEventPublished();
@@ -561,7 +532,7 @@ void test_midi_channel_change_wraps_at_min() {
   logicalState.m_midiChannel = 0;
   midiService.init();
 
-  midiService.handleEvent(makeMidiChannelChangeEvent(-1));
+  midiService.handleEvent(makeUIMidiChannelSettingChanged(-1));
 
   // Wraps to max-1 since valid channels are 0 to (max-1)
   TEST_ASSERT_EQUAL(MidiHandlerConstants::c_maxMidiChannels - 1, logicalState.m_midiChannel);
@@ -579,7 +550,7 @@ void test_midi_channel_change_syncs_handler() {
   midiService.init();
 
   // Change to channel 5
-  midiService.handleEvent(makeMidiChannelChangeEvent(5));
+  midiService.handleEvent(makeUIMidiChannelSettingChanged(5));
   clearEventBus();
 
   // Messages on channel 5 should now be processed
@@ -597,21 +568,21 @@ void test_midi_channel_change_syncs_handler() {
 // interestedIn Tests
 // =============================================================================
 
-void test_interested_in_midi_channel_change() {
+void test_interested_in_ui_midi_channel_change() {
   LogicalState logicalState;
   MockedClock clock;
   MockedSerial serial;
   MidiService midiService(logicalState, serial, clock);
 
   Event e;
-  e.m_domain = EventDomain::kMidi;
-  e.m_subject = EventSubject::kGeneral;
-  e.m_action = EventAction::kValueChanged;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kMidiChannel;
+  e.m_action = EventAction::kSettingChanged;
 
   TEST_ASSERT_TRUE(midiService.interestedIn(e));
 }
 
-void test_interested_in_logic_program_change() {
+void test_not_interested_in_logic_program_change() {
   LogicalState logicalState;
   MockedClock clock;
   MockedSerial serial;
@@ -622,7 +593,7 @@ void test_interested_in_logic_program_change() {
   e.m_subject = EventSubject::kProgram;
   e.m_action = EventAction::kValueChanged;
 
-  TEST_ASSERT_TRUE(midiService.interestedIn(e));
+  TEST_ASSERT_FALSE(midiService.interestedIn(e));
 }
 
 void test_not_interested_in_midi_pot_events() {
@@ -750,9 +721,6 @@ int main() {
   // Successive Messages
   RUN_TEST(test_successive_cc_messages_processed);
 
-  // handleEvent - Program Change Sync
-  RUN_TEST(test_program_change_syncs_handler);
-
   // handleEvent - MIDI Channel Change
   RUN_TEST(test_midi_channel_change_updates_state);
   RUN_TEST(test_midi_channel_change_wraps_at_max);
@@ -760,8 +728,8 @@ int main() {
   RUN_TEST(test_midi_channel_change_syncs_handler);
 
   // interestedIn
-  RUN_TEST(test_interested_in_midi_channel_change);
-  RUN_TEST(test_interested_in_logic_program_change);
+  RUN_TEST(test_interested_in_ui_midi_channel_change);
+  RUN_TEST(test_not_interested_in_logic_program_change);
   RUN_TEST(test_not_interested_in_midi_pot_events);
   RUN_TEST(test_not_interested_in_midi_switch_events);
   RUN_TEST(test_not_interested_in_midi_program_events);
