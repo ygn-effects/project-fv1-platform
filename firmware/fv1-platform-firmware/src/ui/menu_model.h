@@ -109,6 +109,8 @@ constexpr const char* labelPotSettings(const LogicalState* t_state);
 constexpr const char* labelPresetBankSaveTarget(const LogicalState* t_state);
 constexpr const char* labelPresetSaveTarget(const LogicalState* t_state);
 constexpr const char* labelSave(const LogicalState* t_state);
+constexpr const char* labelMidiChannel(const LogicalState* t_state);
+constexpr const char* labelGlobalSettings(const LogicalState* t_state);
 
 constexpr const char* valueProgram(const LogicalState* t_state);
 const char* valuePresetBank(const LogicalState* t_state);
@@ -140,6 +142,7 @@ const char* valuePot2MaxValue(const LogicalState* t_state);
 const char* valueMixPotMaxValue(const LogicalState* t_state);
 const char* valuePresetBankSaveTarget(const LogicalState* t_state);
 const char* valuePresetSaveTarget(const LogicalState* t_state);
+const char* valueMidiChannel(const LogicalState* t_state);
 
 void onMoveProgram(int8_t t_delta);
 void onMovePot0(int8_t t_delta);
@@ -161,6 +164,7 @@ void onMovePot2MaxValue(int8_t t_delta);
 void onMoveMixPotMaxValue(int8_t t_delta);
 void onMovePresetBankSaveTarget(int8_t t_delta);
 void onMovePresetSaveTarget(int8_t t_delta);
+void onMoveMidiChannel(int8_t t_delta);
 
 void onClickExprState();
 void onClickExprDirection();
@@ -178,5 +182,6 @@ extern const MenuPage MixPotValueMenuPage;
 extern const MenuPage TempoMenuPage;
 extern const MenuPage PotSettingsMenuPage;
 extern const MenuPage SavePresetMenuPage;
+extern const MenuPage GlobalSettingsMenuPage;
 
 } // namespace ui
