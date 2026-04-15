@@ -8,7 +8,7 @@ FsmService fsmService(logicalState);
 MidiService midiService(logicalState, hal::midiSerial, hal::clock);
 SettingsService settingsService(logicalState, hal::eeprom, hal::clock);
 PresetBankService presetBankService(logicalState, hal::eeprom);
-PresetBankService presetService(logicalState, hal::eeprom);
+PresetService presetService(logicalState, hal::eeprom);
 ProgramModeService programModeService(logicalState, hal::programModeLed);
 ProgramService programService(logicalState);
 BypassService bypassService(logicalState, hal::bypass);
