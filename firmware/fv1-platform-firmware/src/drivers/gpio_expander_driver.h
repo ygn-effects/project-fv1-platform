@@ -35,7 +35,12 @@ class ExpanderGpioDriver : public DigitalGpio {
     }
 
     void write(bool t_value) override {
-      m_expander.writePin(m_pin, t_value);
+      if (m_config == GpioConfig::kOutput) {
+        m_expander.writePin(m_pin, !t_value);
+      }
+      else {
+        m_expander.writePin(m_pin, t_value);
+      }
     }
 };
 
