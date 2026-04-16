@@ -343,6 +343,9 @@ bool MenuService::interestedIn(const Event& t_event) const {
     if (t_event.m_subject == EventSubject::kTempo
         && t_event.m_action == EventAction::kValueChanged) return true;
 
+    if (t_event.m_subject == EventSubject::kProgramMode
+        && t_event.m_action == EventAction::kToggled) return true;
+
     if (t_event.m_subject == EventSubject::kProgram
         && t_event.m_action == EventAction::kValueChanged) return true;
 

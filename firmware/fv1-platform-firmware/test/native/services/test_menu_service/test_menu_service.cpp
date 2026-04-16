@@ -82,6 +82,14 @@ Event makeLogicBypassToggledEvent(uint32_t t_timestamp = 0) {
   return e;
 }
 
+Event makeLogicProgramModeToggledEvent() {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kProgramMode;
+  e.m_action = EventAction::kToggled;
+  return e;
+}
+
 Event makeLogicProgramChangedEvent(uint8_t t_programId) {
   Event e;
   e.m_domain = EventDomain::kLogic;
@@ -793,6 +801,92 @@ void test_update_does_nothing_when_locked() {
 }
 
 // =============================================================================
+// Program mode change
+// =============================================================================
+
+void test_program_mode_change_preset_locks_menu_if_unlocked() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  // Program mode start unlocked
+  service.init();
+  clearEventBus();
+
+  // Program mode change
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kProgramMode, 0));
+
+  assertMenuLockedEventPublished();
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_program_mode_change_preset_not_locks_menu_if_locked() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  // Program mode start unlocked
+  service.init();
+  clearEventBus();
+
+  // Lock
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 0));
+  clearEventBus();
+
+  // Program mode change
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kProgramMode, 0));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_program_mode_change_program_unlocks_menu_if_locked() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
+
+  // Preset mode start locked
+  service.init();
+  clearEventBus();
+
+  // Program mode change
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kProgramMode, 0));
+
+  assertMenuUnlockedEventPublished();
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_program_mode_change_program_not_unlocks_menu_if_unlocked() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_programMode = ProgramMode::kPreset;
+
+  // Preset mode start locked
+  service.init();
+  clearEventBus();
+
+  // Unlock
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 0));
+  clearEventBus();
+
+  // Program mode change
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kProgramMode, 0));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+// =============================================================================
 // Program change
 // =============================================================================
 
@@ -951,6 +1045,16 @@ void test_interested_in_logic_bypass_toggled() {
   MenuService service(logicalState, mockLed, mockClock);
 
   Event e = makeLogicBypassToggledEvent();
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
+void test_interested_in_logic_program_mode_toggled() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  Event e = makeLogicProgramModeToggledEvent();
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
@@ -1163,6 +1267,12 @@ int main() {
   RUN_TEST(test_update_pops_tempo_overlay_after_timeout);
   RUN_TEST(test_update_does_nothing_when_locked);
 
+  // Program mode change
+  RUN_TEST(test_program_mode_change_preset_locks_menu_if_unlocked);
+  RUN_TEST(test_program_mode_change_preset_not_locks_menu_if_locked);
+  RUN_TEST(test_program_mode_change_program_unlocks_menu_if_locked);
+  RUN_TEST(test_program_mode_change_program_not_unlocks_menu_if_unlocked);
+
   // Program change
   RUN_TEST(test_program_change_publishes_updated);
 
@@ -1181,6 +1291,7 @@ int main() {
   RUN_TEST(test_interested_in_logic_tempo_value_changed);
   RUN_TEST(test_interested_in_logic_bypass_toggled);
   RUN_TEST(test_interested_in_logic_program_changed);
+  RUN_TEST(test_interested_in_logic_program_mode_toggled);
   RUN_TEST(test_interested_in_ui_preset_setting_changed);
   RUN_TEST(test_interested_in_ui_expr_setting_changed);
   RUN_TEST(test_interested_in_ui_expr_setting_toggled);

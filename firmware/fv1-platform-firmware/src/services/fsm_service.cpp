@@ -209,6 +209,18 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
+      // Program mode switch long press
+      if (isLongPressed(t_event, SwitchId::kProgramMode)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Program mode toggle
+      if (isProgramModeToggled(t_event)) {
+        transitionTo(AppState::kPresetIdle);
+        return;
+      }
+
       // Expr move
       if (isExprValueChanged(t_event)) {
         rePublishPhysicalEvent(t_event);
@@ -331,6 +343,18 @@ void FsmService::handleEvent(const Event& t_event) {
       // Pot move
       if (isPotValueChanged(t_event)) {
         rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Program mode switch long press
+      if (isLongPressed(t_event, SwitchId::kProgramMode)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Program mode toggle
+      if (isProgramModeToggled(t_event)) {
+        transitionTo(AppState::kProgramEdit);
         return;
       }
 
