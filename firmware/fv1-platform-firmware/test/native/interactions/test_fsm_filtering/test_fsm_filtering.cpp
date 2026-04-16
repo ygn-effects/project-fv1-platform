@@ -635,6 +635,22 @@ void test_program_edit_republishes_expr_move() {
   TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
 }
 
+void test_program_edit_republishes_program_mode_long_press() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kProgram;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.fsmService.setAppState(AppState::kProgramEdit);
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverSwitchLongPress(SwitchId::kProgramMode);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
 void test_program_edit_republishes_menu_lock_long_press() {
   InteractionFixture fix;
   fix.logicalState.m_bypassState = BypassState::kActive;
@@ -987,6 +1003,22 @@ void test_preset_edit_republishes_menu_lock_long_press() {
   TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
 }
 
+void test_preset_edit_republishes_program_mode_long_press() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.fsmService.setAppState(AppState::kPresetEdit);
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverSwitchLongPress(SwitchId::kProgramMode);
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
 // =============================================================================
 // Main
 // =============================================================================
@@ -1037,6 +1069,7 @@ int main() {
   RUN_TEST(test_program_edit_republishes_pot2_move);
   RUN_TEST(test_program_edit_republishes_expr_move);
   RUN_TEST(test_program_edit_republishes_menu_lock_long_press);
+  RUN_TEST(test_program_edit_republishes_program_mode_long_press);
 
   // kPresetIdle - Limited republishing
   RUN_TEST(test_preset_idle_republishes_bypass_press);
@@ -1062,6 +1095,7 @@ int main() {
   RUN_TEST(test_preset_edit_republishes_pot2_move);
   RUN_TEST(test_preset_edit_republishes_expr_move);
   RUN_TEST(test_preset_edit_republishes_menu_lock_long_press);
+  RUN_TEST(test_preset_edit_republishes_program_mode_long_press);
 
   return UNITY_END();
 }

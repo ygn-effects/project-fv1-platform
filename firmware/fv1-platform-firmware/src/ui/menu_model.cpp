@@ -202,6 +202,14 @@ inline constexpr const char* labelSave(const LogicalState* t_state) {
   return "Save";
 }
 
+inline constexpr const char* labelMidiChannel(const LogicalState* t_state) {
+  return "MIDI Channel";
+}
+
+inline constexpr const char* labelGlobalSettings(const LogicalState* t_state) {
+  return "Global settings";
+}
+
 const char* valuePresetBank(const LogicalState* t_state) {
   static char buffer[8];
   snprintf(buffer, sizeof(buffer), "%u", t_state->m_currentPresetBank);
@@ -435,6 +443,13 @@ const char* valuePresetSaveTarget(const LogicalState* t_state) {
   return buffer;
 }
 
+const char* valueMidiChannel(const LogicalState* t_state) {
+  static char buffer[8];
+  snprintf(buffer, sizeof(buffer), "%u", t_state->m_midiChannel);
+
+  return buffer;
+}
+
 void onMovePresetBank(int8_t t_delta) {
   Event e;
   e.m_domain = EventDomain::kUI;
@@ -640,6 +655,16 @@ void onMoveMixPotMaxValue(int8_t t_delta) {
   EventBus::publish(e);
 }
 
+void onMoveMidiChannel(int8_t t_delta) {
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kMidiChannel;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_timestamp = 0;
+  e.m_data.delta = t_delta;
+  EventBus::publish(e);
+}
+
 void onClickExprState() {
   Event e;
   e.m_domain = EventDomain::kUI;
@@ -727,7 +752,8 @@ constexpr MenuItem ProgramMenuItems[] = {
   { labelPot2, isAlwaysVisible, valuePot2, onMovePot2, nullptr, nullptr },
   { labelMixPot, isAlwaysVisible, valueMixPot, onMoveMixPot, nullptr, nullptr },
   { labelExprSettings, isAlwaysVisible, nullptr, nullptr, nullptr, &ExprSettingsMenuPage },
-  { labelPotSettings, isAlwaysVisible, nullptr, nullptr, nullptr, &PotSettingsMenuPage }
+  { labelPotSettings, isAlwaysVisible, nullptr, nullptr, nullptr, &PotSettingsMenuPage },
+  { labelGlobalSettings, isAlwaysVisible, nullptr, nullptr, nullptr, &GlobalSettingsMenuPage }
 };
 
 constexpr MenuPage ProgramMenuPage = {
@@ -855,6 +881,18 @@ constexpr MenuPage SavePresetMenuPage = {
   "Preset save",
   SavePresetMenuItems,
   sizeof(SavePresetMenuItems) / sizeof(SavePresetMenuItems[0]),
+  ui::MenuLayout::kList
+};
+
+constexpr MenuItem GlobalSettingsMenuItems[] = {
+  { labelMidiChannel, isAlwaysVisible, valueMidiChannel, onMoveMidiChannel, nullptr, nullptr },
+  { labelBack, isAlwaysVisible, nullptr, nullptr, nullptr, &BlankMenuPage }
+};
+
+constexpr MenuPage GlobalSettingsMenuPage = {
+  "Global settings",
+  GlobalSettingsMenuItems,
+  sizeof(GlobalSettingsMenuItems) / sizeof(GlobalSettingsMenuItems[0]),
   ui::MenuLayout::kList
 };
 

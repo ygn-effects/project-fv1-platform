@@ -282,11 +282,35 @@ void test_program_mode_toggle_program_idle_to_preset_idle() {
   assertNoMoreEvents();
 }
 
+void test_program_mode_toggle_program_edit_to_preset_idle() {
+  LogicalState logicalState;
+  FsmService fsmService(logicalState);
+
+  fsmService.setAppState(AppState::kProgramEdit);
+
+  fsmService.handleEvent(makeProgramModeToggledEvent());
+
+  TEST_ASSERT_EQUAL(AppState::kPresetIdle, fsmService.getAppState());
+  assertNoMoreEvents();
+}
+
 void test_program_mode_toggle_preset_idle_to_program_edit() {
   LogicalState logicalState;
   FsmService fsmService(logicalState);
 
   fsmService.setAppState(AppState::kPresetIdle);
+
+  fsmService.handleEvent(makeProgramModeToggledEvent());
+
+  TEST_ASSERT_EQUAL(AppState::kProgramEdit, fsmService.getAppState());
+  assertNoMoreEvents();
+}
+
+void test_program_mode_toggle_preset_edit_to_program_edit() {
+  LogicalState logicalState;
+  FsmService fsmService(logicalState);
+
+  fsmService.setAppState(AppState::kPresetEdit);
 
   fsmService.handleEvent(makeProgramModeToggledEvent());
 
@@ -387,7 +411,9 @@ int main() {
 
   // Program Mode Toggle
   RUN_TEST(test_program_mode_toggle_program_idle_to_preset_idle);
+  RUN_TEST(test_program_mode_toggle_program_edit_to_preset_idle);
   RUN_TEST(test_program_mode_toggle_preset_idle_to_program_edit);
+  RUN_TEST(test_program_mode_toggle_preset_edit_to_program_edit);
 
   // interestedIn
   RUN_TEST(test_interested_in_system_booted);

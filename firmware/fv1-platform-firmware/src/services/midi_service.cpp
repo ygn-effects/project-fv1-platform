@@ -19,13 +19,10 @@ void MidiService::init() {
 }
 
 void MidiService::handleEvent(const Event& t_event) {
-  // Program change
-  if (t_event.m_subject == EventSubject::kProgram && t_event.m_action == EventAction::kValueChanged) {
-    syncHandler();
-  }
-
   // MIDI channel change
-  if (t_event.m_domain == EventDomain::kMidi && t_event.m_action == EventAction::kValueChanged) {
+  if (t_event.m_domain == EventDomain::kUI
+      && t_event.m_subject == EventSubject::kMidiChannel
+      && t_event.m_action == EventAction::kSettingChanged) {
     m_logicalState.m_midiChannel = Utils::wrappedAdd(m_logicalState.m_midiChannel, t_event.m_data.delta, MidiHandlerConstants::c_maxMidiChannels);
 
     syncHandler();
@@ -77,14 +74,9 @@ void MidiService::update() {
 
 bool MidiService::interestedIn(const Event& t_event) const {
   // MIDI channel change
-  if (t_event.m_domain == EventDomain::kMidi
-      && t_event.m_subject == EventSubject::kGeneral
-      && t_event.m_action == EventAction::kValueChanged) return true;
-
-  // Program change
-  if (t_event.m_domain == EventDomain::kLogic
-      && t_event.m_subject == EventSubject::kProgram
-      && t_event.m_action == EventAction::kValueChanged) return true;
+  if (t_event.m_domain == EventDomain::kUI
+      && t_event.m_subject == EventSubject::kMidiChannel
+      && t_event.m_action == EventAction::kSettingChanged) return true;
 
   return false;
 }
