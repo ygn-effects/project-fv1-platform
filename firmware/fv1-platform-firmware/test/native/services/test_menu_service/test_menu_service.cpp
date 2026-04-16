@@ -815,7 +815,8 @@ void test_program_mode_change_preset_locks_menu_if_unlocked() {
   clearEventBus();
 
   // Program mode change
-  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kProgramMode, 0));
+  logicalState.m_programMode = ProgramMode::kPreset;
+  service.handleEvent(makeLogicProgramModeToggledEvent());
 
   assertMenuLockedEventPublished();
   assertMenuUpdatedEventPublished();
@@ -837,7 +838,8 @@ void test_program_mode_change_preset_not_locks_menu_if_locked() {
   clearEventBus();
 
   // Program mode change
-  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kProgramMode, 0));
+  logicalState.m_programMode = ProgramMode::kPreset;
+  service.handleEvent(makeLogicProgramModeToggledEvent());
 
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
@@ -856,7 +858,8 @@ void test_program_mode_change_program_unlocks_menu_if_locked() {
   clearEventBus();
 
   // Program mode change
-  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kProgramMode, 0));
+  logicalState.m_programMode = ProgramMode::kProgram;
+  service.handleEvent(makeLogicProgramModeToggledEvent());
 
   assertMenuUnlockedEventPublished();
   assertMenuUpdatedEventPublished();
@@ -880,7 +883,8 @@ void test_program_mode_change_program_not_unlocks_menu_if_unlocked() {
   clearEventBus();
 
   // Program mode change
-  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kProgramMode, 0));
+  logicalState.m_programMode = ProgramMode::kProgram;
+  service.handleEvent(makeLogicProgramModeToggledEvent());
 
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();

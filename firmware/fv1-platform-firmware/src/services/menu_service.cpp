@@ -280,6 +280,26 @@ void MenuService::handleEvent(const Event& t_event) {
         && t_event.m_action == EventAction::kValueChanged) {
       publishViewUpdate();
     }
+
+    if (t_event.m_subject == EventSubject::kProgramMode
+        && t_event.m_action == EventAction::kToggled) {
+      if (m_logicState.m_programMode == ProgramMode::kProgram) {
+        if (m_handler.m_mode == UiMode::kLocked) publishUIMenuUnlockedEvent();
+
+        m_lastInputTime = t_event.m_timestamp;
+        m_handler.unlock(m_logicState);
+        publishViewUpdate();
+        return;
+      }
+      else {
+        if (m_handler.m_mode == UiMode::kUnlocked) publishUIMenuLockedEvent();
+
+        m_lastInputTime = t_event.m_timestamp;
+        m_handler.lock();
+        publishViewUpdate();
+        return;
+      }
+    }
   }
 
   switch (m_handler.m_mode) {
