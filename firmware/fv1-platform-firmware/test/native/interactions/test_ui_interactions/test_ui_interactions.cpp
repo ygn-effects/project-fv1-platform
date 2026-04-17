@@ -650,6 +650,52 @@ void test_menu_encoder_press_on_hilighted_item_exit_edit() {
   TEST_ASSERT_FALSE(fix.mockDisplay.isHighlighted("Digital delay"));
 }
 
+void test_program_mode_switch_long_press_program_transition_to_preset_lock_menu() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kProgram;
+  fix.logicalState.m_currentPreset = 1;
+  fix.logicalState.m_currentPresetBank = 2;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Switch to preset
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kProgramMode));
+  fix.updateAllServices();
+
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Lock screen"));
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("B", "2"));
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsLabelValue("P", "1"));
+}
+
+void test_program_mode_switch_long_press_preset_transition_to_program_edit_menu() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_programMode = ProgramMode::kPreset;
+  fix.logicalState.m_currentPreset = 1;
+  fix.logicalState.m_currentPresetBank = 2;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Switch to preset
+  fix.publishAndDispatchAllEvents(makeDriverSwitchLongPress(SwitchId::kProgramMode));
+  fix.updateAllServices();
+
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Program mode"));
+}
+
 // =============================================================================
 // Overlay Display
 // =============================================================================
@@ -1816,6 +1862,8 @@ int main() {
   RUN_TEST(test_menu_encoder_press_on_back_transition_to_previous_menu);
   RUN_TEST(test_menu_encoder_press_on_editable_items_highlight_value);
   RUN_TEST(test_menu_encoder_press_on_hilighted_item_exit_edit);
+  RUN_TEST(test_program_mode_switch_long_press_program_transition_to_preset_lock_menu);
+  RUN_TEST(test_program_mode_switch_long_press_preset_transition_to_program_edit_menu);
 
   // Overlay Display
   RUN_TEST(test_pot_move_shows_pot_overlay_menu_unlocked);
