@@ -48,14 +48,6 @@ void ProgramService::handleEvent(const Event& t_event) {
 
       return;
     }
-
-    if (t_event.m_subject == EventSubject::kPreset
-        && t_event.m_action == EventAction::kValueChanged) {
-      syncActiveProgram();
-      publishProgramChangeEvent(t_event);
-
-      return;
-    }
   }
 
   else if (t_event.m_domain == EventDomain::kMidi) {
@@ -70,14 +62,6 @@ void ProgramService::handleEvent(const Event& t_event) {
       syncActiveProgram();
       publishProgramChangeEvent(t_event);
       publishSaveCurrentProgram(t_event);
-
-      return;
-    }
-
-    if (t_event.m_subject == EventSubject::kPreset
-        && t_event.m_action == EventAction::kValueChanged) {
-      syncActiveProgram();
-      publishProgramChangeEvent(t_event);
 
       return;
     }
@@ -97,23 +81,18 @@ bool ProgramService::interestedIn(const Event& t_event) const {
   if (t_event.m_domain == EventDomain::kUI) {
     if (t_event.m_subject == EventSubject::kProgram
         && t_event.m_action == EventAction::kValueChanged) return true;
-    if (t_event.m_subject == EventSubject::kPreset
-        && t_event.m_action == EventAction::kValueChanged) return true;
   }
 
   if (t_event.m_domain == EventDomain::kLogic) {
     if (t_event.m_subject == EventSubject::kProgramMode
         && t_event.m_action == EventAction::kToggled) return true;
 
-    if (t_event.m_subject == EventSubject::kPresetBank
+    if (t_event.m_subject == EventSubject::kPreset
         && t_event.m_action == EventAction::kValueChanged) return true;
   }
 
   if (t_event.m_domain == EventDomain::kMidi) {
     if (t_event.m_subject == EventSubject::kProgram
-        && t_event.m_action == EventAction::kValueChanged) return true;
-
-    if (t_event.m_subject == EventSubject::kPreset
         && t_event.m_action == EventAction::kValueChanged) return true;
   }
 

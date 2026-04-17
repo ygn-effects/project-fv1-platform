@@ -43,6 +43,14 @@ Event makeLogicProgramModeToggledEvent() {
   return e;
 }
 
+Event makeLogicPresetValueChangedEvent() {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kProgramMode;
+  e.m_action = EventAction::kToggled;
+  return e;
+}
+
 Event makeMemoryPresetBankChangedEvent() {
   Event e;
   e.m_domain = EventDomain::kMemory;
@@ -227,14 +235,14 @@ void test_ui_program_large_negative_delta_ignored() {
 // UI Preset Change Events (No Save)
 // =============================================================================
 
-void test_ui_preset_change_syncs_pointer_without_save() {
+void test_logic_preset_change_syncs_pointer_without_save() {
   LogicalState logicalState;
   ProgramService programService(logicalState);
 
   logicalState.m_currentProgram = 3;
   programService.init();
 
-  programService.handleEvent(makeUIPresetDeltaEvent(1));
+  programService.handleEvent(makeLogicPresetValueChangedEvent());
 
   assertProgramChangedEventPublished();
   assertEventBusEmpty();  // No save event
@@ -316,24 +324,6 @@ void test_program_mode_toggle_syncs_pointer_without_save() {
 }
 
 // =============================================================================
-// Preset Bank Load Events (No Save)
-// =============================================================================
-
-void test_preset_bank_load_syncs_pointer_without_save() {
-  LogicalState logicalState;
-  ProgramService programService(logicalState);
-
-  logicalState.m_currentProgram = 2;
-  programService.init();
-
-  programService.handleEvent(makeMemoryPresetBankChangedEvent());
-
-  assertProgramChangedEventPublished();
-  assertEventBusEmpty();  // No save event
-  TEST_ASSERT_EQUAL_PTR(&ProgramsDefinitions::kPrograms[2], logicalState.m_activeProgram);
-}
-
-// =============================================================================
 // interestedIn Tests
 // =============================================================================
 
@@ -344,18 +334,6 @@ void test_interested_in_ui_program_change() {
   Event e;
   e.m_domain = EventDomain::kUI;
   e.m_subject = EventSubject::kProgram;
-  e.m_action = EventAction::kValueChanged;
-
-  TEST_ASSERT_TRUE(programService.interestedIn(e));
-}
-
-void test_interested_in_ui_preset_change() {
-  LogicalState logicalState;
-  ProgramService programService(logicalState);
-
-  Event e;
-  e.m_domain = EventDomain::kUI;
-  e.m_subject = EventSubject::kPreset;
   e.m_action = EventAction::kValueChanged;
 
   TEST_ASSERT_TRUE(programService.interestedIn(e));
@@ -373,24 +351,12 @@ void test_interested_in_logic_program_mode_toggle() {
   TEST_ASSERT_TRUE(programService.interestedIn(e));
 }
 
-void test_interested_in_logic_preset_bank_change() {
+void test_interested_in_logic_preset_value_changed() {
   LogicalState logicalState;
   ProgramService programService(logicalState);
 
   Event e;
   e.m_domain = EventDomain::kLogic;
-  e.m_subject = EventSubject::kPresetBank;
-  e.m_action = EventAction::kValueChanged;
-
-  TEST_ASSERT_TRUE(programService.interestedIn(e));
-}
-
-void test_interested_in_midi_preset_value_change() {
-  LogicalState logicalState;
-  ProgramService programService(logicalState);
-
-  Event e;
-  e.m_domain = EventDomain::kMidi;
   e.m_subject = EventSubject::kPreset;
   e.m_action = EventAction::kValueChanged;
 
@@ -451,6 +417,25 @@ void test_not_interested_in_unrelated_events() {
   e.m_subject = EventSubject::kProgram;
   e.m_action = EventAction::kValueChanged;
   TEST_ASSERT_FALSE(programService.interestedIn(e));
+
+  // Events the service was previously listening to
+  e.m_domain = EventDomain::kMidi;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kValueChanged;
+
+  TEST_ASSERT_FALSE(programService.interestedIn(e));
+
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kValueChanged;
+
+  TEST_ASSERT_FALSE(programService.interestedIn(e));
+
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kPresetBank;
+  e.m_action = EventAction::kValueChanged;
+
+  TEST_ASSERT_FALSE(programService.interestedIn(e));
 }
 
 int main() {
@@ -472,26 +457,20 @@ int main() {
   RUN_TEST(test_ui_program_large_positive_delta_ignored);
   RUN_TEST(test_ui_program_large_negative_delta_ignored);
 
-  // UI Preset Change (No Save)
-  RUN_TEST(test_ui_preset_change_syncs_pointer_without_save);
+  // Preset Change (No Save)
+  RUN_TEST(test_logic_preset_change_syncs_pointer_without_save);
 
-  // MIDI Preset Change
-  RUN_TEST(test_midi_preset_change_syncs_pointer_without_save);
+  // MIDI Program Change
   RUN_TEST(test_midi_program_change_state_and_publishes_events);
   RUN_TEST(test_midi_program_change_invalid_value_not_change_logical_state);
 
   // Program Mode Toggle (No Save)
   RUN_TEST(test_program_mode_toggle_syncs_pointer_without_save);
 
-  // Preset Bank Load (No Save)
-  RUN_TEST(test_preset_bank_load_syncs_pointer_without_save);
-
   // interestedIn
   RUN_TEST(test_interested_in_ui_program_change);
-  RUN_TEST(test_interested_in_ui_preset_change);
   RUN_TEST(test_interested_in_logic_program_mode_toggle);
-  RUN_TEST(test_interested_in_logic_preset_bank_change);
-  RUN_TEST(test_interested_in_midi_preset_value_change);
+  RUN_TEST(test_interested_in_logic_preset_value_changed);
   RUN_TEST(test_interested_in_midi_program_value_change);
   RUN_TEST(test_not_interested_in_events_it_publishes);
   RUN_TEST(test_not_interested_in_unrelated_events);
