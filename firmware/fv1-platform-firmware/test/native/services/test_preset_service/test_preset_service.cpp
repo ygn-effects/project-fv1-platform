@@ -92,6 +92,15 @@ Event makeUiSavePresetEvent() {
   return e;
 }
 
+void assertPresetValueChangedEventPublished() {
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  Event e;
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventDomain::kLogic, e.m_domain);
+  TEST_ASSERT_EQUAL(EventSubject::kPreset, e.m_subject);
+  TEST_ASSERT_EQUAL(EventAction::kValueChanged, e.m_action);
+}
+
 void assertPresetSaveEventPublished() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   Event e;
@@ -208,6 +217,7 @@ void test_ui_preset_loading_changes_logical_state() {
   // Check logicalState and event bus
   TEST_ASSERT_EQUAL(1, logicalState.m_currentPreset);
   TEST_ASSERT_EQUAL(1, logicalState.m_saveTargetPreset);
+  assertPresetValueChangedEventPublished();
   assertPresetSaveEventPublished();
 
   // Event bus should be empty
@@ -223,6 +233,7 @@ void test_ui_preset_loading_wraps_around() {
 
   // Check logicalState and event bus
   TEST_ASSERT_EQUAL(PresetConstants::c_presetPerBank - 1, logicalState.m_currentPreset);
+  assertPresetValueChangedEventPublished();
   assertPresetSaveEventPublished();
 
   // Event bus should be empty
@@ -232,6 +243,7 @@ void test_ui_preset_loading_wraps_around() {
 
   // Check logicalState and event bus
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
+  assertPresetValueChangedEventPublished();
   assertPresetSaveEventPublished();
 
   // Event bus should be empty
@@ -248,6 +260,7 @@ void test_midi_preset_loading_changes_logical_state() {
   // Check logicalState and event bus
   TEST_ASSERT_EQUAL(1, logicalState.m_currentPreset);
   TEST_ASSERT_EQUAL(1, logicalState.m_saveTargetPreset);
+  assertPresetValueChangedEventPublished();
   assertPresetSaveEventPublished();
 
   // Event bus should be empty
@@ -266,6 +279,7 @@ void test_preset_bank_value_changed_sets_logical_state() {
   // Check logicalState and event bus
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
   TEST_ASSERT_EQUAL(0, logicalState.m_saveTargetPreset);
+  assertPresetValueChangedEventPublished();
   assertPresetSaveEventPublished();
 
   // Event bus should be empty
@@ -283,6 +297,7 @@ void test_physical_tap_press_changes_logical_state() {
   // Check logicalState and event bus
   TEST_ASSERT_EQUAL(1, logicalState.m_currentPreset);
   TEST_ASSERT_EQUAL(1, logicalState.m_saveTargetPreset);
+  assertPresetValueChangedEventPublished();
   assertPresetSaveEventPublished();
 
   // Event bus should be empty
@@ -303,6 +318,7 @@ void test_physical_tap_long_press_changes_logical_state() {
   // Check logicalState and event bus
   TEST_ASSERT_EQUAL(1, logicalState.m_currentPreset);
   TEST_ASSERT_EQUAL(1, logicalState.m_saveTargetPreset);
+  assertPresetValueChangedEventPublished();
   assertPresetSaveEventPublished();
 
   // Event bus should be empty
@@ -319,6 +335,7 @@ void test_physical_tap_wraps_around() {
 
   // Check logicalState and event bus
   TEST_ASSERT_EQUAL(PresetConstants::c_presetPerBank - 1, logicalState.m_currentPreset);
+  assertPresetValueChangedEventPublished();
   assertPresetSaveEventPublished();
 
   // Event bus should be empty
@@ -330,6 +347,7 @@ void test_physical_tap_wraps_around() {
   // Check logicalState and event bus
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPreset);
   TEST_ASSERT_EQUAL(0, logicalState.m_saveTargetPreset);
+  assertPresetValueChangedEventPublished();
   assertPresetSaveEventPublished();
 
   // Event bus should be empty

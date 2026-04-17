@@ -17,6 +17,16 @@ void PresetService::savePreset(uint8_t t_bankIndex, uint8_t t_presetIndex) {
   m_eeprom.write(info.m_address, buffer, info.m_length);
 }
 
+void PresetService::publishPresetValueChangedEvent(const Event& t_event) {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kValueChanged;
+  e.m_timestamp = t_event.m_timestamp;
+
+  EventBus::publish(e);
+}
+
 void PresetService::publishSavePresetEvent(const Event& t_event) {
   Event e;
   e.m_domain = EventDomain::kMemory;
@@ -42,6 +52,7 @@ void PresetService::handleEvent(const Event& t_event) {
       m_logicalState.m_currentPreset = Utils::wrappedAdd(m_logicalState.m_currentPreset, t_event.m_data.delta, PresetConstants::c_presetPerBank);
       syncSavePresetState();
       applyPreset();
+      publishPresetValueChangedEvent(t_event);
       publishSavePresetEvent(t_event);
 
       return;
@@ -77,6 +88,7 @@ void PresetService::handleEvent(const Event& t_event) {
       m_logicalState.m_currentPreset = targetPreset;
       syncSavePresetState();
       applyPreset();
+      publishPresetValueChangedEvent(t_event);
       publishSavePresetEvent(t_event);
 
       return;
@@ -89,6 +101,7 @@ void PresetService::handleEvent(const Event& t_event) {
       m_logicalState.m_currentPreset = Utils::wrappedAdd(m_logicalState.m_currentPreset, 1, PresetConstants::c_presetPerBank);
       syncSavePresetState();
       applyPreset();
+      publishPresetValueChangedEvent(t_event);
       publishSavePresetEvent(t_event);
 
       return;
@@ -99,6 +112,7 @@ void PresetService::handleEvent(const Event& t_event) {
       m_logicalState.m_currentPreset = Utils::wrappedAdd(m_logicalState.m_currentPreset, -1, PresetConstants::c_presetPerBank);
       syncSavePresetState();
       applyPreset();
+      publishPresetValueChangedEvent(t_event);
       publishSavePresetEvent(t_event);
 
       return;
@@ -116,6 +130,7 @@ void PresetService::handleEvent(const Event& t_event) {
       m_logicalState.m_currentPreset = 0;
       syncSavePresetState();
       applyPreset();
+      publishPresetValueChangedEvent(t_event);
       publishSavePresetEvent(t_event);
 
       return;
