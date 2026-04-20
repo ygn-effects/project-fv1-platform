@@ -21,6 +21,7 @@ class PresetService : public Service {
     void syncSavePresetState();
     void applyPreset();
     void savePreset(uint8_t t_bankIndex, uint8_t t_presetIndex);
+    void publishPresetValueChangedEvent(const Event& t_event);
     void publishSavePresetEvent(const Event& t_event);
 
   public:
