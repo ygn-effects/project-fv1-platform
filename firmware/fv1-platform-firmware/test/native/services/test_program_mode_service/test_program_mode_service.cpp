@@ -296,7 +296,7 @@ void test_midi_program_mode_changed_to_program_when_preset_mode_publishes_save_t
   // Start in preset mode
   logicalState.m_programMode = ProgramMode::kPreset;
 
-  service.handleEvent(makePhysicalProgramModeLongPressEvent());
+  service.handleEvent(makeMidiProgramModeValueChangedEvent(MidiCCValues::c_programMode));
 
   // When in kPreset mode, should load logical state first (before toggling)
   assertLoadLogicalStateEventPublished();
