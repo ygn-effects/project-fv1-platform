@@ -72,6 +72,7 @@ void PresetService::handleEvent(const Event& t_event) {
         m_presetHandler.snapshotFromState(m_logicalState, m_logicalState.m_saveTargetPreset);
         m_logicalState.m_presetDirty = false;
 
+        savePreset(m_logicalState.m_currentPresetBank, m_logicalState.m_currentPreset);
         publishSavePresetEvent(t_event);
         return;
       }
@@ -123,6 +124,7 @@ void PresetService::handleEvent(const Event& t_event) {
     if (t_event.m_subject == EventSubject::kProgramMode
         && t_event.m_action == EventAction::kToggled) {
       init();
+      return;
     }
 
     if (t_event.m_subject == EventSubject::kPresetBank
