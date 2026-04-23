@@ -10,23 +10,29 @@ class MockEEPROM : public EEPROM {
   public:
     static constexpr size_t c_size = 32768;
     inline static std::array<uint8_t, c_size> m_memory;
-    bool initialized = false;
+    bool m_initialized = false;
+    bool m_writeWasCalled = false;
+    bool m_readWasCalled = false;
 
     void init() override {
-      initialized = true;
+      m_initialized = true;
     }
 
     void read(uint16_t t_address, uint8_t* t_data, size_t t_length) override {
       if (t_address + t_length > c_size) return;
       std::copy(std::begin(m_memory) + t_address, std::begin(m_memory) + t_address + t_length, t_data);
+      m_readWasCalled = true;
     }
 
     void write(uint16_t t_address, const uint8_t* t_data, size_t t_length) override  {
       if (t_address + t_length > c_size) return;
       std::copy(t_data, t_data + t_length, std::begin(m_memory) + t_address);
+      m_writeWasCalled = true;
     }
 
     void reset() {
       m_memory.fill(0);
+      m_readWasCalled = false;
+      m_writeWasCalled = false;
     }
 };
