@@ -1,5 +1,11 @@
 #include "services/menu_service.h"
 
+void MenuService::resetOverlayState() {
+  m_potMenuActive = false;
+  m_tempoMenuActive = false;
+  m_savePresetMenuActive = false;
+}
+
 void MenuService::publishUIMenuLockedEvent() const {
   Event e;
   e.m_domain = EventDomain::kUI;
@@ -84,6 +90,7 @@ void MenuService::handleUnlocked(const Event& t_event) {
         && t_event.m_action == EventAction::kLongPressed
         && t_event.matchesId(SwitchId::kMenuLock)) {
       m_handler.lock();
+      resetOverlayState();
       publishUIMenuLockedEvent();
       publishViewUpdate();
       return;
@@ -98,6 +105,7 @@ void MenuService::handleUnlocked(const Event& t_event) {
         : m_menuLockLed.off();
 
       m_handler.lock();
+      resetOverlayState();
       m_previousMenuStateUnlocked = true;
       publishUIMenuLockedEvent();
       publishViewUpdate();
@@ -258,9 +266,9 @@ void MenuService::handleTempoChange(const Event& t_event) {
 
   if (!m_tempoMenuActive) {
     m_handler.pushTempoOverlay();
+    m_tempoMenuActive = true;
   }
 
-  m_tempoMenuActive = true;
   m_lastTempoChangeTime = t_event.m_timestamp;
   m_lastInputTime = t_event.m_timestamp;
 }
@@ -317,6 +325,7 @@ void MenuService::handleEvent(const Event& t_event) {
 
         m_lastInputTime = t_event.m_timestamp;
         m_handler.lock();
+        resetOverlayState();
         publishViewUpdate();
         return;
       }
@@ -345,8 +354,10 @@ void MenuService::update() {
   if (m_logicState.m_programMode == ProgramMode::kPreset) {
     if ((now - m_lastInputTime) > ui::MenuConstants::c_menuTimeout) {
       m_handler.lock();
+      resetOverlayState();
       publishUIMenuLockedEvent();
       publishViewUpdate();
+      return;
     }
   }
 
