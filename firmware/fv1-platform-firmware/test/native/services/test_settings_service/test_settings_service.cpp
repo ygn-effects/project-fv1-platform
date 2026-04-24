@@ -530,7 +530,77 @@ void test_memory_save_expr() {
   TEST_ASSERT_EQUAL(512, logicalState.m_exprParams[2].m_toeValue);
 }
 
-void test_memory_save_pot() {
+void test_memory_save_pot0() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
+
+  // Set pot parameters and send the save event
+  logicalState.m_currentProgram = 3;
+  logicalState.m_potParams[3][0].m_state = PotState::kDisabled;
+  logicalState.m_potParams[3][0].m_value = 512;
+  logicalState.m_potParams[3][0].m_minValue = 256;
+  logicalState.m_potParams[3][0].m_maxValue = 768;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, 0, PotId::kPot0));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
+
+  // Modify the pot parameters
+  logicalState.m_currentProgram = 0;
+  logicalState.m_potParams[3][0].m_state = PotState::kActive;
+  logicalState.m_potParams[3][0].m_value = 0;
+  logicalState.m_potParams[3][0].m_minValue = 0;
+  logicalState.m_potParams[3][0].m_maxValue = 0;
+
+  // Send the restore event
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Check logicalState
+  TEST_ASSERT_EQUAL(PotState::kDisabled, logicalState.m_potParams[3][0].m_state);
+  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[3][0].m_value);
+  TEST_ASSERT_EQUAL(256, logicalState.m_potParams[3][0].m_minValue);
+  TEST_ASSERT_EQUAL(768, logicalState.m_potParams[3][0].m_maxValue);
+}
+
+void test_memory_save_pot1() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
+
+  // Set pot parameters and send the save event
+  logicalState.m_currentProgram = 3;
+  logicalState.m_potParams[3][1].m_state = PotState::kDisabled;
+  logicalState.m_potParams[3][1].m_value = 512;
+  logicalState.m_potParams[3][1].m_minValue = 256;
+  logicalState.m_potParams[3][1].m_maxValue = 768;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, 0, PotId::kPot1));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
+
+  // Modify the pot parameters
+  logicalState.m_currentProgram = 0;
+  logicalState.m_potParams[3][1].m_state = PotState::kActive;
+  logicalState.m_potParams[3][1].m_value = 0;
+  logicalState.m_potParams[3][1].m_minValue = 0;
+  logicalState.m_potParams[3][1].m_maxValue = 0;
+
+  // Send the restore event
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Check logicalState
+  TEST_ASSERT_EQUAL(PotState::kDisabled, logicalState.m_potParams[3][1].m_state);
+  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[3][1].m_value);
+  TEST_ASSERT_EQUAL(256, logicalState.m_potParams[3][1].m_minValue);
+  TEST_ASSERT_EQUAL(768, logicalState.m_potParams[3][1].m_maxValue);
+}
+
+void test_memory_save_pot2() {
   LogicalState logicalState;
   MockEEPROM eeprom;
   MockedClock clock;
@@ -563,6 +633,119 @@ void test_memory_save_pot() {
   TEST_ASSERT_EQUAL(512, logicalState.m_potParams[3][2].m_value);
   TEST_ASSERT_EQUAL(256, logicalState.m_potParams[3][2].m_minValue);
   TEST_ASSERT_EQUAL(768, logicalState.m_potParams[3][2].m_maxValue);
+}
+
+void test_memory_save_mix_pot() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
+
+  // Set pot parameters and send the save event
+  logicalState.m_currentProgram = 3;
+  logicalState.m_potParams[3][3].m_state = PotState::kDisabled;
+  logicalState.m_potParams[3][3].m_value = 512;
+  logicalState.m_potParams[3][3].m_minValue = 256;
+  logicalState.m_potParams[3][3].m_maxValue = 768;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, 0, PotId::kMixPot));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
+
+  // Modify the pot parameters
+  logicalState.m_currentProgram = 0;
+  logicalState.m_potParams[3][3].m_state = PotState::kActive;
+  logicalState.m_potParams[3][3].m_value = 0;
+  logicalState.m_potParams[3][3].m_minValue = 0;
+  logicalState.m_potParams[3][3].m_maxValue = 0;
+
+  // Send the restore event
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Check logicalState
+  TEST_ASSERT_EQUAL(PotState::kDisabled, logicalState.m_potParams[3][3].m_state);
+  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[3][3].m_value);
+  TEST_ASSERT_EQUAL(256, logicalState.m_potParams[3][3].m_minValue);
+  TEST_ASSERT_EQUAL(768, logicalState.m_potParams[3][3].m_maxValue);
+}
+
+void test_memory_save_multiple_pots() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
+
+  // Set pot parameters and send the save event
+  logicalState.m_currentProgram = 3;
+  logicalState.m_potParams[3][0].m_state = PotState::kDisabled;
+  logicalState.m_potParams[3][0].m_value = 512;
+  logicalState.m_potParams[3][0].m_minValue = 256;
+  logicalState.m_potParams[3][0].m_maxValue = 768;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, 0, PotId::kPot0));
+
+  // Set pot parameters and send the save event
+  logicalState.m_potParams[3][2].m_state = PotState::kDisabled;
+  logicalState.m_potParams[3][2].m_value = 512;
+  logicalState.m_potParams[3][2].m_minValue = 256;
+  logicalState.m_potParams[3][2].m_maxValue = 768;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kPot, 1000, PotId::kPot2));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
+
+  // Modify the pot parameters
+  logicalState.m_currentProgram = 0;
+  logicalState.m_potParams[3][0].m_state = PotState::kActive;
+  logicalState.m_potParams[3][0].m_value = 0;
+  logicalState.m_potParams[3][0].m_minValue = 0;
+  logicalState.m_potParams[3][0].m_maxValue = 0;
+  logicalState.m_potParams[3][2].m_state = PotState::kActive;
+  logicalState.m_potParams[3][2].m_value = 0;
+  logicalState.m_potParams[3][2].m_minValue = 0;
+  logicalState.m_potParams[3][2].m_maxValue = 0;
+
+  // Send the restore event
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Check logicalState
+  TEST_ASSERT_EQUAL(PotState::kDisabled, logicalState.m_potParams[3][0].m_state);
+  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[3][0].m_value);
+  TEST_ASSERT_EQUAL(256, logicalState.m_potParams[3][0].m_minValue);
+  TEST_ASSERT_EQUAL(768, logicalState.m_potParams[3][0].m_maxValue);
+  TEST_ASSERT_EQUAL(PotState::kDisabled, logicalState.m_potParams[3][2].m_state);
+  TEST_ASSERT_EQUAL(512, logicalState.m_potParams[3][2].m_value);
+  TEST_ASSERT_EQUAL(256, logicalState.m_potParams[3][2].m_minValue);
+  TEST_ASSERT_EQUAL(768, logicalState.m_potParams[3][2].m_maxValue);
+}
+
+void test_memory_save_multiple_params() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  MockedClock clock;
+  SettingsService settingsService(logicalState, eeprom, clock);
+
+  // Set bypass qnd tempo state and send the save event
+  logicalState.m_bypassState = BypassState::kBypassed;
+  logicalState.m_tempo = 500;
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kBypass, 0));
+  settingsService.handleEvent(makeMemorySaveEvent(EventSubject::kTempo, 1000));
+
+  // Set the clock and update to trigger the commit
+  clock.advanceBy(SettingsServiceConstants::c_editTimeout);
+  settingsService.update();
+
+  // Modify the tempo andbypass state
+  logicalState.m_bypassState = BypassState::kActive;
+  logicalState.m_tempo = 0;
+
+  // Send the restore event
+  settingsService.handleEvent(makeMemoryLoadGeneralEvent());
+
+  // Check logicalState
+  TEST_ASSERT_EQUAL(BypassState::kBypassed, logicalState.m_bypassState);
+  TEST_ASSERT_EQUAL(500, logicalState.m_tempo);
 }
 
 // =============================================================================
@@ -1005,7 +1188,12 @@ int main() {
   RUN_TEST(test_memory_save_tap);
   RUN_TEST(test_memory_save_tempo);
   RUN_TEST(test_memory_save_expr);
-  RUN_TEST(test_memory_save_pot);
+  RUN_TEST(test_memory_save_pot0);
+  RUN_TEST(test_memory_save_pot1);
+  RUN_TEST(test_memory_save_pot2);
+  RUN_TEST(test_memory_save_mix_pot);
+  RUN_TEST(test_memory_save_multiple_pots);
+  RUN_TEST(test_memory_save_multiple_params);
 
   // Preset Mode: Program parameter saves suppressed
   RUN_TEST(test_preset_mode_ignores_pot_save);
