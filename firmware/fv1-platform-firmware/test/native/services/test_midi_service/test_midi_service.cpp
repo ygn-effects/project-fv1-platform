@@ -459,6 +459,23 @@ void test_cc_out_of_range_ignored() {
   assertEventBusEmpty();
 }
 
+void test_message_wrong_channel_ignored() {
+  LogicalState logicalState;
+  MockedClock clock;
+  MockedSerial serial;
+  MidiService midiService(logicalState, serial, clock);
+
+  midiService.init();
+
+  // CC messages on invalid channel
+  serial.feedByte(MidiBytes::c_ccStatus);
+  serial.feedByte(MidiBytes::c_ccBypass);
+  serial.feedByte(MidiCCValues::c_bypassDisable);
+  midiService.update();
+
+  assertEventBusEmpty();
+}
+
 // =============================================================================
 // Successive Message Tests
 // =============================================================================
@@ -717,6 +734,7 @@ int main() {
   RUN_TEST(test_cc_only_status_byte_no_event);
   RUN_TEST(test_cc_recovery_after_incomplete_message);
   RUN_TEST(test_cc_out_of_range_ignored);
+  RUN_TEST(test_message_wrong_channel_ignored);
 
   // Successive Messages
   RUN_TEST(test_successive_cc_messages_processed);
