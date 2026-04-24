@@ -180,6 +180,8 @@ void SettingsService::update() {
           saveRegion(MemoryRegion::kPot, m_logicalState.m_currentProgram, static_cast<uint8_t>(PotId::kMixPot));
           m_dirtyPotFlags &= ~static_cast<uint8_t>(DirtyPotBits::kMixPot);
         }
+
+        m_dirtyFlags &= ~static_cast<uint8_t>(DirtyBits::kPot);
       }
     }
   }
