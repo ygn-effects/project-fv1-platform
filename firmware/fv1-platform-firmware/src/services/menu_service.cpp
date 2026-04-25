@@ -1,5 +1,11 @@
 #include "services/menu_service.h"
 
+void MenuService::resetOverlayState() {
+  m_potMenuActive = false;
+  m_tempoMenuActive = false;
+  m_savePresetMenuActive = false;
+}
+
 void MenuService::publishUIMenuLockedEvent() const {
   Event e;
   e.m_domain = EventDomain::kUI;
@@ -78,6 +84,35 @@ void MenuService::handleLocked(const Event& t_event) {
 }
 
 void MenuService::handleUnlocked(const Event& t_event) {
+  // Global events (lock, bypass) handled regardless of substate
+  if (t_event.m_domain == EventDomain::kPhysical) {
+    if (t_event.m_subject == EventSubject::kSwitch
+        && t_event.m_action == EventAction::kLongPressed
+        && t_event.matchesId(SwitchId::kMenuLock)) {
+      m_handler.lock();
+      resetOverlayState();
+      publishUIMenuLockedEvent();
+      publishViewUpdate();
+      return;
+    }
+  }
+
+  if (t_event.m_domain == EventDomain::kLogic) {
+    if (t_event.m_subject == EventSubject::kBypass
+        && t_event.m_action == EventAction::kToggled) {
+      m_logicState.m_bypassState == BypassState::kActive
+        ? m_menuLockLed.on()
+        : m_menuLockLed.off();
+
+      m_handler.lock();
+      resetOverlayState();
+      m_previousMenuStateUnlocked = true;
+      publishUIMenuLockedEvent();
+      publishViewUpdate();
+      return;
+    }
+  }
+
   if (m_handler.m_subState == SubState::kSelecting) {
     if (t_event.m_domain == EventDomain::kPhysical) {
       if (t_event.m_subject == EventSubject::kEncoder
@@ -97,15 +132,6 @@ void MenuService::handleUnlocked(const Event& t_event) {
 
       if (t_event.m_subject == EventSubject::kSwitch
           && t_event.m_action == EventAction::kLongPressed
-          && t_event.matchesId(SwitchId::kMenuLock)) {
-        m_handler.lock();
-        publishUIMenuLockedEvent();
-        publishViewUpdate();
-        return;
-      }
-
-      if (t_event.m_subject == EventSubject::kSwitch
-          && t_event.m_action == EventAction::kLongPressed
           && t_event.matchesId(static_cast<uint8_t>(SwitchId::kMenuEncoder))) {
         handlePresetSaving(t_event);
         publishViewUpdate();
@@ -116,19 +142,6 @@ void MenuService::handleUnlocked(const Event& t_event) {
       if (t_event.m_subject == EventSubject::kTempo
           && t_event.m_action == EventAction::kValueChanged) {
         handleTempoChange(t_event);
-        publishViewUpdate();
-        return;
-      }
-
-      if (t_event.m_subject == EventSubject::kBypass
-          && t_event.m_action == EventAction::kToggled) {
-        m_logicState.m_bypassState == BypassState::kActive
-          ? m_menuLockLed.on()
-          : m_menuLockLed.off();
-
-        m_handler.lock();
-        m_previousMenuStateUnlocked = true;
-        publishUIMenuLockedEvent();
         publishViewUpdate();
         return;
       }
@@ -163,16 +176,32 @@ void MenuService::handleUnlocked(const Event& t_event) {
     }
   }
   else {
-    if (t_event.m_subject == EventSubject::kEncoder
-        && t_event.matchesId(EncoderId::kMenuEncoder)) {
-      handleEditing(t_event);
-      publishViewUpdate();
+    // Editing Mode
+    if (t_event.m_domain == EventDomain::kPhysical) {
+      if (t_event.m_subject == EventSubject::kEncoder
+          && t_event.matchesId(EncoderId::kMenuEncoder)) {
+        handleEditing(t_event);
+        publishViewUpdate();
+      }
+      else if (t_event.m_subject == EventSubject::kSwitch
+          && t_event.m_action == EventAction::kPressed
+          && t_event.matchesId(SwitchId::kMenuEncoder)) {
+        handleEditing(t_event);
+        publishViewUpdate();
+      }
     }
-    else if (t_event.m_subject == EventSubject::kSwitch
-        && t_event.m_action == EventAction::kPressed
-        && t_event.matchesId(SwitchId::kMenuEncoder)) {
-      handleEditing(t_event);
-      publishViewUpdate();
+
+    if (t_event.m_domain == EventDomain::kLogic) {
+      if (t_event.m_subject == EventSubject::kTempo
+          && t_event.m_action == EventAction::kValueChanged) {
+        handleTempoChange(t_event);
+        publishViewUpdate();
+      }
+      else if (t_event.m_subject == EventSubject::kPot
+          && t_event.m_action == EventAction::kValueChanged) {
+        handlePotsMoving(t_event);
+        publishViewUpdate();
+      }
     }
   }
 }
@@ -237,9 +266,9 @@ void MenuService::handleTempoChange(const Event& t_event) {
 
   if (!m_tempoMenuActive) {
     m_handler.pushTempoOverlay();
+    m_tempoMenuActive = true;
   }
 
-  m_tempoMenuActive = true;
   m_lastTempoChangeTime = t_event.m_timestamp;
   m_lastInputTime = t_event.m_timestamp;
 }
@@ -296,6 +325,7 @@ void MenuService::handleEvent(const Event& t_event) {
 
         m_lastInputTime = t_event.m_timestamp;
         m_handler.lock();
+        resetOverlayState();
         publishViewUpdate();
         return;
       }
@@ -324,8 +354,10 @@ void MenuService::update() {
   if (m_logicState.m_programMode == ProgramMode::kPreset) {
     if ((now - m_lastInputTime) > ui::MenuConstants::c_menuTimeout) {
       m_handler.lock();
+      resetOverlayState();
       publishUIMenuLockedEvent();
       publishViewUpdate();
+      return;
     }
   }
 

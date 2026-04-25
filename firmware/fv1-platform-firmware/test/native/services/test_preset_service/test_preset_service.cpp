@@ -66,7 +66,7 @@ Event makeLogicPresetSaveEvent(uint8_t t_bank) {
   return e;
 }
 
-Event makeLogicProgramModeToggleEvent(uint8_t t_bank) {
+Event makeLogicProgramModeToggleEvent() {
   Event e;
   e.m_domain = EventDomain::kLogic;
   e.m_subject = EventSubject::kProgramMode;
@@ -373,6 +373,32 @@ void test_ui_preset_setting_changed_sets_logical_state() {
   assertEventBusEmpty();
 }
 
+void test_ui_preset_setting_changed_clamps_at_max() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetService presetService(logicalState, eeprom);
+
+  logicalState.m_saveTargetPreset = PresetConstants::c_presetPerBank - 1;
+
+  presetService.handleEvent(makeUIPresetSettingChangeEvent(SavePresetParam::kTargetPreset, 1));
+
+  TEST_ASSERT_EQUAL(PresetConstants::c_presetPerBank - 1, logicalState.m_saveTargetPreset);
+  assertEventBusEmpty();
+}
+
+void test_ui_preset_setting_changed_clamps_at_min() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetService presetService(logicalState, eeprom);
+
+  logicalState.m_saveTargetPreset = 0;
+
+  presetService.handleEvent(makeUIPresetSettingChangeEvent(SavePresetParam::kTargetPreset, -1));
+
+  TEST_ASSERT_EQUAL(0, logicalState.m_saveTargetPreset);
+  assertEventBusEmpty();
+}
+
 // =============================================================================
 // Apply preset tests
 // =============================================================================
@@ -517,6 +543,27 @@ void test_ui_save_preset_saves_logical_state_to_preset_bank() {
   assertEventBusEmpty();
 }
 
+void test_ui_save_preset_triggers_eeprom_write() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetService presetService(logicalState, eeprom);
+
+  // Set logical state
+  logicalState.m_saveTargetPreset = 3;
+  logicalState.m_currentProgram = 2;
+  logicalState.m_tapState = TapState::kEnabled;
+  logicalState.m_tempo = 300;
+
+  // Send the preset save event
+  presetService.handleEvent(makeUiSavePresetEvent());
+
+  // Check EEPROM
+  TEST_ASSERT_TRUE(eeprom.m_writeWasCalled);
+
+  assertPresetSaveEventPublished();
+  assertEventBusEmpty();
+}
+
 // =============================================================================
 // interestedIn Tests
 // =============================================================================
@@ -640,8 +687,9 @@ void test_not_interested_in_physical_tap_program_mode() {
 
   Event e;
   e.m_domain = EventDomain::kPhysical;
-  e.m_subject = EventSubject::kTap;
+  e.m_subject = EventSubject::kSwitch;
   e.m_action = EventAction::kLongPressed;
+  e.m_id = static_cast<uint8_t>(SwitchId::kTap);
 
   TEST_ASSERT_FALSE(presetService.interestedIn(e));
 }
@@ -718,6 +766,55 @@ void test_save_preset_clears_dirty_flag() {
   TEST_ASSERT_FALSE(logicalState.m_presetDirty);
 }
 
+// =============================================================================
+// Program mode tests
+// =============================================================================
+
+void test_program_mode_toggled_to_program_mode_does_not_apply_preset() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetService presetService(logicalState, eeprom);
+
+  logicalState.m_programMode = ProgramMode::kProgram;
+  logicalState.m_currentPreset = 2;
+  logicalState.m_loadedPresetBank.m_presets[2].m_tempo = 512;
+  logicalState.m_tempo = 100;
+
+  presetService.handleEvent(makeLogicProgramModeToggleEvent());
+
+  TEST_ASSERT_EQUAL(100, logicalState.m_tempo);
+  assertEventBusEmpty();
+}
+
+void test_program_mode_toggled_changes_logical_state() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetService presetService(logicalState, eeprom);
+
+  // Set current preset and some preset values
+  logicalState.m_currentPreset = 2;
+  logicalState.m_loadedPresetBank.m_presets[logicalState.m_currentPreset].m_divState = DivState::kEnabled;
+  logicalState.m_loadedPresetBank.m_presets[logicalState.m_currentPreset].m_tempo = 512;
+  logicalState.m_loadedPresetBank.m_presets[logicalState.m_currentPreset].m_exprState = ExprState::kActive;
+  logicalState.m_loadedPresetBank.m_presets[logicalState.m_currentPreset].m_direction = Direction::kInverted;
+
+  // Init
+  presetService.init();
+
+  // Send toggle event
+  logicalState.m_programMode = ProgramMode::kPreset;
+  presetService.handleEvent(makeLogicProgramModeToggleEvent());
+
+  // Check logicalState
+  TEST_ASSERT_EQUAL(DivState::kEnabled, logicalState.m_divState);
+  TEST_ASSERT_EQUAL(512, logicalState.m_tempo);
+  TEST_ASSERT_EQUAL(ExprState::kActive, logicalState.m_exprParams[logicalState.m_currentProgram].m_state);
+  TEST_ASSERT_EQUAL(Direction::kInverted, logicalState.m_exprParams[logicalState.m_currentProgram].m_direction);
+
+  // Event bus should be empty
+  assertEventBusEmpty();
+}
+
 int main() {
   UNITY_BEGIN();
 
@@ -737,6 +834,8 @@ int main() {
 
   // Preset setting change tests
   RUN_TEST(test_ui_preset_setting_changed_sets_logical_state);
+  RUN_TEST(test_ui_preset_setting_changed_clamps_at_max);
+  RUN_TEST(test_ui_preset_setting_changed_clamps_at_min);
 
   // Apply preset tests
   RUN_TEST(test_ui_preset_change_applies_preset_data_to_logical_state);
@@ -747,10 +846,15 @@ int main() {
   RUN_TEST(test_ui_save_preset_sets_logical_state);
   RUN_TEST(test_ui_save_preset_invalid_value_not_sets_logical_state);
   RUN_TEST(test_ui_save_preset_saves_logical_state_to_preset_bank);
+  RUN_TEST(test_ui_save_preset_triggers_eeprom_write);
 
   // Preset Dirty Flag
   RUN_TEST(test_apply_preset_clears_dirty_flag);
   RUN_TEST(test_save_preset_clears_dirty_flag);
+
+  // Program mode tests
+  RUN_TEST(test_program_mode_toggled_to_program_mode_does_not_apply_preset);
+  RUN_TEST(test_program_mode_toggled_changes_logical_state);
 
   // interestedIn Tests
   RUN_TEST(test_interested_in_midi_preset_value_change);

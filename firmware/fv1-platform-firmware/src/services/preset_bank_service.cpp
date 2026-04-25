@@ -4,14 +4,12 @@ void PresetBankService::syncSavePresetState() {
   m_logicalState.m_saveTargetBank = m_logicalState.m_currentPresetBank;
 }
 
-void PresetBankService::loadPresetBank(uint8_t t_bankIndex, PresetBank& t_presetBank) {
+void PresetBankService::loadPresetBank(uint8_t t_bankIndex) {
   RegionInfo info = m_handler.calculateRegionInfo(MemoryRegion::kPresetBank, t_bankIndex);
 
   uint8_t buffer[info.m_length];
   m_eeprom.read(info.m_address, buffer, info.m_length);
-  m_handler.deserializePresetBank(t_presetBank, buffer, t_bankIndex, 0);
-
-  m_logicalState.m_currentPresetBank = t_bankIndex;
+  m_handler.deserializePresetBank(m_logicalState.m_loadedPresetBank, buffer, t_bankIndex, 0);
 }
 
 void PresetBankService::publishSavePresetBankEvent(const Event& t_event) const {
@@ -36,7 +34,7 @@ void PresetBankService::publishPresetBankValueChangedEvent(const Event& t_event)
 
 void PresetBankService::init() {
   syncSavePresetState();
-  loadPresetBank(m_logicalState.m_currentPresetBank, m_logicalState.m_loadedPresetBank);
+  loadPresetBank(m_logicalState.m_currentPresetBank);
 }
 
 void PresetBankService::handleEvent(const Event& t_event) {
@@ -45,7 +43,8 @@ void PresetBankService::handleEvent(const Event& t_event) {
         && t_event.m_action == EventAction::kValueChanged) {
       uint8_t bank = Utils::wrappedAdd(m_logicalState.m_currentPresetBank, t_event.m_data.delta, PresetConstants::c_presetBankCount);
 
-      loadPresetBank(bank, m_logicalState.m_loadedPresetBank);
+      loadPresetBank(bank);
+      m_logicalState.m_currentPresetBank = bank;
       syncSavePresetState();
       publishPresetBankValueChangedEvent(t_event);
       publishSavePresetBankEvent(t_event);
@@ -57,7 +56,8 @@ void PresetBankService::handleEvent(const Event& t_event) {
         && t_event.m_action == EventAction::kSave) {
       if (m_logicalState.m_saveTargetBank < PresetConstants::c_presetBankCount
           && m_logicalState.m_saveTargetBank != m_logicalState.m_currentPresetBank) {
-        loadPresetBank(m_logicalState.m_saveTargetBank, m_logicalState.m_loadedPresetBank);
+        loadPresetBank(m_logicalState.m_saveTargetBank);
+        m_logicalState.m_currentPresetBank = m_logicalState.m_saveTargetBank;
         publishSavePresetBankEvent(t_event);
 
         return;
@@ -80,7 +80,8 @@ void PresetBankService::handleEvent(const Event& t_event) {
       if (targetBank >= PresetConstants::c_presetBankCount) return;
 
       if (targetBank != m_logicalState.m_currentPresetBank) {
-        loadPresetBank(targetBank, m_logicalState.m_loadedPresetBank);
+        loadPresetBank(targetBank);
+        m_logicalState.m_currentPresetBank = targetBank;
         syncSavePresetState();
         publishSavePresetBankEvent(t_event);
 

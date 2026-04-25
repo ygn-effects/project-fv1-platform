@@ -64,7 +64,7 @@ void test_init_initializes_eeprom() {
   InteractionFixture fix;
   fix.init();
 
-  TEST_ASSERT_TRUE(fix.mockEeprom.initialized);
+  TEST_ASSERT_TRUE(fix.mockEeprom.m_initialized);
 }
 
 void test_init_syncs_bypass_relay_when_active() {

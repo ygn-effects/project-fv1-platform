@@ -49,7 +49,7 @@ Event makeUiSavePresetEvent() {
   return e;
 }
 
-void asertPresetBankValueChangedEventPublished() {
+void assertPresetBankValueChangedEventPublished() {
   TEST_ASSERT_TRUE(EventBus::hasEvent());
   Event e;
   EventBus::recall(e);
@@ -148,6 +148,51 @@ void test_ui_preset_setting_changed_sets_logical_state() {
   assertEventBusEmpty();
 }
 
+void test_ui_preset_setting_changed_clamps_at_max() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetBankService presetBankService(logicalState, eeprom);
+
+  logicalState.m_saveTargetBank = PresetConstants::c_presetBankCount - 1;
+
+  presetBankService.handleEvent(makeUIPresetSettingChangeEvent(SavePresetParam::kTargetBank, 1));
+
+  TEST_ASSERT_EQUAL(PresetConstants::c_presetBankCount - 1, logicalState.m_saveTargetBank);
+  assertEventBusEmpty();
+}
+
+void test_ui_preset_setting_changed_clamps_at_min() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetBankService presetBankService(logicalState, eeprom);
+
+  logicalState.m_saveTargetBank = 0;
+
+  presetBankService.handleEvent(makeUIPresetSettingChangeEvent(SavePresetParam::kTargetBank, -1));
+
+  TEST_ASSERT_EQUAL(0, logicalState.m_saveTargetBank);
+  assertEventBusEmpty();
+}
+
+void test_ui_preset_setting_changed_unknown_id_does_nothing() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetBankService presetBankService(logicalState, eeprom);
+
+  logicalState.m_saveTargetBank = 2;
+
+  Event e;
+  e.m_domain = EventDomain::kUI;
+  e.m_subject = EventSubject::kPreset;
+  e.m_action = EventAction::kSettingChanged;
+  e.m_id = 99;
+  e.m_data.delta = 1;
+  presetBankService.handleEvent(e);
+
+  TEST_ASSERT_EQUAL(2, logicalState.m_saveTargetBank);
+  assertEventBusEmpty();
+}
+
 // =============================================================================
 // Preset bank loading tests
 // =============================================================================
@@ -166,6 +211,7 @@ void test_midi_bank_loading_changes_logical_state() {
   TEST_ASSERT_EQUAL(3, logicalState.m_currentPresetBank);
   TEST_ASSERT_EQUAL(3, logicalState.m_saveTargetBank);
   assertPresetBankSaveEventPublished();
+  assertEventBusEmpty();
 }
 
 void test_ui_bank_loading_changes_logical_state() {
@@ -181,7 +227,7 @@ void test_ui_bank_loading_changes_logical_state() {
   // Check logical state and event bus
   TEST_ASSERT_EQUAL(1, logicalState.m_currentPresetBank);
   TEST_ASSERT_EQUAL(1, logicalState.m_saveTargetBank);
-  asertPresetBankValueChangedEventPublished();
+  assertPresetBankValueChangedEventPublished();
   assertPresetBankSaveEventPublished();
 
   // UI event
@@ -190,8 +236,9 @@ void test_ui_bank_loading_changes_logical_state() {
   // Check logical state and event bus
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPresetBank);
   TEST_ASSERT_EQUAL(0, logicalState.m_saveTargetBank);
-  asertPresetBankValueChangedEventPublished();
+  assertPresetBankValueChangedEventPublished();
   assertPresetBankSaveEventPublished();
+  assertEventBusEmpty();
 }
 
 void test_ui_bank_loading_wraps_around() {
@@ -206,7 +253,7 @@ void test_ui_bank_loading_wraps_around() {
 
   // Check logical state and event bus
   TEST_ASSERT_EQUAL(PresetConstants::c_presetBankCount - 1, logicalState.m_currentPresetBank);
-  asertPresetBankValueChangedEventPublished();
+  assertPresetBankValueChangedEventPublished();
   assertPresetBankSaveEventPublished();
 
   // UI event
@@ -214,7 +261,7 @@ void test_ui_bank_loading_wraps_around() {
 
   // Check logical state and event bus
   TEST_ASSERT_EQUAL(0, logicalState.m_currentPresetBank);
-  asertPresetBankValueChangedEventPublished();
+  assertPresetBankValueChangedEventPublished();
   assertPresetBankSaveEventPublished();
 }
 
@@ -273,6 +320,21 @@ void test_preset_save_loads_different_bank() {
   TEST_ASSERT_EQUAL(4, logicalState.m_loadedPresetBank.m_id);
 
   assertPresetBankSaveEventPublished();
+  assertEventBusEmpty();
+}
+
+void test_preset_save_bank_out_of_range_does_nothing() {
+  LogicalState logicalState;
+  MockEEPROM eeprom;
+  PresetBankService presetBankService(logicalState, eeprom);
+
+  logicalState.m_currentPresetBank = 1;
+  logicalState.m_saveTargetBank = PresetConstants::c_presetBankCount;
+  presetBankService.init();
+
+  presetBankService.handleEvent(makeUiSavePresetEvent());
+
+  TEST_ASSERT_EQUAL(1, logicalState.m_currentPresetBank);
   assertEventBusEmpty();
 }
 
@@ -402,6 +464,9 @@ int main() {
 
   // Preset setting change tests
   RUN_TEST(test_ui_preset_setting_changed_sets_logical_state);
+  RUN_TEST(test_ui_preset_setting_changed_clamps_at_max);
+  RUN_TEST(test_ui_preset_setting_changed_clamps_at_min);
+  RUN_TEST(test_ui_preset_setting_changed_unknown_id_does_nothing);
 
   // Preset bank loading tests
   RUN_TEST(test_midi_bank_loading_changes_logical_state);
@@ -411,6 +476,7 @@ int main() {
   RUN_TEST(test_wont_load_same_midi_bank);
   RUN_TEST(test_preset_save_wont_load_same_bank);
   RUN_TEST(test_preset_save_loads_different_bank);
+  RUN_TEST(test_preset_save_bank_out_of_range_does_nothing);
 
   // interestedIn Tests
   RUN_TEST(test_interested_in_midi_preset_value_change);

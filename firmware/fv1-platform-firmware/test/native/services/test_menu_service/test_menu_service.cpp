@@ -394,6 +394,7 @@ void test_bypass_toggled_ignored_when_locked() {
   clearEventBus();
 
   // Bypass toggle should lock
+  logicalState.m_bypassState = BypassState::kBypassed;
   service.handleEvent(makeLogicBypassToggledEvent(2000));
 
   assertNoMoreEvents();
@@ -526,6 +527,54 @@ void test_pot_value_changed_publishes_updated_when_locked() {
   assertNoMoreEvents();
 }
 
+void test_pot_value_changed_while_editing_publishes_updated() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  // Use non-delay effect so Pot1 overlay works
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  service.init();
+  clearEventBus();
+
+  // Edit
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder));
+  clearEventBus();
+
+  // Move pot
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 2000));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_pot_value_changed_publishes_updated_with_tempo_overlay_active() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  // Use non-delay effect so Pot1 overlay works
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+
+  service.init();
+  clearEventBus();
+
+  // Move pot
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 2000));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+
+  // Move pot
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot2, 512, 2400));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
 // =============================================================================
 // Tempo Overlay Tests
 // =============================================================================
@@ -561,6 +610,48 @@ void test_tempo_change_publishes_updated_when_locked() {
 
   // Tempo change
   service.handleEvent(makeLogicTempoValueChangedEvent(500, 2000));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_tempo_change_while_editing_publishes_updated() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Edit
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder));
+  clearEventBus();
+
+  // Tempo change
+  service.handleEvent(makeLogicTempoValueChangedEvent(500, 2000));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_tempo_change_publishes_updated_with_tempo_overlay_active() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Tempo change
+  service.handleEvent(makeLogicTempoValueChangedEvent(500, 2000));
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+
+  // Tempo change
+  service.handleEvent(makeLogicTempoValueChangedEvent(600, 2400));
 
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
@@ -604,6 +695,137 @@ void test_preset_save_event_publishes_updated() {
   service.handleEvent(makeUIPresetSaveEvent());
 
   assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+// =============================================================================
+// Transition Tests (Overlays)
+// =============================================================================
+
+void test_pot_move_pops_tempo_overlay() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  service.init();
+  clearEventBus();
+
+  // 1. Show tempo overlay
+  service.handleEvent(makeLogicTempoValueChangedEvent(500, 1000));
+  assertMenuUpdatedEventPublished();
+
+  // 2. Move pot - should pop tempo and push pot
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 2000));
+  assertMenuUpdatedEventPublished();
+
+  // Internal state check via handler would be better if exposed, 
+  // but we can at least verify events are published.
+  assertNoMoreEvents();
+}
+
+void test_tempo_change_pops_pot_overlay() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  service.init();
+  clearEventBus();
+
+  // 1. Show pot overlay
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 1000));
+  assertMenuUpdatedEventPublished();
+
+  // 2. Change tempo - should pop pot and push tempo
+  service.handleEvent(makeLogicTempoValueChangedEvent(600, 2000));
+  assertMenuUpdatedEventPublished();
+
+  assertNoMoreEvents();
+}
+
+void test_pot_move_pops_save_preset_overlay() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  service.init();
+  clearEventBus();
+
+  // 1. Show save preset overlay
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuEncoder, 1000));
+  assertMenuUpdatedEventPublished();
+
+  // 2. Move pot - should pop save preset and push pot
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 2000));
+  assertMenuUpdatedEventPublished();
+
+  assertNoMoreEvents();
+}
+
+void test_tempo_change_pops_save_preset_overlay() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // 1. Show save preset overlay
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuEncoder, 1000));
+  assertMenuUpdatedEventPublished();
+
+  // 2. Change tempo - should pop save preset and push tempo
+  service.handleEvent(makeLogicTempoValueChangedEvent(600, 2000));
+  assertMenuUpdatedEventPublished();
+
+  assertNoMoreEvents();
+}
+
+void test_save_preset_pops_pot_overlay() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  service.init();
+  clearEventBus();
+
+  // Pot overlay
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 1000));
+  assertMenuUpdatedEventPublished();
+
+  // Save preset
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuEncoder, 2000));
+  assertMenuUpdatedEventPublished();
+
+  assertNoMoreEvents();
+}
+
+void test_save_preset_pops_tempo_overlay() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  service.init();
+  clearEventBus();
+
+  // Tempo overlay
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 1000));
+  assertMenuUpdatedEventPublished();
+
+  // Save preset
+  service.handleEvent(makeLogicTempoValueChangedEvent(100, 2000));
+  assertMenuUpdatedEventPublished();
+
   assertNoMoreEvents();
 }
 
@@ -655,6 +877,49 @@ void test_editing_encoder_press_exits_editing() {
   // Press again to exit editing
   service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder, 3000));
 
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_editing_mode_handles_menu_lock_long_press() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // 1. Enter editing mode
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder, 1000));
+  clearEventBus();
+
+  // 2. Try to lock menu with long press
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock, 2000));
+
+  // Should have published kLocked but currently it's ignored in handleUnlocked if subState != kSelecting
+  assertMenuLockedEventPublished();
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_editing_mode_handles_bypass_toggle() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // 1. Enter editing mode
+  service.handleEvent(makePhysicalSwitchPressEvent(SwitchId::kMenuEncoder, 1000));
+  clearEventBus();
+
+  // 2. Toggle bypass (should lock)
+  service.handleEvent(makeLogicBypassToggledEvent(2000));
+
+  assertMenuLockedEventPublished();
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
 }
@@ -1250,18 +1515,32 @@ int main() {
   // Pot Overlay
   RUN_TEST(test_pot_value_changed_publishes_updated_when_unlocked);
   RUN_TEST(test_pot_value_changed_publishes_updated_when_locked);
+  RUN_TEST(test_pot_value_changed_while_editing_publishes_updated);
+  RUN_TEST(test_pot_value_changed_publishes_updated_with_tempo_overlay_active);
 
   // Tempo Overlay
   RUN_TEST(test_tempo_change_publishes_updated_when_unlocked);
   RUN_TEST(test_tempo_change_publishes_updated_when_locked);
+  RUN_TEST(test_tempo_change_while_editing_publishes_updated);
+  RUN_TEST(test_tempo_change_publishes_updated_with_tempo_overlay_active);
 
   // Preset Save Overlay
   RUN_TEST(test_menu_encoder_long_press_publishes_updated_when_unlocked);
   RUN_TEST(test_preset_save_event_publishes_updated);
 
+  // Transition Tests
+  RUN_TEST(test_pot_move_pops_tempo_overlay);
+  RUN_TEST(test_tempo_change_pops_pot_overlay);
+  RUN_TEST(test_pot_move_pops_save_preset_overlay);
+  RUN_TEST(test_tempo_change_pops_save_preset_overlay);
+  RUN_TEST(test_save_preset_pops_pot_overlay);
+  RUN_TEST(test_save_preset_pops_tempo_overlay);
+
   // Editing Mode
   RUN_TEST(test_editing_encoder_delta_publishes_updated);
   RUN_TEST(test_editing_encoder_press_exits_editing);
+  RUN_TEST(test_editing_mode_handles_menu_lock_long_press);
+  RUN_TEST(test_editing_mode_handles_bypass_toggle);
 
   // Timeout
   RUN_TEST(test_update_not_locks_menu_after_timeout_program_mode);

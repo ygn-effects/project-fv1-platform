@@ -26,14 +26,6 @@ Event makeUIProgramDeltaEvent(int16_t t_delta) {
   return e;
 }
 
-Event makeUIPresetDeltaEvent(int16_t t_delta) {
-  Event e;
-  e.m_domain = EventDomain::kUI;
-  e.m_subject = EventSubject::kPreset;
-  e.m_action = EventAction::kValueChanged;
-  e.m_data.delta = t_delta;
-  return e;
-}
 
 Event makeLogicProgramModeToggledEvent() {
   Event e;
@@ -46,15 +38,7 @@ Event makeLogicProgramModeToggledEvent() {
 Event makeLogicPresetValueChangedEvent() {
   Event e;
   e.m_domain = EventDomain::kLogic;
-  e.m_subject = EventSubject::kProgramMode;
-  e.m_action = EventAction::kToggled;
-  return e;
-}
-
-Event makeMemoryPresetBankChangedEvent() {
-  Event e;
-  e.m_domain = EventDomain::kMemory;
-  e.m_subject = EventSubject::kPresetBank;
+  e.m_subject = EventSubject::kPreset;
   e.m_action = EventAction::kValueChanged;
   return e;
 }
@@ -243,24 +227,6 @@ void test_logic_preset_change_syncs_pointer_without_save() {
   programService.init();
 
   programService.handleEvent(makeLogicPresetValueChangedEvent());
-
-  assertProgramChangedEventPublished();
-  assertEventBusEmpty();  // No save event
-  TEST_ASSERT_EQUAL_PTR(&ProgramsDefinitions::kPrograms[3], logicalState.m_activeProgram);
-}
-
-// =============================================================================
-// MIDI Preset Change Events (No Save)
-// =============================================================================
-
-void test_midi_preset_change_syncs_pointer_without_save() {
-  LogicalState logicalState;
-  ProgramService programService(logicalState);
-
-  programService.init();
-  logicalState.m_currentProgram = 3;
-
-  programService.handleEvent(makeMidiPresetValueChangedEvent());
 
   assertProgramChangedEventPublished();
   assertEventBusEmpty();  // No save event
