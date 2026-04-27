@@ -8,19 +8,16 @@
 
 namespace hal {
 
-enum class ExprDriverState : uint8_t {
-  connected = 0,
-  disconnected = 1,
-  debouncing = 2
-};
 
 class ExprDriver : public Pollable {
   private:
     DigitalGpio& m_detectPin;
     Pollable& m_pot;
-    ExprDriverState m_state{ExprDriverState::disconnected};
+    uint8_t m_state{0};
+    bool m_isDebouncing{false};
     uint32_t m_stateMs{0};
-    uint16_t m_debounceTime = 200;
+    uint16_t m_debounceTime = 100;
+    bool m_firstPoll{true};
 
   public:
     ExprDriver(DigitalGpio& t_pin, Pollable& t_pot) :
