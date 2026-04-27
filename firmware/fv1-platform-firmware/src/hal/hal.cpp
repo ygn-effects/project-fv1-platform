@@ -58,6 +58,11 @@ PotDriver pot2(pot2Pin, PotId::kPot2);
 AnalogGpioDriver mixPotPin(26, GpioConfig::kInput);
 PotDriver mixPot(mixPotPin, PotId::kMixPot);
 
+DigitalGpioDriver exprDetectPin(10, GpioConfig::kInputPullup);
+AnalogGpioDriver exprPotPin(24, GpioConfig::kInput);
+PotDriver exprPot(exprPotPin, PotId::kExpr);
+ExprDriver expr(exprDetectPin, exprPot);
+
 DigitalGpioDriver fv1S0Pin(13, GpioConfig::kOutput);
 DigitalGpioDriver fv1S1Pin(0, GpioConfig::kOutput);
 DigitalGpioDriver fv1S2Pin(1, GpioConfig::kOutput);
@@ -86,6 +91,7 @@ void init() {
   pollManager.registerDevice(&pot1);
   pollManager.registerDevice(&pot2);
   pollManager.registerDevice(&mixPot);
+  pollManager.registerDevice(&expr);
 
   pollManager.init();
   delay(100);

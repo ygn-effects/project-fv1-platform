@@ -6,6 +6,7 @@
 #include "drivers/display_ssd1306.h"
 #include "drivers/encoder.h"
 #include "drivers/eeprom_m95.h"
+#include "drivers/expr_driver.h"
 #include "drivers/fv1_driver.h"
 #include "drivers/gpio_driver.h"
 #include "drivers/gpio_expander_driver.h"
