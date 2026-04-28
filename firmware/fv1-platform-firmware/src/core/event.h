@@ -46,7 +46,9 @@ enum class EventAction {
   kUnlocked,
   kUpdated,
   kSettingChanged,
-  kSettingToggled
+  kSettingToggled,
+  kConnected,
+  kDisconnected
 };
 
 struct Event {
