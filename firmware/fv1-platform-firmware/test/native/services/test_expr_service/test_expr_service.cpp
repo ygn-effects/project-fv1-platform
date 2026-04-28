@@ -20,6 +20,22 @@ Event makePhysicalExprEvent(uint16_t t_value) {
   return e;
 }
 
+Event makePhysicalExprConnected() {
+  Event e{};
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kConnected;
+  return e;
+}
+
+Event makePhysicalExprDisconnected() {
+  Event e{};
+  e.m_domain = EventDomain::kPhysical;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kDisconnected;
+  return e;
+}
+
 Event makeLogicProgramChangedEvent(uint8_t t_programId) {
   Event e;
   e.m_domain = EventDomain::kLogic;
@@ -57,6 +73,24 @@ void assertLogicExprEventPublished(PotId t_expectedPotId, uint16_t t_expectedVal
   TEST_ASSERT_EQUAL(EventAction::kValueChanged, e.m_action);
   TEST_ASSERT_EQUAL(static_cast<uint8_t>(t_expectedPotId), e.m_id);
   TEST_ASSERT_EQUAL(t_expectedValue, e.m_data.value);
+}
+
+void assertExprConnectedPublished() {
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  Event e;
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventDomain::kLogic, e.m_domain);
+  TEST_ASSERT_EQUAL(EventSubject::kExpr, e.m_subject);
+  TEST_ASSERT_EQUAL(EventAction::kConnected, e.m_action);
+}
+
+void assertExprDisconnectedPublished() {
+  TEST_ASSERT_TRUE(EventBus::hasEvent());
+  Event e;
+  EventBus::recall(e);
+  TEST_ASSERT_EQUAL(EventDomain::kLogic, e.m_domain);
+  TEST_ASSERT_EQUAL(EventSubject::kExpr, e.m_subject);
+  TEST_ASSERT_EQUAL(EventAction::kDisconnected, e.m_action);
 }
 
 void assertEventBusEmpty() {
@@ -122,19 +156,49 @@ void test_init_syncs_handler_from_current_program() {
 // Physical Expression Pedal Events
 // =============================================================================
 
-void test_physical_expr_ignored_when_inactive() {
+void test_physical_expr_ignored_when_disconnected_and_inactive() {
   LogicalState logicalState;
   ExprService exprService(logicalState);
+
+  logicalState.m_exprParams[logicalState.m_currentProgram].m_state = ExprState::kInactive;
+  logicalState.m_exprConnected = false;
 
   exprService.handleEvent(makePhysicalExprEvent(512));
 
   assertEventBusEmpty();
 }
 
-void test_physical_expr_publishes_logic_event_when_active() {
+void test_physical_expr_ignored_when_connected_and_inactive() {
   LogicalState logicalState;
   ExprService exprService(logicalState);
 
+  logicalState.m_exprParams[logicalState.m_currentProgram].m_state = ExprState::kInactive;
+  logicalState.m_exprConnected = true;
+
+  exprService.handleEvent(makePhysicalExprEvent(512));
+
+  assertEventBusEmpty();
+}
+
+void test_physical_expr_ignored_when_disconnected_and_active() {
+  LogicalState logicalState;
+  ExprService exprService(logicalState);
+
+  logicalState.m_exprConnected = false;
+  logicalState.m_exprParams[0].m_state = ExprState::kActive;
+  logicalState.m_exprParams[0].m_mappedPot = MappedPot::kPot0;
+  exprService.init();
+
+  exprService.handleEvent(makePhysicalExprEvent(512));
+
+  assertEventBusEmpty();
+}
+
+void test_physical_expr_publishes_logic_event_when_connected_and_active() {
+  LogicalState logicalState;
+  ExprService exprService(logicalState);
+
+  logicalState.m_exprConnected = true;
   logicalState.m_exprParams[0].m_state = ExprState::kActive;
   logicalState.m_exprParams[0].m_mappedPot = MappedPot::kPot0;
   exprService.init();
@@ -165,6 +229,34 @@ void test_physical_expr_maps_to_correct_pot_id() {
     assertLogicExprEventPublished(expectedPotIds[i], 512);
     assertEventBusEmpty();
   }
+}
+
+void test_physical_expr_connected_sets_logical_state() {
+  LogicalState logicalState;
+  ExprService exprService(logicalState);
+
+  exprService.init();
+
+  exprService.handleEvent(makePhysicalExprConnected());
+
+  TEST_ASSERT_EQUAL(true, logicalState.m_exprConnected);
+  assertExprConnectedPublished();
+  assertEventBusEmpty();
+}
+
+void test_physical_expr_disconnected_sets_logical_state() {
+  LogicalState logicalState;
+  ExprService exprService(logicalState);
+
+  // Default is false
+  logicalState.m_exprConnected = true;
+  exprService.init();
+
+  exprService.handleEvent(makePhysicalExprDisconnected());
+
+  TEST_ASSERT_EQUAL(false, logicalState.m_exprConnected);
+  assertExprDisconnectedPublished();
+  assertEventBusEmpty();
 }
 
 // =============================================================================
@@ -566,9 +658,13 @@ int main() {
   RUN_TEST(test_init_syncs_handler_from_current_program);
 
   // Physical Expression Pedal Events
-  RUN_TEST(test_physical_expr_ignored_when_inactive);
-  RUN_TEST(test_physical_expr_publishes_logic_event_when_active);
+  RUN_TEST(test_physical_expr_ignored_when_disconnected_and_inactive);
+  RUN_TEST(test_physical_expr_ignored_when_connected_and_inactive);
+  RUN_TEST(test_physical_expr_ignored_when_disconnected_and_active);
+  RUN_TEST(test_physical_expr_publishes_logic_event_when_connected_and_active);
   RUN_TEST(test_physical_expr_maps_to_correct_pot_id);
+  RUN_TEST(test_physical_expr_connected_sets_logical_state);
+  RUN_TEST(test_physical_expr_disconnected_sets_logical_state);
 
   // Program Change
   RUN_TEST(test_program_change_syncs_handler);
