@@ -468,7 +468,7 @@ void test_message_wrong_channel_ignored() {
   midiService.init();
 
   // CC messages on invalid channel
-  serial.feedByte(MidiBytes::c_ccStatus);
+  serial.feedByte(0xB1); // CC Channel 1
   serial.feedByte(MidiBytes::c_ccBypass);
   serial.feedByte(MidiCCValues::c_bypassDisable);
   midiService.update();
