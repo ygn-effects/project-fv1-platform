@@ -16,6 +16,7 @@ namespace MenuConstants {
   static constexpr uint32_t c_menuTimeout = 600000u;
   static constexpr uint32_t c_potMenuTimeout = 500u;
   static constexpr uint32_t c_tempoMenuTimeout = 2000u;
+  static constexpr uint32_t c_ExprConnectedMenuTimeout = 1000u;
   static constexpr uint8_t c_visibleItemsPerPage = 5;
   static constexpr uint8_t c_visibleItemsPerTwoColumns = 2 * MenuConstants::c_visibleItemsPerPage;
 }
@@ -111,6 +112,7 @@ constexpr const char* labelPresetSaveTarget(const LogicalState* t_state);
 constexpr const char* labelSave(const LogicalState* t_state);
 constexpr const char* labelMidiChannel(const LogicalState* t_state);
 constexpr const char* labelGlobalSettings(const LogicalState* t_state);
+constexpr const char* labelExprConnected(const LogicalState* t_state);
 
 constexpr const char* valueProgram(const LogicalState* t_state);
 const char* valuePresetBank(const LogicalState* t_state);
@@ -143,6 +145,7 @@ const char* valueMixPotMaxValue(const LogicalState* t_state);
 const char* valuePresetBankSaveTarget(const LogicalState* t_state);
 const char* valuePresetSaveTarget(const LogicalState* t_state);
 const char* valueMidiChannel(const LogicalState* t_state);
+constexpr const char* valueExprConnected(const LogicalState* t_state);
 
 void onMoveProgram(int8_t t_delta);
 void onMovePot0(int8_t t_delta);
@@ -183,5 +186,6 @@ extern const MenuPage TempoMenuPage;
 extern const MenuPage PotSettingsMenuPage;
 extern const MenuPage SavePresetMenuPage;
 extern const MenuPage GlobalSettingsMenuPage;
+extern const MenuPage ExprConnectedMenuPage;
 
 } // namespace ui
