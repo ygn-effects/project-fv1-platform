@@ -89,6 +89,22 @@ Event makeDriverExprMove(uint16_t t_value) {
   return e;
 }
 
+Event makeDriverExprConnected() {
+  Event e{};
+  e.m_domain = EventDomain::kDriver;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kConnected;
+  return e;
+}
+
+Event makeDriverExprDisconnected() {
+  Event e{};
+  e.m_domain = EventDomain::kDriver;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kDisconnected;
+  return e;
+}
+
 Event makeDriverEncoderDelta(EncoderId t_id, int16_t t_delta) {
   Event e{};
   e.m_domain = EventDomain::kDriver;
@@ -994,6 +1010,88 @@ void test_successive_pot_move_pushes_pops_overlays() {
   TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Program mode"));
 }
 
+void test_expr_connect_shows_expr_connected_overlay_menu_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverExprConnected());
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Conn."));
+}
+
+void test_expr_disconnect_shows_expr_connected_overlay_menu_unlocked() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Pot move
+  fix.publishAndDispatchAllEvents(makeDriverExprDisconnected());
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Value
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Disc."));
+}
+
+void test_expr_connected_overlay_timeout_pops_overlay() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.updateAllServices();
+
+  // Expr connect
+  fix.publishAndDispatchAllEvents(makeDriverExprConnected());
+  fix.updateAllServices();
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Set the clock
+  fix.mockClock.advanceBy(ui::MenuConstants::c_ExprConnectedMenuTimeout + 1);
+
+  // update and handle events
+  fix.updateAllServices();
+  fix.dispatchAllEvents();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Label
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Program mode"));
+}
+
 // =============================================================================
 // Overlay Cross-Transitions
 // =============================================================================
@@ -1167,6 +1265,38 @@ void test_tempo_overlay_active_pot_move_timeout_returns_to_menu() {
 
   // Should show menu, not an overlay
   TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Program mode"));
+}
+
+void test_tempo_overlay_active_expr_connect_replaces_with_expr_connected_overlay() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  fix.updateAllServices();
+
+  // Pot0 move on delay effect → tempo overlay
+  fix.publishAndDispatchAllEvents(makeDriverPotMove(PotId::kPot0, 512));
+  fix.updateAllServices();
+
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Tempo"));
+
+  // Reset the mock
+  fix.mockDisplay.reset();
+
+  // Expr connect
+  fix.publishAndDispatchAllEvents(makeDriverExprConnected());
+  fix.updateAllServices();
+
+  // Commands
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasClearCmd());
+  TEST_ASSERT_TRUE(fix.mockDisplay.hasDisplayCmd());
+
+  // Should show preset save overlay, not tempo
+  TEST_ASSERT_TRUE(fix.mockDisplay.showsText("Expr pedal"));
+  TEST_ASSERT_FALSE(fix.mockDisplay.showsText("Tempo"));
 }
 
 // =============================================================================
@@ -1715,6 +1845,7 @@ void test_mix_pot_moved_updates_display_unlocked() {
 
 void test_expr_moved_updates_mapped_pot_display_unlocked() {
   InteractionFixture fix;
+  fix.logicalState.m_exprConnected = true;
   fix.logicalState.m_bypassState = BypassState::kActive;
   fix.logicalState.m_exprParams[0].m_state = ExprState::kActive;
   fix.logicalState.m_exprParams[0].m_mappedPot = MappedPot::kPot1;
@@ -1749,6 +1880,7 @@ void test_expr_moved_updates_mapped_pot_display_unlocked() {
 
 void test_expr_moved_updates_mapped_pot_display_locked() {
   InteractionFixture fix;
+  fix.logicalState.m_exprConnected = true;
   fix.logicalState.m_bypassState = BypassState::kActive;
   fix.logicalState.m_exprParams[0].m_state = ExprState::kActive;
   fix.logicalState.m_exprParams[0].m_mappedPot = MappedPot::kPot1;
@@ -1873,6 +2005,9 @@ int main() {
   RUN_TEST(test_pot0_move_shows_pot_overlay_non_delay_effect_menu_unlocked);
   RUN_TEST(test_pot_overlay_timeout_pop_overlay);
   RUN_TEST(test_successive_pot_move_pushes_pops_overlays);
+  RUN_TEST(test_expr_connect_shows_expr_connected_overlay_menu_unlocked);
+  RUN_TEST(test_expr_disconnect_shows_expr_connected_overlay_menu_unlocked);
+  RUN_TEST(test_expr_connected_overlay_timeout_pops_overlay);
 
   // Overlay Cross-Transitions
   RUN_TEST(test_tempo_overlay_active_pot_move_replaces_with_pot_overlay);
@@ -1880,6 +2015,7 @@ int main() {
   RUN_TEST(test_pot_overlay_active_preset_save_replaces_with_save_overlay);
   RUN_TEST(test_tempo_overlay_active_preset_save_replaces_with_save_overlay);
   RUN_TEST(test_tempo_overlay_active_pot_move_timeout_returns_to_menu);
+  RUN_TEST(test_tempo_overlay_active_expr_connect_replaces_with_expr_connected_overlay);
 
   // Preset Editing
   RUN_TEST(test_pot0_move_preset_editing_changes_menu_header);
