@@ -687,7 +687,7 @@ void test_expr_connected_publishes_updated_when_unlocked() {
   clearEventBus();
 
   // Expr connected
-  makeLogicExprConnectedEvent();
+  service.handleEvent(makeLogicExprConnectedEvent());
 
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
@@ -722,7 +722,7 @@ void test_expr_disconnected_publishes_updated_when_unlocked() {
   clearEventBus();
 
   // Expr disconnected
-  makeLogicExprDisconnectedEvent();
+  service.handleEvent(makeLogicExprDisconnectedEvent());
 
   assertMenuUpdatedEventPublished();
   assertNoMoreEvents();
@@ -1251,6 +1251,56 @@ void test_update_pops_tempo_overlay_after_timeout() {
 
   // Advance time past tempo overlay timeout
   mockClock.setClock(2000 + ui::MenuConstants::c_tempoMenuTimeout + 1);
+  service.update();
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_update_pops_expr_connected_overlay_after_timeout() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Set clock at 1000
+  mockClock.setClock(1000);
+
+  // Push tempo overlay at time 2000
+  mockClock.setClock(2000);
+  service.handleEvent(makeLogicExprConnectedEvent());
+  clearEventBus();
+
+  // Advance time past expr connected overlay timeout
+  mockClock.advanceBy(ui::MenuConstants::c_ExprConnectedMenuTimeout + 1);
+  service.update();
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_update_pops_expr_disconnected_overlay_after_timeout() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Set clock at 1000
+  mockClock.setClock(1000);
+
+  // Push tempo overlay at time 2000
+  mockClock.setClock(2000);
+  service.handleEvent(makeLogicExprDisconnectedEvent());
+  clearEventBus();
+
+  // Advance time past expr connected overlay timeout
+  mockClock.advanceBy(ui::MenuConstants::c_ExprConnectedMenuTimeout + 1);
   service.update();
 
   assertMenuUpdatedEventPublished();
@@ -1792,6 +1842,8 @@ int main() {
   RUN_TEST(test_update_does_not_lock_before_timeout_preset_mode);
   RUN_TEST(test_update_pops_pot_overlay_after_timeout);
   RUN_TEST(test_update_pops_tempo_overlay_after_timeout);
+  RUN_TEST(test_update_pops_expr_connected_overlay_after_timeout);
+  RUN_TEST(test_update_pops_expr_disconnected_overlay_after_timeout);
   RUN_TEST(test_update_does_nothing_when_locked);
 
   // Program mode change

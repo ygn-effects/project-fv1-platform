@@ -20,6 +20,26 @@ void ExprService::publishSaveExprEvent(const Event& t_event) {
   EventBus::publish(e);
 }
 
+void ExprService::publishExprConnectedEvent(const Event& t_event) {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kConnected;
+  e.m_timestamp = t_event.m_timestamp;
+
+  EventBus::publish(e);
+}
+
+void ExprService::publishExprDisconnectedEvent(const Event& t_event) {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kDisconnected;
+  e.m_timestamp = t_event.m_timestamp;
+
+  EventBus::publish(e);
+}
+
 void ExprService::init() {
   syncHandler();
 }
@@ -67,7 +87,24 @@ void ExprService::handleEvent(const Event& t_event) {
   }
 
   if (t_event.m_domain == EventDomain::kPhysical) {
+    if (t_event.m_subject == EventSubject::kExpr
+        && t_event.m_action == EventAction::kConnected) {
+      m_logicState.m_exprConnected = true;
+      publishExprConnectedEvent(t_event);
+
+      return;
+    }
+
+    if (t_event.m_subject == EventSubject::kExpr
+        && t_event.m_action == EventAction::kDisconnected) {
+      m_logicState.m_exprConnected = false;
+      publishExprDisconnectedEvent(t_event);
+
+      return;
+    }
+
     if (m_exprHandler.m_state != ExprState::kActive) return;
+    if (! m_logicState.m_exprConnected) return;
 
     if (t_event.m_subject == EventSubject::kExpr
         && t_event.m_action == EventAction::kValueChanged) {

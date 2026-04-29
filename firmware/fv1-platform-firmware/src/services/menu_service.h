@@ -31,9 +31,11 @@ class MenuService : public Service {
     uint32_t m_lastInputTime{0};
     uint32_t m_lastPotMoveTime{0};
     uint32_t m_lastTempoChangeTime{0};
+    uint32_t m_lastExprConnectedTime{0};
     bool m_potMenuActive{false};
     bool m_tempoMenuActive{false};
     bool m_savePresetMenuActive{false};
+    bool m_exprConnectedMenuActive{false};
 
     void resetOverlayState();
 
@@ -49,6 +51,7 @@ class MenuService : public Service {
     void handlePotsMoving(const Event& t_event);
     void handleTempoChange(const Event& t_event);
     void handlePresetSaving(const Event& t_event);
+    void handleExprConnected(const Event& t_event);
 
   public:
     MenuService(LogicalState& t_lState, Toggleable& t_led, Clock& t_clock) :

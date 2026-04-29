@@ -523,6 +523,20 @@ void test_push_tempo_overlay() {
   TEST_ASSERT_EQUAL(&ui::TempoMenuPage, handler.m_menuStack.top());
 }
 
+void test_push_expr_connected_overlay() {
+  MenuHandler handler;
+  LogicalState state;
+
+  handler.init();
+  handler.unlock(state);
+  uint8_t depthBefore = handler.m_menuStack.depth();
+
+  handler.pushExprConnectedOverlay();
+
+  TEST_ASSERT_EQUAL(depthBefore + 1, handler.m_menuStack.depth());
+  TEST_ASSERT_EQUAL(&ui::ExprConnectedMenuPage, handler.m_menuStack.top());
+}
+
 void test_pop_overlay() {
   MenuHandler handler;
   LogicalState state;
@@ -747,6 +761,7 @@ int main() {
   RUN_TEST(test_push_pot_overlay_mix_pot);
   RUN_TEST(test_push_pot_overlay_pot0_pushed_for_non_delay_effect);
   RUN_TEST(test_push_tempo_overlay);
+  RUN_TEST(test_push_expr_connected_overlay);
   RUN_TEST(test_pop_overlay);
 
   // View building

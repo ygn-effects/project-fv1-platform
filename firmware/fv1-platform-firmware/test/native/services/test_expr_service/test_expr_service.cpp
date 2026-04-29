@@ -136,6 +136,7 @@ void test_init_syncs_handler_from_current_program() {
   ExprService exprService(logicalState);
 
   // Configure program 0 with specific expr settings
+  logicalState.m_exprConnected = true;
   logicalState.m_exprParams[0].m_state = ExprState::kActive;
   logicalState.m_exprParams[0].m_mappedPot = MappedPot::kPot2;
   logicalState.m_exprParams[0].m_direction = Direction::kInverted;
@@ -213,6 +214,8 @@ void test_physical_expr_maps_to_correct_pot_id() {
   LogicalState logicalState;
   ExprService exprService(logicalState);
 
+  logicalState.m_exprConnected = true;
+
   // Test each mapped pot
   MappedPot mappedPots[] = {MappedPot::kPot0, MappedPot::kPot1, MappedPot::kPot2, MappedPot::kMixPot};
   PotId expectedPotIds[] = {PotId::kPot0, PotId::kPot1, PotId::kPot2, PotId::kMixPot};
@@ -239,7 +242,7 @@ void test_physical_expr_connected_sets_logical_state() {
 
   exprService.handleEvent(makePhysicalExprConnected());
 
-  TEST_ASSERT_EQUAL(true, logicalState.m_exprConnected);
+  TEST_ASSERT_TRUE(logicalState.m_exprConnected);
   assertExprConnectedPublished();
   assertEventBusEmpty();
 }
@@ -254,7 +257,7 @@ void test_physical_expr_disconnected_sets_logical_state() {
 
   exprService.handleEvent(makePhysicalExprDisconnected());
 
-  TEST_ASSERT_EQUAL(false, logicalState.m_exprConnected);
+  TEST_ASSERT_FALSE(logicalState.m_exprConnected);
   assertExprDisconnectedPublished();
   assertEventBusEmpty();
 }
@@ -266,6 +269,8 @@ void test_physical_expr_disconnected_sets_logical_state() {
 void test_program_change_syncs_handler() {
   LogicalState logicalState;
   ExprService exprService(logicalState);
+
+  logicalState.m_exprConnected = true;
 
   // Configure different settings for program 0 and 1
   logicalState.m_exprParams[0].m_state = ExprState::kActive;
@@ -294,6 +299,8 @@ void test_program_change_syncs_handler() {
 void test_program_change_to_inactive_expr() {
   LogicalState logicalState;
   ExprService exprService(logicalState);
+
+  logicalState.m_exprConnected = true;
 
   // Program 0: active, Program 1: inactive
   logicalState.m_exprParams[0].m_state = ExprState::kActive;
@@ -503,6 +510,7 @@ void test_value_mapping_normal_direction() {
   LogicalState logicalState;
   ExprService exprService(logicalState);
 
+  logicalState.m_exprConnected = true;
   logicalState.m_exprParams[0].m_state = ExprState::kActive;
   logicalState.m_exprParams[0].m_mappedPot = MappedPot::kPot0;
   logicalState.m_exprParams[0].m_direction = Direction::kNormal;
@@ -532,6 +540,7 @@ void test_value_mapping_inverted_direction() {
   LogicalState logicalState;
   ExprService exprService(logicalState);
 
+  logicalState.m_exprConnected = true;
   logicalState.m_exprParams[0].m_state = ExprState::kActive;
   logicalState.m_exprParams[0].m_mappedPot = MappedPot::kPot0;
   logicalState.m_exprParams[0].m_direction = Direction::kInverted;
@@ -554,6 +563,7 @@ void test_value_mapping_custom_range() {
   LogicalState logicalState;
   ExprService exprService(logicalState);
 
+  logicalState.m_exprConnected = true;
   logicalState.m_exprParams[0].m_state = ExprState::kActive;
   logicalState.m_exprParams[0].m_mappedPot = MappedPot::kPot0;
   logicalState.m_exprParams[0].m_direction = Direction::kNormal;
