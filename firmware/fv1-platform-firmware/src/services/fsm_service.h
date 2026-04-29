@@ -19,6 +19,8 @@ class FsmService : public Service {
     bool isDeltaChanged(const Event& t_event) const;
     bool isPotValueChanged(const Event& t_event) const;
     bool isExprValueChanged(const Event& t_event) const;
+    bool isExprConnected(const Event& t_event) const;
+    bool isExprDisconnected(const Event& t_event) const;
     bool isBypassToggled(const Event& t_event) const;
     bool isMenuUnlocked(const Event& t_event) const;
     bool isMenuLocked(const Event& t_event) const;

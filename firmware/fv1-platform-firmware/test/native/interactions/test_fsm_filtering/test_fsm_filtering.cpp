@@ -213,6 +213,36 @@ void test_bypassed_republishes_bypass_press() {
   TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
 }
 
+void test_bypassed_republishes_expr_connected() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kBypassed;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  TEST_ASSERT_EQUAL(AppState::kBypassed, fix.fsmService.getAppState());
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverExprConnected();
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
+void test_bypassed_republishes_expr_disconnected() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kBypassed;
+  fix.syncEepromWithState();
+  fix.init();
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  TEST_ASSERT_EQUAL(AppState::kBypassed, fix.fsmService.getAppState());
+  fix.clearEventBus();
+
+  Event driverEvent = makeDriverExprDisconnected();
+  fix.publishAndDispatchEvent(driverEvent);
+
+  TEST_ASSERT_TRUE(eventWasRepublishedAsPhysical(fix, driverEvent));
+}
+
 void test_bypassed_filters_tap_press() {
   InteractionFixture fix;
   fix.logicalState.m_bypassState = BypassState::kBypassed;
@@ -1146,6 +1176,8 @@ int main() {
 
   // kBypassed - Only bypass switch press republished
   RUN_TEST(test_bypassed_republishes_bypass_press);
+  RUN_TEST(test_bypassed_republishes_expr_connected);
+  RUN_TEST(test_bypassed_republishes_expr_disconnected);
   RUN_TEST(test_bypassed_filters_tap_press);
   RUN_TEST(test_bypassed_filters_tap_long_press);
   RUN_TEST(test_bypassed_filters_encoder_press);
