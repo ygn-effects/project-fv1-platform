@@ -243,6 +243,10 @@ void MenuHandler::pushPresetSaveOverlay() {
   m_menuStack.push(&ui::SavePresetMenuPage);
 }
 
+void MenuHandler::pushExprConnectedOverlay() {
+  m_menuStack.push(&ui::ExprConnectedMenuPage);
+}
+
 void MenuHandler::popOverlay() {
   m_menuStack.pop();
 }

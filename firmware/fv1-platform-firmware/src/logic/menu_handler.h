@@ -53,6 +53,7 @@ struct MenuHandler {
     void pushPotOverlay(uint8_t t_potId, const LogicalState& t_state);
     void pushTempoOverlay();
     void pushPresetSaveOverlay();
+    void pushExprConnectedOverlay();
     void popOverlay();
 
     void buildView(const LogicalState& t_state);

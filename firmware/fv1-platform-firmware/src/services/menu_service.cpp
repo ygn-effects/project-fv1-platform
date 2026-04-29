@@ -142,13 +142,27 @@ void MenuService::handleUnlocked(const Event& t_event) {
       if (t_event.m_subject == EventSubject::kTempo
           && t_event.m_action == EventAction::kValueChanged) {
         handleTempoChange(t_event);
-        publishViewUpdate();
+        if (m_tempoMenuActive) publishViewUpdate();
         return;
       }
 
       if (t_event.m_subject == EventSubject::kPot
           && t_event.m_action == EventAction::kValueChanged) {
         handlePotsMoving(t_event);
+        if(m_potMenuActive) publishViewUpdate();
+        return;
+      }
+
+      if (t_event.m_subject == EventSubject::kExpr
+          && t_event.m_action == EventAction::kConnected) {
+        handleExprConnected(t_event);
+        if(m_exprConnectedMenuActive) publishViewUpdate();
+        return;
+      }
+
+      if (t_event.m_subject == EventSubject::kExpr
+          && t_event.m_action == EventAction::kDisconnected) {
+        handleExprConnected(t_event);
         publishViewUpdate();
         return;
       }
@@ -251,8 +265,11 @@ void MenuService::handlePotsMoving(const Event& t_event) {
     m_handler.popOverlay();
   }
 
-  m_handler.pushPotOverlay(t_event.m_id, m_logicState);
-  m_potMenuActive = true;
+  if (!m_exprConnectedMenuActive) {
+    m_handler.pushPotOverlay(t_event.m_id, m_logicState);
+    m_potMenuActive = true;
+  }
+
   m_lastPotMoveTime = t_event.m_timestamp;
   m_lastInputTime = t_event.m_timestamp;
 }
@@ -264,7 +281,7 @@ void MenuService::handleTempoChange(const Event& t_event) {
     m_handler.popOverlay();
   }
 
-  if (!m_tempoMenuActive) {
+  if (!m_tempoMenuActive && !m_exprConnectedMenuActive) {
     m_handler.pushTempoOverlay();
     m_tempoMenuActive = true;
   }
@@ -286,6 +303,22 @@ void MenuService::handlePresetSaving(const Event& t_event) {
 
   m_savePresetMenuActive = true;
   m_lastInputTime = t_event.m_timestamp;
+}
+
+void MenuService::handleExprConnected(const Event& t_event) {
+  if (m_potMenuActive || m_tempoMenuActive) {
+    m_potMenuActive = false;
+    m_tempoMenuActive = false;
+    m_handler.popOverlay();
+  }
+
+  if (!m_exprConnectedMenuActive && !m_savePresetMenuActive) {
+    m_handler.pushExprConnectedOverlay();
+    m_exprConnectedMenuActive = true;
+  }
+
+  m_lastInputTime = t_event.m_timestamp;
+  m_lastExprConnectedTime = t_event.m_timestamp;
 }
 
 void MenuService::init() {
@@ -376,6 +409,14 @@ void MenuService::update() {
       publishViewUpdate();
     }
   }
+
+  if (m_exprConnectedMenuActive) {
+    if ((now - m_lastExprConnectedTime) > ui::MenuConstants::c_ExprConnectedMenuTimeout) {
+      m_tempoMenuActive = true;
+      m_handler.popOverlay();
+      publishViewUpdate();
+    }
+  }
 }
 
 bool MenuService::interestedIn(const Event& t_event) const {
@@ -406,6 +447,12 @@ bool MenuService::interestedIn(const Event& t_event) const {
 
     if (t_event.m_subject == EventSubject::kPot
         && t_event.m_action == EventAction::kValueChanged) return true;
+
+    if (t_event.m_subject == EventSubject::kExpr
+        && t_event.m_action == EventAction::kConnected) return true;
+
+    if (t_event.m_subject == EventSubject::kExpr
+        && t_event.m_action == EventAction::kDisconnected) return true;
   }
 
   if (t_event.m_domain == EventDomain::kUI) {

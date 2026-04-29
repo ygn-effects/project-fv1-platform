@@ -52,6 +52,8 @@ struct LogicalState {
 
   PotParams m_potParams[ProgramConstants::c_maxPrograms][PotConstants::c_potCount];
 
+  bool m_exprConnected = false;
+
   struct ExprParams {
       ExprState m_state = ExprState::kInactive;
       MappedPot m_mappedPot = MappedPot::kPot0;

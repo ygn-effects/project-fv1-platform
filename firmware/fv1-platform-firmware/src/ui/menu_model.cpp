@@ -210,6 +210,10 @@ inline constexpr const char* labelGlobalSettings(const LogicalState* t_state) {
   return "Global settings";
 }
 
+inline constexpr const char* labelExprConnected(const LogicalState* t_state) {
+  return "Expr pedal";
+}
+
 const char* valuePresetBank(const LogicalState* t_state) {
   static char buffer[8];
   snprintf(buffer, sizeof(buffer), "%u", t_state->m_currentPresetBank);
@@ -448,6 +452,12 @@ const char* valueMidiChannel(const LogicalState* t_state) {
   snprintf(buffer, sizeof(buffer), "%u", t_state->m_midiChannel);
 
   return buffer;
+}
+
+inline constexpr const char* valueExprConnected(const LogicalState* t_state) {
+  return t_state->m_exprConnected
+    ? "Conn."
+    : "Disc.";
 }
 
 void onMovePresetBank(int8_t t_delta) {
@@ -894,6 +904,17 @@ constexpr MenuPage GlobalSettingsMenuPage = {
   GlobalSettingsMenuItems,
   sizeof(GlobalSettingsMenuItems) / sizeof(GlobalSettingsMenuItems[0]),
   ui::MenuLayout::kList
+};
+
+constexpr MenuItem ExprConnectedMenuItems[] = {
+  { labelExprConnected, isAlwaysVisible, valueExprConnected, nullptr, nullptr, nullptr }
+};
+
+constexpr MenuPage ExprConnectedMenuPage = {
+  "Expr pedal",
+  ExprConnectedMenuItems,
+  sizeof(ExprConnectedMenuItems) / sizeof(ExprConnectedMenuItems[0]),
+  ui::MenuLayout::kLabelValue
 };
 
 }

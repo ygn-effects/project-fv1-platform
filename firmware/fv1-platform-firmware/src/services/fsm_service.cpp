@@ -31,6 +31,16 @@ bool FsmService::isExprValueChanged(const Event& t_event) const {
           && t_event.m_action == EventAction::kValueChanged);
 }
 
+bool FsmService::isExprConnected(const Event& t_event) const {
+  return (t_event.m_subject == EventSubject::kExpr
+          && t_event.m_action == EventAction::kConnected);
+}
+
+bool FsmService::isExprDisconnected(const Event& t_event) const {
+  return (t_event.m_subject == EventSubject::kExpr
+          && t_event.m_action == EventAction::kDisconnected);
+}
+
 bool FsmService::isBypassToggled(const Event& t_event) const {
   return (t_event.m_domain == EventDomain::kLogic
           && t_event.m_subject == EventSubject::kBypass
@@ -84,6 +94,18 @@ void FsmService::handleEvent(const Event& t_event) {
     case AppState::kBypassed:
       // Bypass Press
       if (isPressed(t_event, SwitchId::kBypass)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr connection
+      if (isExprConnected(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr disconnection
+      if (isExprDisconnected(t_event)) {
         rePublishPhysicalEvent(t_event);
         return;
       }
@@ -148,6 +170,18 @@ void FsmService::handleEvent(const Event& t_event) {
 
       // Expr move
       if (isExprValueChanged(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr connection
+      if (isExprConnected(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr disconnection
+      if (isExprDisconnected(t_event)) {
         rePublishPhysicalEvent(t_event);
         return;
       }
@@ -227,6 +261,18 @@ void FsmService::handleEvent(const Event& t_event) {
         return;
       }
 
+      // Expr connection
+      if (isExprConnected(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr disconnection
+      if (isExprDisconnected(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
       // Bypass state toggled
       if (isBypassToggled(t_event)) {
         transitionTo(AppState::kBypassed);
@@ -285,6 +331,18 @@ void FsmService::handleEvent(const Event& t_event) {
 
       // Expr move
       if (isExprValueChanged(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr connection
+      if (isExprConnected(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr disconnection
+      if (isExprDisconnected(t_event)) {
         rePublishPhysicalEvent(t_event);
         return;
       }
@@ -360,6 +418,18 @@ void FsmService::handleEvent(const Event& t_event) {
 
       // Expr move
       if (isExprValueChanged(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr connection
+      if (isExprConnected(t_event)) {
+        rePublishPhysicalEvent(t_event);
+        return;
+      }
+
+      // Expr disconnection
+      if (isExprDisconnected(t_event)) {
         rePublishPhysicalEvent(t_event);
         return;
       }

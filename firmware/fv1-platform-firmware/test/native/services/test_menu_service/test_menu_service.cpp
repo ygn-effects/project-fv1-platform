@@ -99,6 +99,22 @@ Event makeLogicProgramChangedEvent(uint8_t t_programId) {
   return e;
 }
 
+Event makeLogicExprConnectedEvent() {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kConnected;
+  return e;
+}
+
+Event makeLogicExprDisconnectedEvent() {
+  Event e;
+  e.m_domain = EventDomain::kLogic;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kDisconnected;
+  return e;
+}
+
 Event makeUIPresetSettingChangeEvent(SavePresetParam t_param, int16_t t_delta = 0) {
   Event e;
   e.m_domain = EventDomain::kUI;
@@ -658,6 +674,80 @@ void test_tempo_change_publishes_updated_with_tempo_overlay_active() {
 }
 
 // =============================================================================
+// Expr connected overlay
+// =============================================================================
+
+void test_expr_connected_publishes_updated_when_unlocked() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Expr connected
+  service.handleEvent(makeLogicExprConnectedEvent());
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_expr_connected_not_publishes_updated_when_locked() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Lock
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock));
+  clearEventBus();
+
+  // Expr connected
+  makeLogicExprConnectedEvent();
+
+  assertNoMoreEvents();
+}
+
+void test_expr_disconnected_publishes_updated_when_unlocked() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Expr disconnected
+  service.handleEvent(makeLogicExprDisconnectedEvent());
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_expr_disconnected_not_publishes_updated_when_locked() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Lock
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuLock));
+  clearEventBus();
+
+  // Expr disconnected
+  makeLogicExprDisconnectedEvent();
+
+  assertNoMoreEvents();
+}
+
+// =============================================================================
 // Preset Save Overlay Tests
 // =============================================================================
 
@@ -746,6 +836,26 @@ void test_tempo_change_pops_pot_overlay() {
   assertNoMoreEvents();
 }
 
+void test_pot_move_not_pops_expr_connected_overlay() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  service.init();
+  clearEventBus();
+
+  // Show expr connected overlay
+  service.handleEvent(makeLogicExprConnectedEvent());
+  assertMenuUpdatedEventPublished();
+
+  // Move pot - should not pop expr overlay
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 2000));
+
+  assertNoMoreEvents();
+}
+
 void test_pot_move_pops_save_preset_overlay() {
   LogicalState logicalState;
   MockedClock mockClock;
@@ -783,6 +893,25 @@ void test_tempo_change_pops_save_preset_overlay() {
   // 2. Change tempo - should pop save preset and push tempo
   service.handleEvent(makeLogicTempoValueChangedEvent(600, 2000));
   assertMenuUpdatedEventPublished();
+
+  assertNoMoreEvents();
+}
+
+void test_tempo_change_not_pops_expr_connected_overlay() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Show expr connected overlay
+  service.handleEvent(makeLogicExprConnectedEvent());
+  assertMenuUpdatedEventPublished();
+
+  // Tempo change- should not pop expr overlay
+  service.handleEvent(makeLogicTempoValueChangedEvent(600, 2000));
 
   assertNoMoreEvents();
 }
@@ -825,6 +954,89 @@ void test_save_preset_pops_tempo_overlay() {
   // Save preset
   service.handleEvent(makeLogicTempoValueChangedEvent(100, 2000));
   assertMenuUpdatedEventPublished();
+
+  assertNoMoreEvents();
+}
+
+void test_save_preset_pops_expr_connected_overlay() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  service.init();
+  clearEventBus();
+
+  // Show expr connected overlay
+  service.handleEvent(makeLogicExprConnectedEvent());
+  assertMenuUpdatedEventPublished();
+
+  // Save preset
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuEncoder, 2000));
+  assertMenuUpdatedEventPublished();
+
+  assertNoMoreEvents();
+}
+
+void test_expr_connected_pops_tempo_overlay() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  service.init();
+  clearEventBus();
+
+  // Tempo overlay
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 1000));
+  assertMenuUpdatedEventPublished();
+
+  // Show expr connected overlay
+  service.handleEvent(makeLogicExprConnectedEvent());
+  assertMenuUpdatedEventPublished();
+
+  assertNoMoreEvents();
+}
+
+void test_expr_connected_pops_pot_overlay() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  service.init();
+  clearEventBus();
+
+  // how pot overlay
+  service.handleEvent(makeLogicPotValueChangedEvent(PotId::kPot1, 512, 1000));
+  assertMenuUpdatedEventPublished();
+
+  // Show expr connected overlay
+  service.handleEvent(makeLogicExprConnectedEvent());
+  assertMenuUpdatedEventPublished();
+
+  assertNoMoreEvents();
+}
+
+void test_expr_connected_not_pops_save_preset_overlay() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  logicalState.m_activeProgram = &ProgramsDefinitions::kPrograms[7];
+  service.init();
+  clearEventBus();
+
+  // Show save preset overlay
+  service.handleEvent(makePhysicalSwitchLongPressEvent(SwitchId::kMenuEncoder, 1000));
+  assertMenuUpdatedEventPublished();
+
+  // Not show expr connected overlay
+  service.handleEvent(makeLogicExprConnectedEvent());
 
   assertNoMoreEvents();
 }
@@ -1039,6 +1251,56 @@ void test_update_pops_tempo_overlay_after_timeout() {
 
   // Advance time past tempo overlay timeout
   mockClock.setClock(2000 + ui::MenuConstants::c_tempoMenuTimeout + 1);
+  service.update();
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_update_pops_expr_connected_overlay_after_timeout() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Set clock at 1000
+  mockClock.setClock(1000);
+
+  // Push tempo overlay at time 2000
+  mockClock.setClock(2000);
+  service.handleEvent(makeLogicExprConnectedEvent());
+  clearEventBus();
+
+  // Advance time past expr connected overlay timeout
+  mockClock.advanceBy(ui::MenuConstants::c_ExprConnectedMenuTimeout + 1);
+  service.update();
+
+  assertMenuUpdatedEventPublished();
+  assertNoMoreEvents();
+}
+
+void test_update_pops_expr_disconnected_overlay_after_timeout() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  service.init();
+  clearEventBus();
+
+  // Set clock at 1000
+  mockClock.setClock(1000);
+
+  // Push tempo overlay at time 2000
+  mockClock.setClock(2000);
+  service.handleEvent(makeLogicExprDisconnectedEvent());
+  clearEventBus();
+
+  // Advance time past expr connected overlay timeout
+  mockClock.advanceBy(ui::MenuConstants::c_ExprConnectedMenuTimeout + 1);
   service.update();
 
   assertMenuUpdatedEventPublished();
@@ -1327,6 +1589,26 @@ void test_interested_in_logic_program_mode_toggled() {
   TEST_ASSERT_TRUE(service.interestedIn(e));
 }
 
+void test_interested_in_logic_expr_connected() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  Event e = makeLogicExprConnectedEvent();
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
+void test_interested_in_logic_expr_disconnected() {
+  LogicalState logicalState;
+  MockedClock mockClock;
+  MockLed mockLed;
+  MenuService service(logicalState, mockLed, mockClock);
+
+  Event e = makeLogicExprDisconnectedEvent();
+  TEST_ASSERT_TRUE(service.interestedIn(e));
+}
+
 void test_interested_in_logic_program_changed() {
   LogicalState logicalState;
   MockedClock mockClock;
@@ -1524,17 +1806,29 @@ int main() {
   RUN_TEST(test_tempo_change_while_editing_publishes_updated);
   RUN_TEST(test_tempo_change_publishes_updated_with_tempo_overlay_active);
 
+  // Expr connected overlay
+  RUN_TEST(test_expr_connected_publishes_updated_when_unlocked);
+  RUN_TEST(test_expr_connected_not_publishes_updated_when_locked);
+  RUN_TEST(test_expr_disconnected_publishes_updated_when_unlocked);
+  RUN_TEST(test_expr_disconnected_not_publishes_updated_when_locked);
+
   // Preset Save Overlay
   RUN_TEST(test_menu_encoder_long_press_publishes_updated_when_unlocked);
   RUN_TEST(test_preset_save_event_publishes_updated);
 
   // Transition Tests
   RUN_TEST(test_pot_move_pops_tempo_overlay);
-  RUN_TEST(test_tempo_change_pops_pot_overlay);
   RUN_TEST(test_pot_move_pops_save_preset_overlay);
+  RUN_TEST(test_pot_move_not_pops_expr_connected_overlay);
+  RUN_TEST(test_tempo_change_pops_pot_overlay);
   RUN_TEST(test_tempo_change_pops_save_preset_overlay);
+  RUN_TEST(test_tempo_change_not_pops_expr_connected_overlay);
   RUN_TEST(test_save_preset_pops_pot_overlay);
   RUN_TEST(test_save_preset_pops_tempo_overlay);
+  RUN_TEST(test_save_preset_pops_expr_connected_overlay);
+  RUN_TEST(test_expr_connected_pops_tempo_overlay);
+  RUN_TEST(test_expr_connected_pops_pot_overlay);
+  RUN_TEST(test_expr_connected_not_pops_save_preset_overlay);
 
   // Editing Mode
   RUN_TEST(test_editing_encoder_delta_publishes_updated);
@@ -1548,6 +1842,8 @@ int main() {
   RUN_TEST(test_update_does_not_lock_before_timeout_preset_mode);
   RUN_TEST(test_update_pops_pot_overlay_after_timeout);
   RUN_TEST(test_update_pops_tempo_overlay_after_timeout);
+  RUN_TEST(test_update_pops_expr_connected_overlay_after_timeout);
+  RUN_TEST(test_update_pops_expr_disconnected_overlay_after_timeout);
   RUN_TEST(test_update_does_nothing_when_locked);
 
   // Program mode change
@@ -1575,6 +1871,8 @@ int main() {
   RUN_TEST(test_interested_in_logic_bypass_toggled);
   RUN_TEST(test_interested_in_logic_program_changed);
   RUN_TEST(test_interested_in_logic_program_mode_toggled);
+  RUN_TEST(test_interested_in_logic_expr_connected);
+  RUN_TEST(test_interested_in_logic_expr_disconnected);
   RUN_TEST(test_interested_in_ui_preset_setting_changed);
   RUN_TEST(test_interested_in_ui_expr_setting_changed);
   RUN_TEST(test_interested_in_ui_expr_setting_toggled);

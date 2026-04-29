@@ -49,6 +49,22 @@ Event makeLogicProgramValueChangedEvent() {
   return e;
 }
 
+Event makeDriverExprConnectedEvent() {
+  Event e;
+  e.m_domain = EventDomain::kDriver;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kConnected;
+  return e;
+}
+
+Event makeDriverExprDisconnectedEvent() {
+  Event e;
+  e.m_domain = EventDomain::kDriver;
+  e.m_subject = EventSubject::kExpr;
+  e.m_action = EventAction::kDisconnected;
+  return e;
+}
+
 Event makeDriverExprValueChangedEvent(uint16_t t_value) {
   Event e{};
   e.m_domain = EventDomain::kDriver;
@@ -77,12 +93,49 @@ void tearDown() {
 }
 
 // =============================================================================
+// Connection / Disconnection
+// =============================================================================
+
+void test_driver_expr_connected_sets_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_exprConnected = false;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send event
+  fix.publishAndDispatchAllEvents(makeDriverExprConnectedEvent());
+
+  // Test logical state
+  TEST_ASSERT_TRUE(fix.logicalState.m_exprConnected);
+}
+
+void test_driver_expr_disconnected_sets_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_exprConnected = true;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send event
+  fix.publishAndDispatchAllEvents(makeDriverExprDisconnectedEvent());
+
+  // Test logical state
+  TEST_ASSERT_FALSE(fix.logicalState.m_exprConnected);
+}
+
+// =============================================================================
 // Physical Pedal Movement
 // =============================================================================
 
-void test_driver_expr_value_changed_active_sets_logical_state() {
+void test_driver_expr_value_changed_connected_active_sets_logical_state() {
   InteractionFixture fix;
   fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_exprConnected = true;
   // Use non-delay program so POT0 is handled as a regular pot
   fix.logicalState.m_currentProgram = 7;
   fix.logicalState.m_exprParams[7].m_state = ExprState::kActive;
@@ -98,9 +151,10 @@ void test_driver_expr_value_changed_active_sets_logical_state() {
   TEST_ASSERT_EQUAL(512, fix.logicalState.m_potParams[7][0].m_value);
 }
 
-void test_driver_expr_value_changed_disabled_not_sets_logical_state() {
+void test_driver_expr_value_changed_connected_disabled_not_sets_logical_state() {
   InteractionFixture fix;
   fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_exprConnected = true;
   fix.logicalState.m_currentProgram = 0;
   fix.logicalState.m_exprParams[0].m_state = ExprState::kInactive;
   fix.syncEepromWithState();
@@ -113,7 +167,43 @@ void test_driver_expr_value_changed_disabled_not_sets_logical_state() {
 
   // Test logical state
   TEST_ASSERT_EQUAL(0, fix.logicalState.m_potParams[0][0].m_value);
+}
 
+void test_driver_expr_value_changed_disconnected_active_not_sets_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_exprConnected = false;
+  // Use non-delay program so POT0 is handled as a regular pot
+  fix.logicalState.m_currentProgram = 7;
+  fix.logicalState.m_exprParams[7].m_state = ExprState::kActive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send event
+  fix.publishAndDispatchAllEvents(makeDriverExprValueChangedEvent(512));
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(0, fix.logicalState.m_potParams[7][0].m_value);
+}
+
+void test_driver_expr_value_changed_disconnected_disabled_not_sets_logical_state() {
+  InteractionFixture fix;
+  fix.logicalState.m_bypassState = BypassState::kActive;
+  fix.logicalState.m_exprConnected = false;
+  fix.logicalState.m_currentProgram = 0;
+  fix.logicalState.m_exprParams[0].m_state = ExprState::kInactive;
+  fix.syncEepromWithState();
+  fix.init();
+
+  // Boot
+  fix.publishAndDispatchAllEvents(makeBootEvent());
+  // Send event
+  fix.publishAndDispatchAllEvents(makeDriverExprValueChangedEvent(512));
+
+  // Test logical state
+  TEST_ASSERT_EQUAL(0, fix.logicalState.m_potParams[0][0].m_value);
 }
 
 // =============================================================================
@@ -183,9 +273,15 @@ void test_expr_params_persist() {
 int main() {
   UNITY_BEGIN();
 
+  // Connection / Disconnection
+  RUN_TEST(test_driver_expr_connected_sets_logical_state);
+  RUN_TEST(test_driver_expr_disconnected_sets_logical_state);
+
   // Physical Pedal Movement
-  RUN_TEST(test_driver_expr_value_changed_active_sets_logical_state);
-  RUN_TEST(test_driver_expr_value_changed_disabled_not_sets_logical_state);
+  RUN_TEST(test_driver_expr_value_changed_connected_active_sets_logical_state);
+  RUN_TEST(test_driver_expr_value_changed_connected_disabled_not_sets_logical_state);
+  RUN_TEST(test_driver_expr_value_changed_disconnected_active_not_sets_logical_state);
+  RUN_TEST(test_driver_expr_value_changed_disconnected_disabled_not_sets_logical_state);
 
   // Persistence
   RUN_TEST(test_expr_params_persist);
