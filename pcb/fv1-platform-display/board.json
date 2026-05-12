@@ -101,7 +101,64 @@
         },
         "grids": {}
     },
-    "holes": {},
+    "holes": {
+        "53782708-7af7-4bd7-b080-dc069c3b2295": {
+            "padstack": "762c84c2-187d-454a-af81-d3381bec5257",
+            "parameter_set": {
+                "hole_diameter": 3200000
+            },
+            "placement": {
+                "angle": 16384,
+                "mirror": false,
+                "shift": [
+                    3000000,
+                    31000000
+                ]
+            }
+        },
+        "5df864db-1e3c-4f4e-b35e-27dc1b6e66e3": {
+            "padstack": "762c84c2-187d-454a-af81-d3381bec5257",
+            "parameter_set": {
+                "hole_diameter": 3200000
+            },
+            "placement": {
+                "angle": 32768,
+                "mirror": false,
+                "shift": [
+                    3000000,
+                    3000000
+                ]
+            }
+        },
+        "8cd35200-9952-41ad-8f76-5ba13d752ed6": {
+            "padstack": "762c84c2-187d-454a-af81-d3381bec5257",
+            "parameter_set": {
+                "hole_diameter": 3200000
+            },
+            "placement": {
+                "angle": 49152,
+                "mirror": false,
+                "shift": [
+                    56000000,
+                    3000000
+                ]
+            }
+        },
+        "bb1bb0b2-fd90-43c4-8bff-f9fde33bd5b9": {
+            "padstack": "762c84c2-187d-454a-af81-d3381bec5257",
+            "parameter_set": {
+                "hole_diameter": 3200000
+            },
+            "placement": {
+                "angle": 0,
+                "mirror": false,
+                "shift": [
+                    56000000,
+                    31000000
+                ]
+            }
+        }
+    },
     "junctions": {
         "00ec5fef-041b-4e35-8125-aac78608fdfd": {
             "position": [
@@ -1413,7 +1470,31 @@
                     "arc_reverse": false,
                     "position": [
                         55100000,
-                        1900000
+                        6200000
+                    ],
+                    "type": "line"
+                },
+                {
+                    "arc_center": [
+                        0,
+                        0
+                    ],
+                    "arc_reverse": false,
+                    "position": [
+                        52700000,
+                        6200000
+                    ],
+                    "type": "line"
+                },
+                {
+                    "arc_center": [
+                        0,
+                        0
+                    ],
+                    "arc_reverse": false,
+                    "position": [
+                        52700000,
+                        2000000
                     ],
                     "type": "line"
                 },
@@ -2319,7 +2400,7 @@
                         ]
                     },
                     {
-                        "clearance": 250000,
+                        "clearance": 300000,
                         "types": [
                             "plane",
                             "hole_npth"
