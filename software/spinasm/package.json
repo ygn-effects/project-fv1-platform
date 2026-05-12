@@ -12,158 +12,194 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
-  "commands": [
+    "configuration": {
+      "title": "SpinASM",
+      "properties": {
+        "spinasm.compiler.path": {
+          "type": "string",
+          "default": "",
+          "description": "Full path to the asfv1 compiler executable.",
+          "scope": "machine-overridable"
+        },
+        "spinasm.compiler.args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "-s"
+          ],
+          "description": "Command line arguments passed to the compiler (e.g., -s for SpinASM compatibility)."
+        },
+        "spinasm.programmer.serialPort": {
+          "type": "string",
+          "default": "",
+          "description": "Serial port for the FV-1 programmer (e.g., COM3 or /dev/ttyUSB0).",
+          "scope": "machine-overridable"
+        },
+        "spinasm.programmer.baudRate": {
+          "type": "number",
+          "default": 57600,
+          "description": "Baud rate for the serial communication.",
+          "scope": "machine-overridable"
+        },
+        "spinasm.editor.compileOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically compile SpinASM programs when saving .spn files."
+        },
+        "spinasm.statusBar.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show compilation status in the status bar. Useful to disable when batch-compiling EEPROMs."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "spinasm.createProject",
+        "title": "SpinASM: Create Project"
+      },
+      {
+        "command": "spinasm.checkProjectSettings",
+        "title": "SpinASM: Check Hardware Connection"
+      },
+      {
+        "command": "spinasm.showSerialConfig",
+        "title": "SpinASM: Show Configuration"
+      },
+      {
+        "command": "spinasm.selectSerialPort",
+        "title": "SpinASM: Select Serial Port..."
+      },
+      {
+        "command": "spinasm.autoDetectProgrammer",
+        "title": "SpinASM: Auto-Detect Programmer"
+      },
+      {
+        "command": "spinasm.showBankStatus",
+        "title": "SpinASM: Show Bank Status"
+      },
+      {
+        "command": "spinasm.showResourceUsage",
+        "title": "SpinASM: Show Resource Usage"
+      },
+      {
+        "command": "spinasm.compileBank",
+        "title": "SpinASM: Compile Specific Bank..."
+      },
+      {
+        "command": "spinasm.uploadBank",
+        "title": "SpinASM: Upload Specific Bank..."
+      },
+      {
+        "command": "spinasm.compileAndUploadBank",
+        "title": "SpinASM: Compile & Upload Specific Bank..."
+      },
+      {
+        "command": "spinasm.compileCurrentProgram",
+        "title": "SpinASM: Compile current program"
+      },
+      {
+        "command": "spinasm.compileAllPrograms",
+        "title": "SpinASM: Compile all programs"
+      },
+      {
+        "command": "spinasm.compileAllProgramsToBin",
+        "title": "SpinASM: Compile all programs to .bin"
+      },
+      {
+        "command": "spinasm.uploadAllPrograms",
+        "title": "SpinASM: Upload all programs"
+      },
+      {
+        "command": "spinasm.compileAndUploadAllPrograms",
+        "title": "SpinASM: Compile & Upload all programs"
+      },
+      {
+        "command": "spinasm.uploadCurrentProgram",
+        "title": "SpinASM: Upload current program"
+      },
+      {
+        "command": "spinasm.compileAndUploadCurrentProgram",
+        "title": "SpinASM: Compile & Upload current program"
+      }
+    ],
+    "languages": [
+      {
+        "id": "spinasm",
+        "aliases": [
+          "SpinASM",
+          "spinasm"
+        ],
+        "extensions": [
+          ".spn"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "spinasm",
+        "scopeName": "source.spinasm",
+        "path": "./syntaxes/spinasm.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "spinasm",
+        "path": "./snippets/spinasm.json"
+      }
+    ],
+    "semanticTokenTypes": [
     {
-      "command": "spinasm.createProject",
-      "title": "SpinASM: Create Project"
+      "id": "variable",
+      "superType": "variable",
+      "description": "User-defined register aliases"
     },
     {
-      "command": "spinasm.checkProjectSettings",
-      "title": "SpinASM: Check Project Settings"
+      "id": "property",
+      "superType": "property",
+      "description": "Memory buffer names"
     },
     {
-      "command": "spinasm.compileProgram0",
-      "title": "SpinASM: Compile Program 0"
+      "id": "function",
+      "superType": "function",
+      "description": "Jump labels"
     },
     {
-      "command": "spinasm.showSerialConfig",
-      "title": "SpinASM: Show Serial Configuration"
-    },
-    {
-      "command": "spinasm.compileProgram1",
-      "title": "SpinASM: Compile program 1"
-    },
-    {
-      "command": "spinasm.compileProgram2",
-      "title": "SpinASM: Compile program 2"
-    },
-    {
-      "command": "spinasm.compileProgram3",
-      "title": "SpinASM: Compile program 3"
-    },
-    {
-      "command": "spinasm.compileProgram4",
-      "title": "SpinASM: Compile program 4"
-    },
-    {
-      "command": "spinasm.compileProgram5",
-      "title": "SpinASM: Compile program 5"
-    },
-    {
-      "command": "spinasm.compileProgram6",
-      "title": "SpinASM: Compile program 6"
-    },
-    {
-      "command": "spinasm.compileProgram7",
-      "title": "SpinASM: Compile program 7"
-    },
-    {
-      "command": "spinasm.compileCurrentProgram",
-      "title": "SpinASM: Compile current program"
-    },
-    {
-      "command": "spinasm.compileAllPrograms",
-      "title": "SpinASM: Compile all programs"
-    },
-    {
-      "command": "spinasm.compileAllProgramsToBin",
-      "title": "SpinASM: Compile all programs to .bin"
-    },
-    {
-      "command": "spinasm.uploadProgram0",
-      "title": "SpinASM: Upload program 0"
-    },
-    {
-      "command": "spinasm.uploadProgram1",
-      "title": "SpinASM: Upload program 1"
-    },
-    {
-      "command": "spinasm.uploadProgram2",
-      "title": "SpinASM: Upload program 2"
-    },
-    {
-      "command": "spinasm.uploadProgram3",
-      "title": "SpinASM: Upload program 3"
-    },
-    {
-      "command": "spinasm.uploadProgram4",
-      "title": "SpinASM: Upload program 4"
-    },
-    {
-      "command": "spinasm.uploadProgram5",
-      "title": "SpinASM: Upload program 5"
-    },
-    {
-      "command": "spinasm.uploadProgram6",
-      "title": "SpinASM: Upload program 6"
-    },
-    {
-      "command": "spinasm.uploadProgram7",
-      "title": "SpinASM: Upload program 7"
-    },
-    {
-      "command": "spinasm.uploadCurrentProgram",
-      "title": "SpinASM: Upload current program"
-    },
-    {
-      "command": "spinasm.compileAndUploadProgram0",
-      "title": "SpinASM: Compile & Upload program 0"
-    },
-    {
-      "command": "spinasm.compileAndUploadProgram1",
-      "title": "SpinASM: Compile & Upload program 1"
-    },
-    {
-      "command": "spinasm.compileAndUploadProgram2",
-      "title": "SpinASM: Compile & Upload program 2"
-    },
-    {
-      "command": "spinasm.compileAndUploadProgram3",
-      "title": "SpinASM: Compile & Upload program 3"
-    },
-    {
-      "command": "spinasm.compileAndUploadProgram4",
-      "title": "SpinASM: Compile & Upload program 4"
-    },
-    {
-      "command": "spinasm.compileAndUploadProgram5",
-      "title": "SpinASM: Compile & Upload program 5"
-    },
-    {
-      "command": "spinasm.compileAndUploadProgram6",
-      "title": "SpinASM: Compile & Upload program 6"
-    },
-    {
-      "command": "spinasm.compileAndUploadProgram7",
-      "title": "SpinASM: Compile & Upload program 7"
-    },
-    {
-      "command": "spinasm.compileAndUploadCurrentProgram",
-      "title": "SpinASM: Compile & Upload current program"
+      "id": "parameter",
+      "superType": "parameter",
+      "description": "Constant values"
     }
   ],
-  "languages": [
+  "semanticTokenModifiers": [
     {
-      "id": "spinasm",
-      "aliases": ["SpinASM", "spinasm"],
-      "extensions": [".spn"],
-      "configuration": "./language-configuration.json"
+      "id": "declaration",
+      "description": "Symbol definition site"
+    },
+    {
+      "id": "readonly",
+      "description": "Constant value"
     }
   ],
-  "grammars": [
+  "semanticTokenScopes": [
     {
       "language": "spinasm",
-      "scopeName": "source.spinasm",
-      "path": "./syntaxes/spinasm.tmLanguage.json"
+      "scopes": {
+        "variable": ["variable.other.spinasm.register"],
+        "property": ["variable.other.spinasm.memory"],
+        "function": ["entity.name.function.spinasm"],
+        "parameter": ["variable.other.constant.spinasm"]
+      }
     }
   ],
-  "snippets": [
-    {
-      "language": "spinasm",
-      "path": "./snippets/spinasm.json"
+  "configurationDefaults": {
+    "[spinasm]": {
+      "editor.semanticHighlighting.enabled": true
     }
-  ]
-},
+  }
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",

@@ -1,766 +1,751 @@
 import * as vscode from "vscode";
-import * as path from "path";
 import Project from "./project";
 import Config from "./config";
 import Logs, { LogType } from "./logs";
+import Utils from "./utils";
 import Programmer from "./programmer";
+import { SpinASMSemanticTokensProvider, SpinASMHoverProvider } from "./spinasmSemanticTokens";
+import { initializeBankStatusBar, disposeBankStatusBar, updateBankStatusBar, showBankStatus } from "./statusBar";
+import { initializeResourceStatusBar, disposeResourceStatusBar, showResourceUsage, forceUpdateResourceStatusBar } from "./resourceStatusBar";
+import { SpinASMValidator } from "./spinasmValidator";
 
-function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+let validator: SpinASMValidator;
 
-/**
- * @brief Activates the SpinASM VSCode extension.
- *
- * Initializes logging and registers all extension commands.
- *
- * @param context - VSCode extension context for command subscriptions.
- */
 export function activate(context: vscode.ExtensionContext): void {
   Logs.createChannel();
   Logs.log(LogType.INFO, "Extension activated");
 
+  validator = new SpinASMValidator();
+  context.subscriptions.push(validator);
+
+  // Shared debounce for all validation triggers
+  let validationTimer: NodeJS.Timeout | null = null;
+  function scheduleValidation(doc: vscode.TextDocument): void {
+    if (validationTimer) {
+      clearTimeout(validationTimer);
+    }
+    validationTimer = setTimeout(() => {
+      validator.validateDocument(doc);
+    }, 500);
+  }
+
+  // Validate on document open (debounced)
   context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument((doc) => {
+      if (doc.languageId === 'spinasm') {
+        scheduleValidation(doc);
+      }
+    })
+  );
+
+  // Validate on change (debounced)
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      if (event.document.languageId === 'spinasm') {
+        scheduleValidation(event.document);
+      }
+    })
+  );
+
+  // Validate on save (immediate)
+  context.subscriptions.push(
+    vscode.workspace.onDidSaveTextDocument((doc) => {
+      if (doc.languageId === 'spinasm') {
+        if (validationTimer) { clearTimeout(validationTimer); }
+        validator.validateDocument(doc);
+      }
+    })
+  );
+
+  // Clear on close
+  context.subscriptions.push(
+    vscode.workspace.onDidCloseTextDocument((doc) => {
+      if (doc.languageId === 'spinasm') {
+        validator.clearDocument(doc);
+      }
+    })
+  );
+
+  // Create status bar item
+  initializeBankStatusBar(context);
+
+  // Create resource bar
+  initializeResourceStatusBar(context);
+
+  // Register file system watcher for compile-on-save
+  const watcher = vscode.workspace.createFileSystemWatcher("**/*.spn");
+  context.subscriptions.push(watcher);
+
+  watcher.onDidChange(async (uri) => {
+    if (Config.getCompileOnSave()) {
+      await handleCompileOnSave(uri);
+    }
+
+    // Update status bar after save (in case file timestamps changed)
+    await updateBankStatusBar();
+  });
+
+  // Register SpinASM semantic token provider
+  context.subscriptions.push(
+    vscode.languages.registerDocumentSemanticTokensProvider(
+      { language: 'spinasm' },
+      new SpinASMSemanticTokensProvider(),
+      SpinASMSemanticTokensProvider.legend
+    )
+  );
+
+  // Register SpinASM hover provider
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(
+      { language: 'spinasm' },
+      new SpinASMHoverProvider()
+    )
+  );
+
+  Logs.log(LogType.INFO, "SpinASM semantic highlighting enabled");
+
+  context.subscriptions.push(
+    // Global / Project Management
     vscode.commands.registerCommand("spinasm.createProject", createProject),
-    vscode.commands.registerCommand("spinasm.checkProjectSettings", checkProjectSettings),
-    vscode.commands.registerCommand("spinasm.showSerialConfig", showSerialConfig),
-    vscode.commands.registerCommand("spinasm.compileProgram0", compileProgram0),
-    vscode.commands.registerCommand("spinasm.compileProgram1", compileProgram1),
-    vscode.commands.registerCommand("spinasm.compileProgram2", compileProgram2),
-    vscode.commands.registerCommand("spinasm.compileProgram3", compileProgram3),
-    vscode.commands.registerCommand("spinasm.compileProgram4", compileProgram4),
-    vscode.commands.registerCommand("spinasm.compileProgram5", compileProgram5),
-    vscode.commands.registerCommand("spinasm.compileProgram6", compileProgram6),
-    vscode.commands.registerCommand("spinasm.compileProgram7", compileProgram7),
+    vscode.commands.registerCommand("spinasm.checkProjectSettings", checkHardwareConnection),
+    vscode.commands.registerCommand("spinasm.showSerialConfig", showConfig),
+    vscode.commands.registerCommand("spinasm.showBankStatus", showBankStatus),
+    vscode.commands.registerCommand("spinasm.showResourceUsage", showResourceUsage),
+
+    // Serial Port Detection
+    vscode.commands.registerCommand("spinasm.selectSerialPort", selectSerialPort),
+    vscode.commands.registerCommand("spinasm.autoDetectProgrammer", autoDetectProgrammer),
+
+    // Current File Operations
     vscode.commands.registerCommand("spinasm.compileCurrentProgram", compileCurrentProgram),
+    vscode.commands.registerCommand("spinasm.uploadCurrentProgram", uploadCurrentProgram),
+    vscode.commands.registerCommand("spinasm.compileAndUploadCurrentProgram", compileAndUploadCurrentProgram),
+
+    // Batch Operations
     vscode.commands.registerCommand("spinasm.compileAllPrograms", compileAllPrograms),
     vscode.commands.registerCommand("spinasm.compileAllProgramsToBin", compileAllProgramsToBin),
-    vscode.commands.registerCommand("spinasm.uploadProgram0", uploadProgram0),
-    vscode.commands.registerCommand("spinasm.uploadProgram1", uploadProgram1),
-    vscode.commands.registerCommand("spinasm.uploadProgram2", uploadProgram2),
-    vscode.commands.registerCommand("spinasm.uploadProgram3", uploadProgram3),
-    vscode.commands.registerCommand("spinasm.uploadProgram4", uploadProgram4),
-    vscode.commands.registerCommand("spinasm.uploadProgram5", uploadProgram5),
-    vscode.commands.registerCommand("spinasm.uploadProgram6", uploadProgram6),
-    vscode.commands.registerCommand("spinasm.uploadProgram7", uploadProgram7),
-    vscode.commands.registerCommand("spinasm.uploadCurrentProgram", uploadCurrentProgram),
-    vscode.commands.registerCommand("spinasm.compileAndUploadProgram0", compileAndUploadProgram0),
-    vscode.commands.registerCommand("spinasm.compileAndUploadProgram1", compileAndUploadProgram1),
-    vscode.commands.registerCommand("spinasm.compileAndUploadProgram2", compileAndUploadProgram2),
-    vscode.commands.registerCommand("spinasm.compileAndUploadProgram3", compileAndUploadProgram3),
-    vscode.commands.registerCommand("spinasm.compileAndUploadProgram4", compileAndUploadProgram4),
-    vscode.commands.registerCommand("spinasm.compileAndUploadProgram5", compileAndUploadProgram5),
-    vscode.commands.registerCommand("spinasm.compileAndUploadProgram6", compileAndUploadProgram6),
-    vscode.commands.registerCommand("spinasm.compileAndUploadProgram7", compileAndUploadProgram7),
-    vscode.commands.registerCommand("spinasm.compileAndUploadCurrentProgram", compileAndUploadCurrentProgram),
+    vscode.commands.registerCommand("spinasm.uploadAllPrograms", uploadAllPrograms),
+    vscode.commands.registerCommand("spinasm.compileAndUploadAllPrograms", compileAndUploadAllPrograms),
+
+    // Generic Bank Operations (Prompts user for bank 0-7)
+    vscode.commands.registerCommand("spinasm.compileBank", async () => {
+      const bank = await pickBank();
+
+      if (bank !== undefined) {
+        await compileBank(bank);
+      }
+    }),
+
+    vscode.commands.registerCommand("spinasm.uploadBank", async () => {
+      const bank = await pickBank();
+
+      if (bank !== undefined) {
+        await uploadBank(bank);
+      }
+    }),
+
+    vscode.commands.registerCommand("spinasm.compileAndUploadBank", async () => {
+      const bank = await pickBank();
+
+      if (bank !== undefined) {
+        await compileAndUploadBank(bank);
+      }
+    })
   );
+
+  // Warn user if config is missing on startup
+  if (Config.isConfigMissing()) {
+    vscode.window.showWarningMessage("SpinASM: Compiler path or Serial port is not configured. Please check your Settings.");
+  }
 
   Logs.log(LogType.INFO, "Commands registered successfully");
 }
 
-/**
- * @brief Deactivates the SpinASM VSCode extension.
- *
- * Cleans up resources and logs the deactivation event.
- */
 export function deactivate(): void {
-  Logs.log(LogType.INFO, "Extension deactivated");
   Logs.disposeChannel();
+  disposeBankStatusBar();
+  disposeResourceStatusBar();
 }
 
-async function test(): Promise<void> {
-  const folder = await getWorkspaceFolder();
+// =============================================================================
+// COMPILE ON SAVE
+// =============================================================================
+
+/**
+ * @brief Handles automatic compilation when a .spn file is saved.
+ */
+async function handleCompileOnSave(uri: vscode.Uri): Promise<void> {
+  const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
 
   if (!folder) {
     return;
   }
 
-  const { compilerPath, compilerArgs, serialPort, baudRate } = loadProjectSettings(folder);
-
   try {
     const project = new Project(folder);
-    project.buildSetup(compilerPath, compilerArgs);
-    project.checkCompiler();
+    const compilerPath = Config.getCompilerPath();
+    const compilerArgs = Config.getCompilerArgs();
 
-    const programmer = new Programmer(serialPort, baudRate);
-    await programmer.connect();
-
-    const isConnected = await programmer.isProgrammerConnected();
-
-    if (!isConnected) {
-      throw new Error("Programmer did not respond correctly.");
+    if (!compilerPath) {
+      return; // Silently skip if compiler not configured
     }
 
-    await programmer.test();
-    await programmer.disconnect();
+    await project.buildSetup(compilerPath, compilerArgs);
+    const bank = project.getProgramBankByPath(uri.fsPath);
+
+    if (bank === -1) {
+      return; // Not a valid project program
+    }
+
+    Logs.log(LogType.INFO, `Compile-on-save: Compiling bank ${bank}...`);
+    await project.compileProgramToHex(bank);
+    Logs.log(LogType.INFO, `Compile-on-save: Bank ${bank} compiled successfully`);
+
+    // Update status bar after successful compilation
+    await updateBankStatusBar();
+
+  } catch (error) {
+    // Log error but don't show intrusive notifications for auto-compile
+    Logs.log(LogType.ERROR, `Compile-on-save failed: ${(error as Error).message}`);
+  }
+}
+
+// =============================================================================
+// UI HELPERS
+// =============================================================================
+
+/**
+ * @brief prompts the user to select a bank number (0-7) from a dropdown.
+ * @returns The selected bank number, or undefined if cancelled.
+ */
+async function pickBank(): Promise<number | undefined> {
+  const items = [];
+
+  for (let i = 0; i < 8; i++) {
+    items.push({
+      label: `Bank ${i}`,
+      description: `Program ${i}`,
+      bankId: i
+    });
+  }
+
+  const selection = await vscode.window.showQuickPick(items, {
+    placeHolder: "Select the target EEPROM bank (0-7)",
+  });
+
+  return selection ? selection.bankId : undefined;
+}
+
+// =============================================================================
+// SERIAL PORT DETECTION
+// =============================================================================
+
+/**
+ * @brief Presents a list of available serial ports for manual selection.
+ */
+async function selectSerialPort(): Promise<void> {
+  try {
+    const ports = await Utils.listSerialPorts();
+
+    if (ports.length === 0) {
+      vscode.window.showErrorMessage("No serial ports detected on this system.");
+      return;
+    }
+
+    const items = ports.map((port: any) => ({
+      label: port.path,
+      description: port.manufacturer || "",
+      detail: `VID: ${port.vendorId || 'N/A'} | PID: ${port.productId || 'N/A'}`,
+      path: port.path
+    }));
+
+    const selection = await vscode.window.showQuickPick(items, {
+      placeHolder: "Select serial port for FV-1 programmer"
+    });
+
+    if (selection) {
+      await Config.setSerialPort(selection.path);
+
+      Logs.log(LogType.INFO, `Serial port set to: ${selection.path}`);
+      vscode.window.showInformationMessage(`Serial port set to: ${selection.path}`);
+    }
   }
   catch (error) {
-    handleError(error, "Failed to validate the compiler and programmer");
-  }
-  finally {
-    const programmer = new Programmer(serialPort, baudRate);
-    // await programmer.sendEndOrder();
-    await programmer.disconnect();
+    handleError(error, "Failed to list serial ports");
   }
 }
 
 /**
- * @brief Initializes a new SpinASM project structure.
+ * @brief Automatically detects the FV-1 programmer by probing available ports.
  */
+async function autoDetectProgrammer(): Promise<void> {
+  await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: "Detecting FV-1 programmer...",
+    cancellable: false
+  }, async () => {
+    try {
+      const baudRate = Config.getBaudRate();
+      const detectedPort = await Utils.detectProgrammer(baudRate);
+
+      if (detectedPort) {
+        await Config.setSerialPort(detectedPort);
+
+        Logs.log(LogType.INFO, `Programmer detected at: ${detectedPort}`);
+        vscode.window.showInformationMessage(`Programmer detected and configured: ${detectedPort}`);
+      }
+      else {
+        vscode.window.showWarningMessage(
+          "Could not auto-detect programmer. Please select port manually.",
+          "Select Port"
+        ).then(action => {
+          if (action === "Select Port") {
+            vscode.commands.executeCommand("spinasm.selectSerialPort");
+          }
+        });
+      }
+    }
+    catch (error) {
+      handleError(error, "Failed to detect programmer");
+    }
+  });
+}
+
+// =============================================================================
+// CORE OPERATIONS
+// =============================================================================
+
+async function compileBank(bank: number): Promise<void> {
+  await runOperation(async (project) => {
+    await project.compileProgramToHex(bank);
+
+    Logs.log(LogType.INFO, `Program ${bank} compilation successful`);
+    vscode.window.showInformationMessage(`Program ${bank} compiled successfully!`);
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
+  }, "Compilation Failed", `Compiling Bank ${bank}...`);
+}
+
+async function uploadBank(bank: number): Promise<void> {
+  const folder = await getWorkspaceFolder();
+
+  if (!folder) {
+    return;
+  }
+
+  await runOperation(async (project, settings) => {
+    await performUpload(project, settings, bank);
+
+    Logs.log(LogType.INFO, `Program ${bank} upload successful`);
+    vscode.window.showInformationMessage(`Program ${bank} uploaded successfully!`);
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
+  }, `Failed to upload program ${bank}`, `Uploading Bank ${bank}...`);
+}
+
+async function compileAndUploadBank(bank: number): Promise<void> {
+  await runOperation(async (project, settings) => {
+    await project.compileProgramToHex(bank);
+    await performUpload(project, settings, bank);
+
+    Logs.log(LogType.INFO, `Program ${bank} compiled and uploaded successfully`);
+    vscode.window.showInformationMessage(`Program ${bank} compiled and uploaded successfully!`);
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
+  }, `Failed to compile and upload program ${bank}`, `Compiling & Uploading Bank ${bank}...`);
+}
+
+// =============================================================================
+// BULK & CURRENT OPERATIONS
+// =============================================================================
+
+async function compileCurrentProgram(): Promise<void> {
+  await runOperation(async (project) => {
+    const currentProgram = getCurrentBank(project);
+
+    if (currentProgram === -1) {
+      throw new Error("Current file is not a valid project program.");
+    }
+
+    await project.compileProgramToHex(currentProgram);
+
+    vscode.window.showInformationMessage(`Program ${currentProgram} compiled successfully!`);
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
+  }, "Failed to compile current program", "Compiling current program...");
+}
+
+async function uploadCurrentProgram(): Promise<void> {
+  await runOperation(async (project, settings) => {
+    const currentProgram = getCurrentBank(project);
+
+    if (currentProgram === -1) {
+      throw new Error("Current file is not a valid project program.");
+    }
+
+    await performUpload(project, settings, currentProgram);
+    vscode.window.showInformationMessage(`Program ${currentProgram} uploaded successfully!`);
+  }, "Failed to upload current program", "Uploading Current Program...");
+}
+
+async function compileAndUploadCurrentProgram(): Promise<void> {
+  await runOperation(async (project, settings) => {
+    const currentProgram = getCurrentBank(project);
+
+    if (currentProgram === -1) {
+      throw new Error("Current file is not a valid project program.");
+    }
+
+    await project.compileProgramToHex(currentProgram);
+    await performUpload(project, settings, currentProgram);
+    vscode.window.showInformationMessage(`Program ${currentProgram} compiled and uploaded successfully!`);
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
+  }, "Failed to compile and upload current program", "Compiling & Uploading Current Program...");
+}
+
+async function compileAllPrograms(): Promise<void> {
+  await runOperation(async (project, settings) => {
+    const programs = project.getAllPrograms();
+
+    for (const programPath of programs) {
+      if(!programPath) {
+        continue;
+      }
+
+      const bank = project.getProgramBankByPath(programPath);
+      await project.compileProgramToHex(bank);
+    }
+
+    vscode.window.showInformationMessage("All programs compiled successfully!");
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
+  }, "Failed to compile all programs", "Compiling all programs...");
+}
+
+async function compileAllProgramsToBin(): Promise<void> {
+  await runOperation(async (project, settings) => {
+    const programs = project.getAllPrograms();
+
+    for (const programPath of programs) {
+      if(!programPath) {
+        continue;
+      }
+
+      const bank = project.getProgramBankByPath(programPath);
+      await project.compileProgramToBin(bank);
+    }
+
+    vscode.window.showInformationMessage("All programs compiled to BIN successfully!");
+
+    // Update status bar after compilation
+    await updateBankStatusBar();
+  }, "Failed to compile all programs", "Compiling all programs to BIN...");
+}
+
+async function uploadAllPrograms(): Promise<void> {
+  await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: "Uploading all programs...",
+    cancellable: false
+  }, async (progress) => {
+    const folder = await getWorkspaceFolder();
+    if (!folder) {
+      return;
+    }
+
+    try {
+      const settings = loadSettings();
+      const project = new Project(folder);
+      await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+
+      const programs = project.getAllPrograms();
+      const programsToUpload = programs.filter(p => p !== null);
+      const totalPrograms = programsToUpload.length;
+
+      let uploadedCount = 0;
+
+      for (const programPath of programs) {
+        if(!programPath) {
+          continue;
+        }
+
+        const bank = project.getProgramBankByPath(programPath);
+
+        progress.report({
+          increment: (100 / totalPrograms),
+          message: `Uploading bank ${bank}... (${uploadedCount + 1}/${totalPrograms})`
+        });
+
+        await performUpload(project, settings, bank);
+        uploadedCount++;
+
+        Logs.log(LogType.INFO, `Bank ${bank} uploaded successfully (${uploadedCount}/${totalPrograms})`);
+      }
+
+      vscode.window.showInformationMessage(`All programs uploaded successfully! (${uploadedCount} banks)`);
+    }
+    catch (error) {
+      handleError(error, "Failed to upload all programs");
+    }
+  });
+}
+
+async function compileAndUploadAllPrograms(): Promise<void> {
+  await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: "Compiling and uploading all programs...",
+    cancellable: false
+  }, async (progress) => {
+    const folder = await getWorkspaceFolder();
+    if (!folder) {
+      return;
+    }
+
+    try {
+      const settings = loadSettings();
+      const project = new Project(folder);
+      await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+
+      const programs = project.getAllPrograms();
+      const programsToProcess = programs.filter(p => p !== null);
+      const totalPrograms = programsToProcess.length;
+
+      let processedCount = 0;
+
+      for (const programPath of programs) {
+        if(!programPath) {
+          continue;
+        }
+
+        const bank = project.getProgramBankByPath(programPath);
+
+        progress.report({
+          increment: (100 / (totalPrograms * 2)),
+          message: `Compiling bank ${bank}... (${processedCount + 1}/${totalPrograms})`
+        });
+
+        await project.compileProgramToHex(bank);
+
+        progress.report({
+          increment: (100 / (totalPrograms * 2)),
+          message: `Uploading bank ${bank}... (${processedCount + 1}/${totalPrograms})`
+        });
+
+        await performUpload(project, settings, bank);
+        processedCount++;
+
+        Logs.log(LogType.INFO, `Bank ${bank} compiled and uploaded (${processedCount}/${totalPrograms})`);
+
+        // Update status bar after compilation
+        await updateBankStatusBar();
+      }
+
+      vscode.window.showInformationMessage(`All programs compiled and uploaded successfully! (${processedCount} banks)`);
+    }
+    catch (error) {
+      handleError(error, "Failed to compile and upload all programs");
+    }
+  });
+}
+
+// =============================================================================
+// PROJECT MANAGEMENT & UTILS
+// =============================================================================
+
 async function createProject(): Promise<void> {
   const folder = await getWorkspaceFolder();
+
   if (!folder) {
     return;
   }
 
   try {
     const project = new Project(folder);
-    project.createProjectStructure();
+
+    await project.createProjectStructure();
+
     Logs.log(LogType.INFO, "Project structure created successfully");
     vscode.window.showInformationMessage("Project created successfully!");
+
+    // Update status bar
+    await updateBankStatusBar();
   }
   catch (error) {
     handleError(error, "Failed to create project structure");
   }
 }
 
-/**
- * @brief Validates the project compiler and programmer settings
- */
-async function checkProjectSettings(): Promise<void> {
+async function checkHardwareConnection(): Promise<void> {
   const folder = await getWorkspaceFolder();
 
   if (!folder) {
     return;
   }
 
-  const { compilerPath, compilerArgs, serialPort, baudRate } = loadProjectSettings(folder);
+  let programmer: Programmer | null = null;
 
   try {
-    const project = new Project(folder);
-    project.buildSetup(compilerPath, compilerArgs);
-    project.checkCompiler();
+    const settings = loadSettings();
 
-    const programmer = new Programmer(serialPort, baudRate);
+    // Check compiler
+    const project = new Project(folder);
+
+    await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+    await project.checkCompiler();
+
+    // Check hardware
+    programmer = new Programmer(settings.serialPort, settings.baudRate);
+
     await programmer.connect();
 
-    const isConnected = await programmer.isProgrammerConnected();
-
-    if (!isConnected) {
-      throw new Error("Programmer did not respond correctly.");
+    if (! (await programmer.isProgrammerConnected())) {
+      throw new Error("Programmer did not respond.");
     }
-
-    const eepromReady = await programmer.isEepromReady();
-
-    if (!eepromReady) {
+    if (! (await programmer.isEepromReady())) {
       throw new Error("EEPROM is not ready.");
     }
 
-    await programmer.disconnect();
-
-    Logs.log(LogType.INFO, "Programmer and EEPROM ready for operations.");
-
-    Logs.log(LogType.INFO, "Compiler and programmer validation succeeded");
-    vscode.window.showInformationMessage("Compiler and programmer are working correctly!");
+    vscode.window.showInformationMessage("Compiler and Programmer are connected and ready!");
   }
   catch (error) {
-    handleError(error, "Failed to validate the compiler and programmer");
+    handleError(error, "Hardware check failed");
   }
   finally {
-    const programmer = new Programmer(serialPort, baudRate);
-    // await programmer.sendEndOrder();
-    await programmer.disconnect();
-  }
-}
-
-/**
- * @brief Displays the current serial configuration from project settings.
- */
-async function showSerialConfig(): Promise<void> {
-  const folder = await getWorkspaceFolder();
-  if (!folder){
-    return;
-  }
-
-  try {
-    const config = new Config(path.join(folder, "settings.ini"));
-    const serialPort = config.readSerialPort();
-    const baudRate = config.readBaudRate();
-
-    Logs.log(LogType.INFO, `Serial Port: ${serialPort}`);
-    Logs.log(LogType.INFO, `Baud Rate: ${baudRate}`);
-
-    vscode.window.showInformationMessage(
-      `Serial Configuration:\nPort: ${serialPort}\nBaud Rate: ${baudRate}`
-    );
-  }
-  catch (error) {
-    handleError(error, "Failed to read serial configuration");
-  }
-}
-
-/**
- * @brief Compiles bank 0 program to HEX format.
- */
-async function compileProgram0(): Promise<void> {
-  try {
-    await compileProgramToHex(0);
-
-    Logs.log(LogType.INFO, "Program 0 compilation successful");
-    vscode.window.showInformationMessage("Program 0 compiled successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile program 0.");
-  }
-}
-
-/**
- * @brief Compiles bank 1 program to HEX format.
- */
-async function compileProgram1(): Promise<void> {
-  try {
-    await compileProgramToHex(1);
-
-    Logs.log(LogType.INFO, "Program 1 compilation successful");
-    vscode.window.showInformationMessage("Program 1 compiled successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile program 1.");
-  }
-}
-
-/**
- * @brief Compiles bank 2 program to HEX format.
- */
-async function compileProgram2(): Promise<void> {
-  try {
-    await compileProgramToHex(2);
-
-    Logs.log(LogType.INFO, "Program 2 compilation successful");
-    vscode.window.showInformationMessage("Program 2 compiled successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile program 3.");
-  }
-}
-
-/**
- * @brief Compiles bank 3 program to HEX format.
- */
-async function compileProgram3(): Promise<void> {
-  try {
-    await compileProgramToHex(3);
-
-    Logs.log(LogType.INFO, "Program 3 compilation successful");
-    vscode.window.showInformationMessage("Program 3 compiled successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile program 3.");
-  }
-}
-
-/**
- * @brief Compiles bank 4 program to HEX format.
- */
-async function compileProgram4(): Promise<void> {
-  try {
-    await compileProgramToHex(4);
-
-    Logs.log(LogType.INFO, "Program 4 compilation successful");
-    vscode.window.showInformationMessage("Program 4 compiled successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile program 4.");
-  }
-}
-
-/**
- * @brief Compiles bank 5 program to HEX format.
- */
-async function compileProgram5(): Promise<void> {
-  try {
-    await compileProgramToHex(5);
-
-    Logs.log(LogType.INFO, "Program 5 compilation successful");
-    vscode.window.showInformationMessage("Program 5 compiled successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile program 5.");
-  }
-}
-
-/**
- * @brief Compiles bank 6 program to HEX format.
- */
-async function compileProgram6(): Promise<void> {
-  try {
-    await compileProgramToHex(6);
-
-    Logs.log(LogType.INFO, "Program 6 compilation successful");
-    vscode.window.showInformationMessage("Program 6 compiled successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile program 6.");
-  }
-}
-
-/**
- * @brief Compiles bank 6 program to HEX format.
- */
-async function compileProgram7(): Promise<void> {
-  try {
-    await compileProgramToHex(7);
-
-    Logs.log(LogType.INFO, "Program 7 compilation successful");
-    vscode.window.showInformationMessage("Program 7 compiled successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile program 7.");
-  }
-}
-
-/**
- * @brief Compiles the current program to HEX.
- */
-async function compileCurrentProgram(): Promise<void> {
-  const folder = await getWorkspaceFolder();
-  if (!folder) {
-    return;
-  }
-
-  try {
-    const { compilerPath, compilerArgs } = loadProjectSettings(folder);
-    const project = new Project(folder);
-    project.buildSetup(compilerPath, compilerArgs);
-
-    const currentProgram = project.getProgramBankByPath(vscode.window.activeTextEditor?.document.uri.fsPath);
-    project.compileProgramToHex(currentProgram);
-
-    Logs.log(LogType.INFO, `Program ${currentProgram} compilation successful`);
-    vscode.window.showInformationMessage(`Program ${currentProgram} compiled successfully!`);
-  }
-  catch (error) {
-    handleError(error, "Failed to compile current program.");
-  }
-}
-
-/**
- * @brief Compiles all the available programs to HEX.
- */
-async function compileAllPrograms(): Promise<void> {
-  const folder = await getWorkspaceFolder();
-  if (!folder) {
-    return;
-  }
-
-  try {
-    const { compilerPath, compilerArgs } = loadProjectSettings(folder);
-    const project = new Project(folder);
-    project.buildSetup(compilerPath, compilerArgs);
-
-    const programs = project.getAllPrograms();
-
-    for (const programPath of programs) {
-      const currentProgram = project.getProgramBankByPath(programPath);
-      project.buildSetup(compilerPath, compilerArgs);
-
-      project.compileProgramToHex(currentProgram);
-
-      Logs.log(LogType.INFO, `Program ${currentProgram} compilation successful`);
+    if (programmer) {
+      await programmer.disconnect();
     }
-
-    vscode.window.showInformationMessage("All programs compiled successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile all programs.");
   }
 }
 
+async function showConfig(): Promise<void> {
+  const port = Config.getSerialPort();
+  const baud = Config.getBaudRate();
+  const compiler = Config.getCompilerPath();
 
-/**
- * @brief Compiles all the available programs to BIN.
- */
-async function compileAllProgramsToBin(): Promise<void> {
+  Logs.log(LogType.INFO, `Config | Port: ${port} | Baud: ${baud} | Compiler: ${compiler}`);
+
+  const action = await vscode.window.showInformationMessage(
+    `Current Configuration:\nCompiler: ${compiler}\nPort: ${port}\nBaud: ${baud}`,
+    "Open Settings"
+  );
+
+  if (action === "Open Settings") {
+    vscode.commands.executeCommand("workbench.action.openSettings", "spinasm");
+  }
+}
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+async function runOperation(
+  operation: (project: Project, settings: ProjectSettings) => Promise<void>,
+  errorMessage: string,
+  progressTitle: string
+): Promise<void> {
   const folder = await getWorkspaceFolder();
   if (!folder) {
     return;
   }
 
-  try {
-    const { compilerPath, compilerArgs } = loadProjectSettings(folder);
-    const project = new Project(folder);
-    project.buildSetup(compilerPath, compilerArgs);
-
-    const programs = project.getAllPrograms();
-
-    for (const programPath of programs) {
-      const currentProgram = project.getProgramBankByPath(programPath);
-      project.buildSetup(compilerPath, compilerArgs);
-
-      project.compileProgramToBin(currentProgram);
-
-      Logs.log(LogType.INFO, `Program ${currentProgram} compilation successful`);
+  await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: progressTitle,
+    cancellable: false
+  }, async (progress) => {
+    try {
+        const settings = loadSettings();
+        const project = new Project(folder);
+        await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+        await operation(project, settings);
     }
-
-    vscode.window.showInformationMessage("All programs compiled successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile all programs.");
-  }
+    catch (error) {
+        handleError(error, errorMessage);
+    }
+  });
 }
 
-/**
- * @brief Upload bank 0 program.
- */
-async function uploadProgram0(): Promise<void> {
-  try {
-    await uploadProgram(0);
-
-    Logs.log(LogType.INFO, "Program 0 upload successful");
-    vscode.window.showInformationMessage("Program 0 uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to upload program 0.");
-  }
-}
-
-/**
- * @brief Upload bank 1 program.
- */
-async function uploadProgram1(): Promise<void> {
-  try {
-    await uploadProgram(1);
-
-    Logs.log(LogType.INFO, "Program 1 upload successful");
-    vscode.window.showInformationMessage("Program 1 uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to upload program 1.");
-  }
-}
-
-/**
- * @brief Upload bank 2 program.
- */
-async function uploadProgram2(): Promise<void> {
-  try {
-    await uploadProgram(2);
-
-    Logs.log(LogType.INFO, "Program 2 upload successful");
-    vscode.window.showInformationMessage("Program 2 uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to upload program 2.");
-  }
-}
-
-/**
- * @brief Upload bank 3 program.
- */
-async function uploadProgram3(): Promise<void> {
-  try {
-    await uploadProgram(3);
-
-    Logs.log(LogType.INFO, "Program 3 upload successful");
-    vscode.window.showInformationMessage("Program 3 uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to upload program 3.");
-  }
-}
-
-/**
- * @brief Upload bank 4 program.
- */
-async function uploadProgram4(): Promise<void> {
-  try {
-    await uploadProgram(4);
-
-    Logs.log(LogType.INFO, "Program 4 upload successful");
-    vscode.window.showInformationMessage("Program 4 uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to upload program 4.");
-  }
-}
-
-/**
- * @brief Upload bank 5 program.
- */
-async function uploadProgram5(): Promise<void> {
-  try {
-    await uploadProgram(5);
-
-    Logs.log(LogType.INFO, "Program 5 upload successful");
-    vscode.window.showInformationMessage("Program 5 uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to upload program 5.");
-  }
-}
-
-/**
- * @brief Upload bank 6 program.
- */
-async function uploadProgram6(): Promise<void> {
-  try {
-    await uploadProgram(6);
-
-    Logs.log(LogType.INFO, "Program 6 upload successful");
-    vscode.window.showInformationMessage("Program 6 uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to upload program 6.");
-  }
-}
-
-/**
- * @brief Upload bank 7 program.
- */
-async function uploadProgram7(): Promise<void> {
-  try {
-    await uploadProgram(7);
-
-    Logs.log(LogType.INFO, "Program 7 upload successful");
-    vscode.window.showInformationMessage("Program 7 uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to upload program 7.");
-  }
-}
-
-/**
- * @brief Upload current program.
- */
-async function uploadCurrentProgram(): Promise<void> {
-  const folder = await getWorkspaceFolder();
-  if (!folder) {
-    return;
-  }
+async function performUpload(project: Project, settings: ProjectSettings, bank: number): Promise<void> {
+  let programmer: Programmer | null = null;
 
   try {
-    const { compilerPath, compilerArgs } = loadProjectSettings(folder);
+    programmer = new Programmer(settings.serialPort, settings.baudRate);
 
-    const project = new Project(folder);
-    project.buildSetup(compilerPath, compilerArgs);
-
-    const currentProgram = project.getProgramBankByPath(vscode.window.activeTextEditor?.document.uri.fsPath);
-    await uploadProgram(currentProgram);
-
-    Logs.log(LogType.INFO, "Program 7 upload successful");
-    vscode.window.showInformationMessage("Program 7 uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to upload program 7.");
-  }
-}
-
-/**
- * @brief Compiles bank 0 program to HEX format and uploads it.
- */
-async function compileAndUploadProgram0(): Promise<void> {
-  try {
-    compileProgramToHex(0);
-    uploadProgram(0);
-
-    Logs.log(LogType.INFO, "Program 0 compilation and upload successful");
-    vscode.window.showInformationMessage("Program 0 compiled and uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile and upload program 0.");
-  }
-}
-
-/**
- * @brief Compiles bank 1 program to HEX format and uploads it.
- */
-async function compileAndUploadProgram1(): Promise<void> {
-  try {
-    compileProgramToHex(1);
-    uploadProgram(1);
-
-    Logs.log(LogType.INFO, "Program 1 compilation and upload successful");
-    vscode.window.showInformationMessage("Program 1 compiled and uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile and upload program 1.");
-  }
-}
-
-/**
- * @brief Compiles bank 2 program to HEX format and uploads it.
- */
-async function compileAndUploadProgram2(): Promise<void> {
-  try {
-    compileProgramToHex(2);
-    uploadProgram(2);
-
-    Logs.log(LogType.INFO, "Program 2 compilation and upload successful");
-    vscode.window.showInformationMessage("Program 2 compiled and uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile and upload program 2.");
-  }
-}
-
-/**
- * @brief Compiles bank 3 program to HEX format and uploads it.
- */
-async function compileAndUploadProgram3(): Promise<void> {
-  try {
-    compileProgramToHex(3);
-    uploadProgram(3);
-
-    Logs.log(LogType.INFO, "Program 3 compilation and upload successful");
-    vscode.window.showInformationMessage("Program 3 compiled and uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile and upload program 3.");
-  }
-}
-
-/**
- * @brief Compiles bank 4 program to HEX format and uploads it.
- */
-async function compileAndUploadProgram4(): Promise<void> {
-  try {
-    compileProgramToHex(4);
-    uploadProgram(4);
-
-    Logs.log(LogType.INFO, "Program 4 compilation and upload successful");
-    vscode.window.showInformationMessage("Program 4 compiled and uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile and upload program 4.");
-  }
-}
-
-/**
- * @brief Compiles bank 5 program to HEX format and uploads it.
- */
-async function compileAndUploadProgram5(): Promise<void> {
-  try {
-    compileProgramToHex(5);
-    uploadProgram(5);
-
-    Logs.log(LogType.INFO, "Program 5 compilation and upload successful");
-    vscode.window.showInformationMessage("Program 5 compiled and uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile and upload program 5.");
-  }
-}
-
-/**
- * @brief Compiles bank 6 program to HEX format and uploads it.
- */
-async function compileAndUploadProgram6(): Promise<void> {
-  try {
-    compileProgramToHex(6);
-    uploadProgram(6);
-
-    Logs.log(LogType.INFO, "Program 6 compilation and upload successful");
-    vscode.window.showInformationMessage("Program 6 compiled and uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile and upload program 6.");
-  }
-}
-
-/**
- * @brief Compiles bank 7 program to HEX format and uploads it.
- */
-async function compileAndUploadProgram7(): Promise<void> {
-  try {
-    compileProgramToHex(7);
-    uploadProgram(7);
-
-    Logs.log(LogType.INFO, "Program 7 compilation and upload successful");
-    vscode.window.showInformationMessage("Program 7 compiled and uploaded successfully!");
-  }
-  catch (error) {
-    handleError(error, "Failed to compile and upload program 7.");
-  }
-}
-
-/**
- * @brief Compiles the current program to HEX and uploads it.
- */
-async function compileAndUploadCurrentProgram(): Promise<void> {
-  const folder = await getWorkspaceFolder();
-  if (!folder) {
-    return;
-  }
-
-  try {
-    const { compilerPath, compilerArgs, serialPort, baudRate } = loadProjectSettings(folder);
-    const project = new Project(folder);
-    project.buildSetup(compilerPath, compilerArgs);
-
-    const currentProgram = project.getProgramBankByPath(vscode.window.activeTextEditor?.document.uri.fsPath);
-    project.compileProgramToHex(currentProgram);
-
-    const programmer = new Programmer(serialPort, baudRate);
     await programmer.connect();
 
-    const isConnected = await programmer.isProgrammerConnected();
-
-    if (!isConnected) {
-      throw new Error("Programmer did not respond correctly.");
+    if (! (await programmer.isProgrammerConnected())) {
+      throw new Error("Programmer did not respond.");
     }
 
-    const program = programmer.readIntelHexData(project.getOutput(currentProgram));
+    const hexOutput = project.getOutput(bank);
+
+    if (!hexOutput) {
+      throw new Error(`No output file found for bank ${bank}`);
+    }
+
+    const program = await programmer.readIntelHexData(hexOutput);
 
     await programmer.writeProgram(program.address, program.data);
     const programRead = await programmer.readProgram(program.address);
-    await programmer.disconnect();
 
     if (Buffer.compare(program.data, programRead) !== 0) {
       throw new Error("Data verification failed.");
     }
-
-    Logs.log(LogType.INFO, `Program ${currentProgram} compilation and upload successful`);
-    vscode.window.showInformationMessage(`Program ${currentProgram} compiled and uploaded successfully!`);
   }
-  catch (error) {
-    handleError(error, "Failed to compile and upload current program.");
+  finally {
+    if (programmer) {
+      await programmer.disconnect();
+    }
   }
 }
 
-/**
- * @brief Retrieves the project settings from the project .ini file
- *
- * @param folder - The workspace folder path.
- * @returns Object containing the project settings.
- */
-function loadProjectSettings(folder: string): { compilerPath: string; compilerArgs: string[]; serialPort: string; baudRate: number } {
-  const config = new Config(path.join(folder, "settings.ini"));
+function getCurrentBank(project: Project): number {
+  return project.getProgramBankByPath(vscode.window.activeTextEditor?.document.uri.fsPath);
+}
+
+interface ProjectSettings {
+  compilerPath: string;
+  compilerArgs: string[];
+  serialPort: string;
+  baudRate: number;
+}
+
+function loadSettings(): ProjectSettings {
+  const compilerPath = Config.getCompilerPath();
+  const serialPort = Config.getSerialPort();
+
+  if (!compilerPath) {
+    throw new Error("Compiler path is not set in Settings.");
+  }
+
+  if (!serialPort) {
+    throw new Error("Serial port is not set in Settings.");
+  }
 
   return {
-    compilerPath: config.readCompilerCommand(),
-    compilerArgs: config.readCompilerArgs(),
-    serialPort: config.readSerialPort(),
-    baudRate: config.readBaudRate(),
+    compilerPath,
+    compilerArgs: Config.getCompilerArgs(),
+    serialPort,
+    baudRate: Config.getBaudRate(),
   };
 }
 
-/**
- * @brief Handles errors by logging them and notifying the user.
- *
- * @param error - Caught error object.
- * @param message - Contextual description of the error.
- */
 function handleError(error: unknown, message: string): void {
   const errorMessage = (error as Error).message;
+
   Logs.log(LogType.ERROR, `${message}: ${errorMessage}`);
   vscode.window.showErrorMessage(`${message}: ${errorMessage}`);
+
+  Logs.show();
 }
 
-/**
- * @brief Retrieves the workspace folder, prompting the user if multiple are open.
- *
- * @returns Path of the selected workspace folder, or null if none selected.
- */
 async function getWorkspaceFolder(): Promise<string | null> {
   const folders = vscode.workspace.workspaceFolders;
 
@@ -779,63 +764,4 @@ async function getWorkspaceFolder(): Promise<string | null> {
   );
 
   return selectedFolder || null;
-}
-
-async function compileProgramToHex(bank: number): Promise<void> {
-  const folder = await getWorkspaceFolder();
-
-  if (!folder) {
-    return;
-  }
-
-  try {
-    const { compilerPath, compilerArgs } = loadProjectSettings(folder);
-    const project = new Project(folder);
-    project.buildSetup(compilerPath, compilerArgs);
-    project.compileProgramToHex(bank);
-  }
-  catch (error) {
-    handleError(error, `Failed to compile program ${bank}.`);
-  }
-}
-
-async function uploadProgram(bank: number): Promise<void> {
-  const folder = await getWorkspaceFolder();
-
-  if (!folder) {
-    return;
-  }
-
-  const { compilerPath, compilerArgs, serialPort, baudRate } = loadProjectSettings(folder);
-
-  try {
-    const project = new Project(folder);
-    project.buildSetup(compilerPath, compilerArgs);
-
-    const programmer = new Programmer(serialPort, baudRate);
-    await programmer.connect();
-
-    const isConnected = await programmer.isProgrammerConnected();
-
-    if (!isConnected) {
-      throw new Error("Programmer did not respond correctly.");
-    }
-
-    const program = programmer.readIntelHexData(project.getOutput(bank));
-
-    await programmer.writeProgram(program.address, program.data);
-    const programRead = await programmer.readProgram(program.address);
-    await programmer.disconnect();
-
-    if (Buffer.compare(program.data, programRead) !== 0) {
-      throw new Error("Data verification failed.");
-    }
-  }
-  catch (error) {
-    handleError(error, `Failed to upload program ${bank}.`);
-  }
-  finally {
-    const programmer = new Programmer(serialPort, baudRate);
-    await programmer.disconnect();
-  }
 }

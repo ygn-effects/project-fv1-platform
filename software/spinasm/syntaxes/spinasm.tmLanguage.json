@@ -7,15 +7,24 @@
         "match": ";.*$"
       },
       {
-        "name": "constant.numeric.spinasm",
-        "match": "\\b\\$[0-9a-fA-F]+\\b"
+        "name": "constant.numeric.hex.spinasm",
+        "match": "\\$[0-9a-fA-F]+"
       },
       {
-        "name": "keyword.control.spinasm",
-        "match": "\\b(?:equ|mem|wra|rda|rdax|wrax|sof|and|or|xor|skp|ldax|log|exp|mulx|rdfx|wrlx|wrhx|wrap|cho|wlds|wldr|jam|not|clr|absa)\\b",
-        "captures": {
-          "1": { "name": "keyword.control.spinasm" }
-        }
+        "name": "constant.numeric.float.spinasm",
+        "match": "(?<![\\w.])[-+]?[0-9]*\\.[0-9]+(?![\\w.])"
+      },
+      {
+        "name": "constant.numeric.integer.spinasm",
+        "match": "(?<![\\w.$])[-+]?[0-9]+\\b"
+      },
+      {
+        "name": "keyword.control.directive.spinasm",
+        "match": "(?i)\\b(?:equ|mem)\\b"
+      },
+      {
+        "name": "keyword.control.instruction.spinasm",
+        "match": "(?i)\\b(?:wra|rda|rdax|wrax|sof|and|or|xor|skp|ldax|log|exp|mulx|rdfx|wrlx|wrhx|wrap|cho|wlds|wldr|jam|not|clr|absa|rmpa|maxx|nop|jmp|raw)\\b"
       },
       {
         "name": "entity.name.label.spinasm",
@@ -23,7 +32,19 @@
       },
       {
         "name": "variable.other.register.spinasm",
-        "match": "\\b(?:ADCL|ADCR|DACL|DACR|POT[0-2]|REG[0-9]{1,2}|ADDR_PTR)\\b"
+        "match": "(?i)\\b(?:ADCL|ADCR|DACL|DACR|POT[0-2]|REG[0-9]{1,2}|ADDR_PTR)\\b"
+      },
+      {
+        "name": "support.variable.lfo.spinasm",
+        "match": "(?i)\\b(?:SIN[01]_(?:RATE|RANGE)|RMP[01]_(?:RATE|RANGE)|SIN[01]|RMP[01])\\b"
+      },
+      {
+        "name": "support.constant.spinasm",
+        "match": "(?i)\\b(?:SIN|COS|REG|COMPC|COMPA|RPTR2|NA)\\b"
+      },
+      {
+        "name": "support.constant.condition.spinasm",
+        "match": "(?i)\\b(?:RUN|ZRC|ZRO|GEZ|NEG)\\b"
       }
     ],
     "scopeName": "source.spinasm"
