@@ -1,0 +1,51 @@
+mem fdel 512
+
+equ dry reg0
+equ fdbk_val reg1
+equ feedback reg2
+equ hpf_state reg4
+
+skp run, main
+  wlds sin0, 12, 0
+
+main:
+  ; --- CONTROLS ---
+  ; Rate (POT0)
+  rdax pot0, 1.0
+  sof 0.20, 0.005
+  wrax sin0_rate, 0
+
+  ; Depth (POT1)
+  rdax pot1, 1.0
+  sof 0.005, 0
+  wrax sin0_range, 0
+
+  ; Feedback (POT2)
+  rdax pot2, 1.0
+  sof 0.75, 0.05
+  wrax fdbk_val, 0
+
+  ; --- AUDIO ---
+  ; Sum inputs
+  rdax adcl, 0.5
+  rdax adcr, 0.5
+  wrax dry, 0
+
+  ; Load feedback
+  rdax feedback, 1.0
+  ; HPF
+  rdfx hpf_state, 0.15
+  wrhx hpf_state, -1
+  ; Scale
+  mulx fdbk_val
+  rdax dry, 1.0
+
+  ; Write into delay line
+  wra fdel, 0
+
+  ; Read the delay line and save
+  cho rda, sin0, sin|reg|compc, fdel^
+  cho rda, sin0, sin, fdel^+1
+  wrax feedback, 1.0
+
+  wrax dacl, 1.0

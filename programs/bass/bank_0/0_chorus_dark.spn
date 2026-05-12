@@ -1,0 +1,88 @@
+mem chorus_del 4096
+
+equ mono_in reg0
+equ hpf_input_state reg1
+equ hpf_pre_state reg2
+equ temp reg3
+equ lpf_output_state reg4
+equ drive_level reg5
+equ feedback_level reg6
+
+equ input_hpf 0.047
+equ output_lpf 0.25
+equ pre_hpf 0.25
+equ pre_boost 0.5
+
+skp run, main
+wlds 0, 30, 250
+
+main:
+; --- CONTROLS ---
+  ; RATE (Pot0)
+  rdax pot0, 1.0
+  sof 0.20, 0.005
+  wrax sin0_rate, 0
+
+  ; DEPTH (Pot1)
+  rdax pot1, 1.0
+  sof 0.015, 0
+  wrax sin0_range, 0
+
+  ; POT2
+  ; FEEDBACK
+  rdax pot2, 1.0
+  sof -0.5, 0
+  wrax feedback_level, 0
+  ; DRIVE
+  rdax pot2, 1.0
+  sof 0.75, 0.25
+  wrax drive_level, 0
+
+; --- AUDIO ---
+  ; Input Sum
+  rdax adcl, 0.5
+  rdax adcr, 0.5
+  wrax mono_in, 1.0
+
+  ; Pre-Tone Shaping (HPF + Boost)
+  rdfx hpf_input_state, input_hpf
+  wrhx hpf_input_state, -1.0
+  rdfx hpf_pre_state, pre_hpf
+  wrhx hpf_pre_state, -1.0
+  sof pre_boost, 0
+
+  rdax mono_in, 1.0  ; Add dry back
+
+  ; multiply by drive level and boost
+  mulx drive_level
+  sof 1.99, 0
+  sof 1.99, 0
+
+  ; Soft Clipper
+  wrax temp, 1.0
+  mulx temp
+  mulx temp
+  sof -0.33, 0
+  rdax temp, 1.0
+
+  sof 0.25, 0
+
+  ; Store ACC and clear
+  wrax temp, 0
+
+  ; Add feedback, multiply by feedback level and adds clipped signal back
+  rdax lpf_output_state, 1.0
+  mulx feedback_level
+  rdax temp, 1.0
+
+  ; Write into the delay line
+  wra chorus_del, 0
+
+  ; Read from the delay line
+  cho rda, sin0, sin|reg|compc, chorus_del + 600
+  cho rda, sin0, sin, chorus_del + 601
+
+  ; Output LPF and write to DACL
+  rdfx lpf_output_state, output_lpf
+  wrax lpf_output_state, 1.0
+  wrax dacl, 0

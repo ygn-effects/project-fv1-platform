@@ -1,0 +1,105 @@
+equ dry reg0
+equ lfo_squared reg1
+equ ldr1 reg2
+equ ldr2 reg3
+equ ldr3 reg4
+equ ldr4 reg5
+equ ap1_state reg6
+equ ap2_state reg7
+equ ap3_state reg8
+equ ap4_state reg9
+equ filament reg10
+equ inertia reg11
+equ depth reg12
+
+
+skp run, main
+  wlds 0, 0, 32767
+
+main:
+; --- CONTROLS ---
+  ; Rate (POT0)
+  rdax pot0, 1.0
+  ; Scale 0.01 to 0.21
+  sof 0.2, 0.01
+  wrax sin0_rate, 0
+
+  ; Depth (POT1)
+  rdax pot1, 1.0
+  wrax depth, 0
+
+  ; Inertia (POT2)
+  rdax pot2, 1.0
+  ; Scale 0.005 to 0.995
+  sof 0.99, 0.005
+  wrax inertia, 0
+
+  ; --- LFO ---
+  cho rdal, 0
+  ; Scale 0 to 1
+  sof 0.5, 0.5
+  ; Store and square
+  wrax lfo_squared, 1.0
+  mulx lfo_squared
+
+  ; LPF to slow down the LFO
+  rdax filament, -1.0
+  mulx inertia
+  rdax filament, 1.0
+  wrax filament, 1.0
+
+  ; Apply depth
+  mulx depth
+
+  ; Build the filter coefficients with some randomness
+  ; LDR 1 (Baseline)
+  sof 1.2, 0.1
+  wrax ldr1, 0
+
+  ; LDR 2 (Shadowed)
+  rdax filament, 1.0
+  mulx pot1
+  sof 1.1, 0.15
+  wrax ldr2, 0
+
+; LDR 3 (Hot)
+  rdax filament, 1.0
+  mulx pot1
+  sof 1.2, 0.12
+  wrax ldr3, 0
+
+; LDR 4 (Baseline)
+  rdax filament, 1.0
+  mulx pot1
+  sof 1.2, 0.1
+  wrax ldr4, 0
+
+  ; --- AUDIO ---
+  ; Sum inputs
+  rdax adcl, 0.5
+  rdax adcr, 0.5
+  wrax dry, 1.0
+
+  ; Apply the 4 filters
+  rdax ap1_state, -1.0
+  mulx ldr1
+  rdax ap1_state, 1.0
+  wrax ap1_state, 1.0
+
+  rdax ap2_state, -1.0
+  mulx ldr2
+  rdax ap2_state, 1.0
+  wrax ap2_state, 1.0
+
+  rdax ap3_state, -1.0
+  mulx ldr3
+  rdax ap3_state, 1.0
+  wrax ap3_state, 1.0
+
+  rdax ap4_state, -1.0
+  mulx ldr4
+  rdax ap4_state, 1.0
+  wrax ap4_state, 1.0
+
+; --- Output ---
+  wrax dacl, 0
