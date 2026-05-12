@@ -22,10 +22,10 @@ class EEPROM {
     uint8_t m_i2cAddress;
 
     /**
-     * @brief Wait until the EEPROM is ready or timeout occurs.
+     * @brief Polls the EEPROM using ACK polling until it is ready for the next operation.
      *
-     * @param timeout Timeout duration in milliseconds (default 10ms).
-     * @return true if EEPROM is ready, false if timeout.
+     * @param timeout Max wait time in milliseconds.
+     * @return true if ready, false if timeout.
      */
     bool waitForReady(uint16_t timeout = 10);
 
@@ -33,7 +33,7 @@ class EEPROM {
     /**
      * @brief Construct an EEPROM object.
      *
-     * @param address I²C address of the EEPROM device.
+     * @param address I²C address of the EEPROM device (usually 0x50).
      */
     EEPROM(uint8_t address) : m_i2cAddress(address) {}
 
@@ -43,9 +43,9 @@ class EEPROM {
     void setup();
 
     /**
-     * @brief Checks if the EEPROM is ready for operations.
+     * @brief Checks if the EEPROM is currently responding (ACK).
      *
-     * @return true if ready, false otherwise.
+     * @return true if ready, false if busy (NACK).
      */
     bool isReady();
 
@@ -54,7 +54,7 @@ class EEPROM {
      *
      * @param address EEPROM memory address.
      * @param data Byte to write.
-     * @param maxRetries Maximum retry attempts on failure.
+     * @param maxRetries Maximum retry attempts on bus failure.
      * @return EEPROMResult indicating the outcome.
      */
     EEPROMResult writeByte(uint16_t address, uint8_t data, uint8_t maxRetries = 3);
@@ -64,7 +64,7 @@ class EEPROM {
      *
      * @param address EEPROM memory address.
      * @param data Reference to store the read byte.
-     * @param maxRetries Maximum retry attempts on failure.
+     * @param maxRetries Maximum retry attempts on bus failure.
      * @return EEPROMResult indicating the outcome.
      */
     EEPROMResult readByte(uint16_t address, uint8_t &data, uint8_t maxRetries = 3);
@@ -74,8 +74,8 @@ class EEPROM {
      *
      * @param address Starting EEPROM memory address.
      * @param data Pointer to data buffer to write.
-     * @param length Number of bytes to write.
-     * @param maxRetries Maximum retry attempts on failure.
+     * @param length Number of bytes to write (ensure this does not cross page boundaries!).
+     * @param maxRetries Maximum retry attempts on bus failure.
      * @return EEPROMResult indicating the outcome.
      */
     EEPROMResult writePage(uint16_t address, const uint8_t *data, size_t length, uint8_t maxRetries = 3);
@@ -86,7 +86,7 @@ class EEPROM {
      * @param address Starting EEPROM memory address.
      * @param data Pointer to buffer to store read data.
      * @param length Number of bytes to read.
-     * @param maxRetries Maximum retry attempts on failure.
+     * @param maxRetries Maximum retry attempts on bus failure.
      * @return EEPROMResult indicating the outcome.
      */
     EEPROMResult readPage(uint16_t address, uint8_t *data, size_t length, uint8_t maxRetries = 3);

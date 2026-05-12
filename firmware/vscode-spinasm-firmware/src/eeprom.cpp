@@ -2,10 +2,13 @@
 
 void EEPROM::setup() {
   Wire.begin();
-  Wire.setClock(100000); // Standard 100kHz I²C speed
+  // 100kHz is safe for all 24xx series EEPROMs.
+  // If your hardware has pull-ups < 4.7k, you could try 400000 for speed.
+  Wire.setClock(100000);
 }
 
 bool EEPROM::isReady() {
+  // Send a dummy write command to check for ACK
   Wire.beginTransmission(m_i2cAddress);
   return Wire.endTransmission() == 0;
 }
@@ -13,15 +16,17 @@ bool EEPROM::isReady() {
 bool EEPROM::waitForReady(uint16_t timeout) {
   uint32_t start = millis();
 
-  // Poll until EEPROM responds or timeout
-  while (millis() - start < timeout) {
-    if (isReady())
+  // ACK Polling Loop
+  // The EEPROM will NACK all requests while it is performing an internal write cycle.
+  // As soon as the write is complete, it will ACK.
+  do {
+    if (isReady()) {
       return true;
+    }
+    // No delay needed here; the I2C transaction time acts as a natural yield.
+  } while (millis() - start < timeout);
 
-    delay(1);
-  }
-
-  return false; // EEPROM didn't respond within timeout
+  return false; // Timed out
 }
 
 EEPROMResult EEPROM::writeByte(uint16_t address, uint8_t data, uint8_t maxRetries) {
@@ -31,36 +36,42 @@ EEPROMResult EEPROM::writeByte(uint16_t address, uint8_t data, uint8_t maxRetrie
     Wire.write(lowByte(address));
     Wire.write(data);
 
-    // Attempt to write byte and confirm EEPROM is ready afterwards
-    if (Wire.endTransmission() == 0 && waitForReady())
-      return EEPROMResult::Success;
+    uint8_t error = Wire.endTransmission();
 
-    delay(2); // Brief pause before retrying
+    if (error == 0) {
+      // Transmission succeeded, now wait for the internal write cycle to finish
+      if (waitForReady(10)) { // Standard max write time is 5ms, 10ms provides safety margin
+        return EEPROMResult::Success;
+      } else {
+        return EEPROMResult::Timeout;
+      }
+    }
+
+    // If endTransmission failed (e.g., bus error), we loop again to retry sending.
   }
 
-  return EEPROMResult::WriteError; // Write failed after retries
+  return EEPROMResult::WriteError;
 }
 
 EEPROMResult EEPROM::readByte(uint16_t address, uint8_t &data, uint8_t maxRetries) {
   for (uint8_t attempt = 0; attempt < maxRetries; attempt++) {
+    // 1. Set Address Pointer
     Wire.beginTransmission(m_i2cAddress);
     Wire.write(highByte(address));
     Wire.write(lowByte(address));
 
-    // Issue repeated-start condition for read operation
-    if (Wire.endTransmission(false) == 0) {
-      Wire.requestFrom(m_i2cAddress, (uint8_t)1);
-
-      if (Wire.available()) {
-        data = Wire.read();
-        return EEPROMResult::Success;
-      }
+    if (Wire.endTransmission(false) != 0) {
+      continue; // Failed to set address, retry
     }
 
-    delay(2); // Brief pause before retrying
+    // 2. Request Data
+    if (Wire.requestFrom(m_i2cAddress, (uint8_t)1) == 1) {
+      data = Wire.read();
+      return EEPROMResult::Success;
+    }
   }
 
-  return EEPROMResult::ReadError; // Read failed after retries
+  return EEPROMResult::ReadError;
 }
 
 EEPROMResult EEPROM::writePage(uint16_t address, const uint8_t *data, size_t length, uint8_t maxRetries) {
@@ -70,41 +81,46 @@ EEPROMResult EEPROM::writePage(uint16_t address, const uint8_t *data, size_t len
     Wire.write(lowByte(address));
     Wire.write(data, length);
 
-    // Attempt to write page and confirm EEPROM readiness
-    if (Wire.endTransmission() == 0 && waitForReady(20))
-      return EEPROMResult::Success;
+    uint8_t error = Wire.endTransmission();
 
-    delay(5); // Page write takes longer; wait before retrying
+    if (error == 0) {
+      // Transmission succeeded, wait for write cycle to complete
+      if (waitForReady(10)) {
+        return EEPROMResult::Success;
+      } else {
+        return EEPROMResult::Timeout;
+      }
+    }
   }
 
-  return EEPROMResult::WriteError; // Page write failed after retries
+  return EEPROMResult::WriteError;
 }
 
 EEPROMResult EEPROM::readPage(uint16_t address, uint8_t *data, size_t length, uint8_t maxRetries) {
   for (uint8_t attempt = 0; attempt < maxRetries; attempt++) {
+    // 1. Set Address Pointer
     Wire.beginTransmission(m_i2cAddress);
     Wire.write(highByte(address));
     Wire.write(lowByte(address));
 
-    // Initiate repeated-start read
-    if (Wire.endTransmission(false) == 0) {
-      Wire.requestFrom(m_i2cAddress, length);
-
-      size_t count = 0;
-      uint32_t start = millis();
-
-      // Read data with timeout safeguard
-      while ((count < length) && (millis() - start < 10)) {
-        if (Wire.available())
-          data[count++] = Wire.read();
-      }
-
-      if (count == length)
-        return EEPROMResult::Success;
+    // Use restart (false) to keep control of the bus
+    if (Wire.endTransmission(false) != 0) {
+      continue;
     }
 
-    delay(2); // Brief pause before retrying
+    // 2. Request Data Block
+    // Note: wire.requestFrom returns the number of bytes received
+    if (Wire.requestFrom(m_i2cAddress, (uint8_t)length) == length) {
+      for (size_t i = 0; i < length; i++) {
+        if (Wire.available()) {
+          data[i] = Wire.read();
+        } else {
+          return EEPROMResult::ReadError; // Should not happen if requestFrom returned length
+        }
+      }
+      return EEPROMResult::Success;
+    }
   }
 
-  return EEPROMResult::ReadError; // Page read failed after retries
+  return EEPROMResult::ReadError;
 }

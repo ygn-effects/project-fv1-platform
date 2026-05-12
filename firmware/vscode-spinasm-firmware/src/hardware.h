@@ -71,6 +71,7 @@ class Hardware {
     SystemState m_systemState = SystemState::kReceivingMessage; ///< Current state machine status
     Message m_currentMessage = Message::kNone;                  ///< Last validated message received
     OperationContext m_context;                                 ///< Operational context data
+    uint8_t m_fv1ResetPin = 9;                                  ///< FV-1 "reset" ping, tied to T0's pullup
 
     /**
      * @brief Retrieves and validates messages from the Programmer.
