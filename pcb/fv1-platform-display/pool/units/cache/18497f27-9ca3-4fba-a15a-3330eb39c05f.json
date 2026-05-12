@@ -1,0 +1,26 @@
+{
+    "manufacturer": "",
+    "name": "Encoder rotary incremental",
+    "pins": {
+        "38fb573b-24f4-4df9-96b9-e99cabeabcf0": {
+            "direction": "output",
+            "names": [],
+            "primary_name": "B",
+            "swap_group": 0
+        },
+        "7e800f19-728b-43a7-b715-f7581b9f4554": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "C",
+            "swap_group": 0
+        },
+        "ec9cbd8b-fae2-4726-8a5f-9419c23ec5c2": {
+            "direction": "output",
+            "names": [],
+            "primary_name": "A",
+            "swap_group": 0
+        }
+    },
+    "type": "unit",
+    "uuid": "18497f27-9ca3-4fba-a15a-3330eb39c05f"
+}

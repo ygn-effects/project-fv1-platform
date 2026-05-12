@@ -1,0 +1,32 @@
+{
+    "manufacturer": "",
+    "name": "SSI216x",
+    "pins": {
+        "5ae4b897-de22-49aa-9d6a-e7253a5a2ba4": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "V+",
+            "swap_group": 0
+        },
+        "7be953dc-8d35-4829-b696-7d3859b1450e": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "V-",
+            "swap_group": 0
+        },
+        "85f4fcc5-4663-4c2e-841f-8dcfb48d3ffc": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "MODE",
+            "swap_group": 0
+        },
+        "9ac8546f-5494-4aa6-901d-8735016f4494": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "GND",
+            "swap_group": 0
+        }
+    },
+    "type": "unit",
+    "uuid": "6b79086f-0a78-49c7-a991-2ce69b057ade"
+}

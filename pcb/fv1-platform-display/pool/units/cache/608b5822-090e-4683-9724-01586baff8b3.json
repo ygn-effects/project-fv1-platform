@@ -1,0 +1,62 @@
+{
+    "manufacturer": "",
+    "name": "GPIO expander 8 pins interrupt",
+    "pins": {
+        "2770063c-e036-4bd1-b081-613a8a84317a": {
+            "direction": "bidirectional",
+            "names": [],
+            "primary_name": "P2",
+            "swap_group": 0
+        },
+        "299522d4-760b-4758-867c-29280dae0497": {
+            "direction": "bidirectional",
+            "names": [],
+            "primary_name": "P6",
+            "swap_group": 0
+        },
+        "4b94b1a9-ca1a-4c87-a94e-b6d6bead668c": {
+            "direction": "bidirectional",
+            "names": [],
+            "primary_name": "P5",
+            "swap_group": 0
+        },
+        "59376bce-fec7-487b-8da1-0826cc7fd18b": {
+            "direction": "bidirectional",
+            "names": [],
+            "primary_name": "P3",
+            "swap_group": 0
+        },
+        "59ad3128-7bf8-4668-92f4-95622d112ab7": {
+            "direction": "bidirectional",
+            "names": [],
+            "primary_name": "P4",
+            "swap_group": 0
+        },
+        "d823c159-4f4c-4e81-9087-0addd7934fef": {
+            "direction": "bidirectional",
+            "names": [],
+            "primary_name": "P7",
+            "swap_group": 0
+        },
+        "edad9cbe-ee6d-4e5f-8c92-37885eb94b6f": {
+            "direction": "bidirectional",
+            "names": [],
+            "primary_name": "P1",
+            "swap_group": 0
+        },
+        "ef1db964-6618-47e4-a649-0ca6310eec67": {
+            "direction": "output",
+            "names": [],
+            "primary_name": "INT",
+            "swap_group": 0
+        },
+        "f0ddc4de-88a4-4b19-baa3-8e7ec4a4e80c": {
+            "direction": "bidirectional",
+            "names": [],
+            "primary_name": "P0",
+            "swap_group": 0
+        }
+    },
+    "type": "unit",
+    "uuid": "608b5822-090e-4683-9724-01586baff8b3"
+}

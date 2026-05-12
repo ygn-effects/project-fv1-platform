@@ -1,0 +1,64 @@
+{
+    "MPN": [
+        false,
+        "S5B-PH-K-S"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER PH MALE 1X5 PINS 2MM PITCH ANGLED"
+    ],
+    "entity": "d5a916c3-77dc-46e9-bdcf-7619785722c2",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "KNOCKOFF"
+    ],
+    "model": "1388a022-3bce-418e-a6a7-a4c73afc54e3",
+    "package": "7367b248-72a8-4742-a256-5f7b3cce5f48",
+    "pad_map": {
+        "0b925004-6f42-4161-92f9-91367f194d4a": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "e6ac0a44-63e0-4f23-8f57-4acaf5174dda"
+        },
+        "2f2361dd-c9d7-4a4b-af7f-74820211ae84": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "0e9faa10-b8a3-407f-987a-153cfe31f87b"
+        },
+        "7894a49b-b532-4668-a393-47258bb453c3": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "b0b785dd-2675-450c-b81a-c5e8361a2864"
+        },
+        "9a4e1c98-a38e-497d-84d7-69439a41a041": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "ecc64fbf-8c2f-4221-afd3-050c7de56f7a"
+        },
+        "da766cab-174f-4eac-baf2-26ed18158866": {
+            "gate": "8046b835-531d-474b-b930-4cb749a5df7e",
+            "pin": "013c9306-3b86-499c-98dd-458b52ad73b3"
+        }
+    },
+    "parametric": {
+        "contact_material": "Tin",
+        "current_rating": "2",
+        "mounting_angle": "Right Angle",
+        "mounting_style": "Through Hole",
+        "pitch": "2",
+        "positions": "5",
+        "price": "0.113",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "100"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "15f0785e-4d46-4c7b-90bf-7bca28209d67",
+    "value": [
+        false,
+        ""
+    ]
+}

@@ -1,0 +1,43 @@
+{
+    "gates": {
+        "1527e447-9fef-43e1-bbbb-9f5b69855f5b": {
+            "name": "D",
+            "suffix": "D",
+            "swap_group": 1,
+            "unit": "254ca0c3-0da8-4c79-8340-178e4e95fbc4"
+        },
+        "21e9a079-e0ad-4533-b8e1-c2e9b1f71fd0": {
+            "name": "A",
+            "suffix": "A",
+            "swap_group": 1,
+            "unit": "254ca0c3-0da8-4c79-8340-178e4e95fbc4"
+        },
+        "34bfbe9e-b081-49ea-a9e6-c7bfaec18d4b": {
+            "name": "POWER",
+            "suffix": "P",
+            "swap_group": 0,
+            "unit": "6b79086f-0a78-49c7-a991-2ce69b057ade"
+        },
+        "4954cccc-c7db-4fb6-bdcc-958cda27d255": {
+            "name": "B",
+            "suffix": "B",
+            "swap_group": 1,
+            "unit": "254ca0c3-0da8-4c79-8340-178e4e95fbc4"
+        },
+        "c7216f04-c4cf-4932-9544-d15f4d16b650": {
+            "name": "C",
+            "suffix": "C",
+            "swap_group": 1,
+            "unit": "254ca0c3-0da8-4c79-8340-178e4e95fbc4"
+        }
+    },
+    "manufacturer": "SOUND SEMICONDUCTOR",
+    "name": "SSI2164",
+    "prefix": "IC",
+    "tags": [
+        "quad",
+        "vca"
+    ],
+    "type": "entity",
+    "uuid": "f2679c45-d2a4-4905-818a-97f4d27fded0"
+}

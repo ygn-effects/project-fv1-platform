@@ -1,0 +1,49 @@
+{
+    "MPN": [
+        false,
+        "ABS07-32.768KHZ-T"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "CRYSTAL 32.768 KHZ 20PPM 12.5PF"
+    ],
+    "entity": "8c1bc342-9e46-4296-a524-6063dbb84ae6",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Abracon"
+    ],
+    "model": "a4322f9a-0819-4b2d-9403-0943cb1077ce",
+    "package": "33a610e3-a605-4af0-aed9-a4fba7d0e858",
+    "pad_map": {
+        "ce9153cd-1401-4a1e-8a34-712705aa8979": {
+            "gate": "d66d769b-28e6-4f15-a257-e17f90609942",
+            "pin": "063f28ea-5bf0-4203-b5f2-18ce2790a092"
+        },
+        "e69eecb5-6fae-4ecf-bd4c-7a004bbd8165": {
+            "gate": "d66d769b-28e6-4f15-a257-e17f90609942",
+            "pin": "fac19994-30e6-4ecd-8125-96fdfa03622a"
+        }
+    },
+    "parametric": {
+        "frequency": "32768",
+        "load_capacitance": "1.25e-11",
+        "package": "SMD",
+        "price": "0.53",
+        "size": "3.2x1.5mm",
+        "table": "oscillators_crystal",
+        "tolerance": "20"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "17c14af5-ad2d-4a4c-93a6-ec94e6dc839d",
+    "value": [
+        false,
+        ""
+    ]
+}

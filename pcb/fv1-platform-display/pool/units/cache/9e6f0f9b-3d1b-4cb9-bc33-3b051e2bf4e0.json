@@ -1,0 +1,26 @@
+{
+    "manufacturer": "",
+    "name": "I²C address",
+    "pins": {
+        "1a3ce679-91de-4979-a8ba-75145b3d7c26": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "A0",
+            "swap_group": 0
+        },
+        "82911baa-98fc-4b8f-9866-ec791e2c96b9": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "A1",
+            "swap_group": 0
+        },
+        "dd0824bb-d47b-4173-8229-3f8e4c39dc6f": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "A2",
+            "swap_group": 0
+        }
+    },
+    "type": "unit",
+    "uuid": "9e6f0f9b-3d1b-4cb9-bc33-3b051e2bf4e0"
+}

@@ -1,0 +1,18 @@
+{
+    "gates": {
+        "da0b64ae-07c4-430d-af80-e73f280e4084": {
+            "name": "Main",
+            "suffix": "",
+            "swap_group": 0,
+            "unit": "ef26b65d-9b27-4f0a-8b43-7afc286bedec"
+        }
+    },
+    "manufacturer": "",
+    "name": "Connector 7 pins",
+    "prefix": "J",
+    "tags": [
+        "connector"
+    ],
+    "type": "entity",
+    "uuid": "5de3300c-a58e-4850-9fa7-ae780a0be4b5"
+}

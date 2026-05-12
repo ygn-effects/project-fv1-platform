@@ -1,0 +1,20 @@
+{
+    "manufacturer": "",
+    "name": "Inductor",
+    "pins": {
+        "05e9394d-395b-4182-b83c-f3ef7b883adc": {
+            "direction": "passive",
+            "names": [],
+            "primary_name": "2",
+            "swap_group": 0
+        },
+        "3d13da9b-92de-4697-9297-1abb5cb6169b": {
+            "direction": "passive",
+            "names": [],
+            "primary_name": "1",
+            "swap_group": 0
+        }
+    },
+    "type": "unit",
+    "uuid": "e764a137-e26b-40eb-adbd-fd5379be1b1a"
+}

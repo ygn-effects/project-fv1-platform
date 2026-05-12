@@ -1,0 +1,18 @@
+{
+    "gates": {
+        "bae4cadd-875c-4186-8e6e-8f7c65506915": {
+            "name": "Main",
+            "suffix": "",
+            "swap_group": 0,
+            "unit": "dfdc828c-605d-409f-838a-f59e80ed0577"
+        }
+    },
+    "manufacturer": "Spinsemi",
+    "name": "FV-1",
+    "prefix": "IC",
+    "tags": [
+        "dsp"
+    ],
+    "type": "entity",
+    "uuid": "701a5c44-59d9-4503-a546-efe416bc52a0"
+}

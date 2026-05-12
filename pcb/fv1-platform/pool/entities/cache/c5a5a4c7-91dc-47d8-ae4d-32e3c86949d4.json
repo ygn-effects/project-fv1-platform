@@ -1,0 +1,18 @@
+{
+    "gates": {
+        "a14a8407-0b48-4656-a2f7-5cc11cec0eaf": {
+            "name": "Main",
+            "suffix": "",
+            "swap_group": 0,
+            "unit": "c7a69b50-08d5-47c0-be54-03acfa47f930"
+        }
+    },
+    "manufacturer": "Microchip",
+    "name": "24LC SOT",
+    "prefix": "IC",
+    "tags": [
+        "eeprom"
+    ],
+    "type": "entity",
+    "uuid": "c5a5a4c7-91dc-47d8-ae4d-32e3c86949d4"
+}

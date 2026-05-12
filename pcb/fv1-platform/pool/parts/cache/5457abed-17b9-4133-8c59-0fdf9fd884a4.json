@@ -1,0 +1,68 @@
+{
+    "MPN": [
+        false,
+        "B6B-PH-K-S"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER PH MALE 1X6 PINS 2MM PITCH STRAIGHT"
+    ],
+    "entity": "4969fd95-015a-41c7-b6e7-941856f99f5e",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "JST"
+    ],
+    "model": "b0602fc6-28cf-489a-8524-962bf5675ede",
+    "package": "beafde33-5fb1-4102-85f0-79b0121b2025",
+    "pad_map": {
+        "47b2c30b-b29c-4758-8d3b-9e7a033f9118": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "30f3e502-5732-4be1-a6c8-9e850a04deb0"
+        },
+        "5ebbf635-0e34-4761-bb4f-bce40726f92f": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "8131c6bd-7bb6-4141-b43e-4a7ad56c5543"
+        },
+        "97464d11-f05a-4808-a08d-19e3442c93b1": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "df50d8b5-6e5c-4cd1-91c8-17f2783b8c26"
+        },
+        "c518d23e-705f-40ac-9323-b8fb64c1341b": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "2c7b98b7-d657-4cf7-a33e-99d0f643d473"
+        },
+        "d995792f-e9c3-467f-b9ac-338e04fb213c": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "33daec02-393c-49b1-8764-f58ebdb8bbbf"
+        },
+        "f1b3e9e7-275f-43f1-a6b6-33053a5d9b34": {
+            "gate": "7e216459-ad85-4d9b-98b7-a46e9d9b5438",
+            "pin": "d0555739-abc7-4df1-a0c0-a1f0de57bb67"
+        }
+    },
+    "parametric": {
+        "contact_material": "Tin",
+        "current_rating": "2",
+        "mounting_angle": "Straight",
+        "mounting_style": "Through Hole",
+        "pitch": "2",
+        "positions": "6",
+        "price": "0.145",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "10"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "5457abed-17b9-4133-8c59-0fdf9fd884a4",
+    "value": [
+        false,
+        ""
+    ]
+}

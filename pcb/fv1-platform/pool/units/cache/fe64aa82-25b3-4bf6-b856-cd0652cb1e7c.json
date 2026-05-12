@@ -1,0 +1,56 @@
+{
+    "manufacturer": "Microchip",
+    "name": "MCP49x1",
+    "pins": {
+        "10cb2d7e-39e3-4220-8d29-5bd0ace87198": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "VSS",
+            "swap_group": 0
+        },
+        "939c632b-df7e-462b-a4a3-a414b5a6b764": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "VDD",
+            "swap_group": 0
+        },
+        "9b1eaa17-9868-4603-a5b9-fc237839ae41": {
+            "direction": "output",
+            "names": [],
+            "primary_name": "VOUT",
+            "swap_group": 0
+        },
+        "b5068aeb-9f5c-475f-afc2-6d00aafe864d": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "LDAC",
+            "swap_group": 0
+        },
+        "b6b81415-5fff-4fae-af4c-8a6568756e0a": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "SCK",
+            "swap_group": 0
+        },
+        "d462f426-06c6-4139-96df-421a0f492c3f": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "SDI",
+            "swap_group": 0
+        },
+        "d4a1e00b-c320-4d9b-8255-09f3c3a72c42": {
+            "direction": "power_input",
+            "names": [],
+            "primary_name": "VREF",
+            "swap_group": 0
+        },
+        "e386370d-a0b1-4c95-b3c3-6b28a73177e9": {
+            "direction": "input",
+            "names": [],
+            "primary_name": "CS",
+            "swap_group": 0
+        }
+    },
+    "type": "unit",
+    "uuid": "fe64aa82-25b3-4bf6-b856-cd0652cb1e7c"
+}

@@ -1,0 +1,60 @@
+{
+    "MPN": [
+        false,
+        "G800W304018EU"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "HEADER TH 1x4 2.54MM MALE"
+    ],
+    "entity": "278ef14c-9aa2-41af-8497-f29f96d294e5",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "AMPHENOL"
+    ],
+    "model": "0d8290e0-34c9-4db6-ab0f-a3bc2220835e",
+    "package": "e59b37c7-b1bf-407b-94b6-11eea0d96ea4",
+    "pad_map": {
+        "0cff476c-a815-4361-a861-be74883b3311": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "b787f728-bdd2-4890-a3c1-e9cbba66bb3d"
+        },
+        "9cd45b0a-d971-4600-93af-ed41cc86d5a1": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "c65dc90f-fb6a-4093-bc7c-586fbf00d8b5"
+        },
+        "d58b3cd9-5fb6-4a63-8022-bf5afc7ae47c": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "b683c934-469e-44df-9b3f-faa281710d00"
+        },
+        "d60052bb-8b04-453e-bfff-969e2d246f6d": {
+            "gate": "a3532230-532a-42c1-b196-b10b4c890b8c",
+            "pin": "82a7e37c-9b1d-4930-b8da-fa8035e6a757"
+        }
+    },
+    "parametric": {
+        "contact_material": "Gold",
+        "current_rating": "3",
+        "mounting_angle": "Straight",
+        "mounting_style": "Through Hole",
+        "pitch": "2.54",
+        "positions": "4",
+        "price": "0.058",
+        "rows": "1",
+        "table": "connectors_headers",
+        "voltage_rating": "500"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "a017a55a-db58-47a1-91a9-0a9a9ef81019",
+    "value": [
+        false,
+        ""
+    ]
+}

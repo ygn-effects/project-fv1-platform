@@ -6,11 +6,12 @@ software/spinasm/out/
 software/spinasm/.vscode/
 firmware/vscode-spinasm-firmware/.vscode/
 firmware/vscode-spinasm-firmware/.gitignore
+firmware/fv1-platform-firmware/.vscode/
+firmware/fv1-platform-firmware/.gitignore
 
 # PIO files
-firmware/vscode-spinasm-firmware/.pio/build/ATmega328P/
-firmware/vscode-spinasm-firmware/.vscode/
 firmware/vscode-spinasm-firmware/.pio/build/
+firmware/fv1-platform-firmware/.pio/
 
 # Packaging artifacts
 software/spinasm/*.vsix
@@ -26,10 +27,6 @@ desktop.ini
 
 # Test project
 software/spinasm/test
-
-firmware/vscode-spinasm-firmware/.pio/build/ATmega328P/
-firmware/vscode-spinasm-firmware/.vscode/
-firmware/vscode-spinasm-firmware/.pio/build/
 
 # Horizon files
 *.db

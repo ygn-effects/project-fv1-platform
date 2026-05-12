@@ -1,0 +1,51 @@
+{
+    "MPN": [
+        false,
+        "EEE-1VA100WR"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "CAPACITOR ALUM 10UF 35V BIPOLAR ±20%"
+    ],
+    "entity": "ca83a84f-6183-4088-84b6-5d79b2a119d4",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Panasonic"
+    ],
+    "model": "64472e11-3ab6-48a8-bd47-88366f7e0a7d",
+    "package": "8788d11a-e385-42a5-aa9b-44aa689245d8",
+    "pad_map": {
+        "2c796120-073c-4504-9663-72805c246546": {
+            "gate": "9bfcf213-2a7e-444e-8312-ce57209fc9ec",
+            "pin": "29995253-b4b1-4c7c-a049-b6db2713ca7c"
+        },
+        "ff00f8ad-52a5-44bf-8bcc-5459d8e16b8c": {
+            "gate": "9bfcf213-2a7e-444e-8312-ce57209fc9ec",
+            "pin": "852f1fe6-06dc-4661-8a14-61a9a6ebb26a"
+        }
+    },
+    "parametric": {
+        "esr": "",
+        "lifetime": "1000",
+        "package": "SMD",
+        "price": "0.098",
+        "size": "4x5.4mm",
+        "table": "capacitors_electrolytic",
+        "tolerance": "20",
+        "value": "10",
+        "wvdc": "35"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "a1f74641-2f22-4584-b773-2e0196bab90e",
+    "value": [
+        false,
+        "10u"
+    ]
+}
