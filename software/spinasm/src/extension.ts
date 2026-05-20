@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as path from "path";
 import Project from "./project";
 import Config from "./config";
 import Logs, { LogType } from "./logs";
@@ -8,15 +9,20 @@ import { SpinASMSemanticTokensProvider, SpinASMHoverProvider } from "./spinasmSe
 import { initializeBankStatusBar, disposeBankStatusBar, updateBankStatusBar, showBankStatus } from "./statusBar";
 import { initializeResourceStatusBar, disposeResourceStatusBar, showResourceUsage, forceUpdateResourceStatusBar } from "./resourceStatusBar";
 import { SpinASMValidator } from "./spinasmValidator";
+import { ProjectManager } from "./projectManager";
 
 let validator: SpinASMValidator;
 
-export function activate(context: vscode.ExtensionContext): void {
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
   Logs.createChannel();
-  Logs.log(LogType.INFO, "Extension activated");
+  Logs.log(LogType.INFO, "Extension activating...");
 
   validator = new SpinASMValidator();
   context.subscriptions.push(validator);
+
+  // Initialize ProjectManager cache background scan
+  const projectManager = ProjectManager.getInstance();
+  await projectManager.initializeWorkspace();
 
   // Shared debounce for all validation triggers
   let validationTimer: NodeJS.Timeout | null = null;
@@ -53,6 +59,16 @@ export function activate(context: vscode.ExtensionContext): void {
       if (doc.languageId === 'spinasm') {
         if (validationTimer) { clearTimeout(validationTimer); }
         validator.validateDocument(doc);
+
+        // Optimize update: when saving any .spn file, run a targeted,
+        // non-blocking background check on that single bank's cache state.
+        const rootPath = vscode.workspace.getWorkspaceFolder(doc.uri)?.uri.fsPath;
+        if (rootPath) {
+          const bankIndex = projectManager.getBankIndexFromPath(doc.uri.fsPath);
+          if (bankIndex !== -1) {
+            projectManager.refreshBank(rootPath, bankIndex);
+          }
+        }
       }
     })
   );
@@ -66,24 +82,68 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  // Create status bar item
+  // Create status bar items
   initializeBankStatusBar(context);
-
-  // Create resource bar
   initializeResourceStatusBar(context);
 
-  // Register file system watcher for compile-on-save
+  // Register file system watcher for reactive cache management & compile-on-save
   const watcher = vscode.workspace.createFileSystemWatcher("**/*.spn");
   context.subscriptions.push(watcher);
 
+  // Dynamic reaction to changes on disk
   watcher.onDidChange(async (uri) => {
+    const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
+    if (!folder) { return; }
+
+    const bankIndex = projectManager.getBankIndexFromPath(uri.fsPath);
+    if (bankIndex !== -1) {
+      // Invalidate and refresh cache for this bank instantly in memory
+      await projectManager.refreshBank(folder, bankIndex);
+    }
+
     if (Config.getCompileOnSave()) {
       await handleCompileOnSave(uri);
     }
-
-    // Update status bar after save (in case file timestamps changed)
-    await updateBankStatusBar();
   });
+
+  watcher.onDidCreate(async (uri) => {
+    const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
+    if (!folder) { return; }
+
+    // Completely rebuild cached directory bindings on new files
+    await projectManager.refreshProject(folder);
+  });
+
+  watcher.onDidDelete(async (uri) => {
+    const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
+    if (!folder) { return; }
+
+    await projectManager.refreshProject(folder);
+  });
+
+  // Watch for external output compiler updates (clean, direct hex generations, etc.)
+  const hexWatcher = vscode.workspace.createFileSystemWatcher("**/output/*.hex");
+  context.subscriptions.push(hexWatcher);
+
+  const onHexUpdate = async (uri: vscode.Uri) => {
+    const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
+    if (!folder) { return; }
+
+    // Parse which bank this compiled hex matches to optimize cache refresh
+    const baseName = path.basename(uri.fsPath, ".hex");
+    // Scan program list in cache to find match
+    const cachedBanks = projectManager.getBanksSync(folder);
+    for (let i = 0; i < 8; i++) {
+      if (cachedBanks[i].spnFile && path.basename(cachedBanks[i].spnFile!, ".spn") === baseName) {
+        await projectManager.refreshBank(folder, i);
+        break;
+      }
+    }
+  };
+
+  hexWatcher.onDidChange(onHexUpdate);
+  hexWatcher.onDidCreate(onHexUpdate);
+  hexWatcher.onDidDelete(onHexUpdate);
 
   // Register SpinASM semantic token provider
   context.subscriptions.push(
@@ -127,7 +187,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("spinasm.uploadAllPrograms", uploadAllPrograms),
     vscode.commands.registerCommand("spinasm.compileAndUploadAllPrograms", compileAndUploadAllPrograms),
 
-    // Generic Bank Operations (Prompts user for bank 0-7)
+    // Generic Bank Operations
     vscode.commands.registerCommand("spinasm.compileBank", async () => {
       const bank = await pickBank();
 
@@ -171,9 +231,6 @@ export function deactivate(): void {
 // COMPILE ON SAVE
 // =============================================================================
 
-/**
- * @brief Handles automatic compilation when a .spn file is saved.
- */
 async function handleCompileOnSave(uri: vscode.Uri): Promise<void> {
   const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
 
@@ -187,25 +244,21 @@ async function handleCompileOnSave(uri: vscode.Uri): Promise<void> {
     const compilerArgs = Config.getCompilerArgs();
 
     if (!compilerPath) {
-      return; // Silently skip if compiler not configured
+      return;
     }
 
     await project.buildSetup(compilerPath, compilerArgs);
     const bank = project.getProgramBankByPath(uri.fsPath);
 
     if (bank === -1) {
-      return; // Not a valid project program
+      return;
     }
 
     Logs.log(LogType.INFO, `Compile-on-save: Compiling bank ${bank}...`);
     await project.compileProgramToHex(bank);
     Logs.log(LogType.INFO, `Compile-on-save: Bank ${bank} compiled successfully`);
 
-    // Update status bar after successful compilation
-    await updateBankStatusBar();
-
   } catch (error) {
-    // Log error but don't show intrusive notifications for auto-compile
     Logs.log(LogType.ERROR, `Compile-on-save failed: ${(error as Error).message}`);
   }
 }
@@ -214,10 +267,6 @@ async function handleCompileOnSave(uri: vscode.Uri): Promise<void> {
 // UI HELPERS
 // =============================================================================
 
-/**
- * @brief prompts the user to select a bank number (0-7) from a dropdown.
- * @returns The selected bank number, or undefined if cancelled.
- */
 async function pickBank(): Promise<number | undefined> {
   const items = [];
 
@@ -240,9 +289,6 @@ async function pickBank(): Promise<number | undefined> {
 // SERIAL PORT DETECTION
 // =============================================================================
 
-/**
- * @brief Presents a list of available serial ports for manual selection.
- */
 async function selectSerialPort(): Promise<void> {
   try {
     const ports = await Utils.listSerialPorts();
@@ -275,9 +321,6 @@ async function selectSerialPort(): Promise<void> {
   }
 }
 
-/**
- * @brief Automatically detects the FV-1 programmer by probing available ports.
- */
 async function autoDetectProgrammer(): Promise<void> {
   await vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
@@ -321,9 +364,6 @@ async function compileBank(bank: number): Promise<void> {
 
     Logs.log(LogType.INFO, `Program ${bank} compilation successful`);
     vscode.window.showInformationMessage(`Program ${bank} compiled successfully!`);
-
-    // Update status bar after compilation
-    await updateBankStatusBar();
   }, "Compilation Failed", `Compiling Bank ${bank}...`);
 }
 
@@ -339,9 +379,6 @@ async function uploadBank(bank: number): Promise<void> {
 
     Logs.log(LogType.INFO, `Program ${bank} upload successful`);
     vscode.window.showInformationMessage(`Program ${bank} uploaded successfully!`);
-
-    // Update status bar after compilation
-    await updateBankStatusBar();
   }, `Failed to upload program ${bank}`, `Uploading Bank ${bank}...`);
 }
 
@@ -352,9 +389,6 @@ async function compileAndUploadBank(bank: number): Promise<void> {
 
     Logs.log(LogType.INFO, `Program ${bank} compiled and uploaded successfully`);
     vscode.window.showInformationMessage(`Program ${bank} compiled and uploaded successfully!`);
-
-    // Update status bar after compilation
-    await updateBankStatusBar();
   }, `Failed to compile and upload program ${bank}`, `Compiling & Uploading Bank ${bank}...`);
 }
 
@@ -373,9 +407,6 @@ async function compileCurrentProgram(): Promise<void> {
     await project.compileProgramToHex(currentProgram);
 
     vscode.window.showInformationMessage(`Program ${currentProgram} compiled successfully!`);
-
-    // Update status bar after compilation
-    await updateBankStatusBar();
   }, "Failed to compile current program", "Compiling current program...");
 }
 
@@ -403,14 +434,11 @@ async function compileAndUploadCurrentProgram(): Promise<void> {
     await project.compileProgramToHex(currentProgram);
     await performUpload(project, settings, currentProgram);
     vscode.window.showInformationMessage(`Program ${currentProgram} compiled and uploaded successfully!`);
-
-    // Update status bar after compilation
-    await updateBankStatusBar();
   }, "Failed to compile and upload current program", "Compiling & Uploading Current Program...");
 }
 
 async function compileAllPrograms(): Promise<void> {
-  await runOperation(async (project, settings) => {
+  await runOperation(async (project) => {
     const programs = project.getAllPrograms();
 
     for (const programPath of programs) {
@@ -423,14 +451,11 @@ async function compileAllPrograms(): Promise<void> {
     }
 
     vscode.window.showInformationMessage("All programs compiled successfully!");
-
-    // Update status bar after compilation
-    await updateBankStatusBar();
   }, "Failed to compile all programs", "Compiling all programs...");
 }
 
 async function compileAllProgramsToBin(): Promise<void> {
-  await runOperation(async (project, settings) => {
+  await runOperation(async (project) => {
     const programs = project.getAllPrograms();
 
     for (const programPath of programs) {
@@ -443,9 +468,6 @@ async function compileAllProgramsToBin(): Promise<void> {
     }
 
     vscode.window.showInformationMessage("All programs compiled to BIN successfully!");
-
-    // Update status bar after compilation
-    await updateBankStatusBar();
   }, "Failed to compile all programs", "Compiling all programs to BIN...");
 }
 
@@ -542,9 +564,6 @@ async function compileAndUploadAllPrograms(): Promise<void> {
         processedCount++;
 
         Logs.log(LogType.INFO, `Bank ${bank} compiled and uploaded (${processedCount}/${totalPrograms})`);
-
-        // Update status bar after compilation
-        await updateBankStatusBar();
       }
 
       vscode.window.showInformationMessage(`All programs compiled and uploaded successfully! (${processedCount} banks)`);
@@ -573,9 +592,6 @@ async function createProject(): Promise<void> {
 
     Logs.log(LogType.INFO, "Project structure created successfully");
     vscode.window.showInformationMessage("Project created successfully!");
-
-    // Update status bar
-    await updateBankStatusBar();
   }
   catch (error) {
     handleError(error, "Failed to create project structure");
@@ -659,7 +675,7 @@ async function runOperation(
     location: vscode.ProgressLocation.Notification,
     title: progressTitle,
     cancellable: false
-  }, async (progress) => {
+  }, async () => {
     try {
         const settings = loadSettings();
         const project = new Project(folder);

@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
-import * as fsPromises from "fs/promises";
 import * as path from "path";
 import Project from "./project";
 import Config from "./config";
+import { ProjectManager, BankStatus, CachedBankInfo } from "./projectManager";
 
 // Global status bar item
 let bankStatusBar: vscode.StatusBarItem;
@@ -16,27 +16,32 @@ export function initializeBankStatusBar(context: vscode.ExtensionContext): void 
   bankStatusBar.command = "spinasm.showBankStatus";
   context.subscriptions.push(bankStatusBar);
 
-  // Update status bar when active editor changes
+  // Subscribe to ProjectManager updates. UI updates immediately when the cache alters.
   context.subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(() => updateBankStatusBar())
+    ProjectManager.getInstance().onDidChangeProject(() => updateBankStatusBarImmediate())
+  );
+
+  // Update status bar instantly when active editor changes (No Disk I/O!)
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(() => updateBankStatusBarImmediate())
   );
 
   // Update status bar when document changes (for initial load)
   context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument(() => updateBankStatusBar())
+    vscode.workspace.onDidOpenTextDocument(() => updateBankStatusBarImmediate())
   );
 
-  // Update when settings change (in case user toggles visibility)
+  // Update when settings change
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('spinasm.statusBar.enabled')) {
-        updateBankStatusBar();
+        updateBankStatusBarImmediate();
       }
     })
   );
 
   // Initial update
-  updateBankStatusBar();
+  updateBankStatusBarImmediate();
 }
 
 /**
@@ -45,94 +50,6 @@ export function initializeBankStatusBar(context: vscode.ExtensionContext): void 
 export function disposeBankStatusBar(): void {
   if (bankStatusBar) {
     bankStatusBar.dispose();
-  }
-}
-
-/**
- * @enum BankStatus
- * @brief Represents the compilation status of a bank
- */
-enum BankStatus {
-  Empty = 0,        // No .spn file
-  NotCompiled = 1,  // .spn exists, no .hex
-  UpToDate = 2,     // .hex exists and is newer than .spn
-  OutOfDate = 3     // .hex exists but .spn is newer
-}
-
-/**
- * @interface BankInfo
- * @brief Information about a single bank
- */
-interface BankInfo {
-  status: BankStatus;
-  spnFile?: string;
-  hexFile?: string;
-  spnTime?: Date;
-  hexTime?: Date;
-}
-
-/**
- * @brief Get the compilation status of a bank with file age tracking
- */
-async function getBankStatus(
-  programs: (string | null)[],
-  project: Project,
-  bankIndex: number
-): Promise<BankInfo> {
-
-  const spnFile = programs[bankIndex];
-
-  if (!spnFile) {
-    return { status: BankStatus.Empty };
-  }
-
-  const hexFile = project.getOutput(bankIndex);
-
-  if (!hexFile) {
-    return {
-      status: BankStatus.NotCompiled,
-      spnFile
-    };
-  }
-
-  // Both files exist - compare modification times
-  try {
-    await fsPromises.access(hexFile);
-
-    const [spnStats, hexStats] = await Promise.all([
-      fsPromises.stat(spnFile),
-      fsPromises.stat(hexFile)
-    ]);
-
-    const spnTime = spnStats.mtime;
-    const hexTime = hexStats.mtime;
-
-    // If .hex is newer than .spn, it's up to date
-    if (hexTime >= spnTime) {
-      return {
-        status: BankStatus.UpToDate,
-        spnFile,
-        hexFile,
-        spnTime,
-        hexTime
-      };
-    } else {
-      // .spn is newer than .hex - needs recompilation
-      return {
-        status: BankStatus.OutOfDate,
-        spnFile,
-        hexFile,
-        spnTime,
-        hexTime
-      };
-    }
-  } catch (error) {
-    // If we can't stat the files, assume not compiled
-    return {
-      status: BankStatus.NotCompiled,
-      spnFile,
-      hexFile
-    };
   }
 }
 
@@ -154,29 +71,19 @@ function getStatusSymbol(status: BankStatus): string {
   }
 }
 
-// Debounce timer for bank status bar updates
-let bankUpdateTimer: NodeJS.Timeout | null = null;
-
 /**
- * @brief Updates the status bar with current bank compilation status (debounced)
+ * @brief Updates the status bar with current bank compilation status (Synchronously from Cache!)
  */
 export async function updateBankStatusBar(): Promise<void> {
-  if (bankUpdateTimer) {
-    clearTimeout(bankUpdateTimer);
-  }
-
-  return new Promise((resolve) => {
-    bankUpdateTimer = setTimeout(async () => {
-      await updateBankStatusBarImmediate();
-      resolve();
-    }, 300);
-  });
+  // Retained for backward-compatibility but now delegates directly
+  // to the high-performance synchronous UI updater.
+  updateBankStatusBarImmediate();
 }
 
 /**
- * @brief Actual status bar update logic
+ * @brief Actual status bar update logic running synchronously on the cache data
  */
-async function updateBankStatusBarImmediate(): Promise<void> {
+function updateBankStatusBarImmediate(): void {
   // Check if status bar is enabled
   if (!Config.getStatusBarEnabled()) {
     bankStatusBar.hide();
@@ -191,23 +98,14 @@ async function updateBankStatusBarImmediate(): Promise<void> {
   }
 
   try {
-    const project = new Project(folder);
-    const compilerPath = Config.getCompilerPath();
-    const compilerArgs = Config.getCompilerArgs();
-
-    if (!compilerPath) {
-      bankStatusBar.hide();
-      return;
-    }
-
-    await project.buildSetup(compilerPath, compilerArgs);
-    const programs = project.getAllPrograms();
+    const manager = ProjectManager.getInstance();
+    const cachedBanks = manager.getBanksSync(folder);
 
     let statusText = "SpinASM: ";
     let hasOutOfDate = false;
 
     for (let i = 0; i < 8; i++) {
-      const bankInfo = await getBankStatus(programs, project, i);
+      const bankInfo = cachedBanks[i];
       const symbol = getStatusSymbol(bankInfo.status);
       statusText += `[${i}${symbol}]`;
 
@@ -227,7 +125,7 @@ async function updateBankStatusBarImmediate(): Promise<void> {
 
     bankStatusBar.show();
   } catch (error) {
-    // If there's an error, just hide the status bar
+    // Hide bar silently on parsing errors
     bankStatusBar.hide();
   }
 }
@@ -265,31 +163,21 @@ export async function showBankStatus(): Promise<void> {
   }
 
   try {
-    const project = new Project(folder);
-    const compilerPath = Config.getCompilerPath();
-    const compilerArgs = Config.getCompilerArgs();
-
-    if (!compilerPath) {
-      vscode.window.showWarningMessage("Compiler path not configured.");
-      return;
-    }
-
-    await project.buildSetup(compilerPath, compilerArgs);
-    const programs = project.getAllPrograms();
-
+    const manager = ProjectManager.getInstance();
+    const cachedBanks = manager.getBanksSync(folder);
     const items = [];
 
     for (let i = 0; i < 8; i++) {
-      const bankInfo = await getBankStatus(programs, project, i);
+      const bankInfo = cachedBanks[i];
       let label = "";
       let detail = "";
       let description = "";
 
-      if (bankInfo.status === BankStatus.Empty) {
+      if (bankInfo.status === BankStatus.Empty || !bankInfo.spnFile) {
         label = `- Bank ${i}: Empty`;
         detail = "No program file";
       } else {
-        const fileName = path.basename(bankInfo.spnFile!);
+        const fileName = path.basename(bankInfo.spnFile);
 
         switch (bankInfo.status) {
           case BankStatus.UpToDate:
@@ -330,7 +218,7 @@ export async function showBankStatus(): Promise<void> {
     });
 
     if (selection && selection.hasProgram) {
-      const programPath = programs[selection.bank];
+      const programPath = cachedBanks[selection.bank].spnFile;
       if (programPath) {
         const doc = await vscode.workspace.openTextDocument(programPath);
         await vscode.window.showTextDocument(doc);

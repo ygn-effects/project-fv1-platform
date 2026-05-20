@@ -3,6 +3,7 @@ import * as fsPromises from "fs/promises";
 import * as path from "path";
 import * as cp from "child_process";
 import Logs, { LogType } from "./logs";
+import { ProjectManager } from "./projectManager";
 
 /**
  * @class Project
@@ -100,6 +101,9 @@ export default class Project {
         throw new Error(`Could not create output folder: ${(error as Error).message}`);
       }
     }
+
+    // Inform ProjectManager to rebuild the workspace cache
+    await ProjectManager.getInstance().refreshProject(this.rootFolder);
   }
 
   /**
@@ -121,6 +125,9 @@ export default class Project {
     }
 
     Logs.log(LogType.INFO, "Compilation succeeded.");
+
+    // Inform the project cache to update this specific bank immediately for optimized UI feedback
+    await ProjectManager.getInstance().refreshBank(this.rootFolder, program);
   }
 
   /**
