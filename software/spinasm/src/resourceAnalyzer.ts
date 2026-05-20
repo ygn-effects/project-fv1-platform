@@ -1,171 +1,20 @@
 import * as vscode from "vscode";
-import { isInstruction } from "./spinasmLanguage";
+import { DocumentParser, ResourceUsage } from "./documentParser";
 
-/**
- * @interface ResourceUsage
- * @brief Represents the resource usage of a SpinASM program
- */
-export interface ResourceUsage {
-  registers: {
-    used: Set<number>;              // Set of register numbers in use
-    aliases: Map<string, number>;   // Symbol name -> register number
-    total: number;                  // Total available (32)
-    percentage: number;             // Usage percentage
-  };
-  instructions: {
-    count: number;                  // Number of instructions
-    limit: number;                  // Instruction limit (128)
-    percentage: number;             // Usage percentage
-  };
-  memory: {
-    used: number;                   // Total memory used (samples)
-    total: number;                  // Total available (32768)
-    allocations: Map<string, number>; // Buffer name -> size
-    percentage: number;             // Usage percentage
-  };
-}
+export { ResourceUsage } from "./documentParser";
 
 /**
  * @class ResourceAnalyzer
  * @brief Analyzes SpinASM code to track register, instruction, and memory usage
+ * Fully optimized to query the cached Parser model.
  */
 export class ResourceAnalyzer {
 
-  // Cache keyed by document URI + version to avoid redundant analysis
-  private static cache = new Map<string, { version: number; usage: ResourceUsage }>();
-
   /**
-   * @brief Analyze a SpinASM document for resource usage (cached by document version)
+   * @brief Analyze a SpinASM document for resource usage (fetches from fast warm AST cache)
    */
   public static analyze(document: vscode.TextDocument): ResourceUsage {
-    const cacheKey = document.uri.toString();
-    const cached = this.cache.get(cacheKey);
-
-    if (cached && cached.version === document.version) {
-      return cached.usage;
-    }
-
-    const text = document.getText();
-    const lines = text.split('\n');
-
-    // Initialize tracking
-    const registers = new Set<number>();
-    const registerAliases = new Map<string, number>();
-    const memoryAllocations = new Map<string, number>();
-    let instructionCount = 0;
-
-    // Parse the document
-    for (const line of lines) {
-      // Remove comments
-      const codeOnly = line.split(';')[0].trim();
-      if (!codeOnly) continue;
-
-      // Track register aliases (equ)
-      this.parseRegisterAlias(codeOnly, registerAliases, registers);
-
-      // Track memory allocations (mem)
-      this.parseMemoryAllocation(codeOnly, memoryAllocations);
-
-      // Track instructions
-      if (isInstruction(codeOnly)) {
-        instructionCount++;
-        // Also track direct register usage in instructions
-        this.parseDirectRegisterUsage(codeOnly, registers);
-      }
-    }
-
-    // Calculate percentages
-    const registerPercentage = (registers.size / 32) * 100;
-    const instructionPercentage = (instructionCount / 128) * 100;
-
-    const totalMemory = Array.from(memoryAllocations.values()).reduce((a, b) => a + b, 0);
-    const memoryPercentage = (totalMemory / 32768) * 100;
-
-    const usage: ResourceUsage = {
-      registers: {
-        used: registers,
-        aliases: registerAliases,
-        total: 32,
-        percentage: registerPercentage
-      },
-      instructions: {
-        count: instructionCount,
-        limit: 128,
-        percentage: instructionPercentage
-      },
-      memory: {
-        used: totalMemory,
-        total: 32768,
-        allocations: memoryAllocations,
-        percentage: memoryPercentage
-      }
-    };
-
-    this.cache.set(cacheKey, { version: document.version, usage });
-    return usage;
-  }
-
-  /**
-   * @brief Parse register alias declarations (equ)
-   */
-  private static parseRegisterAlias(
-    line: string,
-    aliases: Map<string, number>,
-    registers: Set<number>
-  ): void {
-    // Match: equ <name> reg<N>
-    const equMatch = /^\s*equ\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+reg(\d+)/i.exec(line);
-    if (equMatch) {
-      const symbolName = equMatch[1];
-      const registerNum = parseInt(equMatch[2], 10);
-
-      if (registerNum >= 0 && registerNum <= 31) {
-        aliases.set(symbolName, registerNum);
-        registers.add(registerNum);
-      }
-    }
-
-    // Also match built-in registers like ADCL, ADCR, DACL, DACR
-    // These are typically reg24-27 but we'll just track their usage
-    const builtInMatch = /\b(adcl|adcr|dacl|dacr)\b/i.exec(line);
-    if (builtInMatch) {
-      // Built-in registers - we'll count them separately if needed
-      // For now, just note they're used (don't add to set since they're implicit)
-    }
-  }
-
-  /**
-   * @brief Parse memory allocation declarations (mem)
-   */
-  private static parseMemoryAllocation(
-    line: string,
-    allocations: Map<string, number>
-  ): void {
-    // Match: mem <name> <size>
-    const memMatch = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(\d+)/i.exec(line);
-    if (memMatch) {
-      const bufferName = memMatch[1];
-      const size = parseInt(memMatch[2], 10);
-
-      allocations.set(bufferName, size);
-    }
-  }
-
-  /**
-   * @brief Parse direct register usage in instructions
-   */
-  private static parseDirectRegisterUsage(
-    line: string,
-    registers: Set<number>
-  ): void {
-    // Match direct register references like "reg5" or "REG12"
-    const regMatches = line.matchAll(/\breg(\d+)\b/gi);
-    for (const match of regMatches) {
-      const registerNum = parseInt(match[1], 10);
-      if (registerNum >= 0 && registerNum <= 31) {
-        registers.add(registerNum);
-      }
-    }
+    return DocumentParser.get(document).resourceUsage;
   }
 
   /**
@@ -227,7 +76,6 @@ export class ResourceAnalyzer {
     lines.push(`${regIcon} Registers: ${usage.registers.used.size} / 32 (${Math.round(usage.registers.percentage)}%)`);
 
     if (usage.registers.used.size > 0) {
-      const regList = Array.from(usage.registers.used).sort((a, b) => a - b);
       const aliasedRegs: string[] = [];
 
       // Show aliased registers

@@ -1,29 +1,11 @@
 import * as vscode from "vscode";
-import { ResourceAnalyzer } from "./resourceAnalyzer";
-import { BUILT_IN_SYMBOLS, isInstruction, isBuiltInSymbol } from "./spinasmLanguage";
-
-/**
- * @interface SymbolDefinition
- * @brief Represents a symbol defined in SpinASM code
- */
-interface SymbolDefinition {
-  name: string;
-  type: 'register' | 'memory' | 'constant' | 'label';
-  value?: string | number;
-  line: number;
-  character: number;
-}
+import { DocumentParser, DocumentSymbol } from "./documentParser";
+import { ResourceAnalyzer, ResourceUsage } from "./resourceAnalyzer";
+import { isInstruction, isBuiltInSymbol } from "./spinasmLanguage";
 
 /**
  * @class SpinASMValidator
  * @brief Validates SpinASM code and provides diagnostics
- *
- * This validator catches common errors:
- * - Undefined symbols
- * - Duplicate definitions
- * - Invalid syntax
- * - Resource limit violations
- * - Basic instruction validation
  */
 export class SpinASMValidator {
 
@@ -67,15 +49,28 @@ export class SpinASMValidator {
   }
 
   /**
-   * @brief Main validation function
+   * @brief Main validation function querying unified cached parser
    */
   private validate(document: vscode.TextDocument): vscode.Diagnostic[] {
     const diagnostics: vscode.Diagnostic[] = [];
 
-    // Pass 1: Collect all symbol definitions
-    const symbols = this.collectSymbols(document, diagnostics);
+    // Extract unified parsed model
+    const parsedDoc = DocumentParser.get(document);
 
-    // Pass 2: Validate symbol usage and instruction syntax
+    // 1. Add static structural syntax errors found on single-pass parse
+    for (const parserDiag of parsedDoc.diagnostics) {
+      const vsDiag = new vscode.Diagnostic(
+        parserDiag.range,
+        parserDiag.message,
+        parserDiag.severity
+      );
+      vsDiag.code = parserDiag.code;
+      diagnostics.push(vsDiag);
+    }
+
+    const symbols = parsedDoc.symbols;
+
+    // 2. Validate symbol reference usages and operands
     for (let i = 0; i < document.lineCount; i++) {
       const line = document.lineAt(i);
       const lineText = line.text;
@@ -86,7 +81,7 @@ export class SpinASMValidator {
         continue;
       }
 
-      // Skip directives and labels (already validated in pass 1)
+      // Skip directives and labels (which are validated during parse stage)
       if (/^\s*(equ|mem)\s+/i.test(codeOnly)) {
         continue;
       }
@@ -101,160 +96,10 @@ export class SpinASMValidator {
       }
     }
 
-    // Pass 3: Check resource limits using ResourceAnalyzer
-    this.validateResourceLimits(document, diagnostics);
+    // 3. Evaluate memory & instruction resource boundary limits
+    this.validateResourceLimits(parsedDoc.resourceUsage, diagnostics);
 
     return diagnostics;
-  }
-
-  /**
-   * @brief Collect all symbol definitions (equ, mem, labels)
-   */
-  private collectSymbols(
-    document: vscode.TextDocument,
-    diagnostics: vscode.Diagnostic[]
-  ): Map<string, SymbolDefinition> {
-
-    const symbols = new Map<string, SymbolDefinition>();
-    const text = document.getText();
-
-    const reserved = BUILT_IN_SYMBOLS;
-
-    // Parse EQU declarations
-    const equRegex = /^\s*equ\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+?)(?:;.*)?$/gmi;
-    let match;
-
-    while ((match = equRegex.exec(text)) !== null) {
-      const symbolName = match[1];
-      const symbolValue = match[2].trim();
-      const line = text.substring(0, match.index).split('\n').length - 1;
-      const character = match.index - text.lastIndexOf('\n', match.index) - 1;
-
-      // Check for reserved names
-      if (reserved.has(symbolName.toUpperCase())) {
-        const diagnostic = new vscode.Diagnostic(
-          new vscode.Range(line, character, line, character + 3 + symbolName.length),
-          `Reserved symbol '${symbolName}' cannot be redefined`,
-          vscode.DiagnosticSeverity.Error
-        );
-        diagnostic.code = 'reserved-symbol';
-        diagnostics.push(diagnostic);
-        continue;
-      }
-
-      // Check for duplicate definitions
-      if (symbols.has(symbolName.toUpperCase())) {
-        const prevDef = symbols.get(symbolName.toUpperCase())!;
-        const diagnostic = new vscode.Diagnostic(
-          new vscode.Range(line, character, line, character + 3 + symbolName.length),
-          `Symbol '${symbolName}' already defined on line ${prevDef.line + 1}`,
-          vscode.DiagnosticSeverity.Error
-        );
-        diagnostic.code = 'duplicate-symbol';
-        diagnostics.push(diagnostic);
-        continue;
-      }
-
-      // Determine if this is a register alias or constant
-      const isRegister = /^(?:reg\d+|adcl|adcr|dacl|dacr|pot[0-2])$/i.test(symbolValue);
-
-      symbols.set(symbolName.toUpperCase(), {
-        name: symbolName,
-        type: isRegister ? 'register' : 'constant',
-        value: symbolValue,
-        line: line,
-        character: character
-      });
-    }
-
-    // Parse MEM declarations
-    const memRegex = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(\d+)/gmi;
-
-    while ((match = memRegex.exec(text)) !== null) {
-      const symbolName = match[1];
-      const size = parseInt(match[2], 10);
-      const line = text.substring(0, match.index).split('\n').length - 1;
-      const character = match.index - text.lastIndexOf('\n', match.index) - 1;
-
-      // Check for reserved names
-      if (reserved.has(symbolName.toUpperCase())) {
-        const diagnostic = new vscode.Diagnostic(
-          new vscode.Range(line, character, line, character + 3 + symbolName.length),
-          `Reserved symbol '${symbolName}' cannot be redefined`,
-          vscode.DiagnosticSeverity.Error
-        );
-        diagnostic.code = 'reserved-symbol';
-        diagnostics.push(diagnostic);
-        continue;
-      }
-
-      // Check for duplicate definitions
-      if (symbols.has(symbolName.toUpperCase())) {
-        const prevDef = symbols.get(symbolName.toUpperCase())!;
-        const diagnostic = new vscode.Diagnostic(
-          new vscode.Range(line, character, line, character + 3 + symbolName.length),
-          `Symbol '${symbolName}' already defined on line ${prevDef.line + 1}`,
-          vscode.DiagnosticSeverity.Error
-        );
-        diagnostic.code = 'duplicate-symbol';
-        diagnostics.push(diagnostic);
-        continue;
-      }
-
-      // Validate memory size
-      if (size <= 0 || size > 32767) {
-        const diagnostic = new vscode.Diagnostic(
-          new vscode.Range(line, 0, line, match[0].length),
-          `Memory size ${size} out of range (must be 1-32767)`,
-          vscode.DiagnosticSeverity.Error
-        );
-        diagnostic.code = 'invalid-memory-size';
-        diagnostics.push(diagnostic);
-      }
-
-      symbols.set(symbolName.toUpperCase(), {
-        name: symbolName,
-        type: 'memory',
-        value: size,
-        line: line,
-        character: character
-      });
-    }
-
-    // Parse label definitions
-    const labelRegex = /^\s*([a-zA-Z_][a-zA-Z0-9_]*):/gm;
-
-    while ((match = labelRegex.exec(text)) !== null) {
-      const symbolName = match[1];
-      const line = text.substring(0, match.index).split('\n').length - 1;
-      const character = match.index - text.lastIndexOf('\n', match.index) - 1;
-
-      // Skip if already defined as equ/mem
-      if (symbols.has(symbolName.toUpperCase())) {
-        continue;
-      }
-
-      // Check for reserved names
-      if (reserved.has(symbolName.toUpperCase())) {
-        const diagnostic = new vscode.Diagnostic(
-          new vscode.Range(line, character, line, character + symbolName.length + 1),
-          `Reserved symbol '${symbolName}' cannot be used as label`,
-          vscode.DiagnosticSeverity.Error
-        );
-        diagnostic.code = 'reserved-symbol';
-        diagnostics.push(diagnostic);
-        continue;
-      }
-
-      symbols.set(symbolName.toUpperCase(), {
-        name: symbolName,
-        type: 'label',
-        line: line,
-        character: character
-      });
-    }
-
-    return symbols;
   }
 
   /**
@@ -262,10 +107,10 @@ export class SpinASMValidator {
    */
   private validateInstruction(
     line: vscode.TextLine,
-    symbols: Map<string, SymbolDefinition>,
+    symbols: Map<string, DocumentSymbol>,
     diagnostics: vscode.Diagnostic[]
   ): void {
-    const lineText = line.text.split(';')[0]; // Remove comments
+    const lineText = line.text.split(';')[0]; // Strip comments
 
     // Extract instruction and operands
     const match = /^\s*(\w+)\s+(.*)$/.exec(lineText);
@@ -277,8 +122,8 @@ export class SpinASMValidator {
     const operands = match[2];
 
     // Validate symbol references in operands
-    // Look for potential symbol names (alphanumeric starting with letter)
     const symbolRefs = operands.matchAll(/\b([a-zA-Z_][a-zA-Z0-9_]*)\b/g);
+    const operandStart = lineText.indexOf(operands);
 
     for (const symbolMatch of symbolRefs) {
       const symbolName = symbolMatch[1];
@@ -289,14 +134,14 @@ export class SpinASMValidator {
         continue;
       }
 
-      // Skip numeric-looking things
+      // Skip numeric-looking constants
       if (/^\d/.test(symbolName)) {
         continue;
       }
 
       // Check if symbol is defined
       if (!symbols.has(symbolUpper)) {
-        const startChar = lineText.indexOf(symbolName);
+        const startChar = operandStart + symbolMatch.index!;
         const diagnostic = new vscode.Diagnostic(
           new vscode.Range(line.lineNumber, startChar, line.lineNumber, startChar + symbolName.length),
           `Undefined symbol '${symbolName}'`,
@@ -340,8 +185,7 @@ export class SpinASMValidator {
       }
     }
 
-    // Check for obvious coefficient range errors (basic check)
-    // Only check for instructions that actually use coefficients
+    // Check for obvious coefficient range errors
     const coefficientInstructions = new Set([
       'RDAX', 'WRAX', 'RDFX', 'WRLX', 'WRHX', 'MAXX',
       'SOF', 'LOG', 'EXP', 'RDA', 'WRA', 'WRAP'
@@ -368,14 +212,12 @@ export class SpinASMValidator {
   }
 
   /**
-   * @brief Validate resource limits using ResourceAnalyzer
+   * @brief Validate resource limits
    */
   private validateResourceLimits(
-    document: vscode.TextDocument,
+    usage: ResourceUsage,
     diagnostics: vscode.Diagnostic[]
   ): void {
-    const usage = ResourceAnalyzer.analyze(document);
-
     // Check instruction limit
     if (usage.instructions.count > usage.instructions.limit) {
       const diagnostic = new vscode.Diagnostic(
@@ -387,7 +229,6 @@ export class SpinASMValidator {
       diagnostics.push(diagnostic);
     }
     else if (usage.instructions.count > 120) {
-      // Warning when approaching limit
       const diagnostic = new vscode.Diagnostic(
         new vscode.Range(0, 0, 0, 0),
         `Approaching instruction limit: ${usage.instructions.count} / ${usage.instructions.limit}`,
