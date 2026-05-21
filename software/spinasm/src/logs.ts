@@ -1,5 +1,11 @@
 import * as vscode from "vscode";
-import Utils from "./utils";
+
+function getFormattedDate(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${('0' + (d.getMonth() + 1)).slice(-2)}-${('0' + d.getDate()).slice(-2)} ` +
+         `${('0' + d.getHours()).slice(-2)}:${('0' + d.getMinutes()).slice(-2)}:${('0' + d.getSeconds()).slice(-2)}` +
+         `.${('00' + d.getMilliseconds()).slice(-3)}`;
+}
 
 /**
  * @enum LogType
@@ -48,7 +54,7 @@ export default class Logs {
       throw new Error("Log channel is not created. Ensure Logs.createChannel() is called first.");
     }
 
-    const timestamp = Utils.getFormattedDate();
+    const timestamp = getFormattedDate();
 
     switch (type) {
       case LogType.INFO:
