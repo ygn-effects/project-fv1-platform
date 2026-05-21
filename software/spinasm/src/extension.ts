@@ -3,26 +3,42 @@ import * as path from "path";
 import Project from "./project";
 import Config from "./config";
 import Logs, { LogType } from "./logs";
-import Utils from "./utils";
-import Programmer from "./programmer";
 import { SpinASMSemanticTokensProvider, SpinASMHoverProvider } from "./spinasmSemanticTokens";
-import { initializeBankStatusBar, disposeBankStatusBar, updateBankStatusBar, showBankStatus } from "./statusBar";
-import { initializeResourceStatusBar, disposeResourceStatusBar, showResourceUsage, forceUpdateResourceStatusBar } from "./resourceStatusBar";
+import { initializeBankStatusBar, disposeBankStatusBar, showBankStatus } from "./statusBar";
+import { initializeResourceStatusBar, disposeResourceStatusBar, showResourceUsage } from "./resourceStatusBar";
 import { SpinASMValidator } from "./spinasmValidator";
 import { ProjectManager } from "./projectManager";
 
 let validator: SpinASMValidator;
 
-export async function activate(context: vscode.ExtensionContext): Promise<void> {
+// Lazy-loaded serialport-dependent modules; loading them eagerly costs hundreds of
+// ms because @serialport/bindings-cpp is a native module. Commands that need them
+// import on first use via these getters.
+import type UtilsType from "./utils";
+import type ProgrammerType from "./programmer";
+
+async function getUtils(): Promise<typeof UtilsType> {
+  const mod = await import("./utils.js");
+  return (mod as unknown as { default: typeof UtilsType }).default;
+}
+
+async function getProgrammer(): Promise<typeof ProgrammerType> {
+  const mod = await import("./programmer.js");
+  return (mod as unknown as { default: typeof ProgrammerType }).default;
+}
+
+export function activate(context: vscode.ExtensionContext): void {
   Logs.createChannel();
   Logs.log(LogType.INFO, "Extension activating...");
 
   validator = new SpinASMValidator();
   context.subscriptions.push(validator);
 
-  // Initialize ProjectManager cache background scan
+  // Kick off project scan WITHOUT awaiting so activate returns immediately.
+  // Callers that need cache use getBanksSync(), which already handles
+  // a not-yet-populated cache by returning a placeholder + scheduling a refresh.
   const projectManager = ProjectManager.getInstance();
-  await projectManager.initializeWorkspace();
+  projectManager.initializeWorkspace();
 
   // Shared debounce for all validation triggers
   let validationTimer: NodeJS.Timeout | null = null;
@@ -291,6 +307,7 @@ async function pickBank(): Promise<number | undefined> {
 
 async function selectSerialPort(): Promise<void> {
   try {
+    const Utils = await getUtils();
     const ports = await Utils.listSerialPorts();
 
     if (ports.length === 0) {
@@ -328,6 +345,7 @@ async function autoDetectProgrammer(): Promise<void> {
     cancellable: false
   }, async () => {
     try {
+      const Utils = await getUtils();
       const baudRate = Config.getBaudRate();
       const detectedPort = await Utils.detectProgrammer(baudRate);
 
@@ -605,7 +623,8 @@ async function checkHardwareConnection(): Promise<void> {
     return;
   }
 
-  let programmer: Programmer | null = null;
+  const Programmer = await getProgrammer();
+  let programmer: ProgrammerType | null = null;
 
   try {
     const settings = loadSettings();
@@ -689,7 +708,8 @@ async function runOperation(
 }
 
 async function performUpload(project: Project, settings: ProjectSettings, bank: number): Promise<void> {
-  let programmer: Programmer | null = null;
+  const Programmer = await getProgrammer();
+  let programmer: ProgrammerType | null = null;
 
   try {
     programmer = new Programmer(settings.serialPort, settings.baudRate);

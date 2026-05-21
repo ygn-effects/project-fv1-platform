@@ -24,19 +24,24 @@ export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTok
     ]
   );
 
+  // Yield to the event loop every N lines so the extension host stays responsive.
+  private static readonly CHUNK_SIZE = 200;
+
+  // Fixed identifier scanner - compiled once, no alternation cost.
+  private static readonly WORD_REGEX = /\b[a-zA-Z_]\w*\b/g;
+
   /**
    * @brief Provide semantic tokens for the entire document
    */
-  provideDocumentSemanticTokens(
+  async provideDocumentSemanticTokens(
     document: vscode.TextDocument,
     token: vscode.CancellationToken
-  ): vscode.ProviderResult<vscode.SemanticTokens> {
+  ): Promise<vscode.SemanticTokens | undefined> {
 
     const tokensBuilder = new vscode.SemanticTokensBuilder(
       SpinASMSemanticTokensProvider.legend
     );
 
-    // Get the unified AST model parsed exactly once
     const parsedDoc = DocumentParser.get(document);
     const symbols = parsedDoc.symbols;
 
@@ -44,14 +49,19 @@ export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTok
       return tokensBuilder.build();
     }
 
-    // Build a single combined regex for all symbols (case-insensitive) using original defined names
-    const escapedNames = Array.from(symbols.values()).map(sym => this.escapeRegex(sym.name));
-    const combinedRegex = new RegExp(`\\b(${escapedNames.join('|')})\\b`, 'gi');
+    const wordRegex = SpinASMSemanticTokensProvider.WORD_REGEX;
+    const chunkSize = SpinASMSemanticTokensProvider.CHUNK_SIZE;
 
-    // Scan each line once with the combined regex
     for (let lineIndex = 0; lineIndex < document.lineCount; lineIndex++) {
       if (token.isCancellationRequested) {
         return;
+      }
+
+      if (lineIndex > 0 && lineIndex % chunkSize === 0) {
+        await new Promise<void>(resolve => setImmediate(resolve));
+        if (token.isCancellationRequested) {
+          return;
+        }
       }
 
       const lineText = document.lineAt(lineIndex).text;
@@ -60,15 +70,14 @@ export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTok
       const commentStart = lineText.indexOf(';');
       const codeText = commentStart !== -1 ? lineText.substring(0, commentStart) : lineText;
 
-      combinedRegex.lastIndex = 0;
+      wordRegex.lastIndex = 0;
       let match;
 
-      while ((match = combinedRegex.exec(codeText)) !== null) {
-        // Retrieve symbol using UPPERCASE key to match DocumentParser map
-        const symbol = symbols.get(match[1].toUpperCase());
+      while ((match = wordRegex.exec(codeText)) !== null) {
+        const word = match[0];
+        const symbol = symbols.get(word.toUpperCase());
         if (!symbol) { continue; }
 
-        // Determine token type and modifiers
         let tokenType = 0;
         let tokenModifiers = 0;
 
@@ -79,23 +88,15 @@ export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTok
           case 'constant':  tokenType = 3; tokenModifiers = 1; break;
         }
 
-        // Direct, zero-allocation O(1) declaration checking via cached offsets
         if (lineIndex === symbol.line && match.index === symbol.character) {
           tokenModifiers |= 1 << 0;
         }
 
-        tokensBuilder.push(lineIndex, match.index, match[1].length, tokenType, tokenModifiers);
+        tokensBuilder.push(lineIndex, match.index, word.length, tokenType, tokenModifiers);
       }
     }
 
     return tokensBuilder.build();
-  }
-
-  /**
-   * @brief Escape special regex characters in a string
-   */
-  private escapeRegex(str: string): string {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }
 
