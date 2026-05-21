@@ -35,11 +35,13 @@ export function initializeResourceStatusBar(context: vscode.ExtensionContext): v
     })
   );
 
-  // Initial update
-  const editor = vscode.window.activeTextEditor;
-  if (editor && editor.document.languageId === 'spinasm') {
-    updateResourceStatusBar(editor.document);
-  }
+  // Initial update - deferred so activate() returns quickly
+  setImmediate(() => {
+    const editor = vscode.window.activeTextEditor;
+    if (editor && editor.document.languageId === 'spinasm') {
+      updateResourceStatusBar(editor.document);
+    }
+  });
 }
 
 /**
@@ -72,7 +74,7 @@ function debounceUpdate(document: vscode.TextDocument): void {
  */
 function updateResourceStatusBar(document: vscode.TextDocument): void {
   try {
-    // Analyze the document
+    // Analyze the document (retrieved cleanly from single-pass cache)
     const usage = ResourceAnalyzer.analyze(document);
     currentUsage = usage;
 
@@ -80,7 +82,7 @@ function updateResourceStatusBar(document: vscode.TextDocument): void {
     const statusText = ResourceAnalyzer.formatStatusBar(usage);
     resourceStatusBar.text = statusText;
 
-    // Set color based on worst severity
+    // Set color based on worst severity (Red for critical, Orange for warning, default otherwise)
     const worstSeverity = ResourceAnalyzer.getWorstSeverity(usage);
     const color = ResourceAnalyzer.getStatusBarColor(
       worstSeverity === 'critical' ? 95 :
@@ -103,54 +105,9 @@ function updateResourceStatusBar(document: vscode.TextDocument): void {
 
     resourceStatusBar.show();
 
-    // Show warnings if approaching limits
-    showWarningsIfNeeded(usage);
-
   } catch (error) {
-    // If analysis fails, hide the status bar
+    // If analysis fails, hide the status bar silently
     resourceStatusBar.hide();
-  }
-}
-
-// Track which warnings have already been shown to avoid spam
-const shownWarnings = new Set<string>();
-
-/**
- * @brief Show warning messages if resources are running low (once per resource)
- */
-function showWarningsIfNeeded(usage: ResourceUsage): void {
-  const instSeverity = ResourceAnalyzer.getSeverity(usage.instructions.percentage);
-  const memSeverity = ResourceAnalyzer.getSeverity(usage.memory.percentage);
-  const regSeverity = ResourceAnalyzer.getSeverity(usage.registers.percentage);
-
-  if (instSeverity === 'critical' && !shownWarnings.has('instructions')) {
-    shownWarnings.add('instructions');
-    const remaining = usage.instructions.limit - usage.instructions.count;
-    vscode.window.showWarningMessage(
-      `SpinASM: Approaching instruction limit! Only ${remaining} instructions remaining (${usage.instructions.count}/128)`
-    );
-  } else if (instSeverity !== 'critical') {
-    shownWarnings.delete('instructions');
-  }
-
-  if (memSeverity === 'critical' && !shownWarnings.has('memory')) {
-    shownWarnings.add('memory');
-    const remaining = usage.memory.total - usage.memory.used;
-    vscode.window.showWarningMessage(
-      `SpinASM: Approaching memory limit! Only ${remaining} samples remaining (${usage.memory.used}/32768)`
-    );
-  } else if (memSeverity !== 'critical') {
-    shownWarnings.delete('memory');
-  }
-
-  if (regSeverity === 'critical' && !shownWarnings.has('registers')) {
-    shownWarnings.add('registers');
-    const remaining = usage.registers.total - usage.registers.used.size;
-    vscode.window.showWarningMessage(
-      `SpinASM: Approaching register limit! Only ${remaining} registers remaining (${usage.registers.used.size}/32)`
-    );
-  } else if (regSeverity !== 'critical') {
-    shownWarnings.delete('registers');
   }
 }
 
@@ -164,7 +121,6 @@ export async function showResourceUsage(): Promise<void> {
   }
 
   const usage = currentUsage;
-
   const items = [];
 
   // === REGISTERS ===
