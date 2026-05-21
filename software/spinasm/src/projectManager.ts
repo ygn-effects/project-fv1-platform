@@ -66,11 +66,17 @@ export class ProjectManager {
       return;
     }
 
-    for (const folder of folders) {
+    const tasks = folders.map(async (folder) => {
       const rootPath = folder.uri.fsPath;
       Logs.log(LogType.INFO, `Initializing cache scan for: ${rootPath}`);
-      await this.refreshProject(rootPath);
-    }
+      try {
+        await this.refreshProject(rootPath);
+      } catch (err) {
+        Logs.log(LogType.ERROR, `Failed to initialize cache scan for ${rootPath}: ${(err as Error).message}`);
+      }
+    });
+
+    await Promise.all(tasks);
   }
 
   /**
@@ -219,33 +225,30 @@ export class ProjectManager {
 
       await project.buildSetup(compilerPath, compilerArgs);
       const programs = project.getAllPrograms();
-      const updatedBanks: CachedBankInfo[] = [];
 
-      for (let i = 0; i < 8; i++) {
+      const tasks = Array.from({ length: 8 }, async (_, i): Promise<CachedBankInfo> => {
         const spnFile = programs[i];
 
         if (!spnFile) {
-          updatedBanks.push({
+          return {
             status: BankStatus.Empty,
             spnFile: null,
             hexFile: null,
             spnTime: null,
             hexTime: null
-          });
-          continue;
+          };
         }
 
         const hexFile = project.getOutput(i);
 
         if (!hexFile) {
-          updatedBanks.push({
+          return {
             status: BankStatus.NotCompiled,
             spnFile,
             hexFile: null,
             spnTime: null,
             hexTime: null
-          });
-          continue;
+          };
         }
 
         try {
@@ -259,24 +262,25 @@ export class ProjectManager {
           const spnTime = spnStats.mtime;
           const hexTime = hexStats.mtime;
 
-          updatedBanks.push({
+          return {
             status: hexTime >= spnTime ? BankStatus.UpToDate : BankStatus.OutOfDate,
             spnFile,
             hexFile,
             spnTime,
             hexTime
-          });
+          };
         } catch {
-          updatedBanks.push({
+          return {
             status: BankStatus.NotCompiled,
             spnFile,
             hexFile,
             spnTime: null,
             hexTime: null
-          });
+          };
         }
-      }
+      });
 
+      const updatedBanks = await Promise.all(tasks);
       this.projectCache.set(rootPath, updatedBanks);
       this.onDidChangeProjectEmitter.fire();
     } catch (error) {
