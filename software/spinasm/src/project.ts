@@ -2,12 +2,13 @@ import * as fs from "fs";
 import * as fsPromises from "fs/promises";
 import * as path from "path";
 import * as cp from "child_process";
+import * as vscode from "vscode";
 import Logs, { LogType } from "./logs";
-import { ProjectManager } from "./projectManager";
 
 /**
  * @class Project
- * @brief Manages project files, directories, and compilation workflow.
+ * @brief Owns workspace state and runs the compiler. Emits events for the manager
+ * to refresh its cache; never reaches back into ProjectManager itself.
  */
 export default class Project {
   private rootFolder: string;
@@ -17,6 +18,12 @@ export default class Project {
   private compilerArguments: string[];
   private programs: (string | null)[];
   private outputs: string[];
+
+  private readonly onDidCompileEmitter = new vscode.EventEmitter<number>();
+  public readonly onDidCompile = this.onDidCompileEmitter.event;
+
+  private readonly onDidChangeStructureEmitter = new vscode.EventEmitter<void>();
+  public readonly onDidChangeStructure = this.onDidChangeStructureEmitter.event;
 
   constructor(folder: string) {
     this.rootFolder = folder;
@@ -28,22 +35,23 @@ export default class Project {
     this.outputs = [];
   }
 
-  /**
-   * @brief Sets the compiler configuration for the build session.
-   */
-  public async buildSetup(compiler: string, compilerArgs: string[]): Promise<void> {
+  public getRootFolder(): string {
+    return this.rootFolder;
+  }
+
+  public configure(compiler: string, compilerArgs: string[]): void {
     this.compiler = compiler;
     this.compilerArguments = [...compilerArgs];
 
     Logs.log(LogType.INFO, `Compiler set to: ${compiler}`);
     Logs.log(LogType.INFO, `Compiler args: ${compilerArgs.join(" ")}`);
-
-    await this.getAvailablePrograms();
   }
 
-  /**
-   * @brief Validates the compiler's functionality.
-   */
+  public async buildSetup(compiler: string, compilerArgs: string[]): Promise<void> {
+    this.configure(compiler, compilerArgs);
+    await this.scanPrograms();
+  }
+
   public async checkCompiler(): Promise<void> {
     try {
       await fsPromises.access(this.compiler, fs.constants.X_OK);
@@ -55,19 +63,14 @@ export default class Project {
     Logs.log(LogType.INFO, `Compiler found at ${this.compiler}`);
   }
 
-  /**
-   * @brief Creates project bank structure (folders 0-7).
-   */
   public async createProjectStructure(): Promise<void> {
     const programContent = "; Blank SpinASM program";
 
-    // Create bank folders and default programs
     for (let i = 0; i < 8; i++) {
       const folder = path.join(this.rootFolder, `bank_${i}`);
       const file = path.join(folder, `${i}_programName.spn`);
 
       try {
-        // Check if folder exists
         try {
           await fsPromises.access(folder);
         }
@@ -77,7 +80,6 @@ export default class Project {
           await fsPromises.mkdir(folder, { recursive: true });
         }
 
-        // Check if file exists
         try {
           await fsPromises.access(file);
         }
@@ -92,7 +94,6 @@ export default class Project {
       }
     }
 
-    // Create output directory
     try {
       await fsPromises.mkdir(this.outputFolder, { recursive: true });
     }
@@ -102,13 +103,9 @@ export default class Project {
       }
     }
 
-    // Inform ProjectManager to rebuild the workspace cache
-    await ProjectManager.getInstance().refreshProject(this.rootFolder);
+    this.onDidChangeStructureEmitter.fire();
   }
 
-  /**
-   * @brief Compiles the specified program index into a `.hex` file.
-   */
   public async compileProgramToHex(program: number): Promise<void> {
     await this.removeHexProgram(this.outputs[program]);
 
@@ -116,7 +113,6 @@ export default class Project {
       throw new Error(`Program at index ${program} does not exist.`);
     }
 
-    // Clone args to avoid mutating the class state permanently
     const args = [...this.compilerArguments, "-p", program.toString(), this.programs[program]!, this.outputs[program]];
     const result = await this.runCompiler(args);
 
@@ -126,13 +122,9 @@ export default class Project {
 
     Logs.log(LogType.INFO, "Compilation succeeded.");
 
-    // Inform the project cache to update this specific bank immediately for optimized UI feedback
-    await ProjectManager.getInstance().refreshBank(this.rootFolder, program);
+    this.onDidCompileEmitter.fire(program);
   }
 
-  /**
-   * @brief Compiles the specified program index into a `.bin` file.
-   */
   public async compileProgramToBin(program: number): Promise<void> {
     if (!this.programs[program]) {
       throw new Error(`Program at index ${program} does not exist.`);
@@ -148,9 +140,6 @@ export default class Project {
     Logs.log(LogType.INFO, "Compilation succeeded.");
   }
 
-  /**
-   * @brief Runs the compiler process asynchronously.
-   */
   private runCompiler(args: string[]): Promise<number> {
     Logs.log(LogType.INFO, `Running: ${this.compiler} ${args.join(" ")}`);
 
@@ -196,7 +185,7 @@ export default class Project {
     });
   }
 
-  private async getAvailablePrograms(): Promise<void> {
+  public async scanPrograms(): Promise<void> {
     this.programs = [];
     this.outputs = [];
 
@@ -232,7 +221,6 @@ export default class Project {
       await fsPromises.unlink(path);
     }
     catch (error) {
-      // Ignore if file missing
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
         throw error;
       }
@@ -241,7 +229,7 @@ export default class Project {
 
   public getProgramBankByPath(path: string | undefined | null): number {
     if (typeof path === 'undefined' || path === null) {
-      throw new Error("Invalid file path");
+      return -1;
     }
 
     return this.programs.indexOf(path);
@@ -253,5 +241,10 @@ export default class Project {
 
   public getOutput(bank: number): (string | null) {
     return this.outputs[bank];
+  }
+
+  public dispose(): void {
+    this.onDidCompileEmitter.dispose();
+    this.onDidChangeStructureEmitter.dispose();
   }
 }

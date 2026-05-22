@@ -1,15 +1,9 @@
 import * as vscode from "vscode";
-import * as path from "path";
 import * as fsPromises from "fs/promises";
-import * as fs from "fs";
 import Project from "./project";
 import Config from "./config";
 import Logs, { LogType } from "./logs";
 
-/**
- * @enum BankStatus
- * @brief Represents the compilation status of a bank
- */
 export enum BankStatus {
   Empty = 0,        // No .spn file
   NotCompiled = 1,  // .spn exists, no .hex
@@ -17,10 +11,6 @@ export enum BankStatus {
   OutOfDate = 3     // .hex exists but .spn is newer
 }
 
-/**
- * @interface CachedBankInfo
- * @brief Information about a single bank stored in memory
- */
 export interface CachedBankInfo {
   status: BankStatus;
   spnFile: string | null;
@@ -31,25 +21,27 @@ export interface CachedBankInfo {
 
 /**
  * @class ProjectManager
- * @brief Centralized service that maintains a warm in-memory cache of project bank states.
- * * Prevents redundant disc-bound traversals when changing active editor tabs.
- * Uses a file system watcher to reactively refresh specific banks.
+ * @brief Owns one Project per workspace root and maintains a warm bank-status cache.
+ *
+ * Commands ask the manager for the Project rather than instantiating one themselves;
+ * the manager subscribes to project events to keep its cache fresh.
  */
 export class ProjectManager {
   private static instance: ProjectManager | null = null;
 
-  // Cache storage mapping: workspaceRoot -> array of 8 CachedBankInfos
   private projectCache = new Map<string, CachedBankInfo[]>();
+  private projects = new Map<string, Project>();
+  private projectSubscriptions = new Map<string, vscode.Disposable[]>();
 
-  // Event emitter to notify the status bar or diagnostics of cache updates
+  // In-flight promises so concurrent callers share work instead of duplicating it.
+  private projectPromises = new Map<string, Promise<Project | null>>();
+  private refreshPromises = new Map<string, Promise<void>>();
+
   private onDidChangeProjectEmitter = new vscode.EventEmitter<void>();
   public readonly onDidChangeProject = this.onDidChangeProjectEmitter.event;
 
   private constructor() {}
 
-  /**
-   * @brief Gets the singleton instance of the ProjectManager
-   */
   public static getInstance(): ProjectManager {
     if (!ProjectManager.instance) {
       ProjectManager.instance = new ProjectManager();
@@ -57,9 +49,6 @@ export class ProjectManager {
     return ProjectManager.instance;
   }
 
-  /**
-   * @brief Initializes project scanning for workspace folders.
-   */
   public async initializeWorkspace(): Promise<void> {
     const folders = vscode.workspace.workspaceFolders;
     if (!folders) {
@@ -79,44 +68,113 @@ export class ProjectManager {
     await Promise.all(tasks);
   }
 
-  /**
-   * @brief Checks if project cache exists for the specified root path.
-   */
   public hasCache(rootPath: string): boolean {
     return this.projectCache.has(rootPath);
   }
 
   /**
-   * @brief Synchronously gets cached bank information.
-   * If cache is missing, triggers an asynchronous scan in the background.
+   * Returns the cached Project for a workspace, creating it on first access.
+   * Concurrent callers share the same in-flight creation promise.
    */
-  public getBanksSync(rootPath: string): CachedBankInfo[] {
-    if (!this.projectCache.has(rootPath)) {
-      // Return a temporary blank list and trigger a background refresh
-      const placeholder: CachedBankInfo[] = Array.from({ length: 8 }, () => ({
-        status: BankStatus.Empty,
-        spnFile: null,
-        hexFile: null,
-        spnTime: null,
-        hexTime: null
-      }));
-      this.projectCache.set(rootPath, placeholder);
-
-      this.refreshProject(rootPath).then(() => {
-        this.onDidChangeProjectEmitter.fire();
-      }).catch(err => {
-        Logs.log(LogType.ERROR, `Background project scan failed: ${err.message}`);
-      });
-
-      return placeholder;
+  public getProject(rootPath: string): Promise<Project | null> {
+    const existing = this.projects.get(rootPath);
+    if (existing) {
+      return Promise.resolve(existing);
     }
 
-    return this.projectCache.get(rootPath)!;
+    let promise = this.projectPromises.get(rootPath);
+    if (!promise) {
+      promise = this.createProject(rootPath);
+      this.projectPromises.set(rootPath, promise);
+      promise.finally(() => this.projectPromises.delete(rootPath));
+    }
+    return promise;
+  }
+
+  private async createProject(rootPath: string): Promise<Project | null> {
+    const compilerPath = Config.getCompilerPath();
+    if (!compilerPath) {
+      return null;
+    }
+
+    const project = new Project(rootPath);
+    await project.buildSetup(compilerPath, Config.getCompilerArgs());
+
+    const subs: vscode.Disposable[] = [
+      project.onDidCompile((bank) => {
+        this.refreshBank(rootPath, bank).catch(err => {
+          Logs.log(LogType.ERROR, `Post-compile cache refresh failed: ${(err as Error).message}`);
+        });
+      }),
+      project.onDidChangeStructure(() => {
+        this.refreshProject(rootPath).catch(err => {
+          Logs.log(LogType.ERROR, `Post-structure cache refresh failed: ${(err as Error).message}`);
+        });
+      }),
+    ];
+
+    this.projects.set(rootPath, project);
+    this.projectSubscriptions.set(rootPath, subs);
+    return project;
   }
 
   /**
-   * @brief Perform a lightweight background check on a single target bank.
-   * Highly useful to call on individual file saves or compilation successes.
+   * Drops the cached Project for a workspace. Call after config changes that
+   * affect compiler path/args.
+   */
+  public invalidate(rootPath: string): void {
+    const subs = this.projectSubscriptions.get(rootPath);
+    if (subs) {
+      subs.forEach(d => d.dispose());
+      this.projectSubscriptions.delete(rootPath);
+    }
+    const project = this.projects.get(rootPath);
+    if (project) {
+      project.dispose();
+      this.projects.delete(rootPath);
+    }
+    this.projectCache.delete(rootPath);
+  }
+
+  public invalidateAll(): void {
+    for (const rootPath of Array.from(this.projects.keys())) {
+      this.invalidate(rootPath);
+    }
+    // Clear any caches for workspaces that were placeholder-only
+    this.projectCache.clear();
+  }
+
+  /**
+   * Synchronously gets cached bank information.
+   * If cache is missing, returns a placeholder and triggers an async refresh.
+   */
+  public getBanksSync(rootPath: string): CachedBankInfo[] {
+    const cached = this.projectCache.get(rootPath);
+    if (cached) {
+      return cached;
+    }
+
+    const placeholder: CachedBankInfo[] = Array.from({ length: 8 }, () => ({
+      status: BankStatus.Empty,
+      spnFile: null,
+      hexFile: null,
+      spnTime: null,
+      hexTime: null
+    }));
+    this.projectCache.set(rootPath, placeholder);
+
+    // refreshProject dedupes internally, so this won't kick off a second scan
+    // if one is already in flight from initializeWorkspace.
+    this.refreshProject(rootPath).catch(err => {
+      Logs.log(LogType.ERROR, `Background project scan failed: ${(err as Error).message}`);
+    });
+
+    return placeholder;
+  }
+
+  /**
+   * Recomputes the cache entry for a single bank using the owned Project's
+   * already-scanned program list. No directory enumeration.
    */
   public async refreshBank(rootPath: string, bankIndex: number): Promise<void> {
     if (bankIndex < 0 || bankIndex >= 8) {
@@ -124,70 +182,14 @@ export class ProjectManager {
     }
 
     try {
-      const project = new Project(rootPath);
-      const compilerPath = Config.getCompilerPath();
-      const compilerArgs = Config.getCompilerArgs();
-
-      if (!compilerPath) {
+      const project = await this.getProject(rootPath);
+      if (!project) {
         return;
       }
 
-      await project.buildSetup(compilerPath, compilerArgs);
-      const programs = project.getAllPrograms();
-      const spnFile = programs[bankIndex];
+      const spnFile = project.getAllPrograms()[bankIndex];
+      const updatedInfo = await this.buildBankInfo(spnFile, project.getOutput(bankIndex));
 
-      // Default empty state
-      let updatedInfo: CachedBankInfo = {
-        status: BankStatus.Empty,
-        spnFile: null,
-        hexFile: null,
-        spnTime: null,
-        hexTime: null
-      };
-
-      if (spnFile) {
-        const hexFile = project.getOutput(bankIndex);
-        if (hexFile) {
-          try {
-            await fsPromises.access(hexFile);
-
-            const [spnStats, hexStats] = await Promise.all([
-              fsPromises.stat(spnFile),
-              fsPromises.stat(hexFile)
-            ]);
-
-            const spnTime = spnStats.mtime;
-            const hexTime = hexStats.mtime;
-
-            updatedInfo = {
-              status: hexTime >= spnTime ? BankStatus.UpToDate : BankStatus.OutOfDate,
-              spnFile,
-              hexFile,
-              spnTime,
-              hexTime
-            };
-          } catch {
-            // Hex file missing or inaccessible
-            updatedInfo = {
-              status: BankStatus.NotCompiled,
-              spnFile,
-              hexFile,
-              spnTime: null,
-              hexTime: null
-            };
-          }
-        } else {
-          updatedInfo = {
-            status: BankStatus.NotCompiled,
-            spnFile,
-            hexFile: null,
-            spnTime: null,
-            hexTime: null
-          };
-        }
-      }
-
-      // Merge into workspace array in cache
       let cachedArray = this.projectCache.get(rootPath);
       if (!cachedArray) {
         cachedArray = Array.from({ length: 8 }, () => ({
@@ -202,7 +204,6 @@ export class ProjectManager {
       cachedArray[bankIndex] = updatedInfo;
       this.projectCache.set(rootPath, cachedArray);
 
-      // Fire notification to trigger responsive UI updates
       this.onDidChangeProjectEmitter.fire();
     } catch (error) {
       Logs.log(LogType.ERROR, `Error refreshing bank ${bankIndex}: ${(error as Error).message}`);
@@ -210,75 +211,41 @@ export class ProjectManager {
   }
 
   /**
-   * @brief Refreshes all 8 banks for the specified root path.
-   * Executed when a project is first loaded, structured, or configured.
+   * Rescans programs on disk and rebuilds the full cache entry.
+   * Concurrent callers share a single in-flight refresh.
    */
-  public async refreshProject(rootPath: string): Promise<void> {
-    try {
-      const project = new Project(rootPath);
-      const compilerPath = Config.getCompilerPath();
-      const compilerArgs = Config.getCompilerArgs();
+  public refreshProject(rootPath: string): Promise<void> {
+    const existing = this.refreshPromises.get(rootPath);
+    if (existing) {
+      return existing;
+    }
 
-      if (!compilerPath) {
+    const promise = this.doRefreshProject(rootPath);
+    this.refreshPromises.set(rootPath, promise);
+    promise.finally(() => this.refreshPromises.delete(rootPath));
+    return promise;
+  }
+
+  private async doRefreshProject(rootPath: string): Promise<void> {
+    try {
+      // If the Project already existed before this call, the on-disk structure
+      // may have changed since its last scan. Rescan. If we're about to create
+      // it for the first time, buildSetup will scan, so skip.
+      const alreadyHadProject = this.projects.has(rootPath);
+
+      const project = await this.getProject(rootPath);
+      if (!project) {
         return;
       }
 
-      await project.buildSetup(compilerPath, compilerArgs);
+      if (alreadyHadProject) {
+        await project.scanPrograms();
+      }
+
       const programs = project.getAllPrograms();
-
-      const tasks = Array.from({ length: 8 }, async (_, i): Promise<CachedBankInfo> => {
-        const spnFile = programs[i];
-
-        if (!spnFile) {
-          return {
-            status: BankStatus.Empty,
-            spnFile: null,
-            hexFile: null,
-            spnTime: null,
-            hexTime: null
-          };
-        }
-
-        const hexFile = project.getOutput(i);
-
-        if (!hexFile) {
-          return {
-            status: BankStatus.NotCompiled,
-            spnFile,
-            hexFile: null,
-            spnTime: null,
-            hexTime: null
-          };
-        }
-
-        try {
-          await fsPromises.access(hexFile);
-
-          const [spnStats, hexStats] = await Promise.all([
-            fsPromises.stat(spnFile),
-            fsPromises.stat(hexFile)
-          ]);
-
-          const spnTime = spnStats.mtime;
-          const hexTime = hexStats.mtime;
-
-          return {
-            status: hexTime >= spnTime ? BankStatus.UpToDate : BankStatus.OutOfDate,
-            spnFile,
-            hexFile,
-            spnTime,
-            hexTime
-          };
-        } catch {
-          return {
-            status: BankStatus.NotCompiled,
-            spnFile,
-            hexFile,
-            spnTime: null,
-            hexTime: null
-          };
-        }
-      });
+      const tasks = Array.from({ length: 8 }, (_, i) =>
+        this.buildBankInfo(programs[i], project.getOutput(i))
+      );
 
       const updatedBanks = await Promise.all(tasks);
       this.projectCache.set(rootPath, updatedBanks);
@@ -288,10 +255,56 @@ export class ProjectManager {
     }
   }
 
-  /**
-   * @brief Helper to resolve bank index from file path based on folder naming conventions.
-   * Matches `bank_([0-7])` structures instantly without doing disk reads.
-   */
+  private async buildBankInfo(spnFile: string | null, hexFile: string | null): Promise<CachedBankInfo> {
+    if (!spnFile) {
+      return {
+        status: BankStatus.Empty,
+        spnFile: null,
+        hexFile: null,
+        spnTime: null,
+        hexTime: null
+      };
+    }
+
+    if (!hexFile) {
+      return {
+        status: BankStatus.NotCompiled,
+        spnFile,
+        hexFile: null,
+        spnTime: null,
+        hexTime: null
+      };
+    }
+
+    try {
+      await fsPromises.access(hexFile);
+
+      const [spnStats, hexStats] = await Promise.all([
+        fsPromises.stat(spnFile),
+        fsPromises.stat(hexFile)
+      ]);
+
+      const spnTime = spnStats.mtime;
+      const hexTime = hexStats.mtime;
+
+      return {
+        status: hexTime >= spnTime ? BankStatus.UpToDate : BankStatus.OutOfDate,
+        spnFile,
+        hexFile,
+        spnTime,
+        hexTime
+      };
+    } catch {
+      return {
+        status: BankStatus.NotCompiled,
+        spnFile,
+        hexFile: hexFile,
+        spnTime: null,
+        hexTime: null
+      };
+    }
+  }
+
   public getBankIndexFromPath(filePath: string): number {
     const match = /[\\/]bank_([0-7])[\\/]/i.exec(filePath);
     if (match) {

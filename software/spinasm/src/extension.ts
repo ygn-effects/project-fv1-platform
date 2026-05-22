@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import Project from "./project";
+import type Project from "./project";
+import type UtilsType from "./utils";
+import type ProgrammerType from "./programmer";
 import Config from "./config";
 import Logs, { LogType } from "./logs";
 import { SpinASMSemanticTokensProvider, SpinASMHoverProvider } from "./spinasmSemanticTokens";
@@ -14,8 +16,6 @@ let validator: SpinASMValidator;
 // Lazy-loaded serialport-dependent modules; loading them eagerly costs hundreds of
 // ms because @serialport/bindings-cpp is a native module. Commands that need them
 // import on first use via these getters.
-import type UtilsType from "./utils";
-import type ProgrammerType from "./programmer";
 
 async function getUtils(): Promise<typeof UtilsType> {
   const mod = await import("./utils.js");
@@ -25,6 +25,14 @@ async function getUtils(): Promise<typeof UtilsType> {
 async function getProgrammer(): Promise<typeof ProgrammerType> {
   const mod = await import("./programmer.js");
   return (mod as unknown as { default: typeof ProgrammerType }).default;
+}
+
+async function requireProject(folder: string): Promise<Project> {
+  const project = await ProjectManager.getInstance().getProject(folder);
+  if (!project) {
+    throw new Error("Compiler path is not set in Settings.");
+  }
+  return project;
 }
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -39,6 +47,17 @@ export function activate(context: vscode.ExtensionContext): void {
   // a not-yet-populated cache by returning a placeholder + scheduling a refresh.
   const projectManager = ProjectManager.getInstance();
   projectManager.initializeWorkspace();
+
+  // Drop cached projects when the compiler config changes so the next command
+  // picks up new compiler path/args.
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('spinasm.compiler')) {
+        projectManager.invalidateAll();
+        projectManager.initializeWorkspace();
+      }
+    })
+  );
 
   // Shared debounce for all validation triggers
   let validationTimer: NodeJS.Timeout | null = null;
@@ -255,15 +274,11 @@ async function handleCompileOnSave(uri: vscode.Uri): Promise<void> {
   }
 
   try {
-    const project = new Project(folder);
-    const compilerPath = Config.getCompilerPath();
-    const compilerArgs = Config.getCompilerArgs();
-
-    if (!compilerPath) {
+    const project = await ProjectManager.getInstance().getProject(folder);
+    if (!project) {
       return;
     }
 
-    await project.buildSetup(compilerPath, compilerArgs);
     const bank = project.getProgramBankByPath(uri.fsPath);
 
     if (bank === -1) {
@@ -502,8 +517,7 @@ async function uploadAllPrograms(): Promise<void> {
 
     try {
       const settings = loadSettings();
-      const project = new Project(folder);
-      await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+      const project = await requireProject(folder);
 
       const programs = project.getAllPrograms();
       const programsToUpload = programs.filter(p => p !== null);
@@ -550,8 +564,7 @@ async function compileAndUploadAllPrograms(): Promise<void> {
 
     try {
       const settings = loadSettings();
-      const project = new Project(folder);
-      await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+      const project = await requireProject(folder);
 
       const programs = project.getAllPrograms();
       const programsToProcess = programs.filter(p => p !== null);
@@ -604,9 +617,14 @@ async function createProject(): Promise<void> {
   }
 
   try {
-    const project = new Project(folder);
-
+    // For first-time setup, the compiler may not be configured yet. Run the
+    // file-creation directly via a transient project; the manager picks it up
+    // via the create watcher.
+    const mod = await import("./project.js");
+    const ProjectCtor = (mod as unknown as { default: typeof import("./project").default }).default;
+    const project = new ProjectCtor(folder);
     await project.createProjectStructure();
+    project.dispose();
 
     Logs.log(LogType.INFO, "Project structure created successfully");
     vscode.window.showInformationMessage("Project created successfully!");
@@ -630,9 +648,7 @@ async function checkHardwareConnection(): Promise<void> {
     const settings = loadSettings();
 
     // Check compiler
-    const project = new Project(folder);
-
-    await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+    const project = await requireProject(folder);
     await project.checkCompiler();
 
     // Check hardware
@@ -697,8 +713,7 @@ async function runOperation(
   }, async () => {
     try {
         const settings = loadSettings();
-        const project = new Project(folder);
-        await project.buildSetup(settings.compilerPath, settings.compilerArgs);
+        const project = await requireProject(folder);
         await operation(project, settings);
     }
     catch (error) {
