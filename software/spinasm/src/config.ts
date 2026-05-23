@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import Utils from "./utils";
 
 /**
  * @class Config
@@ -9,13 +8,14 @@ export default class Config {
 
   /**
    * @brief Retrieves the compiler executable path from VSCode settings.
-   * @returns Sanitized path string.
+   *
+   * Returned as-is — no shell quoting. The path is handed to cp.spawn, which
+   * doesn't invoke a shell and handles spaces correctly on its own. Quoting
+   * here would make spawn try to exec a path with literal `"` characters.
    */
   public static getCompilerPath(): string {
     const config = vscode.workspace.getConfiguration("spinasm");
-    const pathStr = config.get<string>("compiler.path", "");
-
-    return Utils.sanitizePath(pathStr);
+    return config.get<string>("compiler.path", "");
   }
 
   /**
