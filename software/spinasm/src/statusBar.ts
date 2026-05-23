@@ -1,8 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import Project from "./project";
 import Config from "./config";
-import { ProjectManager, BankStatus, CachedBankInfo } from "./projectManager";
+import { ProjectManager, BankStatus } from "./projectManager";
 
 // Global status bar item
 let bankStatusBar: vscode.StatusBarItem;
@@ -72,16 +71,7 @@ function getStatusSymbol(status: BankStatus): string {
 }
 
 /**
- * @brief Updates the status bar with current bank compilation status (Synchronously from Cache!)
- */
-export async function updateBankStatusBar(): Promise<void> {
-  // Retained for backward-compatibility but now delegates directly
-  // to the high-performance synchronous UI updater.
-  updateBankStatusBarImmediate();
-}
-
-/**
- * @brief Actual status bar update logic running synchronously on the cache data
+ * @brief Updates the status bar with current bank compilation status synchronously from cache.
  */
 function updateBankStatusBarImmediate(): void {
   // Check if status bar is enabled

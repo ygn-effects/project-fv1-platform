@@ -778,13 +778,19 @@ function loadSettings(): ProjectSettings {
   };
 }
 
-function handleError(error: unknown, message: string): void {
+function handleError(error: unknown, message: string, options: { showLog?: boolean } = {}): void {
+  const { showLog = true } = options;
   const errorMessage = (error as Error).message;
 
   Logs.log(LogType.ERROR, `${message}: ${errorMessage}`);
   vscode.window.showErrorMessage(`${message}: ${errorMessage}`);
 
-  Logs.show();
+  // Default true: existing handleError callers are user-initiated commands
+  // where popping the Output panel is helpful. Background callers should
+  // pass { showLog: false } to avoid stealing the user's attention.
+  if (showLog) {
+    Logs.show();
+  }
 }
 
 async function getWorkspaceFolder(): Promise<string | null> {

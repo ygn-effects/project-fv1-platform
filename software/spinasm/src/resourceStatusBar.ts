@@ -218,12 +218,3 @@ export async function showResourceUsage(): Promise<void> {
   });
 }
 
-/**
- * @brief Force update of resource status bar (call after saving, compiling, etc.)
- */
-export function forceUpdateResourceStatusBar(): void {
-  const editor = vscode.window.activeTextEditor;
-  if (editor && editor.document.languageId === 'spinasm') {
-    updateResourceStatusBar(editor.document);
-  }
-}

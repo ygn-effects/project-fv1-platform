@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { DocumentParser, DocumentSymbol } from "./documentParser";
-import { ResourceAnalyzer, ResourceUsage } from "./resourceAnalyzer";
+import { ResourceUsage } from "./resourceAnalyzer";
 import { isInstruction, isBuiltInSymbol } from "./spinasmLanguage";
 
 /**
@@ -32,13 +32,6 @@ export class SpinASMValidator {
    */
   public clearDocument(document: vscode.TextDocument): void {
     this.diagnosticCollection.delete(document.uri);
-  }
-
-  /**
-   * @brief Clear all diagnostics
-   */
-  public clearAll(): void {
-    this.diagnosticCollection.clear();
   }
 
   /**
@@ -112,8 +105,8 @@ export class SpinASMValidator {
   ): void {
     const lineText = line.text.split(';')[0]; // Strip comments
 
-    // Extract instruction and operands
-    const match = /^\s*(\w+)\s+(.*)$/.exec(lineText);
+    // Extract instruction and operands, skipping an optional `label:` prefix.
+    const match = /^\s*(?:[a-zA-Z_][a-zA-Z0-9_]*:\s*)?(\w+)\s+(.*)$/.exec(lineText);
     if (!match) {
       return;
     }

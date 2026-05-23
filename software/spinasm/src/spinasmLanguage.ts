@@ -10,8 +10,10 @@ export const INSTRUCTIONS = new Set([
   'RMPA', 'MAXX', 'NOP', 'JMP', 'RAW'
 ]);
 
+// Matches an instruction at line start, with an optional `label:` prefix.
+// `start: SOF 0,0` must count as an instruction just like `SOF 0,0` does.
 const INSTRUCTION_REGEX = new RegExp(
-  `^\\s*\\b(${Array.from(INSTRUCTIONS).join('|')})\\b`, 'i'
+  `^\\s*(?:[a-zA-Z_][a-zA-Z0-9_]*:\\s*)?\\b(${Array.from(INSTRUCTIONS).join('|')})\\b`, 'i'
 );
 
 export const BUILT_IN_SYMBOLS = new Set([
