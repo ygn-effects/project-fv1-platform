@@ -125,19 +125,61 @@ export default class Project {
     this.onDidCompileEmitter.fire(program);
   }
 
-  public async compileProgramToBin(program: number): Promise<void> {
-    if (!this.programs[program]) {
-      throw new Error(`Program at index ${program} does not exist.`);
+  /**
+   * Builds a single 4 KB EEPROM image (8 × 512-byte banks) by compiling each
+   * present bank with `asfv1 -p N` and merging.
+   *
+   * asfv1 emits `(N+1) * 512` bytes for `-p N`: banks 0..(N-1) zero-padded,
+   * the assembled program at offset N*512. We extract just the bank-N slice
+   * from each output and drop it into the right offset of the combined image.
+   * Missing banks remain 0x00 (matching asfv1's own padding convention).
+   */
+  public async compileAllProgramsToCombinedBin(): Promise<void> {
+    const BANK_SIZE = 512;
+    const BANK_COUNT = 8;
+    const TOTAL_SIZE = BANK_SIZE * BANK_COUNT;
+
+    const eeprom = Buffer.alloc(TOTAL_SIZE, 0x00);
+    const tempFiles: string[] = [];
+
+    try {
+      for (let bank = 0; bank < BANK_COUNT; bank++) {
+        const programPath = this.programs[bank];
+        if (!programPath) {
+          continue;
+        }
+
+        const tempBin = path.join(this.outputFolder, `.bank_${bank}.bin`);
+        tempFiles.push(tempBin);
+
+        const args = [...this.compilerArguments, "-p", bank.toString(), programPath, tempBin];
+        const result = await this.runCompiler(args);
+
+        if (result !== 0) {
+          throw new Error(`Compilation failed for bank ${bank} with return code: ${result}`);
+        }
+
+        const bankBytes = await fsPromises.readFile(tempBin);
+        const expected = (bank + 1) * BANK_SIZE;
+        if (bankBytes.length !== expected) {
+          throw new Error(`Bank ${bank} compiled to ${bankBytes.length} bytes, expected ${expected}`);
+        }
+
+        bankBytes.copy(eeprom, bank * BANK_SIZE, bank * BANK_SIZE, expected);
+      }
+
+      await fsPromises.writeFile(this.outputBinFile, eeprom);
+      Logs.log(LogType.INFO, `Combined EEPROM image written: ${this.outputBinFile} (${TOTAL_SIZE} bytes)`);
+    } finally {
+      // Always clean up temp bank files, even on failure.
+      await Promise.all(tempFiles.map(async (f) => {
+        try {
+          await fsPromises.unlink(f);
+        } catch {
+          // ignore — already gone or never created
+        }
+      }));
     }
-
-    const args = [...this.compilerArguments, "-p", program.toString(), this.programs[program]!, this.outputBinFile];
-    const result = await this.runCompiler(args);
-
-    if (result !== 0) {
-      throw new Error(`Compilation failed for program ${program} with return code: ${result}`);
-    }
-
-    Logs.log(LogType.INFO, "Compilation succeeded.");
   }
 
   private runCompiler(args: string[]): Promise<number> {

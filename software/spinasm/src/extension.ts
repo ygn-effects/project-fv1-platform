@@ -489,19 +489,9 @@ async function compileAllPrograms(): Promise<void> {
 
 async function compileAllProgramsToBin(): Promise<void> {
   await runOperation(async (project) => {
-    const programs = project.getAllPrograms();
-
-    for (const programPath of programs) {
-      if(!programPath) {
-        continue;
-      }
-
-      const bank = project.getProgramBankByPath(programPath);
-      await project.compileProgramToBin(bank);
-    }
-
-    vscode.window.showInformationMessage("All programs compiled to BIN successfully!");
-  }, "Failed to compile all programs", "Compiling all programs to BIN...");
+    await project.compileAllProgramsToCombinedBin();
+    vscode.window.showInformationMessage("Combined EEPROM image written to output.bin!");
+  }, "Failed to compile combined EEPROM image", "Building combined EEPROM image...");
 }
 
 async function uploadAllPrograms(): Promise<void> {
