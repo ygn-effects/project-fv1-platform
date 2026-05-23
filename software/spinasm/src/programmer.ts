@@ -196,16 +196,38 @@ export default class Programmer {
         }
 
         // Parse Record Structure: :LLAAAATT[DD...]CC
+        // Minimum frame (no data): `:` + LL(2) + AAAA(4) + TT(2) + CC(2) = 11 chars.
+        // A data record adds 2*LL hex chars between TT and CC.
+        if (line.length < 11) {
+          throw new Error(`Malformed HEX record at line ${lineNo}: too short (${line.length} chars)`);
+        }
+
         const byteCount = parseInt(line.substr(1, 2), 16);
         const address = parseInt(line.substr(3, 4), 16);
         const recordType = parseInt(line.substr(7, 2), 16);
+
+        if (isNaN(byteCount) || isNaN(address) || isNaN(recordType)) {
+          throw new Error(`Malformed HEX record at line ${lineNo}: non-hex header`);
+        }
+
+        const expectedLength = 11 + 2 * byteCount;
+        if (line.length < expectedLength) {
+          throw new Error(`Malformed HEX record at line ${lineNo}: expected ${expectedLength} chars for byteCount=${byteCount}, got ${line.length}`);
+        }
+
         const checksum = parseInt(line.substr(line.length - 2, 2), 16);
+        if (isNaN(checksum)) {
+          throw new Error(`Malformed HEX record at line ${lineNo}: non-hex checksum`);
+        }
 
         // 1. Checksum Validation
         let calculatedChecksum = byteCount + (address >> 8) + (address & 0xFF) + recordType;
 
         for (let i = 0; i < byteCount; i++) {
           const byte = parseInt(line.substr(9 + (i * 2), 2), 16);
+          if (isNaN(byte)) {
+            throw new Error(`Malformed HEX record at line ${lineNo}: non-hex data byte at offset ${i}`);
+          }
           calculatedChecksum += byte;
         }
         // Checksum is two's complement of the LSB of the sum
