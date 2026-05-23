@@ -3,6 +3,8 @@ import { DocumentParser, ResourceUsage } from "./documentParser";
 
 export { ResourceUsage } from "./documentParser";
 
+export type Severity = 'safe' | 'warning' | 'critical';
+
 /**
  * @class ResourceAnalyzer
  * @brief Analyzes SpinASM code to track register, instruction, and memory usage
@@ -20,7 +22,7 @@ export class ResourceAnalyzer {
   /**
    * @brief Get severity level based on percentage
    */
-  public static getSeverity(percentage: number): 'safe' | 'warning' | 'critical' {
+  public static getSeverity(percentage: number): Severity {
     if (percentage >= 90) return 'critical';
     if (percentage >= 75) return 'warning';
     return 'safe';
@@ -29,8 +31,7 @@ export class ResourceAnalyzer {
   /**
    * @brief Get color for status bar based on severity
    */
-  public static getStatusBarColor(percentage: number): string | undefined {
-    const severity = this.getSeverity(percentage);
+  public static getStatusBarColor(severity: Severity): string | undefined {
     switch (severity) {
       case 'critical': return '#ff4444'; // Red
       case 'warning': return '#ffaa00';  // Orange/Yellow
@@ -52,7 +53,7 @@ export class ResourceAnalyzer {
   /**
    * @brief Get the worst severity across all resources
    */
-  public static getWorstSeverity(usage: ResourceUsage): 'safe' | 'warning' | 'critical' {
+  public static getWorstSeverity(usage: ResourceUsage): Severity {
     const severities = [
       this.getSeverity(usage.registers.percentage),
       this.getSeverity(usage.instructions.percentage),

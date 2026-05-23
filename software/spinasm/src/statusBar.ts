@@ -25,9 +25,14 @@ export function initializeBankStatusBar(context: vscode.ExtensionContext): void 
     vscode.window.onDidChangeActiveTextEditor(() => updateBankStatusBarImmediate())
   );
 
-  // Update status bar when document changes (for initial load)
+  // Refresh the bar when a spinasm file is opened. Non-spinasm docs don't
+  // affect bank status, so skip them to avoid rebuilding on every README open.
   context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument(() => updateBankStatusBarImmediate())
+    vscode.workspace.onDidOpenTextDocument((doc) => {
+      if (doc.languageId === 'spinasm') {
+        updateBankStatusBarImmediate();
+      }
+    })
   );
 
   // Update when settings change

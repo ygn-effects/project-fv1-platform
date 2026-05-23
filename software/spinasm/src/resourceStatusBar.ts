@@ -5,6 +5,10 @@ import { ResourceAnalyzer, ResourceUsage } from "./resourceAnalyzer";
 let resourceStatusBar: vscode.StatusBarItem;
 let currentUsage: ResourceUsage | null = null;
 
+// Cached MarkdownString for the tooltip, keyed by its detail body so we can
+// skip rebuilding on every debounced update when nothing visible changed.
+let lastTooltipDetail: string | null = null;
+
 /**
  * @brief Initialize the resource tracking status bar
  */
@@ -84,24 +88,20 @@ function updateResourceStatusBar(document: vscode.TextDocument): void {
 
     // Set color based on worst severity (Red for critical, Orange for warning, default otherwise)
     const worstSeverity = ResourceAnalyzer.getWorstSeverity(usage);
-    const color = ResourceAnalyzer.getStatusBarColor(
-      worstSeverity === 'critical' ? 95 :
-      worstSeverity === 'warning' ? 80 :
-      50
-    );
+    resourceStatusBar.color = ResourceAnalyzer.getStatusBarColor(worstSeverity);
 
-    if (color) {
-      resourceStatusBar.color = color;
-    } else {
-      resourceStatusBar.color = undefined;
+    // Rebuild the tooltip only when its body actually changes. Typing rarely
+    // affects every resource at once, so this cuts MarkdownString churn on
+    // every debounced update.
+    const detail = ResourceAnalyzer.formatDetailed(usage);
+    if (detail !== lastTooltipDetail) {
+      const tooltip = new vscode.MarkdownString();
+      tooltip.appendMarkdown('**SpinASM Resource Usage**\n\n');
+      tooltip.appendMarkdown('Click for detailed breakdown\n\n');
+      tooltip.appendCodeblock(detail, 'text');
+      resourceStatusBar.tooltip = tooltip;
+      lastTooltipDetail = detail;
     }
-
-    // Set tooltip
-    const tooltip = new vscode.MarkdownString();
-    tooltip.appendMarkdown('**SpinASM Resource Usage**\n\n');
-    tooltip.appendMarkdown('Click for detailed breakdown\n\n');
-    tooltip.appendCodeblock(ResourceAnalyzer.formatDetailed(usage), 'text');
-    resourceStatusBar.tooltip = tooltip;
 
     resourceStatusBar.show();
 
