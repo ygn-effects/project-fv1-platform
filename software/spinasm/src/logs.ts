@@ -42,34 +42,33 @@ export default class Logs {
    * @brief Writes a log message to the output channel with timestamp and severity.
    *
    * Sanitizes error messages to remove redundant "Error:" prefixes, enhancing readability.
-   * Ensures the output channel exists before attempting to log.
+   * Lazy-creates the output channel if a logger fires before activate() has called createChannel().
    *
    * @param type - Severity level of the log entry (`INFO` or `ERROR`).
    * @param message - Message content to log.
-   *
-   * @throws Error if the logging channel has not been created yet.
    */
   public static log(type: LogType, message: string): void {
     if (!this.logChannel) {
-      throw new Error("Log channel is not created. Ensure Logs.createChannel() is called first.");
+      this.createChannel();
     }
+    const channel = this.logChannel!;
 
     const timestamp = getFormattedDate();
 
     switch (type) {
       case LogType.INFO:
-        this.logChannel.appendLine(`${timestamp} | INFO  | ${message}`);
+        channel.appendLine(`${timestamp} | INFO  | ${message}`);
         break;
 
       case LogType.ERROR:
         // Remove redundant "Error: " prefix to keep logs clean.
         const sanitizedMessage = message.replace(/^Error:\s*/, "");
-        this.logChannel.appendLine(`${timestamp} | ERROR | ${sanitizedMessage}`);
+        channel.appendLine(`${timestamp} | ERROR | ${sanitizedMessage}`);
         break;
 
       default:
         // Fallback for unrecognized log types.
-        this.logChannel.appendLine(`${timestamp} | UNKNOWN | ${message}`);
+        channel.appendLine(`${timestamp} | UNKNOWN | ${message}`);
         break;
     }
   }
