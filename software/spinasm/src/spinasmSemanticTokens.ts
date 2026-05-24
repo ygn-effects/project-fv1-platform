@@ -1,38 +1,27 @@
 import * as vscode from 'vscode';
 import { DocumentParser } from './documentParser';
 
-/**
- * @class SpinASMSemanticTokensProvider
- * @brief Provides semantic highlighting for user-defined SpinASM symbols
- * Retrieves symbols directly from the DocumentParser cache for instant performance.
- */
+/** Semantic highlighting for user-defined SpinASM symbols (equ, mem, labels). */
 export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTokensProvider {
 
-  /**
-   * @brief Legend defining token types and modifiers
-   */
   static readonly legend = new vscode.SemanticTokensLegend(
     [
-      'variable',      // 0: User-defined register aliases (equ)
-      'property',      // 1: Memory buffer names (mem)
-      'function',      // 2: Label definitions
-      'parameter'      // 3: Constants
+      'variable',      // 0: equ register aliases
+      'property',      // 1: mem buffer names
+      'function',      // 2: labels
+      'parameter'      // 3: constants
     ],
     [
-      'declaration',   // 0: Symbol definition site
-      'readonly'       // 1: Constant values
+      'declaration',   // 0: definition site
+      'readonly'       // 1: constant values
     ]
   );
 
-  // Yield to the event loop every N lines so the extension host stays responsive.
+  // Yield every CHUNK_SIZE lines so large files don't block the extension host.
   private static readonly CHUNK_SIZE = 200;
 
-  // Fixed identifier scanner - compiled once, no alternation cost.
   private static readonly WORD_REGEX = /\b[a-zA-Z_]\w*\b/g;
 
-  /**
-   * @brief Provide semantic tokens for the entire document
-   */
   async provideDocumentSemanticTokens(
     document: vscode.TextDocument,
     token: vscode.CancellationToken
@@ -66,7 +55,6 @@ export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTok
 
       const lineText = document.lineAt(lineIndex).text;
 
-      // Strip comments
       const commentStart = lineText.indexOf(';');
       const codeText = commentStart !== -1 ? lineText.substring(0, commentStart) : lineText;
 
@@ -100,11 +88,7 @@ export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTok
   }
 }
 
-/**
- * @class SpinASMHoverProvider
- * @brief Provides hover information for SpinASM symbols
- * Uses the cached unified Parser mapping for fast 0ms hover popups.
- */
+/** Hover popups for SpinASM symbols, served from the DocumentParser cache. */
 export class SpinASMHoverProvider implements vscode.HoverProvider {
 
   provideHover(
@@ -120,14 +104,12 @@ export class SpinASMHoverProvider implements vscode.HoverProvider {
 
     const word = document.getText(wordRange);
     const parsedDoc = DocumentParser.get(document);
-    // Retrieve symbol using UPPERCASE key to match DocumentParser map
     const symbol = parsedDoc.symbols.get(word.toUpperCase());
 
     if (!symbol) {
       return;
     }
 
-    // Build hover markdown content
     let hoverText = '';
 
     switch (symbol.type) {

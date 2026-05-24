@@ -3,10 +3,11 @@ import * as fsPromises from "fs/promises";
 import Project from "./project";
 import Config from "./config";
 import Logs, { LogType } from "./logs";
+import { BANK_COUNT } from "./fv1Constants";
 
 export enum BankStatus {
-  Empty = 0,        // No .spn file
-  NotCompiled = 1,  // .spn exists, no .hex
+  Empty = 0,
+  NotCompiled = 1,
   UpToDate = 2,     // .hex exists and is newer than .spn
   OutOfDate = 3     // .hex exists but .spn is newer
 }
@@ -20,10 +21,8 @@ export interface CachedBankInfo {
 }
 
 /**
- * @class ProjectManager
- * @brief Owns one Project per workspace root and maintains a warm bank-status cache.
- *
- * Commands ask the manager for the Project rather than instantiating one themselves;
+ * Owns one Project per workspace root and keeps a warm bank-status cache.
+ * Commands ask the manager for the Project rather than instantiating one;
  * the manager subscribes to project events to keep its cache fresh.
  */
 export class ProjectManager {
@@ -72,10 +71,7 @@ export class ProjectManager {
     return this.projectCache.has(rootPath);
   }
 
-  /**
-   * Returns the cached Project for a workspace, creating it on first access.
-   * Concurrent callers share the same in-flight creation promise.
-   */
+  /** Returns the cached Project for a workspace, creating it on first access. */
   public getProject(rootPath: string): Promise<Project | null> {
     const existing = this.projects.get(rootPath);
     if (existing) {
@@ -118,10 +114,7 @@ export class ProjectManager {
     return project;
   }
 
-  /**
-   * Drops the cached Project for a workspace. Call after config changes that
-   * affect compiler path/args.
-   */
+  /** Drops the cached Project. Call after compiler config changes. */
   public invalidate(rootPath: string): void {
     const subs = this.projectSubscriptions.get(rootPath);
     if (subs) {
@@ -140,21 +133,18 @@ export class ProjectManager {
     for (const rootPath of Array.from(this.projects.keys())) {
       this.invalidate(rootPath);
     }
-    // Clear any caches for workspaces that were placeholder-only
+    // Also drop placeholder-only entries for workspaces we never fully scanned.
     this.projectCache.clear();
   }
 
-  /**
-   * Synchronously gets cached bank information.
-   * If cache is missing, returns a placeholder and triggers an async refresh.
-   */
+  /** Returns cached bank info, kicking off a background scan on cache miss. */
   public getBanksSync(rootPath: string): CachedBankInfo[] {
     const cached = this.projectCache.get(rootPath);
     if (cached) {
       return cached;
     }
 
-    const placeholder: CachedBankInfo[] = Array.from({ length: 8 }, () => ({
+    const placeholder: CachedBankInfo[] = Array.from({ length: BANK_COUNT }, () => ({
       status: BankStatus.Empty,
       spnFile: null,
       hexFile: null,
@@ -163,8 +153,8 @@ export class ProjectManager {
     }));
     this.projectCache.set(rootPath, placeholder);
 
-    // refreshProject dedupes internally, so this won't kick off a second scan
-    // if one is already in flight from initializeWorkspace.
+    // refreshProject dedupes in-flight, so this is safe even when
+    // initializeWorkspace already kicked off a scan.
     this.refreshProject(rootPath).catch(err => {
       Logs.log(LogType.ERROR, `Background project scan failed: ${(err as Error).message}`);
     });
@@ -172,12 +162,9 @@ export class ProjectManager {
     return placeholder;
   }
 
-  /**
-   * Recomputes the cache entry for a single bank using the owned Project's
-   * already-scanned program list. No directory enumeration.
-   */
+  /** Recomputes one bank's cache entry from the owned Project's scanned list — no directory I/O. */
   public async refreshBank(rootPath: string, bankIndex: number): Promise<void> {
-    if (bankIndex < 0 || bankIndex >= 8) {
+    if (bankIndex < 0 || bankIndex >= BANK_COUNT) {
       return;
     }
 
@@ -192,7 +179,7 @@ export class ProjectManager {
 
       let cachedArray = this.projectCache.get(rootPath);
       if (!cachedArray) {
-        cachedArray = Array.from({ length: 8 }, () => ({
+        cachedArray = Array.from({ length: BANK_COUNT }, () => ({
           status: BankStatus.Empty,
           spnFile: null,
           hexFile: null,
@@ -210,10 +197,7 @@ export class ProjectManager {
     }
   }
 
-  /**
-   * Rescans programs on disk and rebuilds the full cache entry.
-   * Concurrent callers share a single in-flight refresh.
-   */
+  /** Rescans programs on disk and rebuilds the full cache entry. Dedupes in-flight. */
   public refreshProject(rootPath: string): Promise<void> {
     const existing = this.refreshPromises.get(rootPath);
     if (existing) {
@@ -228,9 +212,9 @@ export class ProjectManager {
 
   private async doRefreshProject(rootPath: string): Promise<void> {
     try {
-      // If the Project already existed before this call, the on-disk structure
-      // may have changed since its last scan. Rescan. If we're about to create
-      // it for the first time, buildSetup will scan, so skip.
+      // If a Project already existed, the on-disk structure may have changed
+      // since its last scan, so we rescan. First-time creation runs buildSetup
+      // which scans, so we skip the extra pass there.
       const alreadyHadProject = this.projects.has(rootPath);
 
       const project = await this.getProject(rootPath);
@@ -243,7 +227,7 @@ export class ProjectManager {
       }
 
       const programs = project.getAllPrograms();
-      const tasks = Array.from({ length: 8 }, (_, i) =>
+      const tasks = Array.from({ length: BANK_COUNT }, (_, i) =>
         this.buildBankInfo(programs[i], project.getOutput(i))
       );
 
@@ -305,6 +289,7 @@ export class ProjectManager {
     }
   }
 
+  /** Returns the bank index from a path like `.../bank_3/...`, or -1 if unmatched. */
   public getBankIndexFromPath(filePath: string): number {
     const match = /[\\/]bank_([0-7])[\\/]/i.exec(filePath);
     if (match) {

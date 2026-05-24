@@ -1,10 +1,7 @@
 import * as vscode from "vscode";
 import { isInstruction, BUILT_IN_SYMBOLS } from "./spinasmLanguage";
+import { INSTRUCTION_LIMIT, REGISTER_COUNT, MEMORY_SAMPLES, MEMORY_MAX_INDEX } from "./fv1Constants";
 
-/**
- * @interface DocumentSymbol
- * @brief Represents a parsed symbol definition in SpinASM code
- */
 export interface DocumentSymbol {
   name: string;
   type: 'register' | 'memory' | 'constant' | 'label';
@@ -14,10 +11,6 @@ export interface DocumentSymbol {
   length: number;
 }
 
-/**
- * @interface ParserDiagnostic
- * @brief Lightweight representation of syntax/logical errors found during parsing
- */
 export interface ParserDiagnostic {
   range: vscode.Range;
   message: string;
@@ -25,10 +18,6 @@ export interface ParserDiagnostic {
   code: string;
 }
 
-/**
- * @interface ResourceUsage
- * @brief Complete register, instruction, and memory metrics of the program
- */
 export interface ResourceUsage {
   registers: {
     used: Set<number>;
@@ -49,28 +38,20 @@ export interface ResourceUsage {
   };
 }
 
-/**
- * @interface ParsedDocument
- * @brief Unified model representing the parsed state of a SpinASM document
- */
 export interface ParsedDocument {
-  symbols: Map<string, DocumentSymbol>; // Keyed by UPPERCASE name
+  /** Keyed by UPPERCASE symbol name. */
+  symbols: Map<string, DocumentSymbol>;
   diagnostics: ParserDiagnostic[];
   resourceUsage: ResourceUsage;
 }
 
 /**
- * @class DocumentParser
- * @brief Central parser that analyzes SpinASM text exactly once per document version.
- * Caches results in-memory, providing O(1) syntax validation and resource metrics.
+ * Parses each document exactly once per version and caches the result. Hover,
+ * resource analysis, and validation all read from this single representation.
  */
 export class DocumentParser {
   private static cache = new Map<string, { version: number; parsed: ParsedDocument }>();
 
-  /**
-   * @brief Gets the parsed representation of the document.
-   * Leverages internal caching to bypass repetitive parsing on identical document versions.
-   */
   public static get(document: vscode.TextDocument): ParsedDocument {
     const cacheKey = document.uri.toString();
     const cached = this.cache.get(cacheKey);
@@ -84,16 +65,10 @@ export class DocumentParser {
     return parsed;
   }
 
-  /**
-   * @brief Manually invalidates the parser cache for a specific document.
-   */
   public static invalidate(document: vscode.TextDocument): void {
     this.cache.delete(document.uri.toString());
   }
 
-  /**
-   * @brief Single-pass parsing of the assembly document.
-   */
   private static parse(document: vscode.TextDocument): ParsedDocument {
     const symbols = new Map<string, DocumentSymbol>();
     const diagnostics: ParserDiagnostic[] = [];
@@ -114,7 +89,7 @@ export class DocumentParser {
         continue;
       }
 
-      // 1. Parse EQU declarations: equ <name> <value>
+      // equ <name> <value>
       const equMatch = /^\s*equ\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+)$/i.exec(codeOnly);
       if (equMatch) {
         const symbolName = equMatch[1];
@@ -124,7 +99,6 @@ export class DocumentParser {
         const charIndex = lineText.indexOf(symbolName);
         const actualChar = charIndex !== -1 ? charIndex : 0;
 
-        // Validation: Reserved Name Check
         if (reserved.has(symbolUpper)) {
           diagnostics.push({
             range: new vscode.Range(i, actualChar, i, actualChar + symbolName.length),
@@ -135,7 +109,6 @@ export class DocumentParser {
           continue;
         }
 
-        // Validation: Duplicate Definition Check
         if (symbols.has(symbolUpper)) {
           const prevDef = symbols.get(symbolUpper)!;
           diagnostics.push({
@@ -158,11 +131,11 @@ export class DocumentParser {
           length: symbolName.length
         });
 
-        // Registry for Resource Allocation
+        // An equ that aliases a regN counts toward register usage.
         const regNumMatch = /^reg(\d+)$/i.exec(symbolValue);
         if (regNumMatch) {
           const regNum = parseInt(regNumMatch[1], 10);
-          if (regNum >= 0 && regNum <= 31) {
+          if (regNum >= 0 && regNum < REGISTER_COUNT) {
             registerAliases.set(symbolName, regNum);
             usedRegisters.add(regNum);
           }
@@ -170,7 +143,7 @@ export class DocumentParser {
         continue;
       }
 
-      // 2. Parse MEM declarations: mem <name> <size>
+      // mem <name> <size>
       const memMatch = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(\d+)/i.exec(codeOnly);
       if (memMatch) {
         const symbolName = memMatch[1];
@@ -181,7 +154,6 @@ export class DocumentParser {
         const charIndex = lineText.indexOf(symbolName);
         const actualChar = charIndex !== -1 ? charIndex : 0;
 
-        // Validation: Reserved Name Check
         if (reserved.has(symbolUpper)) {
           diagnostics.push({
             range: new vscode.Range(i, actualChar, i, actualChar + symbolName.length),
@@ -192,7 +164,6 @@ export class DocumentParser {
           continue;
         }
 
-        // Validation: Duplicate Definition Check
         if (symbols.has(symbolUpper)) {
           const prevDef = symbols.get(symbolUpper)!;
           diagnostics.push({
@@ -204,13 +175,12 @@ export class DocumentParser {
           continue;
         }
 
-        // Validation: Size Boundary Limit
-        if (size <= 0 || size > 32767) {
+        if (size <= 0 || size > MEMORY_MAX_INDEX) {
           const sizeCharIndex = lineText.indexOf(sizeStr);
           const sizePos = sizeCharIndex !== -1 ? sizeCharIndex : actualChar + symbolName.length + 1;
           diagnostics.push({
             range: new vscode.Range(i, sizePos, i, sizePos + sizeStr.length),
-            message: `Memory size ${size} out of range (must be 1-32767)`,
+            message: `Memory size ${size} out of range (must be 1-${MEMORY_MAX_INDEX})`,
             severity: vscode.DiagnosticSeverity.Error,
             code: 'invalid-memory-size'
           });
@@ -229,7 +199,8 @@ export class DocumentParser {
         continue;
       }
 
-      // 3. Parse JUMP labels: <label>: (No early exit, permitting sequential line instructions to parse)
+      // Jump labels `<label>:`. No `continue` here: the rest of the line may
+      // also be an instruction (e.g., `start: SOF 0,0`).
       const labelMatch = /^\s*([a-zA-Z_][a-zA-Z0-9_]*):/i.exec(codeOnly);
       if (labelMatch) {
         const symbolName = labelMatch[1];
@@ -238,7 +209,6 @@ export class DocumentParser {
         const charIndex = lineText.indexOf(symbolName);
         const actualChar = charIndex !== -1 ? charIndex : 0;
 
-        // Validation: Reserved Name Check
         if (reserved.has(symbolUpper)) {
           diagnostics.push({
             range: new vscode.Range(i, actualChar, i, actualChar + symbolName.length + 1),
@@ -257,26 +227,23 @@ export class DocumentParser {
         }
       }
 
-      // 4. Trace Instruction Counts & Register Usage in Real Time
       if (isInstruction(codeOnly)) {
         instructionCount++;
 
-        // Track standard internal direct registers
         const regMatches = codeOnly.matchAll(/\breg(\d+)\b/gi);
         for (const rMatch of regMatches) {
           const registerNum = parseInt(rMatch[1], 10);
-          if (registerNum >= 0 && registerNum <= 31) {
+          if (registerNum >= 0 && registerNum < REGISTER_COUNT) {
             usedRegisters.add(registerNum);
           }
         }
       }
     }
 
-    // Compute hardware limits percentages
-    const registerPercentage = (usedRegisters.size / 32) * 100;
-    const instructionPercentage = (instructionCount / 128) * 100;
+    const registerPercentage = (usedRegisters.size / REGISTER_COUNT) * 100;
+    const instructionPercentage = (instructionCount / INSTRUCTION_LIMIT) * 100;
     const totalMemory = Array.from(memoryAllocations.values()).reduce((a, b) => a + b, 0);
-    const memoryPercentage = (totalMemory / 32768) * 100;
+    const memoryPercentage = (totalMemory / MEMORY_SAMPLES) * 100;
 
     return {
       symbols,
@@ -285,17 +252,17 @@ export class DocumentParser {
         registers: {
           used: usedRegisters,
           aliases: registerAliases,
-          total: 32,
+          total: REGISTER_COUNT,
           percentage: registerPercentage
         },
         instructions: {
           count: instructionCount,
-          limit: 128,
+          limit: INSTRUCTION_LIMIT,
           percentage: instructionPercentage
         },
         memory: {
           used: totalMemory,
-          total: 32768,
+          total: MEMORY_SAMPLES,
           allocations: memoryAllocations,
           percentage: memoryPercentage
         }

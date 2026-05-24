@@ -4,10 +4,10 @@ import * as path from "path";
 import * as cp from "child_process";
 import * as vscode from "vscode";
 import Logs, { LogType } from "./logs";
+import { BANK_COUNT, BANK_SIZE_BYTES, EEPROM_SIZE_BYTES } from "./fv1Constants";
 
 /**
- * @class Project
- * @brief Owns workspace state and runs the compiler. Emits events for the manager
+ * Owns workspace state and runs the compiler. Emits events for the manager
  * to refresh its cache; never reaches back into ProjectManager itself.
  */
 export default class Project {
@@ -66,7 +66,7 @@ export default class Project {
   public async createProjectStructure(): Promise<void> {
     const programContent = "; Blank SpinASM program";
 
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < BANK_COUNT; i++) {
       const folder = path.join(this.rootFolder, `bank_${i}`);
       const file = path.join(folder, `${i}_programName.spn`);
 
@@ -126,20 +126,16 @@ export default class Project {
   }
 
   /**
-   * Builds a single 4 KB EEPROM image (8 × 512-byte banks) by compiling each
-   * present bank with `asfv1 -p N` and merging.
+   * Builds a single EEPROM_SIZE_BYTES image by compiling each present bank
+   * with `asfv1 -p N` and merging.
    *
-   * asfv1 emits `(N+1) * 512` bytes for `-p N`: banks 0..(N-1) zero-padded,
-   * the assembled program at offset N*512. We extract just the bank-N slice
-   * from each output and drop it into the right offset of the combined image.
-   * Missing banks remain 0x00 (matching asfv1's own padding convention).
+   * asfv1 emits `(N+1) * BANK_SIZE_BYTES` for `-p N`: banks 0..(N-1) zero-padded,
+   * the assembled program at offset `N * BANK_SIZE_BYTES`. We extract just the
+   * bank-N slice from each output. Missing banks remain `0x00` to match asfv1's
+   * own padding convention.
    */
   public async compileAllProgramsToCombinedBin(): Promise<void> {
-    const BANK_SIZE = 512;
-    const BANK_COUNT = 8;
-    const TOTAL_SIZE = BANK_SIZE * BANK_COUNT;
-
-    const eeprom = Buffer.alloc(TOTAL_SIZE, 0x00);
+    const eeprom = Buffer.alloc(EEPROM_SIZE_BYTES, 0x00);
     const tempFiles: string[] = [];
 
     try {
@@ -160,23 +156,23 @@ export default class Project {
         }
 
         const bankBytes = await fsPromises.readFile(tempBin);
-        const expected = (bank + 1) * BANK_SIZE;
+        const expected = (bank + 1) * BANK_SIZE_BYTES;
         if (bankBytes.length !== expected) {
           throw new Error(`Bank ${bank} compiled to ${bankBytes.length} bytes, expected ${expected}`);
         }
 
-        bankBytes.copy(eeprom, bank * BANK_SIZE, bank * BANK_SIZE, expected);
+        bankBytes.copy(eeprom, bank * BANK_SIZE_BYTES, bank * BANK_SIZE_BYTES, expected);
       }
 
       await fsPromises.writeFile(this.outputBinFile, eeprom);
-      Logs.log(LogType.INFO, `Combined EEPROM image written: ${this.outputBinFile} (${TOTAL_SIZE} bytes)`);
+      Logs.log(LogType.INFO, `Combined EEPROM image written: ${this.outputBinFile} (${EEPROM_SIZE_BYTES} bytes)`);
     } finally {
-      // Always clean up temp bank files, even on failure.
+      // Clean up temp bank files even on failure.
       await Promise.all(tempFiles.map(async (f) => {
         try {
           await fsPromises.unlink(f);
         } catch {
-          // ignore — already gone or never created
+          // already gone or never created
         }
       }));
     }
@@ -231,7 +227,7 @@ export default class Project {
     this.programs = [];
     this.outputs = [];
 
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < BANK_COUNT; i++) {
       const currentFolder = path.join(this.rootFolder, `bank_${i}`);
 
       try {
@@ -246,7 +242,7 @@ export default class Project {
         }
       }
       catch {
-        // Folder doesn't exist or can't be read
+        // folder doesn't exist or can't be read; treat as empty bank
       }
 
       this.programs[i] = null;

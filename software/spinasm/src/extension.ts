@@ -10,6 +10,7 @@ import { initializeBankStatusBar, disposeBankStatusBar, showBankStatus } from ".
 import { initializeResourceStatusBar, disposeResourceStatusBar, showResourceUsage } from "./resourceStatusBar";
 import { SpinASMValidator } from "./spinasmValidator";
 import { ProjectManager } from "./projectManager";
+import { BANK_COUNT } from "./fv1Constants";
 
 let validator: SpinASMValidator;
 
@@ -42,14 +43,13 @@ export function activate(context: vscode.ExtensionContext): void {
   validator = new SpinASMValidator();
   context.subscriptions.push(validator);
 
-  // Kick off project scan WITHOUT awaiting so activate returns immediately.
-  // Callers that need cache use getBanksSync(), which already handles
-  // a not-yet-populated cache by returning a placeholder + scheduling a refresh.
+  // Don't await — activate() must return fast. getBanksSync handles cache miss
+  // by returning a placeholder while a background refresh runs.
   const projectManager = ProjectManager.getInstance();
   projectManager.initializeWorkspace();
 
-  // Drop cached projects when the compiler config changes so the next command
-  // picks up new compiler path/args.
+  // Drop cached projects on compiler config change so the next command picks
+  // up the new path/args.
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('spinasm.compiler')) {
@@ -59,7 +59,6 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  // Shared debounce for all validation triggers
   let validationTimer: NodeJS.Timeout | null = null;
   function scheduleValidation(doc: vscode.TextDocument): void {
     if (validationTimer) {
@@ -70,7 +69,6 @@ export function activate(context: vscode.ExtensionContext): void {
     }, 500);
   }
 
-  // Validate on document open (debounced)
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((doc) => {
       if (doc.languageId === 'spinasm') {
@@ -79,7 +77,6 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  // Validate on change (debounced)
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument((event) => {
       if (event.document.languageId === 'spinasm') {
@@ -88,15 +85,13 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  // Validate on save (immediate)
+  // Save runs validation immediately and refreshes the saved bank's cache.
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((doc) => {
       if (doc.languageId === 'spinasm') {
         if (validationTimer) { clearTimeout(validationTimer); }
         validator.validateDocument(doc);
 
-        // Optimize update: when saving any .spn file, run a targeted,
-        // non-blocking background check on that single bank's cache state.
         const rootPath = vscode.workspace.getWorkspaceFolder(doc.uri)?.uri.fsPath;
         if (rootPath) {
           const bankIndex = projectManager.getBankIndexFromPath(doc.uri.fsPath);
@@ -108,7 +103,6 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  // Clear on close
   context.subscriptions.push(
     vscode.workspace.onDidCloseTextDocument((doc) => {
       if (doc.languageId === 'spinasm') {
@@ -117,22 +111,18 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  // Create status bar items
   initializeBankStatusBar(context);
   initializeResourceStatusBar(context);
 
-  // Register file system watcher for reactive cache management & compile-on-save
   const watcher = vscode.workspace.createFileSystemWatcher("**/*.spn");
   context.subscriptions.push(watcher);
 
-  // Dynamic reaction to changes on disk
   watcher.onDidChange(async (uri) => {
     const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
     if (!folder) { return; }
 
     const bankIndex = projectManager.getBankIndexFromPath(uri.fsPath);
     if (bankIndex !== -1) {
-      // Invalidate and refresh cache for this bank instantly in memory
       await projectManager.refreshBank(folder, bankIndex);
     }
 
@@ -141,22 +131,22 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   });
 
+  // Create/delete change which file lives in each bank, so we have to
+  // refreshProject (which rescans), not refreshBank.
   watcher.onDidCreate(async (uri) => {
     const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
     if (!folder) { return; }
-
-    // Completely rebuild cached directory bindings on new files
     await projectManager.refreshProject(folder);
   });
 
   watcher.onDidDelete(async (uri) => {
     const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
     if (!folder) { return; }
-
     await projectManager.refreshProject(folder);
   });
 
-  // Watch for external output compiler updates (clean, direct hex generations, etc.)
+  // Watch the output dir so external compiler runs (e.g. asfv1 from a terminal)
+  // update the bank status bar too.
   const hexWatcher = vscode.workspace.createFileSystemWatcher("**/output/*.hex");
   context.subscriptions.push(hexWatcher);
 
@@ -164,11 +154,9 @@ export function activate(context: vscode.ExtensionContext): void {
     const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
     if (!folder) { return; }
 
-    // Parse which bank this compiled hex matches to optimize cache refresh
     const baseName = path.basename(uri.fsPath, ".hex");
-    // Scan program list in cache to find match
     const cachedBanks = projectManager.getBanksSync(folder);
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < BANK_COUNT; i++) {
       if (cachedBanks[i].spnFile && path.basename(cachedBanks[i].spnFile!, ".spn") === baseName) {
         await projectManager.refreshBank(folder, i);
         break;
@@ -180,7 +168,6 @@ export function activate(context: vscode.ExtensionContext): void {
   hexWatcher.onDidCreate(onHexUpdate);
   hexWatcher.onDidDelete(onHexUpdate);
 
-  // Register SpinASM semantic token provider
   context.subscriptions.push(
     vscode.languages.registerDocumentSemanticTokensProvider(
       { language: 'spinasm' },
@@ -189,7 +176,6 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
-  // Register SpinASM hover provider
   context.subscriptions.push(
     vscode.languages.registerHoverProvider(
       { language: 'spinasm' },
@@ -200,29 +186,24 @@ export function activate(context: vscode.ExtensionContext): void {
   Logs.log(LogType.INFO, "SpinASM semantic highlighting enabled");
 
   context.subscriptions.push(
-    // Global / Project Management
     vscode.commands.registerCommand("spinasm.createProject", createProject),
     vscode.commands.registerCommand("spinasm.checkProjectSettings", checkHardwareConnection),
     vscode.commands.registerCommand("spinasm.showSerialConfig", showConfig),
     vscode.commands.registerCommand("spinasm.showBankStatus", showBankStatus),
     vscode.commands.registerCommand("spinasm.showResourceUsage", showResourceUsage),
 
-    // Serial Port Detection
     vscode.commands.registerCommand("spinasm.selectSerialPort", selectSerialPort),
     vscode.commands.registerCommand("spinasm.autoDetectProgrammer", autoDetectProgrammer),
 
-    // Current File Operations
     vscode.commands.registerCommand("spinasm.compileCurrentProgram", compileCurrentProgram),
     vscode.commands.registerCommand("spinasm.uploadCurrentProgram", uploadCurrentProgram),
     vscode.commands.registerCommand("spinasm.compileAndUploadCurrentProgram", compileAndUploadCurrentProgram),
 
-    // Batch Operations
     vscode.commands.registerCommand("spinasm.compileAllPrograms", compileAllPrograms),
     vscode.commands.registerCommand("spinasm.compileAllProgramsToBin", compileAllProgramsToBin),
     vscode.commands.registerCommand("spinasm.uploadAllPrograms", uploadAllPrograms),
     vscode.commands.registerCommand("spinasm.compileAndUploadAllPrograms", compileAndUploadAllPrograms),
 
-    // Generic Bank Operations
     vscode.commands.registerCommand("spinasm.compileBank", async () => {
       const bank = await pickBank();
 
@@ -248,7 +229,6 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  // Warn user if config is missing on startup
   if (Config.isConfigMissing()) {
     vscode.window.showWarningMessage("SpinASM: Compiler path or Serial port is not configured. Please check your Settings.");
   }
@@ -261,10 +241,6 @@ export function deactivate(): void {
   disposeBankStatusBar();
   disposeResourceStatusBar();
 }
-
-// =============================================================================
-// COMPILE ON SAVE
-// =============================================================================
 
 async function handleCompileOnSave(uri: vscode.Uri): Promise<void> {
   const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
@@ -294,14 +270,10 @@ async function handleCompileOnSave(uri: vscode.Uri): Promise<void> {
   }
 }
 
-// =============================================================================
-// UI HELPERS
-// =============================================================================
-
 async function pickBank(): Promise<number | undefined> {
   const items = [];
 
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < BANK_COUNT; i++) {
     items.push({
       label: `Bank ${i}`,
       description: `Program ${i}`,
@@ -315,10 +287,6 @@ async function pickBank(): Promise<number | undefined> {
 
   return selection ? selection.bankId : undefined;
 }
-
-// =============================================================================
-// SERIAL PORT DETECTION
-// =============================================================================
 
 async function selectSerialPort(): Promise<void> {
   try {
@@ -387,10 +355,6 @@ async function autoDetectProgrammer(): Promise<void> {
   });
 }
 
-// =============================================================================
-// CORE OPERATIONS
-// =============================================================================
-
 async function compileBank(bank: number): Promise<void> {
   await runOperation(async (project) => {
     await project.compileProgramToHex(bank);
@@ -424,10 +388,6 @@ async function compileAndUploadBank(bank: number): Promise<void> {
     vscode.window.showInformationMessage(`Program ${bank} compiled and uploaded successfully!`);
   }, `Failed to compile and upload program ${bank}`, `Compiling & Uploading Bank ${bank}...`);
 }
-
-// =============================================================================
-// BULK & CURRENT OPERATIONS
-// =============================================================================
 
 async function compileCurrentProgram(): Promise<void> {
   await runOperation(async (project) => {
@@ -595,10 +555,6 @@ async function compileAndUploadAllPrograms(): Promise<void> {
   });
 }
 
-// =============================================================================
-// PROJECT MANAGEMENT & UTILS
-// =============================================================================
-
 async function createProject(): Promise<void> {
   const folder = await getWorkspaceFolder();
 
@@ -607,9 +563,9 @@ async function createProject(): Promise<void> {
   }
 
   try {
-    // For first-time setup, the compiler may not be configured yet. Run the
-    // file-creation directly via a transient project; the manager picks it up
-    // via the create watcher.
+    // First-time setup: compiler may not be configured yet, so we bypass the
+    // manager and use a throwaway Project just for file creation. The manager
+    // picks up the new files via the create watcher.
     const mod = await import("./project.js");
     const ProjectCtor = (mod as unknown as { default: typeof import("./project").default }).default;
     const project = new ProjectCtor(folder);
@@ -637,11 +593,9 @@ async function checkHardwareConnection(): Promise<void> {
   try {
     const settings = loadSettings();
 
-    // Check compiler
     const project = await requireProject(folder);
     await project.checkCompiler();
 
-    // Check hardware
     programmer = new Programmer(settings.serialPort, settings.baudRate);
 
     await programmer.connect();
@@ -681,10 +635,6 @@ async function showConfig(): Promise<void> {
     vscode.commands.executeCommand("workbench.action.openSettings", "spinasm");
   }
 }
-
-// =============================================================================
-// HELPERS
-// =============================================================================
 
 async function runOperation(
   operation: (project: Project, settings: ProjectSettings) => Promise<void>,
@@ -778,6 +728,7 @@ function loadSettings(): ProjectSettings {
   };
 }
 
+/** Background callers should pass `{ showLog: false }` to avoid stealing focus. */
 function handleError(error: unknown, message: string, options: { showLog?: boolean } = {}): void {
   const { showLog = true } = options;
   const errorMessage = (error as Error).message;
@@ -785,9 +736,6 @@ function handleError(error: unknown, message: string, options: { showLog?: boole
   Logs.log(LogType.ERROR, `${message}: ${errorMessage}`);
   vscode.window.showErrorMessage(`${message}: ${errorMessage}`);
 
-  // Default true: existing handleError callers are user-initiated commands
-  // where popping the Output panel is helpful. Background callers should
-  // pass { showLog: false } to avoid stealing the user's attention.
   if (showLog) {
     Logs.show();
   }

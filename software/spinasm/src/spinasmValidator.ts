@@ -3,10 +3,11 @@ import { DocumentParser, DocumentSymbol } from "./documentParser";
 import { ResourceUsage } from "./resourceAnalyzer";
 import { isInstruction, isBuiltInSymbol } from "./spinasmLanguage";
 
-/**
- * @class SpinASMValidator
- * @brief Validates SpinASM code and provides diagnostics
- */
+// Warn before hitting the hard limits. Instructions are scarce (128 max), so
+// we warn earlier in absolute terms; memory is abundant (32K samples).
+const INSTRUCTION_WARNING_RATIO = 120 / 128; // ≈ 93.75% — fires with ≤8 left.
+const MEMORY_WARNING_RATIO = 0.9;            // fires at 90% capacity.
+
 export class SpinASMValidator {
 
   private diagnosticCollection: vscode.DiagnosticCollection;
@@ -15,9 +16,6 @@ export class SpinASMValidator {
     this.diagnosticCollection = vscode.languages.createDiagnosticCollection('spinasm');
   }
 
-  /**
-   * @brief Validate a SpinASM document and update diagnostics
-   */
   public validateDocument(document: vscode.TextDocument): void {
     if (document.languageId !== 'spinasm') {
       return;
@@ -27,30 +25,20 @@ export class SpinASMValidator {
     this.diagnosticCollection.set(document.uri, diagnostics);
   }
 
-  /**
-   * @brief Clear diagnostics for a document
-   */
   public clearDocument(document: vscode.TextDocument): void {
     this.diagnosticCollection.delete(document.uri);
   }
 
-  /**
-   * @brief Dispose the diagnostic collection
-   */
   public dispose(): void {
     this.diagnosticCollection.dispose();
   }
 
-  /**
-   * @brief Main validation function querying unified cached parser
-   */
   private validate(document: vscode.TextDocument): vscode.Diagnostic[] {
     const diagnostics: vscode.Diagnostic[] = [];
 
-    // Extract unified parsed model
     const parsedDoc = DocumentParser.get(document);
 
-    // 1. Add static structural syntax errors found on single-pass parse
+    // Diagnostics produced by the parser pass come first.
     for (const parserDiag of parsedDoc.diagnostics) {
       const vsDiag = new vscode.Diagnostic(
         parserDiag.range,
@@ -63,18 +51,16 @@ export class SpinASMValidator {
 
     const symbols = parsedDoc.symbols;
 
-    // 2. Validate symbol reference usages and operands
     for (let i = 0; i < document.lineCount; i++) {
       const line = document.lineAt(i);
       const lineText = line.text;
 
-      // Skip comments and empty lines
       const codeOnly = lineText.split(';')[0].trim();
       if (!codeOnly) {
         continue;
       }
 
-      // Skip directives and labels (which are validated during parse stage)
+      // equ/mem and bare labels are validated in the parser pass.
       if (/^\s*(equ|mem)\s+/i.test(codeOnly)) {
         continue;
       }
@@ -83,29 +69,24 @@ export class SpinASMValidator {
         continue;
       }
 
-      // Validate instructions
       if (isInstruction(codeOnly)) {
         this.validateInstruction(line, symbols, diagnostics);
       }
     }
 
-    // 3. Evaluate memory & instruction resource boundary limits
     this.validateResourceLimits(parsedDoc.resourceUsage, diagnostics);
 
     return diagnostics;
   }
 
-  /**
-   * @brief Validate an instruction line
-   */
   private validateInstruction(
     line: vscode.TextLine,
     symbols: Map<string, DocumentSymbol>,
     diagnostics: vscode.Diagnostic[]
   ): void {
-    const lineText = line.text.split(';')[0]; // Strip comments
+    const lineText = line.text.split(';')[0];
 
-    // Extract instruction and operands, skipping an optional `label:` prefix.
+    // Accepts an optional `label:` prefix so `start: SOF 0,0` parses too.
     const match = /^\s*(?:[a-zA-Z_][a-zA-Z0-9_]*:\s*)?(\w+)\s+(.*)$/.exec(lineText);
     if (!match) {
       return;
@@ -114,7 +95,6 @@ export class SpinASMValidator {
     const instruction = match[1].toUpperCase();
     const operands = match[2];
 
-    // Validate symbol references in operands
     const symbolRefs = operands.matchAll(/\b([a-zA-Z_][a-zA-Z0-9_]*)\b/g);
     const operandStart = lineText.indexOf(operands);
 
@@ -122,17 +102,14 @@ export class SpinASMValidator {
       const symbolName = symbolMatch[1];
       const symbolUpper = symbolName.toUpperCase();
 
-      // Skip if it's a built-in register or keyword
       if (isBuiltInSymbol(symbolUpper)) {
         continue;
       }
 
-      // Skip numeric-looking constants
       if (/^\d/.test(symbolName)) {
         continue;
       }
 
-      // Check if symbol is defined
       if (!symbols.has(symbolUpper)) {
         const startChar = operandStart + symbolMatch.index!;
         const diagnostic = new vscode.Diagnostic(
@@ -145,13 +122,9 @@ export class SpinASMValidator {
       }
     }
 
-    // Basic syntax validation
     this.validateInstructionSyntax(line, instruction, operands, diagnostics);
   }
 
-  /**
-   * @brief Validate basic instruction syntax
-   */
   private validateInstructionSyntax(
     line: vscode.TextLine,
     instruction: string,
@@ -160,7 +133,6 @@ export class SpinASMValidator {
   ): void {
     const lineText = line.text.split(';')[0];
 
-    // Instructions that require a comma
     const requiresComma = new Set([
       'RDAX', 'WRAX', 'RDFX', 'WRLX', 'WRHX', 'MAXX',
       'SOF', 'LOG', 'EXP'
@@ -178,7 +150,6 @@ export class SpinASMValidator {
       }
     }
 
-    // Check for obvious coefficient range errors
     const coefficientInstructions = new Set([
       'RDAX', 'WRAX', 'RDFX', 'WRLX', 'WRHX', 'MAXX',
       'SOF', 'LOG', 'EXP', 'RDA', 'WRA', 'WRAP'
@@ -189,7 +160,7 @@ export class SpinASMValidator {
       if (coeffMatch) {
         const coeff = parseFloat(coeffMatch[1]);
 
-        // Most instructions use S1_14 format: -2.0 to ~2.0
+        // S1_14 fixed-point operand range is approximately -2.0 to 2.0.
         if (Math.abs(coeff) > 2.0) {
           const startChar = lineText.indexOf(coeffMatch[1]);
           const diagnostic = new vscode.Diagnostic(
@@ -204,14 +175,10 @@ export class SpinASMValidator {
     }
   }
 
-  /**
-   * @brief Validate resource limits
-   */
   private validateResourceLimits(
     usage: ResourceUsage,
     diagnostics: vscode.Diagnostic[]
   ): void {
-    // Check instruction limit
     if (usage.instructions.count > usage.instructions.limit) {
       const diagnostic = new vscode.Diagnostic(
         new vscode.Range(0, 0, 0, 0),
@@ -221,7 +188,7 @@ export class SpinASMValidator {
       diagnostic.code = 'instruction-limit';
       diagnostics.push(diagnostic);
     }
-    else if (usage.instructions.count > 120) {
+    else if (usage.instructions.count > usage.instructions.limit * INSTRUCTION_WARNING_RATIO) {
       const diagnostic = new vscode.Diagnostic(
         new vscode.Range(0, 0, 0, 0),
         `Approaching instruction limit: ${usage.instructions.count} / ${usage.instructions.limit}`,
@@ -231,7 +198,6 @@ export class SpinASMValidator {
       diagnostics.push(diagnostic);
     }
 
-    // Check memory limit
     if (usage.memory.used > usage.memory.total) {
       const diagnostic = new vscode.Diagnostic(
         new vscode.Range(0, 0, 0, 0),
@@ -241,7 +207,7 @@ export class SpinASMValidator {
       diagnostic.code = 'memory-limit';
       diagnostics.push(diagnostic);
     }
-    else if (usage.memory.used > 29491) { // 90% of 32768
+    else if (usage.memory.used > usage.memory.total * MEMORY_WARNING_RATIO) {
       const diagnostic = new vscode.Diagnostic(
         new vscode.Range(0, 0, 0, 0),
         `Approaching memory limit: ${usage.memory.used} / ${usage.memory.total} samples`,

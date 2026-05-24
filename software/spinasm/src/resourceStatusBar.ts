@@ -1,24 +1,19 @@
 import * as vscode from "vscode";
 import { ResourceAnalyzer, ResourceUsage } from "./resourceAnalyzer";
+import { REGISTER_COUNT, INSTRUCTION_LIMIT, MEMORY_SAMPLES } from "./fv1Constants";
 
-// Global status bar item for resource tracking
 let resourceStatusBar: vscode.StatusBarItem;
 let currentUsage: ResourceUsage | null = null;
 
-// Cached MarkdownString for the tooltip, keyed by its detail body so we can
-// skip rebuilding on every debounced update when nothing visible changed.
+// Cached tooltip body so we don't rebuild the MarkdownString every debounce
+// tick when nothing visible changed.
 let lastTooltipDetail: string | null = null;
 
-/**
- * @brief Initialize the resource tracking status bar
- */
 export function initializeResourceStatusBar(context: vscode.ExtensionContext): void {
-  // Create status bar item (to the right of the bank status)
   resourceStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 99);
   resourceStatusBar.command = "spinasm.showResourceUsage";
   context.subscriptions.push(resourceStatusBar);
 
-  // Update when active editor changes
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       if (editor && editor.document.languageId === 'spinasm') {
@@ -29,17 +24,15 @@ export function initializeResourceStatusBar(context: vscode.ExtensionContext): v
     })
   );
 
-  // Update on document changes (typing)
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument((e) => {
       if (e.document.languageId === 'spinasm') {
-        // Debounce updates - only update after user stops typing
         debounceUpdate(e.document);
       }
     })
   );
 
-  // Initial update - deferred so activate() returns quickly
+  // Defer the first paint so activate() returns quickly.
   setImmediate(() => {
     const editor = vscode.window.activeTextEditor;
     if (editor && editor.document.languageId === 'spinasm') {
@@ -48,21 +41,14 @@ export function initializeResourceStatusBar(context: vscode.ExtensionContext): v
   });
 }
 
-/**
- * @brief Dispose the resource status bar
- */
 export function disposeResourceStatusBar(): void {
   if (resourceStatusBar) {
     resourceStatusBar.dispose();
   }
 }
 
-// Debounce timer
 let updateTimer: NodeJS.Timeout | null = null;
 
-/**
- * @brief Debounce resource updates to avoid updating on every keystroke
- */
 function debounceUpdate(document: vscode.TextDocument): void {
   if (updateTimer) {
     clearTimeout(updateTimer);
@@ -70,29 +56,19 @@ function debounceUpdate(document: vscode.TextDocument): void {
 
   updateTimer = setTimeout(() => {
     updateResourceStatusBar(document);
-  }, 500); // Update 500ms after user stops typing
+  }, 500);
 }
 
-/**
- * @brief Update the resource status bar with current document analysis
- */
 function updateResourceStatusBar(document: vscode.TextDocument): void {
   try {
-    // Analyze the document (retrieved cleanly from single-pass cache)
     const usage = ResourceAnalyzer.analyze(document);
     currentUsage = usage;
 
-    // Format status bar text
-    const statusText = ResourceAnalyzer.formatStatusBar(usage);
-    resourceStatusBar.text = statusText;
+    resourceStatusBar.text = ResourceAnalyzer.formatStatusBar(usage);
+    resourceStatusBar.color = ResourceAnalyzer.getStatusBarColor(
+      ResourceAnalyzer.getWorstSeverity(usage)
+    );
 
-    // Set color based on worst severity (Red for critical, Orange for warning, default otherwise)
-    const worstSeverity = ResourceAnalyzer.getWorstSeverity(usage);
-    resourceStatusBar.color = ResourceAnalyzer.getStatusBarColor(worstSeverity);
-
-    // Rebuild the tooltip only when its body actually changes. Typing rarely
-    // affects every resource at once, so this cuts MarkdownString churn on
-    // every debounced update.
     const detail = ResourceAnalyzer.formatDetailed(usage);
     if (detail !== lastTooltipDetail) {
       const tooltip = new vscode.MarkdownString();
@@ -104,16 +80,11 @@ function updateResourceStatusBar(document: vscode.TextDocument): void {
     }
 
     resourceStatusBar.show();
-
-  } catch (error) {
-    // If analysis fails, hide the status bar silently
+  } catch {
     resourceStatusBar.hide();
   }
 }
 
-/**
- * @brief Show detailed resource usage in a QuickPick
- */
 export async function showResourceUsage(): Promise<void> {
   if (!currentUsage) {
     vscode.window.showInformationMessage("No SpinASM file is currently open.");
@@ -123,17 +94,15 @@ export async function showResourceUsage(): Promise<void> {
   const usage = currentUsage;
   const items = [];
 
-  // === REGISTERS ===
   const regSeverity = ResourceAnalyzer.getSeverity(usage.registers.percentage);
   const regIcon = regSeverity === 'critical' ? '🔴' : regSeverity === 'warning' ? '⚠️' : '✅';
 
   items.push({
-    label: `${regIcon} Registers: ${usage.registers.used.size} / 32`,
+    label: `${regIcon} Registers: ${usage.registers.used.size} / ${REGISTER_COUNT}`,
     detail: `${Math.round(usage.registers.percentage)}% capacity`,
     description: regSeverity === 'critical' ? 'CRITICAL' : regSeverity === 'warning' ? 'WARNING' : 'OK'
   });
 
-  // Show register details
   if (usage.registers.aliases.size > 0) {
     const aliasedRegs = Array.from(usage.registers.aliases.entries())
       .sort((a, b) => a[1] - b[1])
@@ -146,7 +115,6 @@ export async function showResourceUsage(): Promise<void> {
     });
   }
 
-  // Show unaliased direct register usage
   const unaliasedRegs = Array.from(usage.registers.used)
     .filter(num => !Array.from(usage.registers.aliases.values()).includes(num))
     .sort((a, b) => a - b);
@@ -158,15 +126,14 @@ export async function showResourceUsage(): Promise<void> {
     });
   }
 
-  items.push({ label: '', detail: '' }); // Separator
+  items.push({ label: '', detail: '' });
 
-  // === INSTRUCTIONS ===
   const instSeverity = ResourceAnalyzer.getSeverity(usage.instructions.percentage);
   const instIcon = instSeverity === 'critical' ? '🔴' : instSeverity === 'warning' ? '⚠️' : '✅';
   const remaining = usage.instructions.limit - usage.instructions.count;
 
   items.push({
-    label: `${instIcon} Instructions: ${usage.instructions.count} / 128`,
+    label: `${instIcon} Instructions: ${usage.instructions.count} / ${INSTRUCTION_LIMIT}`,
     detail: `${Math.round(usage.instructions.percentage)}% capacity - ${remaining} remaining`,
     description: instSeverity === 'critical' ? 'CRITICAL' : instSeverity === 'warning' ? 'WARNING' : 'OK'
   });
@@ -184,15 +151,14 @@ export async function showResourceUsage(): Promise<void> {
     });
   }
 
-  items.push({ label: '', detail: '' }); // Separator
+  items.push({ label: '', detail: '' });
 
-  // === MEMORY ===
   const memSeverity = ResourceAnalyzer.getSeverity(usage.memory.percentage);
   const memIcon = memSeverity === 'critical' ? '🔴' : memSeverity === 'warning' ? '⚠️' : '✅';
   const memRemaining = usage.memory.total - usage.memory.used;
 
   items.push({
-    label: `${memIcon} Memory: ${usage.memory.used} / 32768 samples`,
+    label: `${memIcon} Memory: ${usage.memory.used} / ${MEMORY_SAMPLES} samples`,
     detail: `${Math.round(usage.memory.percentage)}% capacity - ${memRemaining} samples remaining`,
     description: memSeverity === 'critical' ? 'CRITICAL' : memSeverity === 'warning' ? 'WARNING' : 'OK'
   });
@@ -209,7 +175,7 @@ export async function showResourceUsage(): Promise<void> {
   else {
     items.push({
       label: `   No delay memory allocated`,
-      detail: 'All 32768 samples available'
+      detail: `All ${MEMORY_SAMPLES} samples available`
     });
   }
 
@@ -217,4 +183,3 @@ export async function showResourceUsage(): Promise<void> {
     placeHolder: 'SpinASM Resource Usage - Current File'
   });
 }
-

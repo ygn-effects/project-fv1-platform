@@ -1,16 +1,13 @@
 import { DelimiterParser, SerialPort } from "serialport";
 import Logs, { LogType } from "./logs";
 import * as fs from 'fs/promises';
+import { BANK_SIZE_BYTES, EEPROM_BLOCK_SIZE_BYTES, EEPROM_BLANK_BYTE } from "./fv1Constants";
 
 interface IntelHexData {
-  address: number;   // Start address (Base address of the firmware)
-  data: Buffer;      // The program data
+  address: number;
+  data: Buffer;
 }
 
-/**
- * @enum OrderCode
- * @brief Codes representing commands sent to the programmer.
- */
 enum OrderCode {
   RuThere = 0x01,
   RuReady = 0x02,
@@ -19,10 +16,6 @@ enum OrderCode {
   End     = 0x05,
 }
 
-/**
- * @enum ResponseCode
- * @brief Codes representing possible programmer responses.
- */
 enum ResponseCode {
   Nok          = 0x06,
   Ok           = 0x07,
@@ -33,10 +26,6 @@ enum ResponseCode {
   FramingError = 0x0C,
 }
 
-/**
- * @class Programmer
- * @brief Manages communication with EEPROM programmer hardware via serial port.
- */
 export default class Programmer {
   private serialPort: SerialPort;
   private parser: DelimiterParser;
@@ -59,7 +48,8 @@ export default class Programmer {
 
         Logs.log(LogType.INFO, `Serial port ${this.serialPort.path} opened successfully.`);
 
-        // Allow 100 ms to discard initial noise
+        // Some adapters emit junk bytes right after open(); discard for 100 ms
+        // so the first real command doesn't get the leftovers as its response.
         const discardDuration = 100;
         const discardData = (data: Buffer) => {
           Logs.log(LogType.INFO, `Discarding junk data: ${data.toString('hex')}`);
@@ -104,9 +94,9 @@ export default class Programmer {
   }
 
   public async readProgram(address: number): Promise<Buffer> {
-    let program = Buffer.alloc(512);
+    let program = Buffer.alloc(BANK_SIZE_BYTES);
 
-    for (let offset = 0; offset < 512; offset += 32) {
+    for (let offset = 0; offset < BANK_SIZE_BYTES; offset += EEPROM_BLOCK_SIZE_BYTES) {
       const currentAddress = address + offset;
 
       if (! (await this.sendReadOrder())) {
@@ -118,24 +108,24 @@ export default class Programmer {
       }
 
       let data = await this.readData();
-      data.copy(program, offset, 0, 32);
+      data.copy(program, offset, 0, EEPROM_BLOCK_SIZE_BYTES);
     }
 
     return program;
   }
 
   public async writeProgram(address: number, program: Buffer): Promise<void> {
-    // Pad buffer to ensure we have full pages
-    if (program.length < 512) {
-        const padding = Buffer.alloc(512 - program.length, 0xFF); // 0xFF is standard EEPROM blank state
+    // Pad short buffers so every write covers a full EEPROM page.
+    if (program.length < BANK_SIZE_BYTES) {
+        const padding = Buffer.alloc(BANK_SIZE_BYTES - program.length, EEPROM_BLANK_BYTE);
         program = Buffer.concat([program, padding]);
     }
 
-    for (let offset = 0; offset < 512; offset += 32) {
+    for (let offset = 0; offset < BANK_SIZE_BYTES; offset += EEPROM_BLOCK_SIZE_BYTES) {
       const currentAddress = address + offset;
 
-      let data = Buffer.alloc(32);
-      program.copy(data, 0, offset, offset + 32);
+      let data = Buffer.alloc(EEPROM_BLOCK_SIZE_BYTES);
+      program.copy(data, 0, offset, offset + EEPROM_BLOCK_SIZE_BYTES);
 
       if (! (await this.sendWriteOrder())) {
         throw new Error("Failed to send WRITE order.");
@@ -163,10 +153,7 @@ export default class Programmer {
     }
   }
 
-  /**
-   * @brief Parses a standard Intel HEX file asynchronously.
-   * Validates checksums and handles variable record lengths.
-   */
+  /** Parses an Intel HEX file, validates per-record checksums, returns base addr + bytes. */
   public async readIntelHexData(file: string): Promise<IntelHexData> {
     try {
       await fs.access(file);
@@ -179,7 +166,7 @@ export default class Programmer {
     const content = await fs.readFile(file, { encoding: 'utf8' });
     const lines = content.split(/\r\n|\r|\n/);
 
-    const memoryMap = new Map<number, number>(); // Address -> Byte
+    const memoryMap = new Map<number, number>();
     let minAddress = Infinity;
     let maxAddress = 0;
     let lineNo = 0;
@@ -195,9 +182,8 @@ export default class Programmer {
           continue;
         }
 
-        // Parse Record Structure: :LLAAAATT[DD...]CC
-        // Minimum frame (no data): `:` + LL(2) + AAAA(4) + TT(2) + CC(2) = 11 chars.
-        // A data record adds 2*LL hex chars between TT and CC.
+        // Intel HEX record: `:LLAAAATT[DD...]CC` — min frame (no data) is 11 chars
+        // (`:` + LL(2) + AAAA(4) + TT(2) + CC(2)). Data adds 2*LL between TT and CC.
         if (line.length < 11) {
           throw new Error(`Malformed HEX record at line ${lineNo}: too short (${line.length} chars)`);
         }
@@ -220,7 +206,6 @@ export default class Programmer {
           throw new Error(`Malformed HEX record at line ${lineNo}: non-hex checksum`);
         }
 
-        // 1. Checksum Validation
         let calculatedChecksum = byteCount + (address >> 8) + (address & 0xFF) + recordType;
 
         for (let i = 0; i < byteCount; i++) {
@@ -230,13 +215,12 @@ export default class Programmer {
           }
           calculatedChecksum += byte;
         }
-        // Checksum is two's complement of the LSB of the sum
+        // Intel HEX checksum is two's complement of the LSB of the running sum.
         if (((calculatedChecksum + checksum) & 0xFF) !== 0) {
           throw new Error(`Checksum mismatch at line ${lineNo}`);
         }
 
-        // 2. Handle Record Types
-        if (recordType === 0x00) { // Data Record
+        if (recordType === 0x00) { // data
           for (let i = 0; i < byteCount; i++) {
             const byte = parseInt(line.substr(9 + (i * 2), 2), 16);
             const absoluteAddress = address + i;
@@ -259,12 +243,10 @@ export default class Programmer {
       throw new Error("HEX file contained no valid data records.");
     }
 
-    // 3. Construct Buffer
-    // FV-1 Banks are typically fixed size, but we support variable for safety.
+    // Bank size is fixed but we tolerate larger inputs in case of off-spec hex.
     const size = maxAddress - minAddress + 1;
-    // Enforce 512 byte minimum for FV-1 bank size
-    const bufferSize = Math.max(512, size);
-    const buffer = Buffer.alloc(bufferSize, 0xFF); // Fill with 0xFF (Empty)
+    const bufferSize = Math.max(BANK_SIZE_BYTES, size);
+    const buffer = Buffer.alloc(bufferSize, EEPROM_BLANK_BYTE);
 
     memoryMap.forEach((byte, addr) => {
       buffer[addr - minAddress] = byte;
@@ -277,8 +259,6 @@ export default class Programmer {
       data: buffer
     };
   }
-
-  // ... Serial Communication Helpers (SendWriteOrder, SendAddress, etc.) ...
 
   private async sendWriteOrder(): Promise<boolean> {
     const response = await this.sendMessage(Buffer.from([OrderCode.Write]), 1);
@@ -301,7 +281,7 @@ export default class Programmer {
   }
 
   private async readData(): Promise<Buffer> {
-    return await this.sendMessage(Buffer.from([OrderCode.Read]), 32);
+    return await this.sendMessage(Buffer.from([OrderCode.Read]), EEPROM_BLOCK_SIZE_BYTES);
   }
 
   private async sendData(data: Buffer): Promise<boolean> {
@@ -310,6 +290,7 @@ export default class Programmer {
   }
 
   private async sendMessage(payload: Buffer, expectedResponseSize: number, timeoutMs = 500): Promise<Buffer> {
+    // Hardware needs ≥10 ms between commands or it drops the next message.
     const now = Date.now();
     const elapsed = now - this.lastCommandTimestamp;
     const requiredDelay = 10;

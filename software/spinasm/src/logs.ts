@@ -7,47 +7,23 @@ function getFormattedDate(): string {
          `.${('00' + d.getMilliseconds()).slice(-3)}`;
 }
 
-/**
- * @enum LogType
- * @brief Enumerates the supported types of log messages.
- */
 export enum LogType {
-  INFO = 0,   ///< Informational log messages.
-  ERROR = 1,  ///< Error log messages.
+  INFO = 0,
+  ERROR = 1,
 }
 
-/**
- * @class Logs
- * @brief Provides centralized logging for the SpinASM VSCode extension.
- *
- * Handles the creation and management of a dedicated VSCode output channel
- * for logging informational and error messages with timestamps.
- */
 export default class Logs {
-  private static logChannel: vscode.OutputChannel | null = null; ///< VSCode Output Channel for logging.
+  private static logChannel: vscode.OutputChannel | null = null;
 
-  /**
-   * @brief Initializes the logging output channel.
-   *
-   * Creates a dedicated VSCode output channel named "SpinASM" if not already created.
-   * Should be called once during the extension activation phase.
-   */
   public static createChannel(): void {
     if (!this.logChannel) {
       this.logChannel = vscode.window.createOutputChannel("SpinASM");
     }
   }
 
-  /**
-   * @brief Writes a log message to the output channel with timestamp and severity.
-   *
-   * Sanitizes error messages to remove redundant "Error:" prefixes, enhancing readability.
-   * Lazy-creates the output channel if a logger fires before activate() has called createChannel().
-   *
-   * @param type - Severity level of the log entry (`INFO` or `ERROR`).
-   * @param message - Message content to log.
-   */
   public static log(type: LogType, message: string): void {
+    // Lazy-create so loggers that fire before activate() called createChannel
+    // don't crash.
     if (!this.logChannel) {
       this.createChannel();
     }
@@ -61,33 +37,22 @@ export default class Logs {
         break;
 
       case LogType.ERROR:
-        // Remove redundant "Error: " prefix to keep logs clean.
         const sanitizedMessage = message.replace(/^Error:\s*/, "");
         channel.appendLine(`${timestamp} | ERROR | ${sanitizedMessage}`);
         break;
 
       default:
-        // Fallback for unrecognized log types.
         channel.appendLine(`${timestamp} | UNKNOWN | ${message}`);
         break;
     }
   }
 
-  /**
-   * @brief Forces the output channel to come into focus.
-   * Useful when an error occurs so the user sees the logs immediately.
-   */
   public static show(): void {
     if (this.logChannel) {
-      this.logChannel.show(true); // true = preserve focus (don't steal keyboard focus)
+      this.logChannel.show(true); // preserveFocus
     }
   }
 
-  /**
-   * @brief Disposes the logging channel resources.
-   *
-   * Should be called during the extension deactivation phase to free resources.
-   */
   public static disposeChannel(): void {
     if (this.logChannel) {
       this.logChannel.dispose();

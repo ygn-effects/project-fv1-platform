@@ -2,31 +2,25 @@ import * as vscode from "vscode";
 import * as path from "path";
 import Config from "./config";
 import { ProjectManager, BankStatus } from "./projectManager";
+import { BANK_COUNT } from "./fv1Constants";
 
-// Global status bar item
 let bankStatusBar: vscode.StatusBarItem;
 
-/**
- * @brief Initialize and register the status bar
- */
 export function initializeBankStatusBar(context: vscode.ExtensionContext): void {
-  // Create status bar item
   bankStatusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   bankStatusBar.command = "spinasm.showBankStatus";
   context.subscriptions.push(bankStatusBar);
 
-  // Subscribe to ProjectManager updates. UI updates immediately when the cache alters.
   context.subscriptions.push(
     ProjectManager.getInstance().onDidChangeProject(() => updateBankStatusBarImmediate())
   );
 
-  // Update status bar instantly when active editor changes (No Disk I/O!)
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(() => updateBankStatusBarImmediate())
   );
 
-  // Refresh the bar when a spinasm file is opened. Non-spinasm docs don't
-  // affect bank status, so skip them to avoid rebuilding on every README open.
+  // Non-spinasm docs can't affect bank status, so skip them to avoid
+  // rebuilding on every README open.
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((doc) => {
       if (doc.languageId === 'spinasm') {
@@ -35,7 +29,6 @@ export function initializeBankStatusBar(context: vscode.ExtensionContext): void 
     })
   );
 
-  // Update when settings change
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('spinasm.statusBar.enabled')) {
@@ -44,22 +37,15 @@ export function initializeBankStatusBar(context: vscode.ExtensionContext): void 
     })
   );
 
-  // Initial update
   updateBankStatusBarImmediate();
 }
 
-/**
- * @brief Dispose the status bar on deactivation
- */
 export function disposeBankStatusBar(): void {
   if (bankStatusBar) {
     bankStatusBar.dispose();
   }
 }
 
-/**
- * @brief Get the status symbol for a bank
- */
 function getStatusSymbol(status: BankStatus): string {
   switch (status) {
     case BankStatus.Empty:
@@ -69,17 +55,13 @@ function getStatusSymbol(status: BankStatus): string {
     case BankStatus.UpToDate:
       return '✓';
     case BankStatus.OutOfDate:
-      return '⚠';  // Warning symbol - hex is stale
+      return '⚠';
     default:
       return '?';
   }
 }
 
-/**
- * @brief Updates the status bar with current bank compilation status synchronously from cache.
- */
 function updateBankStatusBarImmediate(): void {
-  // Check if status bar is enabled
   if (!Config.getStatusBarEnabled()) {
     bankStatusBar.hide();
     return;
@@ -99,7 +81,7 @@ function updateBankStatusBarImmediate(): void {
     let statusText = "SpinASM: ";
     let hasOutOfDate = false;
 
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < BANK_COUNT; i++) {
       const bankInfo = cachedBanks[i];
       const symbol = getStatusSymbol(bankInfo.status);
       statusText += `[${i}${symbol}]`;
@@ -111,7 +93,6 @@ function updateBankStatusBarImmediate(): void {
 
     bankStatusBar.text = statusText;
 
-    // Update tooltip based on status
     if (hasOutOfDate) {
       bankStatusBar.tooltip = "⚠ Some programs need recompilation (click for details)";
     } else {
@@ -119,15 +100,11 @@ function updateBankStatusBarImmediate(): void {
     }
 
     bankStatusBar.show();
-  } catch (error) {
-    // Hide bar silently on parsing errors
+  } catch {
     bankStatusBar.hide();
   }
 }
 
-/**
- * @brief Format time difference in a human-readable way
- */
 function formatTimeDiff(date1: Date, date2: Date): string {
   const diffMs = Math.abs(date1.getTime() - date2.getTime());
   const diffSec = Math.floor(diffMs / 1000);
@@ -146,9 +123,6 @@ function formatTimeDiff(date1: Date, date2: Date): string {
   }
 }
 
-/**
- * @brief Shows detailed information about bank compilation status
- */
 export async function showBankStatus(): Promise<void> {
   const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
@@ -162,7 +136,7 @@ export async function showBankStatus(): Promise<void> {
     const cachedBanks = manager.getBanksSync(folder);
     const items = [];
 
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < BANK_COUNT; i++) {
       const bankInfo = cachedBanks[i];
       let label = "";
       let detail = "";
@@ -218,7 +192,6 @@ export async function showBankStatus(): Promise<void> {
         const doc = await vscode.workspace.openTextDocument(programPath);
         await vscode.window.showTextDocument(doc);
 
-        // If the bank needs compilation, offer to compile it
         if (selection.needsCompile) {
           const action = await vscode.window.showInformationMessage(
             `Bank ${selection.bank} needs compilation`,
