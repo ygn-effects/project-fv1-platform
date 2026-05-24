@@ -17,16 +17,14 @@ let validator: SpinASMValidator;
 
 // Lazy-loaded serialport-dependent modules; loading them eagerly costs hundreds of
 // ms because @serialport/bindings-cpp is a native module. Commands that need them
-// import on first use via these getters.
+// require() on first use via these getters.
 
-async function getUtils(): Promise<typeof UtilsType> {
-  const mod = await import("./utils.js");
-  return mod.default as unknown as typeof UtilsType;
+function getUtils(): typeof UtilsType {
+  return require("./utils.js").default;
 }
 
-async function getProgrammer(): Promise<typeof ProgrammerType> {
-  const mod = await import("./programmer.js");
-  return mod.default as unknown as typeof ProgrammerType;
+function getProgrammer(): typeof ProgrammerType {
+  return require("./programmer.js").default;
 }
 
 async function requireProject(folder: string): Promise<Project> {
@@ -291,7 +289,7 @@ async function pickBank(): Promise<number | undefined> {
 
 async function selectSerialPort(): Promise<void> {
   try {
-    const Utils = await getUtils();
+    const Utils = getUtils();
     const ports = await Utils.listSerialPorts();
 
     if (ports.length === 0) {
@@ -329,7 +327,7 @@ async function autoDetectProgrammer(): Promise<void> {
     cancellable: false
   }, async () => {
     try {
-      const Utils = await getUtils();
+      const Utils = getUtils();
       const baudRate = Config.getBaudRate();
       const detectedPort = await Utils.detectProgrammer(baudRate);
 
@@ -567,8 +565,7 @@ async function createProject(): Promise<void> {
     // First-time setup: compiler may not be configured yet, so we bypass the
     // manager and use a throwaway Project just for file creation. The manager
     // picks up the new files via the create watcher.
-    const mod = await import("./project.js");
-    const ProjectCtor = mod.default as unknown as typeof import("./project").default;
+    const ProjectCtor = require("./project.js").default as typeof import("./project").default;
     const project = new ProjectCtor(folder);
     await project.createProjectStructure();
     project.dispose();
@@ -588,7 +585,7 @@ async function checkHardwareConnection(): Promise<void> {
     return;
   }
 
-  const Programmer = await getProgrammer();
+  const Programmer = getProgrammer();
   let programmer: ProgrammerType | null = null;
 
   try {
@@ -664,7 +661,7 @@ async function runOperation(
 }
 
 async function performUpload(project: Project, settings: ProjectSettings, bank: number): Promise<void> {
-  const Programmer = await getProgrammer();
+  const Programmer = getProgrammer();
   let programmer: ProgrammerType | null = null;
 
   try {
