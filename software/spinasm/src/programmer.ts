@@ -116,16 +116,17 @@ export default class Programmer {
 
   public async writeProgram(address: number, program: Buffer): Promise<void> {
     // Pad short buffers so every write covers a full EEPROM page.
-    if (program.length < BANK_SIZE_BYTES) {
-        const padding = Buffer.alloc(BANK_SIZE_BYTES - program.length, EEPROM_BLANK_BYTE);
-        program = Buffer.concat([program, padding]);
+    let payload = program;
+    if (payload.length < BANK_SIZE_BYTES) {
+        const padding = Buffer.alloc(BANK_SIZE_BYTES - payload.length, EEPROM_BLANK_BYTE);
+        payload = Buffer.concat([payload, padding]);
     }
 
     for (let offset = 0; offset < BANK_SIZE_BYTES; offset += EEPROM_BLOCK_SIZE_BYTES) {
       const currentAddress = address + offset;
 
       let data = Buffer.alloc(EEPROM_BLOCK_SIZE_BYTES);
-      program.copy(data, 0, offset, offset + EEPROM_BLOCK_SIZE_BYTES);
+      payload.copy(data, 0, offset, offset + EEPROM_BLOCK_SIZE_BYTES);
 
       if (! (await this.sendWriteOrder())) {
         throw new Error("Failed to send WRITE order.");
@@ -337,7 +338,7 @@ export default class Programmer {
           }
         }
 
-        resolve(data.slice(1));
+        resolve(data.subarray(1));
       });
 
       this.serialPort.write(message, (err) => {

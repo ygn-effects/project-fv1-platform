@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import type Project from "./project";
 import type UtilsType from "./utils";
+import type { SerialPortInfo } from "./utils";
 import type ProgrammerType from "./programmer";
 import Config from "./config";
 import Logs, { LogType } from "./logs";
@@ -20,12 +21,12 @@ let validator: SpinASMValidator;
 
 async function getUtils(): Promise<typeof UtilsType> {
   const mod = await import("./utils.js");
-  return (mod as unknown as { default: typeof UtilsType }).default;
+  return mod.default as unknown as typeof UtilsType;
 }
 
 async function getProgrammer(): Promise<typeof ProgrammerType> {
   const mod = await import("./programmer.js");
-  return (mod as unknown as { default: typeof ProgrammerType }).default;
+  return mod.default as unknown as typeof ProgrammerType;
 }
 
 async function requireProject(folder: string): Promise<Project> {
@@ -298,7 +299,7 @@ async function selectSerialPort(): Promise<void> {
       return;
     }
 
-    const items = ports.map((port: any) => ({
+    const items = ports.map((port: SerialPortInfo) => ({
       label: port.path,
       description: port.manufacturer || "",
       detail: `VID: ${port.vendorId || 'N/A'} | PID: ${port.productId || 'N/A'}`,
@@ -567,7 +568,7 @@ async function createProject(): Promise<void> {
     // manager and use a throwaway Project just for file creation. The manager
     // picks up the new files via the create watcher.
     const mod = await import("./project.js");
-    const ProjectCtor = (mod as unknown as { default: typeof import("./project").default }).default;
+    const ProjectCtor = mod.default as unknown as typeof import("./project").default;
     const project = new ProjectCtor(folder);
     await project.createProjectStructure();
     project.dispose();
