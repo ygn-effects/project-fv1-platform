@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import Config from "./config";
 
 function getFormattedDate(): string {
   const d = new Date();
@@ -8,8 +9,9 @@ function getFormattedDate(): string {
 }
 
 export enum LogType {
-  INFO = 0,
-  ERROR = 1,
+  DEBUG = 0,
+  INFO = 1,
+  ERROR = 2,
 }
 
 export default class Logs {
@@ -22,6 +24,11 @@ export default class Logs {
   }
 
   public static log(type: LogType, message: string): void {
+    // DEBUG is high-volume (every serial byte) — drop unless explicitly opted in.
+    if (type === LogType.DEBUG && !Config.getVerboseLogging()) {
+      return;
+    }
+
     // Lazy-create so loggers that fire before activate() called createChannel
     // don't crash.
     if (!this.logChannel) {
@@ -32,6 +39,10 @@ export default class Logs {
     const timestamp = getFormattedDate();
 
     switch (type) {
+      case LogType.DEBUG:
+        channel.appendLine(`${timestamp} | DEBUG | ${message}`);
+        break;
+
       case LogType.INFO:
         channel.appendLine(`${timestamp} | INFO  | ${message}`);
         break;

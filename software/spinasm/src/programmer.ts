@@ -347,7 +347,7 @@ export default class Programmer {
           Logs.log(LogType.ERROR, `Failed to write message: ${err.message}`);
           reject(err);
         } else {
-          Logs.log(LogType.INFO, `Message sent: ${message.toString("hex")}`);
+          Logs.log(LogType.DEBUG, `Message sent: ${message.toString("hex")}`);
         }
       });
     });

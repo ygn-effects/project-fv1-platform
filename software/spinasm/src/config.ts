@@ -34,6 +34,11 @@ export default class Config {
     return config.get<boolean>("statusBar.enabled", true);
   }
 
+  public static getVerboseLogging(): boolean {
+    const config = vscode.workspace.getConfiguration("spinasm");
+    return config.get<boolean>("logging.verbose", false);
+  }
+
   public static async setSerialPort(port: string, global: boolean = false): Promise<void> {
     const config = vscode.workspace.getConfiguration("spinasm");
     await config.update("programmer.serialPort", port, global);

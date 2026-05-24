@@ -52,6 +52,11 @@
           "type": "boolean",
           "default": true,
           "description": "Show compilation status in the status bar. Useful to disable when batch-compiling EEPROMs."
+        },
+        "spinasm.logging.verbose": {
+          "type": "boolean",
+          "default": false,
+          "description": "Emit DEBUG-level log entries (per-message serial traffic, etc). Off by default — only enable when troubleshooting the programmer."
         }
       }
     },
