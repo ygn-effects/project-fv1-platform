@@ -63,71 +63,148 @@
     "commands": [
       {
         "command": "spinasm.createProject",
-        "title": "SpinASM: Create Project"
+        "title": "Create Project",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.checkProjectSettings",
-        "title": "SpinASM: Check Hardware Connection"
+        "title": "Check Hardware Connection",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.showSerialConfig",
-        "title": "SpinASM: Show Configuration"
+        "title": "Show Configuration",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.selectSerialPort",
-        "title": "SpinASM: Select Serial Port..."
+        "title": "Select Serial Port...",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.autoDetectProgrammer",
-        "title": "SpinASM: Auto-Detect Programmer"
+        "title": "Auto-Detect Programmer",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.showBankStatus",
-        "title": "SpinASM: Show Bank Status"
+        "title": "Show Bank Status",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.showResourceUsage",
-        "title": "SpinASM: Show Resource Usage"
+        "title": "Show Resource Usage",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.compileBank",
-        "title": "SpinASM: Compile Specific Bank..."
+        "title": "Compile Specific Bank...",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.uploadBank",
-        "title": "SpinASM: Upload Specific Bank..."
+        "title": "Upload Specific Bank...",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.compileAndUploadBank",
-        "title": "SpinASM: Compile & Upload Specific Bank..."
+        "title": "Compile & Upload Specific Bank...",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.compileCurrentProgram",
-        "title": "SpinASM: Compile current program"
+        "title": "Compile current program",
+        "category": "SpinASM",
+        "icon": "$(check)"
       },
       {
         "command": "spinasm.compileAllPrograms",
-        "title": "SpinASM: Compile all programs"
+        "title": "Compile all programs",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.compileAllProgramsToBin",
-        "title": "SpinASM: Compile all programs to .bin"
+        "title": "Compile all programs to .bin",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.uploadAllPrograms",
-        "title": "SpinASM: Upload all programs"
+        "title": "Upload all programs",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.compileAndUploadAllPrograms",
-        "title": "SpinASM: Compile & Upload all programs"
+        "title": "Compile & Upload all programs",
+        "category": "SpinASM"
       },
       {
         "command": "spinasm.uploadCurrentProgram",
-        "title": "SpinASM: Upload current program"
+        "title": "Upload current program",
+        "category": "SpinASM",
+        "icon": "$(arrow-up)"
       },
       {
         "command": "spinasm.compileAndUploadCurrentProgram",
-        "title": "SpinASM: Compile & Upload current program"
+        "title": "Compile & Upload current program",
+        "category": "SpinASM",
+        "icon": "$(zap)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "spinasm.compileCurrentProgram",
+          "when": "editorLangId == spinasm"
+        },
+        {
+          "command": "spinasm.uploadCurrentProgram",
+          "when": "editorLangId == spinasm"
+        },
+        {
+          "command": "spinasm.compileAndUploadCurrentProgram",
+          "when": "editorLangId == spinasm"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "spinasm.compileCurrentProgram",
+          "when": "resourceLangId == spinasm",
+          "group": "navigation@1"
+        },
+        {
+          "command": "spinasm.compileAndUploadCurrentProgram",
+          "when": "resourceLangId == spinasm",
+          "group": "navigation@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "spinasm.compileCurrentProgram",
+          "when": "resourceLangId == spinasm",
+          "group": "spinasm@1"
+        },
+        {
+          "command": "spinasm.compileAndUploadCurrentProgram",
+          "when": "resourceLangId == spinasm",
+          "group": "spinasm@2"
+        },
+        {
+          "command": "spinasm.uploadCurrentProgram",
+          "when": "resourceLangId == spinasm",
+          "group": "spinasm@3"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "spinasm.compileCurrentProgram",
+        "key": "ctrl+alt+b",
+        "when": "editorTextFocus && editorLangId == spinasm"
+      },
+      {
+        "command": "spinasm.compileAndUploadCurrentProgram",
+        "key": "ctrl+alt+u",
+        "when": "editorTextFocus && editorLangId == spinasm"
       }
     ],
     "languages": [
