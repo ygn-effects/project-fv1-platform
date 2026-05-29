@@ -80,6 +80,7 @@ function updateBankStatusBarImmediate(): void {
 
     let statusText = "SpinASM: ";
     let hasOutOfDate = false;
+    let hasAmbiguous = false;
 
     for (let i = 0; i < BANK_COUNT; i++) {
       const bankInfo = cachedBanks[i];
@@ -89,15 +90,22 @@ function updateBankStatusBarImmediate(): void {
       if (bankInfo.status === BankStatus.OutOfDate) {
         hasOutOfDate = true;
       }
+      if (bankInfo.extraFiles.length > 0) {
+        hasAmbiguous = true;
+      }
     }
 
     bankStatusBar.text = statusText;
 
+    const tooltipLines: string[] = [];
     if (hasOutOfDate) {
-      bankStatusBar.tooltip = "⚠ Some programs need recompilation (click for details)";
-    } else {
-      bankStatusBar.tooltip = "Click to view bank details";
+      tooltipLines.push("⚠ Some programs need recompilation");
     }
+    if (hasAmbiguous) {
+      tooltipLines.push("⚠ Some banks contain more than one .spn file");
+    }
+    tooltipLines.push("Click for details");
+    bankStatusBar.tooltip = tooltipLines.join("\n");
 
     bankStatusBar.show();
   } catch {
@@ -169,6 +177,12 @@ export async function showBankStatus(): Promise<void> {
             label = `✗ Bank ${i}: ${fileName}`;
             detail = "Not compiled yet";
             break;
+        }
+
+        if (bankInfo.extraFiles.length > 0) {
+          const ignored = bankInfo.extraFiles.map(f => path.basename(f)).join(", ");
+          detail = `${detail}  •  ⚠ also in folder (ignored): ${ignored}`;
+          description = description ? `${description} • ⚠ ambiguous` : "⚠ ambiguous";
         }
       }
 

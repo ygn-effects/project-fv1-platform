@@ -153,13 +153,13 @@ export function activate(context: vscode.ExtensionContext): void {
     const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
     if (!folder) { return; }
 
-    const baseName = path.basename(uri.fsPath, ".hex");
-    const cachedBanks = projectManager.getBanksSync(folder);
-    for (let i = 0; i < BANK_COUNT; i++) {
-      if (cachedBanks[i].spnFile && path.basename(cachedBanks[i].spnFile!, ".spn") === baseName) {
-        await projectManager.refreshBank(folder, i);
-        break;
-      }
+    // Outputs are named bank_<N>.hex, so the bank index is in the filename.
+    const match = /^bank_(\d+)$/i.exec(path.basename(uri.fsPath, ".hex"));
+    if (!match) { return; }
+
+    const bankIndex = parseInt(match[1], 10);
+    if (bankIndex >= 0 && bankIndex < BANK_COUNT) {
+      await projectManager.refreshBank(folder, bankIndex);
     }
   };
 

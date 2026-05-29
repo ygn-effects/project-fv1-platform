@@ -18,6 +18,8 @@ export interface CachedBankInfo {
   hexFile: string | null;
   spnTime: Date | null;
   hexTime: Date | null;
+  /** Extra .spn files in the bank folder beyond the chosen program; non-empty = ambiguous. */
+  extraFiles: string[];
 }
 
 /**
@@ -149,7 +151,8 @@ export class ProjectManager {
       spnFile: null,
       hexFile: null,
       spnTime: null,
-      hexTime: null
+      hexTime: null,
+      extraFiles: []
     }));
     this.projectCache.set(rootPath, placeholder);
 
@@ -175,7 +178,11 @@ export class ProjectManager {
       }
 
       const spnFile = project.getAllPrograms()[bankIndex];
-      const updatedInfo = await this.buildBankInfo(spnFile, project.getOutput(bankIndex));
+      const updatedInfo = await this.buildBankInfo(
+        spnFile,
+        project.getOutput(bankIndex),
+        project.getExtraPrograms(bankIndex)
+      );
 
       let cachedArray = this.projectCache.get(rootPath);
       if (!cachedArray) {
@@ -184,7 +191,8 @@ export class ProjectManager {
           spnFile: null,
           hexFile: null,
           spnTime: null,
-          hexTime: null
+          hexTime: null,
+          extraFiles: []
         }));
       }
 
@@ -228,7 +236,7 @@ export class ProjectManager {
 
       const programs = project.getAllPrograms();
       const tasks = Array.from({ length: BANK_COUNT }, (_, i) =>
-        this.buildBankInfo(programs[i], project.getOutput(i))
+        this.buildBankInfo(programs[i], project.getOutput(i), project.getExtraPrograms(i))
       );
 
       const updatedBanks = await Promise.all(tasks);
@@ -239,14 +247,19 @@ export class ProjectManager {
     }
   }
 
-  private async buildBankInfo(spnFile: string | null, hexFile: string | null): Promise<CachedBankInfo> {
+  private async buildBankInfo(
+    spnFile: string | null,
+    hexFile: string | null,
+    extraFiles: string[] = []
+  ): Promise<CachedBankInfo> {
     if (!spnFile) {
       return {
         status: BankStatus.Empty,
         spnFile: null,
         hexFile: null,
         spnTime: null,
-        hexTime: null
+        hexTime: null,
+        extraFiles
       };
     }
 
@@ -256,7 +269,8 @@ export class ProjectManager {
         spnFile,
         hexFile: null,
         spnTime: null,
-        hexTime: null
+        hexTime: null,
+        extraFiles
       };
     }
 
@@ -276,7 +290,8 @@ export class ProjectManager {
         spnFile,
         hexFile,
         spnTime,
-        hexTime
+        hexTime,
+        extraFiles
       };
     } catch {
       return {
@@ -284,7 +299,8 @@ export class ProjectManager {
         spnFile,
         hexFile: hexFile,
         spnTime: null,
-        hexTime: null
+        hexTime: null,
+        extraFiles
       };
     }
   }

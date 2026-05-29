@@ -18,6 +18,9 @@ export default class Project {
   private compilerArguments: string[];
   private programs: (string | null)[];
   private outputs: string[];
+  // Per bank: extra .spn files found in the folder beyond the chosen program.
+  // Non-empty means the bank is ambiguous and we picked one deterministically.
+  private programExtras: string[][];
 
   private readonly onDidCompileEmitter = new vscode.EventEmitter<number>();
   public readonly onDidCompile = this.onDidCompileEmitter.event;
@@ -33,6 +36,7 @@ export default class Project {
     this.compilerArguments = [];
     this.programs = [];
     this.outputs = [];
+    this.programExtras = [];
   }
 
   public getRootFolder(): string {
@@ -64,11 +68,13 @@ export default class Project {
   }
 
   public async createProjectStructure(): Promise<void> {
-    const programContent = "; Blank SpinASM program";
-
     for (let i = 0; i < BANK_COUNT; i++) {
       const folder = path.join(this.rootFolder, `bank_${i}`);
-      const file = path.join(folder, `${i}_programName.spn`);
+      const file = path.join(folder, "program.spn");
+
+      // One .spn per bank_<N>/ folder; the filename is free-form because the
+      // bank is decided by the folder, not the name.
+      const programContent = `; Bank ${i} program — rename this file freely.\n`;
 
       try {
         try {
@@ -226,28 +232,51 @@ export default class Project {
   public async scanPrograms(): Promise<void> {
     this.programs = [];
     this.outputs = [];
+    this.programExtras = [];
 
     for (let i = 0; i < BANK_COUNT; i++) {
       const currentFolder = path.join(this.rootFolder, `bank_${i}`);
 
+      this.programs[i] = null;
+      this.outputs[i] = "";
+      this.programExtras[i] = [];
+
       try {
         await fsPromises.access(currentFolder);
         const files = await fsPromises.readdir(currentFolder);
-        const programFile = files.find(file => /^[0-7].*\.spn$/.test(file));
 
-        if (programFile) {
-          this.programs[i] = path.join(currentFolder, programFile);
-          this.outputs[i] = path.join(this.outputFolder, `${path.parse(programFile).name}.hex`);
+        // Any .spn in the folder is a candidate — the bank is decided by the
+        // folder, not the filename. Sort for a stable choice and keep the rest
+        // as "extras" so an ambiguous folder is surfaced, not silently resolved.
+        const candidates = files
+          .filter(file => /\.spn$/i.test(file))
+          .sort((a, b) => a.localeCompare(b));
+
+        if (candidates.length === 0) {
           continue;
+        }
+
+        const [chosen, ...extras] = candidates;
+        this.programs[i] = path.join(currentFolder, chosen);
+        this.outputs[i] = path.join(this.outputFolder, `bank_${i}.hex`);
+        this.programExtras[i] = extras.map(file => path.join(currentFolder, file));
+
+        if (extras.length > 0) {
+          Logs.log(
+            LogType.WARNING,
+            `Bank ${i}: ${candidates.length} .spn files in bank_${i}/ — using ` +
+            `"${chosen}", ignoring ${extras.map(e => `"${e}"`).join(", ")}.`
+          );
         }
       }
       catch {
         // folder doesn't exist or can't be read; treat as empty bank
       }
-
-      this.programs[i] = null;
-      this.outputs[i] = "";
     }
+  }
+
+  public getExtraPrograms(bank: number): string[] {
+    return this.programExtras[bank] ?? [];
   }
 
   public async removeHexProgram(path: string): Promise<void> {

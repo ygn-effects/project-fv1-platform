@@ -11,7 +11,8 @@ function getFormattedDate(): string {
 export enum LogType {
   DEBUG = 0,
   INFO = 1,
-  ERROR = 2,
+  WARNING = 2,
+  ERROR = 3,
 }
 
 export default class Logs {
@@ -45,6 +46,10 @@ export default class Logs {
 
       case LogType.INFO:
         channel.appendLine(`${timestamp} | INFO  | ${message}`);
+        break;
+
+      case LogType.WARNING:
+        channel.appendLine(`${timestamp} | WARN  | ${message}`);
         break;
 
       case LogType.ERROR:
