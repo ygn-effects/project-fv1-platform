@@ -382,9 +382,9 @@ async function compileAndUploadBank(bank: number): Promise<void> {
   }, `Failed to compile and upload program ${bank}`, `Compiling & Uploading Bank ${bank}...`, { requireProgrammer: true });
 }
 
-async function compileCurrentProgram(): Promise<void> {
+async function compileCurrentProgram(uri?: vscode.Uri): Promise<void> {
   await runOperation(async (project) => {
-    const currentProgram = getCurrentBank(project);
+    const currentProgram = getCurrentBank(project, uri);
 
     if (currentProgram === -1) {
       throw new Error("Current file is not a valid project program.");
@@ -396,9 +396,9 @@ async function compileCurrentProgram(): Promise<void> {
   }, "Failed to compile current program", "Compiling current program...");
 }
 
-async function uploadCurrentProgram(): Promise<void> {
+async function uploadCurrentProgram(uri?: vscode.Uri): Promise<void> {
   await runOperation(async (project, settings) => {
-    const currentProgram = getCurrentBank(project);
+    const currentProgram = getCurrentBank(project, uri);
 
     if (currentProgram === -1) {
       throw new Error("Current file is not a valid project program.");
@@ -409,9 +409,9 @@ async function uploadCurrentProgram(): Promise<void> {
   }, "Failed to upload current program", "Uploading Current Program...", { requireProgrammer: true });
 }
 
-async function compileAndUploadCurrentProgram(): Promise<void> {
+async function compileAndUploadCurrentProgram(uri?: vscode.Uri): Promise<void> {
   await runOperation(async (project, settings) => {
-    const currentProgram = getCurrentBank(project);
+    const currentProgram = getCurrentBank(project, uri);
 
     if (currentProgram === -1) {
       throw new Error("Current file is not a valid project program.");
@@ -690,8 +690,13 @@ async function performUpload(project: Project, settings: ProjectSettings, bank: 
   }
 }
 
-function getCurrentBank(project: Project): number {
-  return project.getProgramBankByPath(vscode.window.activeTextEditor?.document.uri.fsPath);
+function getCurrentBank(project: Project, uri?: vscode.Uri): number {
+  // Menu invocations (editor title/context, explorer tree) pass the target
+  // file's URI; palette and keybinding invocations pass nothing and fall back
+  // to the active editor. Passing the URI also makes split views correct — the
+  // button acts on its own editor, not whichever happens to be focused.
+  const fsPath = uri?.fsPath ?? vscode.window.activeTextEditor?.document.uri.fsPath;
+  return project.getProgramBankByPath(fsPath);
 }
 
 interface ProjectSettings {

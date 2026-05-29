@@ -193,6 +193,23 @@
           "when": "resourceLangId == spinasm",
           "group": "spinasm@3"
         }
+      ],
+      "explorer/context": [
+        {
+          "command": "spinasm.compileCurrentProgram",
+          "when": "resourceLangId == spinasm",
+          "group": "spinasm@1"
+        },
+        {
+          "command": "spinasm.compileAndUploadCurrentProgram",
+          "when": "resourceLangId == spinasm",
+          "group": "spinasm@2"
+        },
+        {
+          "command": "spinasm.uploadCurrentProgram",
+          "when": "resourceLangId == spinasm",
+          "group": "spinasm@3"
+        }
       ]
     },
     "keybindings": [
