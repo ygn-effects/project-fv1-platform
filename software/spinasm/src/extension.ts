@@ -364,18 +364,12 @@ async function compileBank(bank: number): Promise<void> {
 }
 
 async function uploadBank(bank: number): Promise<void> {
-  const folder = await getWorkspaceFolder();
-
-  if (!folder) {
-    return;
-  }
-
   await runOperation(async (project, settings) => {
     await performUpload(project, settings, bank);
 
     Logs.log(LogType.INFO, `Program ${bank} upload successful`);
     vscode.window.showInformationMessage(`Program ${bank} uploaded successfully!`);
-  }, `Failed to upload program ${bank}`, `Uploading Bank ${bank}...`);
+  }, `Failed to upload program ${bank}`, `Uploading Bank ${bank}...`, { requireProgrammer: true });
 }
 
 async function compileAndUploadBank(bank: number): Promise<void> {
@@ -385,7 +379,7 @@ async function compileAndUploadBank(bank: number): Promise<void> {
 
     Logs.log(LogType.INFO, `Program ${bank} compiled and uploaded successfully`);
     vscode.window.showInformationMessage(`Program ${bank} compiled and uploaded successfully!`);
-  }, `Failed to compile and upload program ${bank}`, `Compiling & Uploading Bank ${bank}...`);
+  }, `Failed to compile and upload program ${bank}`, `Compiling & Uploading Bank ${bank}...`, { requireProgrammer: true });
 }
 
 async function compileCurrentProgram(): Promise<void> {
@@ -412,7 +406,7 @@ async function uploadCurrentProgram(): Promise<void> {
 
     await performUpload(project, settings, currentProgram);
     vscode.window.showInformationMessage(`Program ${currentProgram} uploaded successfully!`);
-  }, "Failed to upload current program", "Uploading Current Program...");
+  }, "Failed to upload current program", "Uploading Current Program...", { requireProgrammer: true });
 }
 
 async function compileAndUploadCurrentProgram(): Promise<void> {
@@ -426,7 +420,7 @@ async function compileAndUploadCurrentProgram(): Promise<void> {
     await project.compileProgramToHex(currentProgram);
     await performUpload(project, settings, currentProgram);
     vscode.window.showInformationMessage(`Program ${currentProgram} compiled and uploaded successfully!`);
-  }, "Failed to compile and upload current program", "Compiling & Uploading Current Program...");
+  }, "Failed to compile and upload current program", "Compiling & Uploading Current Program...", { requireProgrammer: true });
 }
 
 async function compileAllPrograms(): Promise<void> {
@@ -465,7 +459,7 @@ async function uploadAllPrograms(): Promise<void> {
     }
 
     try {
-      const settings = loadSettings();
+      const settings = loadSettings({ requireProgrammer: true });
       const project = await requireProject(folder);
 
       const programs = project.getAllPrograms();
@@ -512,7 +506,7 @@ async function compileAndUploadAllPrograms(): Promise<void> {
     }
 
     try {
-      const settings = loadSettings();
+      const settings = loadSettings({ requireProgrammer: true });
       const project = await requireProject(folder);
 
       const programs = project.getAllPrograms();
@@ -589,7 +583,7 @@ async function checkHardwareConnection(): Promise<void> {
   let programmer: ProgrammerType | null = null;
 
   try {
-    const settings = loadSettings();
+    const settings = loadSettings({ requireProgrammer: true });
 
     const project = await requireProject(folder);
     await project.checkCompiler();
@@ -637,7 +631,8 @@ async function showConfig(): Promise<void> {
 async function runOperation(
   operation: (project: Project, settings: ProjectSettings) => Promise<void>,
   errorMessage: string,
-  progressTitle: string
+  progressTitle: string,
+  options: { requireProgrammer?: boolean } = {}
 ): Promise<void> {
   const folder = await getWorkspaceFolder();
   if (!folder) {
@@ -650,7 +645,7 @@ async function runOperation(
     cancellable: false
   }, async () => {
     try {
-        const settings = loadSettings();
+        const settings = loadSettings(options);
         const project = await requireProject(folder);
         await operation(project, settings);
     }
@@ -706,15 +701,18 @@ interface ProjectSettings {
   baudRate: number;
 }
 
-function loadSettings(): ProjectSettings {
-  const compilerPath = Config.getCompilerPath();
-  const serialPort = Config.getSerialPort();
+function loadSettings(options: { requireProgrammer?: boolean } = {}): ProjectSettings {
+  const { requireProgrammer = false } = options;
 
+  const compilerPath = Config.getCompilerPath();
   if (!compilerPath) {
     throw new Error("Compiler path is not set in Settings.");
   }
 
-  if (!serialPort) {
+  // Only upload/hardware operations talk to the programmer; compile-only
+  // commands must work with no serial port configured.
+  const serialPort = Config.getSerialPort();
+  if (requireProgrammer && !serialPort) {
     throw new Error("Serial port is not set in Settings.");
   }
 
