@@ -37,8 +37,8 @@
 
     "JAM Instruction": {
       "prefix": "jam",
-      "body": "jam ${1:ADDRESS}",
-      "description": "Jump to ADDRESS"
+      "body": "jam ${1|RMP0,RMP1|}",
+      "description": "Reset the specified ramp LFO (RMP0 or RMP1) to its starting position"
     },
 
     "Basic Effect Skeleton": {
@@ -80,17 +80,20 @@
 
     "MEM Directive": {
       "prefix": "mem",
-      "body": "${1:LABEL} mem ${2:SIZE}",
-      "description": "Allocate memory"
+      "body": "mem ${1:LABEL} ${2:SIZE}",
+      "description": "Allocate delay memory (mem NAME SIZE)"
     },
 
-    "Infinite Loop": {
-      "prefix": "loop",
+    "Run-once Init Block": {
+      "prefix": "skprun",
       "body": [
-        "${1:loop_label}:",
-        "  ${2:}",
-        "  jam ${1:loop_label}"
+        "skp run, ${1:main}",
+        "; one-time init — runs only on the first sample",
+        "${2:}",
+        "${1:main}:",
+        "; main processing — runs every sample",
+        "${3:}"
       ],
-      "description": "Infinite loop"
+      "description": "Skip initialization after the first sample (SKP RUN pattern)"
     }
   }
