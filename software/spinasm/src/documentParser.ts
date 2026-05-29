@@ -89,8 +89,12 @@ export class DocumentParser {
         continue;
       }
 
-      // equ <name> <value>
-      const equMatch = /^\s*equ\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+)$/i.exec(codeOnly);
+      // equ <name> <value> — asfv1 accepts both the directive-first
+      // `EQU NAME VALUE` and the conventional SpinASM `NAME EQU VALUE`.
+      // Both regexes capture name in group 1 and value in group 2.
+      const equMatch =
+        /^\s*equ\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+)$/i.exec(codeOnly) ||
+        /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+equ\s+(.+)$/i.exec(codeOnly);
       if (equMatch) {
         const symbolName = equMatch[1];
         const symbolValue = equMatch[2].trim();
@@ -143,12 +147,15 @@ export class DocumentParser {
         continue;
       }
 
-      // mem <name> <size>
-      const memMatch = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(\d+)/i.exec(codeOnly);
+      // mem <name> <size> — asfv1 always uses the directive-first form. The
+      // size may be an integer literal or an expression (e.g. int(32767*3/5));
+      // register the symbol either way, but only range-check and count toward
+      // the memory total when it's a plain integer.
+      const memMatch = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+)$/i.exec(codeOnly);
       if (memMatch) {
         const symbolName = memMatch[1];
-        const sizeStr = memMatch[2];
-        const size = parseInt(sizeStr, 10);
+        const sizeStr = memMatch[2].trim();
+        const size = /^\d+$/.test(sizeStr) ? parseInt(sizeStr, 10) : NaN;
         const symbolUpper = symbolName.toUpperCase();
 
         const charIndex = lineText.indexOf(symbolName);
@@ -175,7 +182,7 @@ export class DocumentParser {
           continue;
         }
 
-        if (size <= 0 || size > MEMORY_MAX_INDEX) {
+        if (!isNaN(size) && (size <= 0 || size > MEMORY_MAX_INDEX)) {
           const sizeCharIndex = lineText.indexOf(sizeStr);
           const sizePos = sizeCharIndex !== -1 ? sizeCharIndex : actualChar + symbolName.length + 1;
           diagnostics.push({
@@ -189,13 +196,15 @@ export class DocumentParser {
         symbols.set(symbolUpper, {
           name: symbolName,
           type: 'memory',
-          value: size,
+          value: isNaN(size) ? sizeStr : size,
           line: i,
           character: actualChar,
           length: symbolName.length
         });
 
-        memoryAllocations.set(symbolName, size);
+        if (!isNaN(size)) {
+          memoryAllocations.set(symbolName, size);
+        }
         continue;
       }
 

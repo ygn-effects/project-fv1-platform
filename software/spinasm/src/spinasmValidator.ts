@@ -60,8 +60,13 @@ export class SpinASMValidator {
         continue;
       }
 
-      // equ/mem and bare labels are validated in the parser pass.
+      // equ/mem and bare labels are validated in the parser pass. equ accepts
+      // both `EQU NAME VALUE` and the SpinASM `NAME EQU VALUE` order.
       if (/^\s*(equ|mem)\s+/i.test(codeOnly)) {
+        continue;
+      }
+
+      if (/^\s*[a-zA-Z_][a-zA-Z0-9_]*\s+equ\s+/i.test(codeOnly)) {
         continue;
       }
 
