@@ -189,9 +189,9 @@ export default class Programmer {
           throw new Error(`Malformed HEX record at line ${lineNo}: too short (${line.length} chars)`);
         }
 
-        const byteCount = parseInt(line.substr(1, 2), 16);
-        const address = parseInt(line.substr(3, 4), 16);
-        const recordType = parseInt(line.substr(7, 2), 16);
+        const byteCount = parseInt(line.substring(1, 3), 16);
+        const address = parseInt(line.substring(3, 7), 16);
+        const recordType = parseInt(line.substring(7, 9), 16);
 
         if (isNaN(byteCount) || isNaN(address) || isNaN(recordType)) {
           throw new Error(`Malformed HEX record at line ${lineNo}: non-hex header`);
@@ -202,7 +202,7 @@ export default class Programmer {
           throw new Error(`Malformed HEX record at line ${lineNo}: expected ${expectedLength} chars for byteCount=${byteCount}, got ${line.length}`);
         }
 
-        const checksum = parseInt(line.substr(line.length - 2, 2), 16);
+        const checksum = parseInt(line.slice(-2), 16);
         if (isNaN(checksum)) {
           throw new Error(`Malformed HEX record at line ${lineNo}: non-hex checksum`);
         }
@@ -210,7 +210,7 @@ export default class Programmer {
         let calculatedChecksum = byteCount + (address >> 8) + (address & 0xFF) + recordType;
 
         for (let i = 0; i < byteCount; i++) {
-          const byte = parseInt(line.substr(9 + (i * 2), 2), 16);
+          const byte = parseInt(line.substring(9 + i * 2, 11 + i * 2), 16);
           if (isNaN(byte)) {
             throw new Error(`Malformed HEX record at line ${lineNo}: non-hex data byte at offset ${i}`);
           }
@@ -223,7 +223,7 @@ export default class Programmer {
 
         if (recordType === 0x00) { // data
           for (let i = 0; i < byteCount; i++) {
-            const byte = parseInt(line.substr(9 + (i * 2), 2), 16);
+            const byte = parseInt(line.substring(9 + i * 2, 11 + i * 2), 16);
             const absoluteAddress = address + i;
             memoryMap.set(absoluteAddress, byte);
 
