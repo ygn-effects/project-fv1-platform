@@ -155,9 +155,14 @@ export class SpinASMValidator {
       }
     }
 
+    // Instructions whose SECOND (post-comma) operand is the S1.14/S1.9
+    // coefficient with a ±2 range — the value this check captures. SOF/LOG/EXP
+    // are deliberately excluded: their post-comma operand is D, not the
+    // coefficient, and LOG's D ranges to ±16 (S4.6), so a ±2 check would flag
+    // valid code (e.g. `log 0.5, 8`).
     const coefficientInstructions = new Set([
       'RDAX', 'WRAX', 'RDFX', 'WRLX', 'WRHX', 'MAXX',
-      'SOF', 'LOG', 'EXP', 'RDA', 'WRA', 'WRAP'
+      'RDA', 'WRA', 'WRAP'
     ]);
 
     if (coefficientInstructions.has(instruction)) {

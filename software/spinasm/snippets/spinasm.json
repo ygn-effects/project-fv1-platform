@@ -1,99 +1,186 @@
 {
-    "RDAX Instruction": {
-      "prefix": "rdax",
-      "body": "rdax ${1:REG}, ${2:COEFF}",
-      "description": "Read ACCumulate and multiply by COEFF"
-    },
+  "RDAX Instruction": {
+    "prefix": "rdax",
+    "body": "rdax ${1:REG}, ${2:COEFF}",
+    "description": "Read register * COEFF, add to ACC  (ACC = ACC + REG*C)"
+  },
+  "WRAX Instruction": {
+    "prefix": "wrax",
+    "body": "wrax ${1:REG}, ${2:COEFF}",
+    "description": "Write ACC to register, then scale ACC  (REG = ACC; ACC = ACC*C)"
+  },
+  "RDFX Instruction": {
+    "prefix": "rdfx",
+    "body": "rdfx ${1:REG}, ${2:COEFF}",
+    "description": "Read register through a 1-pole filter  ((ACC-REG)*C + REG)"
+  },
+  "WRLX Instruction": {
+    "prefix": "wrlx",
+    "body": "wrlx ${1:REG}, ${2:COEFF}",
+    "description": "Write ACC to register; low-shelf  (REG=ACC; (PACC-ACC)*C+PACC)"
+  },
+  "WRHX Instruction": {
+    "prefix": "wrhx",
+    "body": "wrhx ${1:REG}, ${2:COEFF}",
+    "description": "Write ACC to register; high-shelf  (REG=ACC; ACC*C+PACC)"
+  },
+  "MAXX Instruction": {
+    "prefix": "maxx",
+    "body": "maxx ${1:REG}, ${2:COEFF}",
+    "description": "ACC = max(|ACC|, |REG*C|)"
+  },
+  "MULX Instruction": {
+    "prefix": "mulx",
+    "body": "mulx ${1:REG}",
+    "description": "Multiply ACC by register  (ACC = ACC*REG)"
+  },
+  "LDAX Instruction": {
+    "prefix": "ldax",
+    "body": "ldax ${1:REG}",
+    "description": "Load ACC from register  (ACC = REG)"
+  },
 
-    "WRAX Instruction": {
-      "prefix": "wrax",
-      "body": "wrax ${1:REG}, ${2:COEFF}",
-      "description": "Write ACCumulator to REG with COEFF"
-    },
+  "SOF Instruction": {
+    "prefix": "sof",
+    "body": "sof ${1:COEFF}, ${2:OFFSET}",
+    "description": "Scale and offset ACC  (ACC = C*ACC + D)"
+  },
+  "LOG Instruction": {
+    "prefix": "log",
+    "body": "log ${1:COEFF}, ${2:OFFSET}",
+    "description": "ACC = C*log2(|ACC|) + D   (D is S4.6, range +/-16)"
+  },
+  "EXP Instruction": {
+    "prefix": "exp",
+    "body": "exp ${1:COEFF}, ${2:OFFSET}",
+    "description": "ACC = C*2^ACC + D"
+  },
+  "SKP Instruction": {
+    "prefix": "skp",
+    "body": "skp ${1|RUN,ZRC,ZRO,GEZ,NEG|}, ${2:target}",
+    "description": "Conditionally skip to a label / over N instructions  (SKP CMASK, N)"
+  },
 
-    "MULX Instruction": {
-      "prefix": "mulx",
-      "body": "mulx ${1:REG}",
-      "description": "Multiply ACCumulator by REG"
-    },
+  "RDA Instruction": {
+    "prefix": "rda",
+    "body": "rda ${1:ADDR}, ${2:COEFF}",
+    "description": "Read delay RAM * COEFF, add to ACC  (ACC = ACC + delay[ADDR]*C)"
+  },
+  "WRA Instruction": {
+    "prefix": "wra",
+    "body": "wra ${1:ADDR}, ${2:COEFF}",
+    "description": "Write ACC to delay RAM, then scale ACC  (delay[ADDR]=ACC; ACC*C)"
+  },
+  "WRAP Instruction": {
+    "prefix": "wrap",
+    "body": "wrap ${1:ADDR}, ${2:COEFF}",
+    "description": "Write ACC to delay RAM; scale and add last delay read (all-pass)"
+  },
+  "RMPA Instruction": {
+    "prefix": "rmpa",
+    "body": "rmpa ${1:COEFF}",
+    "description": "Read delay RAM via ADDR_PTR * COEFF, add to ACC (indirect)"
+  },
 
-    "RDFX Instruction": {
-      "prefix": "rdfx",
-      "body": "rdfx ${1:REG}, ${2:COEFF}",
-      "description": "Read Filter and multiply by COEFF"
-    },
+  "WLDS Instruction": {
+    "prefix": "wlds",
+    "body": "wlds ${1|SIN0,SIN1|}, ${2:FREQ}, ${3:AMP}",
+    "description": "Load a sine LFO with frequency and amplitude"
+  },
+  "WLDR Instruction": {
+    "prefix": "wldr",
+    "body": "wldr ${1|RMP0,RMP1|}, ${2:FREQ}, ${3:AMP}",
+    "description": "Load a ramp LFO with frequency and amplitude"
+  },
+  "JAM Instruction": {
+    "prefix": "jam",
+    "body": "jam ${1|RMP0,RMP1|}",
+    "description": "Reset the specified ramp LFO (RMP0 or RMP1) to its starting position"
+  },
+  "CHO RDA Instruction": {
+    "prefix": "chorda",
+    "body": "cho rda, ${1|SIN0,SIN1,RMP0,RMP1|}, ${2:flags}, ${3:ADDR}",
+    "description": "LFO-modulated delay read (chorus, pitch shift). flags: SIN COS REG COMPC COMPA RPTR2 NA"
+  },
+  "CHO SOF Instruction": {
+    "prefix": "chosof",
+    "body": "cho sof, ${1|SIN0,SIN1,RMP0,RMP1|}, ${2:flags}, ${3:OFFSET}",
+    "description": "LFO-coefficient scale and offset (cross-fade for pitch shift)"
+  },
+  "CHO RDAL Instruction": {
+    "prefix": "chordal",
+    "body": "cho rdal, ${1|SIN0,SIN1,RMP0,RMP1|}",
+    "description": "Read the current value of the selected LFO into ACC"
+  },
 
-    "SOF Instruction": {
-      "prefix": "sof",
-      "body": "sof ${1:COEFF}, ${2:OFFSET}",
-      "description": "Scale and Offset ACCumulator"
-    },
+  "EQU Directive": {
+    "prefix": "equ",
+    "body": "equ ${1:NAME} ${2:VALUE}",
+    "description": "Define a symbolic constant  (asfv1 directive-first order)"
+  },
+  "MEM Directive": {
+    "prefix": "mem",
+    "body": "mem ${1:NAME} ${2:SIZE}",
+    "description": "Allocate a delay-memory block  (size 1-32768)"
+  },
 
-    "SKP Instruction": {
-      "prefix": "skp",
-      "body": "skp ${1:Condition}",
-      "description": "Skip instruction based on Condition"
-    },
-
-    "JAM Instruction": {
-      "prefix": "jam",
-      "body": "jam ${1|RMP0,RMP1|}",
-      "description": "Reset the specified ramp LFO (RMP0 or RMP1) to its starting position"
-    },
-
-    "Basic Effect Skeleton": {
-      "prefix": "fxstart",
-      "body": [
-        "; ${1:Effect Name}",
-        "${2:init:}",
-        "  ${3:}",
-        "",
-        "${4:process:}",
-        "  ${5:}"
-      ],
-      "description": "Basic SpinASM effect structure"
-    },
-
-    "Input ADC Setup": {
-      "prefix": "adcsetup",
-      "body": [
-        "rdax adcl, 1.0",
-        "rdax adcr, 1.0"
-      ],
-      "description": "Initialize accumulators with ADC inputs"
-    },
-
-    "Output DAC Write": {
-      "prefix": "dacwrite",
-      "body": [
-        "wrax dacl, 0",
-        "wrax dacr, 0"
-      ],
-      "description": "Write accumulator to DAC outputs"
-    },
-
-    "EQU Directive": {
-      "prefix": "equ",
-      "body": "${1:LABEL} equ ${2:VALUE}",
-      "description": "Define a constant value"
-    },
-
-    "MEM Directive": {
-      "prefix": "mem",
-      "body": "mem ${1:LABEL} ${2:SIZE}",
-      "description": "Allocate delay memory (mem NAME SIZE)"
-    },
-
-    "Run-once Init Block": {
-      "prefix": "skprun",
-      "body": [
-        "skp run, ${1:main}",
-        "; one-time init — runs only on the first sample",
-        "${2:}",
-        "${1:main}:",
-        "; main processing — runs every sample",
-        "${3:}"
-      ],
-      "description": "Skip initialization after the first sample (SKP RUN pattern)"
-    }
+  "Run-once Init Block": {
+    "prefix": "skprun",
+    "body": [
+      "skp run, ${1:main}",
+      "; one-time init - runs only on the first sample",
+      "${2:}",
+      "${1:main}:",
+      "; main processing - runs every sample",
+      "${3:}"
+    ],
+    "description": "Skip initialization after the first sample (SKP RUN pattern)"
+  },
+  "Mono Effect Skeleton": {
+    "prefix": "fxstart",
+    "body": [
+      "; ${1:Effect name}",
+      "",
+      "skp run, ${2:start}",
+      "; --- one-time init (LFOs, registers) ---",
+      "${3:}",
+      "${2:start}:",
+      "rdax adcl, 1.0",
+      "${4:; processing}",
+      "wrax dacl, 0"
+    ],
+    "description": "Starting skeleton: run-once init, read ADC, write DAC"
+  },
+  "Input ADC Setup": {
+    "prefix": "adcsetup",
+    "body": [
+      "rdax adcl, 1.0",
+      "rdax adcr, 1.0"
+    ],
+    "description": "Sum both ADC inputs into the accumulator"
+  },
+  "Output DAC Write": {
+    "prefix": "dacwrite",
+    "body": [
+      "wrax dacl, 0",
+      "wrax dacr, 0"
+    ],
+    "description": "Write accumulator to DAC outputs"
+  },
+  "All-pass Filter Section": {
+    "prefix": "allpass",
+    "body": [
+      "rda ${1:ap}#, ${2:kap}",
+      "wrap ${1:ap}, -${2:kap}"
+    ],
+    "description": "All-pass section (RDA/WRAP) - reverb building block (manual example)"
+  },
+  "First-order Low-pass": {
+    "prefix": "lpf",
+    "body": [
+      "rdfx ${1:filt}, ${2:0.1}",
+      "wrax ${1:filt}, 1.0"
+    ],
+    "description": "Single-pole low-pass filter (RDFX/WRAX); operand 2 ~ cutoff"
   }
+}

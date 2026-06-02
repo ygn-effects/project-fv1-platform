@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { isInstruction, BUILT_IN_SYMBOLS } from "./spinasmLanguage";
-import { INSTRUCTION_LIMIT, REGISTER_COUNT, MEMORY_SAMPLES, MEMORY_MAX_INDEX } from "./fv1Constants";
+import { INSTRUCTION_LIMIT, REGISTER_COUNT, MEMORY_SAMPLES } from "./fv1Constants";
 
 export interface DocumentSymbol {
   name: string;
@@ -147,11 +147,19 @@ export class DocumentParser {
         continue;
       }
 
-      // mem <name> <size> — asfv1 always uses the directive-first form. The
-      // size may be an integer literal or an expression (e.g. int(32767*3/5));
-      // register the symbol either way, but only range-check and count toward
-      // the memory total when it's a plain integer.
-      const memMatch = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+)$/i.exec(codeOnly);
+      // MEM directive. asfv1 only accepts the directive-first `mem name size`,
+      // but we also parse the SpinASM-style name-first `name mem size` so symbol
+      // references still resolve — then warn, since asfv1 won't assemble that
+      // order. The !isInstruction guard keeps an instruction line that happens
+      // to contain `mem` from being misread as a definition.
+      // Size may be an integer or an expression (e.g. int(32767*3/5)); we
+      // register either way but only range-check / count plain integers.
+      const memDirectiveFirst = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+)$/i.exec(codeOnly);
+      const memNameFirst =
+        !memDirectiveFirst && !isInstruction(codeOnly)
+          ? /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+mem\s+(.+)$/i.exec(codeOnly)
+          : null;
+      const memMatch = memDirectiveFirst ?? memNameFirst;
       if (memMatch) {
         const symbolName = memMatch[1];
         const sizeStr = memMatch[2].trim();
@@ -182,14 +190,25 @@ export class DocumentParser {
           continue;
         }
 
-        if (!isNaN(size) && (size <= 0 || size > MEMORY_MAX_INDEX)) {
+        // MEM size is a sample count; the manual allows 1..32768 (the full
+        // delay RAM), so the upper bound is MEMORY_SAMPLES, not the max index.
+        if (!isNaN(size) && (size <= 0 || size > MEMORY_SAMPLES)) {
           const sizeCharIndex = lineText.indexOf(sizeStr);
           const sizePos = sizeCharIndex !== -1 ? sizeCharIndex : actualChar + symbolName.length + 1;
           diagnostics.push({
             range: new vscode.Range(i, sizePos, i, sizePos + sizeStr.length),
-            message: `Memory size ${size} out of range (must be 1-${MEMORY_MAX_INDEX})`,
+            message: `Memory size ${size} out of range (must be 1-${MEMORY_SAMPLES})`,
             severity: vscode.DiagnosticSeverity.Error,
             code: 'invalid-memory-size'
+          });
+        }
+
+        if (memNameFirst) {
+          diagnostics.push({
+            range: new vscode.Range(i, actualChar, i, actualChar + symbolName.length),
+            message: `asfv1 expects directive-first order: 'mem ${symbolName} ${sizeStr}'. The SpinASM 'name mem size' order won't assemble.`,
+            severity: vscode.DiagnosticSeverity.Warning,
+            code: 'mem-operand-order'
           });
         }
 

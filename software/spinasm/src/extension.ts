@@ -7,6 +7,7 @@ import type ProgrammerType from "./programmer";
 import Config from "./config";
 import Logs, { LogType } from "./logs";
 import { SpinASMSemanticTokensProvider, SpinASMHoverProvider } from "./spinasmSemanticTokens";
+import { SpinASMDefinitionProvider, SpinASMCompletionProvider } from "./spinasmLanguageProviders";
 import { initializeBankStatusBar, disposeBankStatusBar, showBankStatus } from "./statusBar";
 import { initializeResourceStatusBar, disposeResourceStatusBar, showResourceUsage } from "./resourceStatusBar";
 import { SpinASMValidator } from "./spinasmValidator";
@@ -182,7 +183,21 @@ export function activate(context: vscode.ExtensionContext): void {
     )
   );
 
-  Logs.log(LogType.INFO, "SpinASM semantic highlighting enabled");
+  context.subscriptions.push(
+    vscode.languages.registerDefinitionProvider(
+      { language: 'spinasm' },
+      new SpinASMDefinitionProvider()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCompletionItemProvider(
+      { language: 'spinasm' },
+      new SpinASMCompletionProvider()
+    )
+  );
+
+  Logs.log(LogType.INFO, "SpinASM language features enabled (highlighting, hover, definition, completion)");
 
   context.subscriptions.push(
     vscode.commands.registerCommand("spinasm.createProject", createProject),

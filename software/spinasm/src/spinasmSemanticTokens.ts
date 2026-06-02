@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { DocumentParser } from './documentParser';
+import { getInstructionDoc, getSymbolDoc } from './fv1Reference';
 
 /** Semantic highlighting for user-defined SpinASM symbols (equ, mem, labels). */
 export class SpinASMSemanticTokensProvider implements vscode.DocumentSemanticTokensProvider {
@@ -106,28 +107,37 @@ export class SpinASMHoverProvider implements vscode.HoverProvider {
     const parsedDoc = DocumentParser.get(document);
     const symbol = parsedDoc.symbols.get(word.toUpperCase());
 
-    if (!symbol) {
-      return;
+    if (symbol) {
+      let hoverText = '';
+
+      switch (symbol.type) {
+        case 'register':
+          hoverText = `\`\`\`spinasm\nequ ${symbol.name} ${symbol.value}\n\`\`\`\n\nUser-defined register alias`;
+          break;
+        case 'memory':
+          hoverText = `\`\`\`spinasm\nmem ${symbol.name}\n\`\`\`\n\nDelay memory buffer`;
+          break;
+        case 'label':
+          hoverText = `\`\`\`spinasm\n${symbol.name}:\n\`\`\`\n\nJump label`;
+          break;
+        case 'constant':
+          hoverText = `\`\`\`spinasm\nequ ${symbol.name} ${symbol.value}\n\`\`\`\n\nConstant value`;
+          break;
+      }
+
+      const markdown = new vscode.MarkdownString(hoverText);
+      return new vscode.Hover(markdown, wordRange);
     }
 
-    let hoverText = '';
-
-    switch (symbol.type) {
-      case 'register':
-        hoverText = `\`\`\`spinasm\nequ ${symbol.name} ${symbol.value}\n\`\`\`\n\nUser-defined register alias`;
-        break;
-      case 'memory':
-        hoverText = `\`\`\`spinasm\nmem ${symbol.name}\n\`\`\`\n\nDelay memory buffer`;
-        break;
-      case 'label':
-        hoverText = `\`\`\`spinasm\n${symbol.name}:\n\`\`\`\n\nJump label`;
-        break;
-      case 'constant':
-        hoverText = `\`\`\`spinasm\nequ ${symbol.name} ${symbol.value}\n\`\`\`\n\nConstant value`;
-        break;
+    // Fall back to built-in instruction / register / flag documentation.
+    const builtIn = getInstructionDoc(word) ?? getSymbolDoc(word);
+    if (builtIn) {
+      const markdown = new vscode.MarkdownString();
+      markdown.appendCodeblock(builtIn.signature, 'spinasm');
+      markdown.appendMarkdown(`\n${builtIn.summary}`);
+      return new vscode.Hover(markdown, wordRange);
     }
 
-    const markdown = new vscode.MarkdownString(hoverText);
-    return new vscode.Hover(markdown, wordRange);
+    return;
   }
 }
