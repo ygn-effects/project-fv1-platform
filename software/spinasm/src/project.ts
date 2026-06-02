@@ -4,8 +4,9 @@ import * as path from "path";
 import * as cp from "child_process";
 import * as vscode from "vscode";
 import Logs, { LogType } from "./logs";
-import { BANK_COUNT, BANK_SIZE_BYTES, EEPROM_SIZE_BYTES } from "./fv1Constants";
+import { BANK_COUNT, EEPROM_SIZE_BYTES } from "./fv1Constants";
 import { pathsEqual } from "./pathUtils";
+import { mergeBankImages } from "./eepromImage";
 
 /**
  * Owns workspace state and runs the compiler. Emits events for the manager
@@ -142,13 +143,14 @@ export default class Project {
    * own padding convention.
    */
   public async compileAllProgramsToCombinedBin(): Promise<void> {
-    const eeprom = Buffer.alloc(EEPROM_SIZE_BYTES, 0x00);
     const tempFiles: string[] = [];
+    const bankOutputs: (Buffer | null)[] = [];
 
     try {
       for (let bank = 0; bank < BANK_COUNT; bank++) {
         const programPath = this.programs[bank];
         if (!programPath) {
+          bankOutputs[bank] = null;
           continue;
         }
 
@@ -162,15 +164,10 @@ export default class Project {
           throw new Error(`Compilation failed for bank ${bank} with return code: ${result}`);
         }
 
-        const bankBytes = await fsPromises.readFile(tempBin);
-        const expected = (bank + 1) * BANK_SIZE_BYTES;
-        if (bankBytes.length !== expected) {
-          throw new Error(`Bank ${bank} compiled to ${bankBytes.length} bytes, expected ${expected}`);
-        }
-
-        bankBytes.copy(eeprom, bank * BANK_SIZE_BYTES, bank * BANK_SIZE_BYTES, expected);
+        bankOutputs[bank] = await fsPromises.readFile(tempBin);
       }
 
+      const eeprom = mergeBankImages(bankOutputs);
       await fsPromises.writeFile(this.outputBinFile, eeprom);
       Logs.log(LogType.INFO, `Combined EEPROM image written: ${this.outputBinFile} (${EEPROM_SIZE_BYTES} bytes)`);
     } finally {
