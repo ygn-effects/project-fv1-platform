@@ -7,6 +7,20 @@ import Logs, { LogType } from "./logs";
 import { BANK_COUNT, BANK_SIZE_BYTES, EEPROM_SIZE_BYTES } from "./fv1Constants";
 
 /**
+ * Compares two filesystem paths, tolerant of separator and `.`/`..` differences
+ * and — on Windows — drive-letter / casing differences. VS Code's `uri.fsPath`
+ * and our `path.join`-built program paths can disagree on drive-letter case
+ * (e.g. `c:\` vs `C:\`), which would make an exact string match miss.
+ */
+function pathsEqual(a: string, b: string): boolean {
+  const na = path.resolve(a);
+  const nb = path.resolve(b);
+  return process.platform === "win32"
+    ? na.toLowerCase() === nb.toLowerCase()
+    : na === nb;
+}
+
+/**
  * Owns workspace state and runs the compiler. Emits events for the manager
  * to refresh its cache; never reaches back into ProjectManager itself.
  */
@@ -294,12 +308,12 @@ export default class Project {
     }
   }
 
-  public getProgramBankByPath(path: string | undefined | null): number {
-    if (typeof path === 'undefined' || path === null) {
+  public getProgramBankByPath(filePath: string | undefined | null): number {
+    if (filePath === undefined || filePath === null) {
       return -1;
     }
 
-    return this.programs.indexOf(path);
+    return this.programs.findIndex(program => program !== null && pathsEqual(program, filePath));
   }
 
   public getAllPrograms(): (string | null)[] {
