@@ -18,10 +18,10 @@ export class ResourceAnalyzer {
     return 'safe';
   }
 
-  public static getStatusBarColor(severity: Severity): string | undefined {
+  public static getStatusBarBackground(severity: Severity): vscode.ThemeColor | undefined {
     switch (severity) {
-      case 'critical': return '#ff4444';
-      case 'warning': return '#ffaa00';
+      case 'critical': return new vscode.ThemeColor('statusBarItem.errorBackground');
+      case 'warning': return new vscode.ThemeColor('statusBarItem.warningBackground');
       case 'safe': return undefined;
     }
   }

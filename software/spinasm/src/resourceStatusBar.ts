@@ -65,7 +65,7 @@ function updateResourceStatusBar(document: vscode.TextDocument): void {
     currentUsage = usage;
 
     resourceStatusBar.text = ResourceAnalyzer.formatStatusBar(usage);
-    resourceStatusBar.color = ResourceAnalyzer.getStatusBarColor(
+    resourceStatusBar.backgroundColor = ResourceAnalyzer.getStatusBarBackground(
       ResourceAnalyzer.getWorstSeverity(usage)
     );
 
