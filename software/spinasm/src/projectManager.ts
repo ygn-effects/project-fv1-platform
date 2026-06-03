@@ -41,6 +41,11 @@ export class ProjectManager {
   private onDidChangeProjectEmitter = new vscode.EventEmitter<void>();
   public readonly onDidChangeProject = this.onDidChangeProjectEmitter.event;
 
+  // Forwarded from each owned Project so the extension can surface asfv1 output
+  // as diagnostics without holding project references itself.
+  private onDidProduceCompilerOutputEmitter = new vscode.EventEmitter<{ sourcePath: string; stderr: string }>();
+  public readonly onDidProduceCompilerOutput = this.onDidProduceCompilerOutputEmitter.event;
+
   private constructor() {}
 
   public static getInstance(): ProjectManager {
@@ -109,6 +114,7 @@ export class ProjectManager {
           Logs.log(LogType.ERROR, `Post-structure cache refresh failed: ${(err as Error).message}`);
         });
       }),
+      project.onCompilerOutput((e) => this.onDidProduceCompilerOutputEmitter.fire(e)),
     ];
 
     this.projects.set(rootPath, project);

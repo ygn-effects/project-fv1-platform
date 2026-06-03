@@ -30,6 +30,11 @@ export default class Project {
   private readonly onDidChangeStructureEmitter = new vscode.EventEmitter<void>();
   public readonly onDidChangeStructure = this.onDidChangeStructureEmitter.event;
 
+  // Fires after every compiler run (success or failure) with the source file and
+  // its raw stderr, so the diagnostics layer can surface asfv1's own errors.
+  private readonly onCompilerOutputEmitter = new vscode.EventEmitter<{ sourcePath: string; stderr: string }>();
+  public readonly onCompilerOutput = this.onCompilerOutputEmitter.event;
+
   constructor(folder: string) {
     this.rootFolder = folder;
     this.outputFolder = path.join(this.rootFolder, "output");
@@ -122,10 +127,12 @@ export default class Project {
     }
 
     const args = [...this.compilerArguments, "-p", program.toString(), this.programs[program]!, this.outputs[program]];
-    const result = await this.runCompiler(args);
+    const { code, stderr } = await this.runCompiler(args);
 
-    if (result !== 0) {
-      throw new Error(`Compilation failed for program ${program} with return code: ${result}`);
+    this.onCompilerOutputEmitter.fire({ sourcePath: this.programs[program]!, stderr });
+
+    if (code !== 0) {
+      throw new Error(`Compilation failed for program ${program} with return code: ${code}`);
     }
 
     Logs.log(LogType.INFO, "Compilation succeeded.");
@@ -158,10 +165,12 @@ export default class Project {
         tempFiles.push(tempBin);
 
         const args = [...this.compilerArguments, "-p", bank.toString(), programPath, tempBin];
-        const result = await this.runCompiler(args);
+        const { code, stderr } = await this.runCompiler(args);
 
-        if (result !== 0) {
-          throw new Error(`Compilation failed for bank ${bank} with return code: ${result}`);
+        this.onCompilerOutputEmitter.fire({ sourcePath: programPath, stderr });
+
+        if (code !== 0) {
+          throw new Error(`Compilation failed for bank ${bank} with return code: ${code}`);
         }
 
         bankOutputs[bank] = await fsPromises.readFile(tempBin);
@@ -182,33 +191,33 @@ export default class Project {
     }
   }
 
-  private runCompiler(args: string[]): Promise<number> {
+  private runCompiler(args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
     Logs.log(LogType.INFO, `Running: ${this.compiler} ${args.join(" ")}`);
 
     return new Promise((resolve, reject) => {
-      const process = cp.spawn(this.compiler, args);
+      const child = cp.spawn(this.compiler, args);
 
       let stderr = "";
       let stdout = "";
 
-      if (process.stdout) {
-        process.stdout.on('data', (data) => {
+      if (child.stdout) {
+        child.stdout.on('data', (data) => {
           stdout += data.toString();
         });
       }
 
-      if (process.stderr) {
-        process.stderr.on('data', (data) => {
+      if (child.stderr) {
+        child.stderr.on('data', (data) => {
           stderr += data.toString();
         });
       }
 
-      process.on('error', (err) => {
+      child.on('error', (err) => {
         Logs.log(LogType.ERROR, `Failed to start compiler: ${err.message}`);
         reject(err);
       });
 
-      process.on('close', (code) => {
+      child.on('close', (code) => {
         if (stdout) {
           Logs.log(LogType.INFO, `Compiler stdout: ${stdout}`);
         }
@@ -222,7 +231,7 @@ export default class Project {
           }
         }
 
-        resolve(code ?? 1);
+        resolve({ code: code ?? 1, stdout, stderr });
       });
     });
   }
@@ -311,5 +320,6 @@ export default class Project {
   public dispose(): void {
     this.onDidCompileEmitter.dispose();
     this.onDidChangeStructureEmitter.dispose();
+    this.onCompilerOutputEmitter.dispose();
   }
 }

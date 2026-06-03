@@ -12,6 +12,7 @@ import { initializeBankStatusBar, disposeBankStatusBar, showBankStatus } from ".
 import { initializeResourceStatusBar, disposeResourceStatusBar, showResourceUsage } from "./resourceStatusBar";
 import { SpinASMValidator } from "./spinasmValidator";
 import { ProjectManager } from "./projectManager";
+import { CompilerDiagnostics } from "./compilerDiagnostics";
 import { BANK_COUNT } from "./fv1Constants";
 
 let validator: SpinASMValidator;
@@ -43,10 +44,21 @@ export function activate(context: vscode.ExtensionContext): void {
   validator = new SpinASMValidator();
   context.subscriptions.push(validator);
 
+  // Surfaces asfv1's own errors/warnings as inline diagnostics, in a separate
+  // collection from the live validator so the two don't clobber each other.
+  const compilerDiagnostics = new CompilerDiagnostics();
+  context.subscriptions.push(compilerDiagnostics);
+
   // Don't await — activate() must return fast. getBanksSync handles cache miss
   // by returning a placeholder while a background refresh runs.
   const projectManager = ProjectManager.getInstance();
   projectManager.initializeWorkspace();
+
+  context.subscriptions.push(
+    projectManager.onDidProduceCompilerOutput(({ sourcePath, stderr }) => {
+      compilerDiagnostics.report(vscode.Uri.file(sourcePath), stderr);
+    })
+  );
 
   // Drop cached projects on compiler config change so the next command picks
   // up the new path/args.
@@ -81,6 +93,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeTextDocument((event) => {
       if (event.document.languageId === 'spinasm') {
         scheduleValidation(event.document);
+        // The last compile's diagnostics no longer line up with the edited text.
+        compilerDiagnostics.clear(event.document.uri);
       }
     })
   );
