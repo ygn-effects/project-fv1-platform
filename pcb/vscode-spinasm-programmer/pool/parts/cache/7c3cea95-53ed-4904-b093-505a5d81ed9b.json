@@ -1,0 +1,97 @@
+{
+    "MPN": [
+        false,
+        "FT230XS-R"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "USB IC USB TO SERIAL UART IC"
+    ],
+    "entity": "faad13b0-2ccb-48d1-8ed9-4fa889337a42",
+    "inherit_model": true,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "FTDI"
+    ],
+    "model": "523c58ac-e8d4-4d82-bf44-78364da3880a",
+    "package": "331b9a71-5756-4525-abc1-15a831d72d90",
+    "pad_map": {
+        "0a5211b3-1b8c-4959-b30f-8e2ad428cc7f": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "70422cbe-d192-4590-b774-f94cc2b4d872"
+        },
+        "0c1637fb-f7a6-48ef-a359-9fd332fb83bf": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "f4d8f633-c451-4eec-a314-3d692629be06"
+        },
+        "100184ba-e2bc-4fa6-86b4-12b0fb69f57b": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "9b21a69b-d2a8-4053-91c0-a3d742e8b176"
+        },
+        "1ee5b57d-ef4b-4e83-a5ca-ec6eecf8e664": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "5406f8a0-b2bb-4aaa-ae34-9218ce26075d"
+        },
+        "22d58454-fd1c-493e-b87a-abfe07ead78a": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "6844091b-30b8-4ee9-91ae-faee58120f89"
+        },
+        "311b2fc4-012c-4268-ae55-bd62f144099a": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "e1d34dc8-8aa5-4a13-a135-7f9e48ac4b39"
+        },
+        "5dfea024-5c79-4f8c-ade2-b232a1de15bf": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "e76d9271-b818-490d-9246-d563e0ffa86a"
+        },
+        "658049f5-f2b2-429d-8980-5b9f3f74445d": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "0650bd86-fc3e-4cb0-9573-de8d7bccdd71"
+        },
+        "67542161-c825-4d5e-88de-a7ab5f89d7a2": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "8fca166a-7a76-4a9b-9372-9a16dd218f5b"
+        },
+        "70ff8149-5dac-4c7c-95f6-19deeea1c819": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "92f59186-5b56-4123-ae08-adbb7f50e3f9"
+        },
+        "8d0e616d-f290-4061-9af2-35cefdcc0494": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "aebf689d-0414-40fc-8532-6c1694a25422"
+        },
+        "9792e10f-235e-432b-8331-186cf96f7a61": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "2bf414f1-66e1-419f-8331-4d7051ae7f02"
+        },
+        "bf273880-c195-4407-bcf0-7d7ab7d18f14": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "fb32be89-7b10-4c00-b4e5-47107f085dc6"
+        },
+        "c80c4707-db13-41fd-8942-0762c22f09f5": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "a66fd327-a300-42f3-8fda-655842ff3b9c"
+        },
+        "f8149728-8437-45aa-8243-af0fed4038df": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "eebeb10d-d78e-4ddf-9275-fafbf00efa39"
+        },
+        "fdeeedd0-9e11-4be8-a387-a70d3f57269e": {
+            "gate": "427627a6-b75d-495c-8226-874ea996fb97",
+            "pin": "e6053f43-23f4-4c2c-b2dd-8e489c627564"
+        }
+    },
+    "parametric": {},
+    "tags": [],
+    "type": "part",
+    "uuid": "7c3cea95-53ed-4904-b093-505a5d81ed9b",
+    "value": [
+        false,
+        ""
+    ]
+}

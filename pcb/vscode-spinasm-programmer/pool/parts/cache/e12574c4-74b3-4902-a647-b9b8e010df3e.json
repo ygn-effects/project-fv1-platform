@@ -1,0 +1,68 @@
+{
+    "MPN": [
+        false,
+        "KUSBX-SMT2AP5S-W"
+    ],
+    "datasheet": [
+        false,
+        ""
+    ],
+    "description": [
+        false,
+        "USB CONNECTOR TYPE A  MALE SMD"
+    ],
+    "entity": "3392e559-5779-41ad-99f4-65f5c6331d33",
+    "inherit_model": false,
+    "inherit_tags": false,
+    "manufacturer": [
+        false,
+        "Kycon"
+    ],
+    "model": "01a77ec0-6eba-4f58-b67f-61b9221b45c4",
+    "package": "73a681f1-702a-4b78-8b85-a0e6864f6c8f",
+    "pad_map": {
+        "25ce4b1a-f4fe-4517-93c4-c51293ab1e46": {
+            "gate": "0b636446-ea2f-4c83-bb33-6d9b6e98f3c7",
+            "pin": "fd433aba-0137-4732-86e1-73360cbe90a0"
+        },
+        "2d225902-752b-41b5-acf9-b7e01565a59c": {
+            "gate": "0b636446-ea2f-4c83-bb33-6d9b6e98f3c7",
+            "pin": "dd6691e0-3656-4675-93ac-c95b57e936cc"
+        },
+        "855f6f65-9bc5-482b-9f39-6e03b5d8a26d": {
+            "gate": "0b636446-ea2f-4c83-bb33-6d9b6e98f3c7",
+            "pin": "73704103-b8e9-496a-85b5-6a8f4d0b801c"
+        },
+        "8837b53e-b95c-4443-acc5-7906c17926e0": {
+            "gate": "0b636446-ea2f-4c83-bb33-6d9b6e98f3c7",
+            "pin": "61b23ee4-b70b-4129-a6a2-15dd652576b8"
+        },
+        "d5b3413d-dbf4-4d84-9e90-5dc66660765b": {
+            "gate": "0b636446-ea2f-4c83-bb33-6d9b6e98f3c7",
+            "pin": "61b23ee4-b70b-4129-a6a2-15dd652576b8"
+        },
+        "ed764f9d-16c7-4b98-b5d4-e3dc05a6a503": {
+            "gate": "0b636446-ea2f-4c83-bb33-6d9b6e98f3c7",
+            "pin": "e1c08a2c-87ee-4936-8479-2605b41b585e"
+        }
+    },
+    "parametric": {
+        "current_rating": "1",
+        "mounting_type": "SMD",
+        "orientation": "Right Angle",
+        "package": "Plug",
+        "pins": "4",
+        "price": "0.99",
+        "shielding": "Shielded",
+        "table": "connectors_usb",
+        "type": "USB-A",
+        "voltage_rating": "30"
+    },
+    "tags": [],
+    "type": "part",
+    "uuid": "e12574c4-74b3-4902-a647-b9b8e010df3e",
+    "value": [
+        false,
+        ""
+    ]
+}
