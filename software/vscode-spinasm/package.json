@@ -256,10 +256,18 @@
       {
         "language": "spinasm",
         "scopes": {
-          "variable": ["variable.other.spinasm.register"],
-          "property": ["variable.other.spinasm.memory"],
-          "function": ["entity.name.function.spinasm"],
-          "parameter": ["variable.other.constant.spinasm"]
+          "variable": [
+            "variable.other.spinasm.register"
+          ],
+          "property": [
+            "variable.other.spinasm.memory"
+          ],
+          "function": [
+            "entity.name.function.spinasm"
+          ],
+          "parameter": [
+            "variable.other.constant.spinasm"
+          ]
         }
       }
     ],

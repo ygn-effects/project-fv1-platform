@@ -13,8 +13,8 @@ export class ResourceAnalyzer {
   }
 
   public static getSeverity(percentage: number): Severity {
-    if (percentage >= 90) return 'critical';
-    if (percentage >= 75) return 'warning';
+    if (percentage >= 90) {return 'critical';}
+    if (percentage >= 75) {return 'warning';}
     return 'safe';
   }
 
@@ -41,8 +41,8 @@ export class ResourceAnalyzer {
       this.getSeverity(usage.memory.percentage)
     ];
 
-    if (severities.includes('critical')) return 'critical';
-    if (severities.includes('warning')) return 'warning';
+    if (severities.includes('critical')) {return 'critical';}
+    if (severities.includes('warning')) {return 'warning';}
     return 'safe';
   }
 
