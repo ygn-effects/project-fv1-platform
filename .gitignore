@@ -1,9 +1,9 @@
 # Node modules and build outputs
-software/spinasm/node_modules/
-software/spinasm/out/
+software/vscode-spinasm/node_modules/
+software/vscode-spinasm/out/
 
 # VSCode workspace settings
-software/spinasm/.vscode/
+software/vscode-spinasm/.vscode/
 
 # PIO files
 firmware/vscode-spinasm-firmware/.pio/build/ATmega328P/
@@ -11,7 +11,7 @@ firmware/vscode-spinasm-firmware/.vscode/
 firmware/vscode-spinasm-firmware/.pio/build/
 
 # Packaging artifacts
-software/spinasm/*.vsix
+software/vscode-spinasm/*.vsix
 
 # TypeScript build cache
 *.tsbuildinfo
@@ -23,7 +23,7 @@ desktop.ini
 *.log
 
 # Test project
-software/spinasm/test
+software/vscode-spinasm/test
 
 firmware/vscode-spinasm-firmware/.pio/build/ATmega328P/
 firmware/vscode-spinasm-firmware/.vscode/
