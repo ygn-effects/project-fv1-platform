@@ -1,14 +1,34 @@
 {
   "name": "spinasm",
-  "displayName": "spinasm",
-  "description": "",
+  "displayName": "SpinASM for FV-1",
+  "description": "Edit, compile, and flash Spin FV-1 SpinASM (.spn) programs — syntax highlighting, live diagnostics, asfv1 compilation, and EEPROM programming.",
   "version": "0.0.1",
+  "license": "Apache-2.0",
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.95.0"
   },
   "categories": [
-    "Other"
+    "Programming Languages",
+    "Snippets",
+    "Linters"
   ],
+  "keywords": [
+    "fv-1",
+    "spinasm",
+    "asfv1",
+    "dsp",
+    "audio"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ygn-effects/project-fv1-platform.git",
+    "directory": "software/vscode-spinasm"
+  },
+  "bugs": {
+    "url": "https://github.com/ygn-effects/project-fv1-platform/issues"
+  },
+  "homepage": "https://github.com/ygn-effects/project-fv1-platform/tree/main/software/vscode-spinasm#readme",
   "activationEvents": [
     "workspaceContains:**/*.spn"
   ],
