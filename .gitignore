@@ -1,6 +1,7 @@
 # Node modules and build outputs
 software/vscode-spinasm/node_modules/
 software/vscode-spinasm/out/
+software/vscode-spinasm/.vscode-test/
 
 # VSCode workspace settings
 software/vscode-spinasm/.vscode/
