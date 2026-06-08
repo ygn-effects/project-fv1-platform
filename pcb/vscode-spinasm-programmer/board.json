@@ -109,9 +109,9 @@
                 "layer": 30
             }
         },
-        "output_directory": "",
-        "prefix": "spinasm",
-        "zip_output": false
+        "output_directory": "/home/yann/_ygn/project-fv1-platform/pcb/gerber/vscode-spinasm-programmer",
+        "prefix": "vscode-spinasm-programmer",
+        "zip_output": true
     },
     "grid_settings": {
         "current": {
