@@ -403,6 +403,42 @@
             "tag": "aa39a3c9-5bce-4c8e-ab7d-3f23126c24cd",
             "value": ""
         },
+        "c5a26967-29e3-4c6e-a760-59f64a071545": {
+            "alt_pins": {},
+            "connections": {
+                "48af78e5-730e-44eb-977a-cf188e4fcb39/6a44037c-65e2-4876-9359-42890048841d": {
+                    "net": "add2fa74-01b2-4bf0-a3bc-4fdf5c8f9d91"
+                },
+                "48af78e5-730e-44eb-977a-cf188e4fcb39/dda0ec99-5d70-4fbe-a8db-897542e7554e": {
+                    "net": "b8f5e58a-fd3a-40a4-9606-d71805cdee75"
+                }
+            },
+            "entity": "3ce770af-7be0-4f72-b2af-2c8010911aaf",
+            "group": "00000000-0000-0000-0000-000000000000",
+            "part": "04d95513-8f23-4712-998a-6aba1d200838",
+            "pin_names": {},
+            "refdes": "R9",
+            "tag": "c3b6a6a9-5db4-4f85-b797-bb25a28f4b19",
+            "value": ""
+        },
+        "c652bf59-3366-43db-959f-b042f09137fa": {
+            "alt_pins": {},
+            "connections": {
+                "48af78e5-730e-44eb-977a-cf188e4fcb39/6a44037c-65e2-4876-9359-42890048841d": {
+                    "net": "22c913ab-de65-40f7-9281-b4490bc0c2a6"
+                },
+                "48af78e5-730e-44eb-977a-cf188e4fcb39/dda0ec99-5d70-4fbe-a8db-897542e7554e": {
+                    "net": "b8f5e58a-fd3a-40a4-9606-d71805cdee75"
+                }
+            },
+            "entity": "3ce770af-7be0-4f72-b2af-2c8010911aaf",
+            "group": "00000000-0000-0000-0000-000000000000",
+            "part": "04d95513-8f23-4712-998a-6aba1d200838",
+            "pin_names": {},
+            "refdes": "R10",
+            "tag": "c3c7be3c-fbbd-423e-b757-b5bf770945f7",
+            "value": ""
+        },
         "c7597302-bd20-42d6-9ae8-d61d3b48615b": {
             "alt_pins": {},
             "connections": {
@@ -882,6 +918,8 @@
         "aa39a3c9-5bce-4c8e-ab7d-3f23126c24cd": "12",
         "ab994c44-866f-4d6b-af72-bf356a563c13": "5",
         "bfe193f1-6f17-4f1b-9f29-0732877cd56d": "22",
+        "c3b6a6a9-5db4-4f85-b797-bb25a28f4b19": "23",
+        "c3c7be3c-fbbd-423e-b757-b5bf770945f7": "24",
         "d71d47b1-17bd-4078-888c-2376e9be6fc2": "16",
         "edcdfd70-3b32-48e4-801f-03c69af5e8b8": "11",
         "f96283b3-f9d4-427e-8e15-c7b280f9db42": "13",
