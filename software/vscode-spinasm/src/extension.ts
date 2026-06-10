@@ -11,6 +11,7 @@ import { SpinASMDefinitionProvider, SpinASMCompletionProvider } from "./spinasmL
 import { initializeBankStatusBar, disposeBankStatusBar, showBankStatus } from "./statusBar";
 import { initializeResourceStatusBar, disposeResourceStatusBar, showResourceUsage } from "./resourceStatusBar";
 import { SpinASMValidator } from "./spinasmValidator";
+import { DocumentParser } from "./documentParser";
 import { ProjectManager } from "./projectManager";
 import { CompilerDiagnostics } from "./compilerDiagnostics";
 import { BANK_COUNT } from "./fv1Constants";
@@ -121,6 +122,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidCloseTextDocument((doc) => {
       if (doc.languageId === 'spinasm') {
         validator.clearDocument(doc);
+        // The parser cache is keyed by URI and otherwise lives for the whole
+        // session. Document versions also reset on reopen, so a stale entry
+        // could match a reopened file whose content changed on disk meanwhile.
+        DocumentParser.invalidate(doc);
       }
     })
   );
