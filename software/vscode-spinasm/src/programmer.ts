@@ -28,6 +28,9 @@ export default class Programmer {
   private readonly startMarker = 0x1e;
   private readonly endMarker = 0x1f;
   private lastCommandTimestamp = 0;
+  // Set when a command timed out: its reply may still arrive and must be
+  // discarded, not consumed as the next command's response.
+  private staleResponsePossible = false;
 
   constructor(port: string, baudRate: number) {
     this.serialPort = new SerialPort({ path: port, baudRate, autoOpen: false });
@@ -196,7 +199,27 @@ export default class Programmer {
     return response[0] === ResponseCode.Ok;
   }
 
+  /** Briefly listens and discards parser output after a timeout, so a late
+   *  reply to the timed-out command can't be mistaken for the next reply. */
+  private drainStaleResponses(drainMs = 100): Promise<void> {
+    return new Promise((resolve) => {
+      const discard = (data: Buffer) => {
+        Logs.log(LogType.DEBUG, `Discarding stale response: ${data.toString("hex")}`);
+      };
+      this.parser.on("data", discard);
+      setTimeout(() => {
+        this.parser.removeListener("data", discard);
+        resolve();
+      }, drainMs);
+    });
+  }
+
   private async sendMessage(payload: Buffer, expectedResponseSize: number, timeoutMs = 500): Promise<Buffer> {
+    if (this.staleResponsePossible) {
+      await this.drainStaleResponses();
+      this.staleResponsePossible = false;
+    }
+
     // Hardware needs ≥10 ms between commands or it drops the next message.
     const now = Date.now();
     const elapsed = now - this.lastCommandTimestamp;
@@ -215,13 +238,7 @@ export default class Programmer {
     ]);
 
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        this.parser.removeAllListeners("data");
-        Logs.log(LogType.ERROR, "Timeout waiting for programmer response.");
-        reject(new Error("Timeout waiting for programmer response."));
-      }, timeoutMs);
-
-      this.parser.once("data", (data: Buffer) => {
+      const onData = (data: Buffer) => {
         clearTimeout(timeout);
 
         if (data.length !== expectedResponseSize + 1 || data[0] !== this.startMarker) {
@@ -245,12 +262,21 @@ export default class Programmer {
         }
 
         resolve(data.subarray(1));
-      });
+      };
+
+      const timeout = setTimeout(() => {
+        this.parser.removeListener("data", onData);
+        this.staleResponsePossible = true;
+        Logs.log(LogType.ERROR, "Timeout waiting for programmer response.");
+        reject(new Error("Timeout waiting for programmer response."));
+      }, timeoutMs);
+
+      this.parser.once("data", onData);
 
       this.serialPort.write(message, (err) => {
         if (err) {
           clearTimeout(timeout);
-          this.parser.removeAllListeners("data");
+          this.parser.removeListener("data", onData);
           Logs.log(LogType.ERROR, `Failed to write message: ${err.message}`);
           reject(err);
         } else {
