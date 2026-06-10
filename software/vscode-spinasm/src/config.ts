@@ -39,7 +39,9 @@ export default class Config {
     return config.get<boolean>("logging.verbose", false);
   }
 
-  public static async setSerialPort(port: string, global: boolean = false): Promise<void> {
+  // Defaults to user (global) settings: a COM port is machine-specific, and
+  // workspace settings tend to get committed and break other machines.
+  public static async setSerialPort(port: string, global: boolean = true): Promise<void> {
     const config = vscode.workspace.getConfiguration("spinasm");
     await config.update("programmer.serialPort", port, global);
   }
