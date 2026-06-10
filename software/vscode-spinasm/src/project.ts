@@ -186,7 +186,6 @@ export default class Project {
       await fsPromises.writeFile(this.outputBinFile, eeprom);
       Logs.log(LogType.INFO, `Combined EEPROM image written: ${this.outputBinFile} (${EEPROM_SIZE_BYTES} bytes)`);
     } finally {
-      // Clean up temp bank files even on failure.
       await Promise.all(tempFiles.map(async (f) => {
         try {
           await fsPromises.unlink(f);

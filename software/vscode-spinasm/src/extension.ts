@@ -111,7 +111,8 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  // Save runs validation immediately and refreshes the saved bank's cache.
+  // On save the content is final — skip the debounce so diagnostics and the
+  // bank cache don't lag half a second behind the file on disk.
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((doc) => {
       if (doc.languageId === 'spinasm') {

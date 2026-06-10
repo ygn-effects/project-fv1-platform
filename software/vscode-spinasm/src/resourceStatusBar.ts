@@ -55,7 +55,11 @@ function debounceUpdate(document: vscode.TextDocument): void {
   }
 
   updateTimer = setTimeout(() => {
-    updateResourceStatusBar(document);
+    // The edited document may no longer be the active one (e.g. an edit
+    // applied to a background editor); the bar reflects the active editor.
+    if (vscode.window.activeTextEditor?.document === document) {
+      updateResourceStatusBar(document);
+    }
   }, 500);
 }
 

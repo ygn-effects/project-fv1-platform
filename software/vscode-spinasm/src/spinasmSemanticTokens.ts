@@ -129,7 +129,6 @@ export class SpinASMHoverProvider implements vscode.HoverProvider {
       return new vscode.Hover(markdown, wordRange);
     }
 
-    // Fall back to built-in instruction / register / flag documentation.
     const builtIn = getInstructionDoc(word) ?? getSymbolDoc(word);
     if (builtIn) {
       const markdown = new vscode.MarkdownString();

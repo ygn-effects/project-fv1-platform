@@ -38,7 +38,6 @@ export class SpinASMValidator {
 
     const parsedDoc = DocumentParser.get(document);
 
-    // Diagnostics produced by the parser pass come first.
     for (const parserDiag of parsedDoc.diagnostics) {
       const vsDiag = new vscode.Diagnostic(
         parserDiag.range,
