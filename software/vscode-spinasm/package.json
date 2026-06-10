@@ -30,6 +30,7 @@
   },
   "homepage": "https://github.com/ygn-effects/project-fv1-platform/tree/main/software/vscode-spinasm#readme",
   "activationEvents": [
+    "onLanguage:spinasm",
     "workspaceContains:**/*.spn"
   ],
   "main": "./out/extension.js",
