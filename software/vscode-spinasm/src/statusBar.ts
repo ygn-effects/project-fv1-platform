@@ -46,6 +46,22 @@ export function disposeBankStatusBar(): void {
   }
 }
 
+/**
+ * The folder whose banks the status bar shows: the active editor's workspace
+ * folder when there is one, else the first folder. Keeps the bar consistent
+ * with the folder-picking commands in multi-root workspaces.
+ */
+function getStatusBarFolder(): string | undefined {
+  const activeUri = vscode.window.activeTextEditor?.document.uri;
+  if (activeUri) {
+    const folder = vscode.workspace.getWorkspaceFolder(activeUri);
+    if (folder) {
+      return folder.uri.fsPath;
+    }
+  }
+  return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+}
+
 function getStatusSymbol(status: BankStatus): string {
   switch (status) {
     case BankStatus.Empty:
@@ -67,7 +83,7 @@ function updateBankStatusBarImmediate(): void {
     return;
   }
 
-  const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const folder = getStatusBarFolder();
 
   if (!folder) {
     bankStatusBar.hide();
@@ -132,7 +148,7 @@ function formatTimeDiff(date1: Date, date2: Date): string {
 }
 
 export async function showBankStatus(): Promise<void> {
-  const folder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  const folder = getStatusBarFolder();
 
   if (!folder) {
     vscode.window.showInformationMessage("No workspace folder open.");
