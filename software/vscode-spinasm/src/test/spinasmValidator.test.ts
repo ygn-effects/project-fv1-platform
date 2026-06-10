@@ -34,6 +34,12 @@ describe("SpinASMValidator", () => {
     assert.ok(diags.some(d => d.code === "missing-comma"));
   });
 
+  it("flags a missing comma on delay-RAM instructions (RDA/WRA/WRAP)", async () => {
+    const diags = await diagnose("mem del 1000\nrda del 0.5\nwra del 0.5\nwrap del 0.5\n");
+    const missing = diags.filter(d => d.code === "missing-comma");
+    assert.strictEqual(missing.length, 3, "rda/wra/wrap without comma should each warn");
+  });
+
   it("flags an undefined symbol", async () => {
     const diags = await diagnose("rdax notdefined, 1.0\n");
     assert.ok(diags.some(d => d.code === "undefined-symbol"));

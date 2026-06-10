@@ -140,7 +140,8 @@ export class SpinASMValidator {
 
     const requiresComma = new Set([
       'RDAX', 'WRAX', 'RDFX', 'WRLX', 'WRHX', 'MAXX',
-      'SOF', 'LOG', 'EXP'
+      'SOF', 'LOG', 'EXP',
+      'RDA', 'WRA', 'WRAP'
     ]);
 
     if (requiresComma.has(instruction)) {
