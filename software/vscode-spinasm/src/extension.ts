@@ -72,14 +72,25 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  let validationTimer: NodeJS.Timeout | null = null;
-  function scheduleValidation(doc: vscode.TextDocument): void {
-    if (validationTimer) {
-      clearTimeout(validationTimer);
+  // One timer per document — a single shared timer would let edits in one
+  // file cancel another file's pending validation, leaving stale diagnostics.
+  const validationTimers = new Map<string, NodeJS.Timeout>();
+
+  function cancelValidation(doc: vscode.TextDocument): void {
+    const key = doc.uri.toString();
+    const timer = validationTimers.get(key);
+    if (timer) {
+      clearTimeout(timer);
+      validationTimers.delete(key);
     }
-    validationTimer = setTimeout(() => {
+  }
+
+  function scheduleValidation(doc: vscode.TextDocument): void {
+    cancelValidation(doc);
+    validationTimers.set(doc.uri.toString(), setTimeout(() => {
+      validationTimers.delete(doc.uri.toString());
       validator.validateDocument(doc);
-    }, 500);
+    }, 500));
   }
 
   context.subscriptions.push(
@@ -104,7 +115,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((doc) => {
       if (doc.languageId === 'spinasm') {
-        if (validationTimer) { clearTimeout(validationTimer); }
+        cancelValidation(doc);
         validator.validateDocument(doc);
 
         const rootPath = vscode.workspace.getWorkspaceFolder(doc.uri)?.uri.fsPath;
@@ -121,6 +132,9 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidCloseTextDocument((doc) => {
       if (doc.languageId === 'spinasm') {
+        // Cancel any pending validation so it can't fire after the close and
+        // re-add diagnostics to a document we just cleared.
+        cancelValidation(doc);
         validator.clearDocument(doc);
         // The parser cache is keyed by URI and otherwise lives for the whole
         // session. Document versions also reset on reopen, so a stale entry
