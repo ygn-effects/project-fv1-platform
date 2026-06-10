@@ -126,6 +126,9 @@ export default class Project {
       throw new Error(`Program at index ${program} does not exist.`);
     }
 
+    // Hand-made project layouts may lack output/; asfv1 can't create it.
+    await fsPromises.mkdir(this.outputFolder, { recursive: true });
+
     const args = [...this.compilerArguments, "-p", program.toString(), this.programs[program]!, this.outputs[program]];
     const { code, stderr } = await this.runCompiler(args);
 
@@ -152,6 +155,9 @@ export default class Project {
   public async compileAllProgramsToCombinedBin(): Promise<void> {
     const tempFiles: string[] = [];
     const bankOutputs: (Buffer | null)[] = [];
+
+    // Hand-made project layouts may lack output/; asfv1 can't create it.
+    await fsPromises.mkdir(this.outputFolder, { recursive: true });
 
     try {
       for (let bank = 0; bank < BANK_COUNT; bank++) {
