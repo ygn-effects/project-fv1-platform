@@ -57,8 +57,11 @@ ProgrammerStatus Programmer::getMessage(uint8_t* t_data, uint8_t t_count, uint16
         return ProgrammerStatus::Success;
       }
       else {
-        // Framing mismatch: discard one byte to realign buffer
+        // Framing mismatch: discard the offending byte, then resync to the next start marker
         m_buffer.pop();
+        while (!m_buffer.isEmpty() && m_buffer.peek(0) != ProgrammerConstants::c_startMarker) {
+          m_buffer.pop();
+        }
         return ProgrammerStatus::FramingError;
       }
     }
