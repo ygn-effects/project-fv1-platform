@@ -16,6 +16,14 @@ namespace MessageLength {
 }
 
 /**
+ * @brief Physical characteristics of the target 24LC32A EEPROM.
+ */
+namespace EepromConstants {
+  constexpr uint16_t c_eepromSize = 0x1000; ///< 24LC32A capacity in bytes (4 KB)
+  constexpr uint16_t c_pageSize = 32;       ///< 24LC32A write page size in bytes
+}
+
+/**
  * @brief Enumerates the possible states of the Hardware state machine.
  */
 enum SystemState {
@@ -48,7 +56,8 @@ enum class Message : uint8_t {
  * @brief Maintains context information during EEPROM operations.
  */
 struct OperationContext {
-  uint16_t address = 0x1000; ///< Current EEPROM address for operation, defaults to an invalid address (0x1000, the max adressable memory in a 24LC32A is 0xFFF)
+  uint16_t address = 0;    ///< Current EEPROM address for operation, only valid when addressSet is true
+  bool addressSet = false; ///< Whether a validated address has been received for the current operation
   uint8_t buffer[MessageLength::c_dataMessageLength] = {0}; ///< Data buffer for EEPROM operations
   size_t bufferLength = 0; ///< Actual length of data in buffer
 
@@ -56,7 +65,8 @@ struct OperationContext {
    * @brief Resets the operation context to default state.
    */
   void reset() {
-    address = 0x1000;
+    address = 0;
+    addressSet = false;
     bufferLength = 0;
     memset(buffer, 0, sizeof(buffer));
   }
@@ -144,6 +154,13 @@ class Hardware {
      * @brief Responds to "Are you ready?" EEPROM status inquiry.
      */
     void processRuReadyMessage();
+
+    /**
+     * @brief Receives the EEPROM address for the current operation and validates it.
+     *
+     * Rejects out-of-range or non page-aligned addresses with kNok and resets the context.
+     */
+    void processAddressMessage();
 
     /**
      * @brief Handles sequential EEPROM read operations.

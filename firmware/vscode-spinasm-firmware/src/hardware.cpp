@@ -152,7 +152,7 @@ void Hardware::processProcessingMessage() {
 
     case Message::kRead:
       // Only aknowledge when the address isn't set. The next read order will directly output the data
-      if (m_context.address == 0x1000) {
+      if (!m_context.addressSet) {
         sendOrder(Message::kOk);
       }
 
@@ -161,7 +161,7 @@ void Hardware::processProcessingMessage() {
 
     case Message::kWrite:
       // Aknowledge when the addresse isn't set
-      if (m_context.address == 0x1000) {
+      if (!m_context.addressSet) {
         sendOrder(Message::kOk);
       }
       // Aknowledge when the buffer size isn't set
@@ -192,19 +192,33 @@ void Hardware::processRuReadyMessage() {
   transitionToState(kReceivingMessage);
 }
 
-void Hardware::processReadMessage() {
-  if (m_context.address == 0x1000) {
-    // Get EEPROM address to read from
-    uint8_t address[MessageLength::c_addressMessageLength];
-    ProgrammerStatus status = getProgrammerMessage(address, MessageLength::c_addressMessageLength);
+void Hardware::processAddressMessage() {
+  uint8_t address[MessageLength::c_addressMessageLength];
+  ProgrammerStatus status = getProgrammerMessage(address, MessageLength::c_addressMessageLength);
 
-    if (status == ProgrammerStatus::Success) {
-      m_context.address = (address[0] << 8) | address[1];
-      sendOrder(Message::kOk);
+  if (status == ProgrammerStatus::Success) {
+    uint16_t parsedAddress = (address[0] << 8) | address[1];
 
-      // Address set, await new message
-      transitionToState(SystemState::kReceivingMessage);
+    // Reject addresses outside the EEPROM or not aligned to a page boundary
+    if (parsedAddress >= EepromConstants::c_eepromSize ||
+        parsedAddress % EepromConstants::c_pageSize != 0) {
+      sendOrder(Message::kNok);
+      m_context.reset();
     }
+    else {
+      m_context.address = parsedAddress;
+      m_context.addressSet = true;
+      sendOrder(Message::kOk);
+    }
+
+    // Address handled, await new message
+    transitionToState(SystemState::kReceivingMessage);
+  }
+}
+
+void Hardware::processReadMessage() {
+  if (!m_context.addressSet) {
+    processAddressMessage();
   }
   else {
     // Perform EEPROM read and send data back
@@ -221,18 +235,8 @@ void Hardware::processReadMessage() {
 }
 
 void Hardware::processWriteMessage() {
-  if (m_context.address == 0x1000) {
-    // Get EEPROM address to write to
-    uint8_t address[MessageLength::c_addressMessageLength];
-    ProgrammerStatus status = getProgrammerMessage(address, MessageLength::c_addressMessageLength);
-
-    if (status == ProgrammerStatus::Success) {
-      m_context.address = (address[0] << 8) | address[1];
-      sendOrder(Message::kOk);
-
-      // Address set, await new message
-      transitionToState(SystemState::kReceivingMessage);
-    }
+  if (!m_context.addressSet) {
+    processAddressMessage();
   }
   else if (m_context.bufferLength == 0) {
     // Get data to write to EEPROM
