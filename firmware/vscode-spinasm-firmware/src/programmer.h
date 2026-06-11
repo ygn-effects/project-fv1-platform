@@ -27,21 +27,28 @@ enum class ProgrammerStatus {
  */
 class Programmer {
   private:
-    uint8_t m_fv1Pin;                 ///< GPIO pin controlling FV-1 state or reset
+    uint8_t m_fv1ResetPin;            ///< GPIO pin controlling the FV-1 reset line
     CircularBuffer<64> m_buffer;      ///< Circular buffer for UART data handling
 
   public:
     /**
      * @brief Construct a Programmer object.
      *
-     * @param t_pin GPIO pin used for FV-1 state/reset control.
+     * @param t_pin GPIO pin used for FV-1 reset control.
      */
-    Programmer(uint8_t t_pin) : m_fv1Pin(t_pin) {}
+    Programmer(uint8_t t_pin) : m_fv1ResetPin(t_pin) {}
 
     /**
      * @brief Initializes serial communication and GPIO.
      */
     void setup();
+
+    /**
+     * @brief Resets the FV-1 by pulsing its reset line LOW then HIGH.
+     *
+     * Blocks for 50 ms while the line is held LOW.
+     */
+    void resetFv1();
 
     /**
      * @brief Receives available UART data into the buffer.

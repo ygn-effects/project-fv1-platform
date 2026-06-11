@@ -1,7 +1,7 @@
 #include "hardware.h"
 
 EEPROM eeprom(0x50);
-Programmer programmer(9);
+Programmer programmer(c_fv1ResetPin);
 
 ProgrammerStatus Hardware::getProgrammerMessage(uint8_t* t_data, uint8_t t_count) {
   ProgrammerStatus status = programmer.getMessage(t_data, t_count);
@@ -260,9 +260,7 @@ void Hardware::processWriteMessage() {
 }
 
 void Hardware::processEndMessage() {
-  digitalWrite(m_fv1ResetPin, LOW);
-  delay(50);
-  digitalWrite(m_fv1ResetPin, HIGH);
+  programmer.resetFv1();
 
   m_context.reset();
   sendOrder(Message::kOk);
@@ -273,9 +271,6 @@ void Hardware::processEndMessage() {
 void Hardware::setup() {
   eeprom.setup();
   programmer.setup();
-
-  portMode(m_fv1ResetPin, OUTPUT);
-  digitalWrite(m_fv1ResetPin, HIGH);
 }
 
 void Hardware::process() {

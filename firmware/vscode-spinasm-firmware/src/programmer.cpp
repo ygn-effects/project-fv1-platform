@@ -2,8 +2,14 @@
 
 void Programmer::setup() {
   Serial.begin(57600);
-  pinMode(m_fv1Pin, OUTPUT);
-  digitalWrite(m_fv1Pin, HIGH); // Initialize FV-1 pin to known state
+  pinMode(m_fv1ResetPin, OUTPUT);
+  digitalWrite(m_fv1ResetPin, HIGH); // Initialize FV-1 pin to known state
+}
+
+void Programmer::resetFv1() {
+  digitalWrite(m_fv1ResetPin, LOW);
+  delay(50);
+  digitalWrite(m_fv1ResetPin, HIGH);
 }
 
 void Programmer::receiveData() {
