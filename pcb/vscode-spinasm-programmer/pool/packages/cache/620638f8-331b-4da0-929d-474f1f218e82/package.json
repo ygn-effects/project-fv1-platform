@@ -717,6 +717,9 @@
         "courtyard_expansion": 50000,
         "paste_mask_contraction": 50000
     },
+    "parameters_fixed": [
+        "paste_mask_contraction"
+    ],
     "polygons": {
         "2b0cc5d6-b7db-4296-baff-1f7127373660": {
             "layer": 50,
@@ -985,5 +988,6 @@
         }
     },
     "type": "package",
-    "uuid": "620638f8-331b-4da0-929d-474f1f218e82"
+    "uuid": "620638f8-331b-4da0-929d-474f1f218e82",
+    "version": 1
 }

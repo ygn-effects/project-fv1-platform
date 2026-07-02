@@ -602,8 +602,12 @@
     },
     "parameter_program": "7.200mm 5.400mm\nget-parameter [ courtyard_expansion ]\n2 * +xy\nset-polygon [ courtyard rectangle 0.000mm 0.000mm ]",
     "parameter_set": {
-        "courtyard_expansion": 50000
+        "courtyard_expansion": 50000,
+        "paste_mask_contraction": 25000
     },
+    "parameters_fixed": [
+        "paste_mask_contraction"
+    ],
     "polygons": {
         "030c1a17-ba63-44f9-87be-8434f29acd61": {
             "layer": 40,
@@ -860,5 +864,6 @@
         }
     },
     "type": "package",
-    "uuid": "331b9a71-5756-4525-abc1-15a831d72d90"
+    "uuid": "331b9a71-5756-4525-abc1-15a831d72d90",
+    "version": 1
 }
