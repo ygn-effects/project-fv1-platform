@@ -129,6 +129,48 @@
         "courtyard_expansion": 50000
     },
     "polygons": {
+        "41f4d335-739b-4aa8-84f1-19086e815202": {
+            "layer": 50,
+            "parameter_class": "",
+            "vertices": [
+                {
+                    "arc_center": [
+                        0,
+                        0
+                    ],
+                    "arc_reverse": false,
+                    "position": [
+                        -200000,
+                        0
+                    ],
+                    "type": "line"
+                },
+                {
+                    "arc_center": [
+                        0,
+                        0
+                    ],
+                    "arc_reverse": false,
+                    "position": [
+                        200000,
+                        250000
+                    ],
+                    "type": "line"
+                },
+                {
+                    "arc_center": [
+                        0,
+                        0
+                    ],
+                    "arc_reverse": false,
+                    "position": [
+                        200000,
+                        -250000
+                    ],
+                    "type": "line"
+                }
+            ]
+        },
         "57712d21-c21a-400a-b14b-76603bba7f36": {
             "layer": 50,
             "parameter_class": "",
@@ -315,7 +357,7 @@
                 "angle": 0,
                 "mirror": false,
                 "shift": [
-                    -700000,
+                    275000,
                     -25000
                 ]
             },

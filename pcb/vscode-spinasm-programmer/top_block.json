@@ -9,13 +9,15 @@
                 "QTY",
                 "value",
                 "MPN",
-                "description"
+                "description",
+                "package",
+                "manufacturer"
             ],
             "order": "asc",
             "sort_column": "refdes"
         },
         "orderable_MPNs": {},
-        "output_filename": "/home/yann/_dev/05 - Spinsemi/vscode-spinasm/assembly/BOM/BOM.csv"
+        "output_filename": "C:\\_Dev\\_ygn\\project-fv1-platform\\pcb\\bom\\vscode-spinasm-programmer.csv"
     },
     "buses": {},
     "components": {
