@@ -34,7 +34,17 @@ export default class Programmer {
 
   constructor(port: string, baudRate: number) {
     this.serialPort = new SerialPort({ path: port, baudRate, autoOpen: false });
-    this.parser = this.serialPort.pipe(new DelimiterParser({ delimiter: Buffer.from([this.endMarker]) }));
+    this.parser = this.createParser();
+  }
+
+  private createParser(): DelimiterParser {
+    return this.serialPort.pipe(new DelimiterParser({ delimiter: Buffer.from([this.endMarker]) }));
+  }
+
+  private resetParser(): void {
+    this.serialPort.unpipe(this.parser);
+    this.parser.destroy();
+    this.parser = this.createParser();
   }
 
   public async connect(): Promise<void> {
@@ -47,8 +57,6 @@ export default class Programmer {
 
         Logs.log(LogType.INFO, `Serial port ${this.serialPort.path} opened successfully.`);
 
-        // Some adapters emit junk bytes right after open(); discard for 100 ms
-        // so the first real command doesn't get the leftovers as its response.
         const discardDuration = 100;
         const discardData = (data: Buffer) => {
           Logs.log(LogType.INFO, `Discarding junk data: ${data.toString('hex')}`);
@@ -58,6 +66,7 @@ export default class Programmer {
 
         setTimeout(() => {
           this.serialPort.removeListener("data", discardData);
+          this.resetParser();
           resolve();
         }, discardDuration);
       });
