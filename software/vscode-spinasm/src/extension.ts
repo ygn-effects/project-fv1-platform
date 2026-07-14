@@ -716,6 +716,9 @@ async function performUpload(project: Project, settings: ProjectSettings, bank: 
     if (! (await programmer.isProgrammerConnected())) {
       throw new Error("Programmer did not respond.");
     }
+    if (! (await programmer.isEepromReady())) {
+      throw new Error("EEPROM isn't responding.");
+    }
 
     const hexOutput = project.getOutput(bank);
 
