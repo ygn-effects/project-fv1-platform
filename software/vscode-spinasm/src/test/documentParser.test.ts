@@ -65,6 +65,18 @@ describe("DocumentParser", () => {
     assert.ok(parsed.diagnostics.some(d => d.code === "duplicate-symbol"));
   });
 
+  it("flags a duplicate label and keeps the first definition", async () => {
+    const parsed = await parse("start:\n  nop\nstart:\n  nop\n");
+    assert.ok(parsed.diagnostics.some(d => d.code === "duplicate-symbol"));
+    assert.strictEqual(parsed.symbols.get("START")!.line, 0);
+  });
+
+  it("flags a label that collides with another symbol kind", async () => {
+    const parsed = await parse("equ target 1\ntarget:\n");
+    assert.ok(parsed.diagnostics.some(d => d.code === "duplicate-symbol"));
+    assert.strictEqual(parsed.symbols.get("TARGET")!.type, "constant");
+  });
+
   it("flags redefinition of a reserved symbol", async () => {
     const parsed = await parse("equ adcl 1\n");
     assert.ok(parsed.diagnostics.some(d => d.code === "reserved-symbol"));

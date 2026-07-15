@@ -244,7 +244,15 @@ export class DocumentParser {
             severity: vscode.DiagnosticSeverity.Error,
             code: 'reserved-symbol'
           });
-        } else if (!symbols.has(symbolUpper)) {
+        } else if (symbols.has(symbolUpper)) {
+          const prevDef = symbols.get(symbolUpper)!;
+          diagnostics.push({
+            range: new vscode.Range(i, actualChar, i, actualChar + symbolName.length),
+            message: `Symbol '${symbolName}' already defined on line ${prevDef.line + 1}`,
+            severity: vscode.DiagnosticSeverity.Error,
+            code: 'duplicate-symbol'
+          });
+        } else {
           symbols.set(symbolUpper, {
             name: symbolName,
             type: 'label',
