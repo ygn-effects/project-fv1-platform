@@ -277,8 +277,8 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  if (Config.isConfigMissing()) {
-    vscode.window.showWarningMessage("SpinASM: Compiler path or Serial port is not configured. Please check your Settings.");
+  if (Config.isCompilerMissing()) {
+    vscode.window.showWarningMessage("SpinASM: Compiler path is not configured. Please check your Settings.");
   }
 
   Logs.log(LogType.INFO, "Commands registered successfully");

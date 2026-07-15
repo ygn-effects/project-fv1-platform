@@ -46,7 +46,7 @@ export default class Config {
     await config.update("programmer.serialPort", port, global);
   }
 
-  public static isConfigMissing(): boolean {
-    return !this.getCompilerPath() || !this.getSerialPort();
+  public static isCompilerMissing(): boolean {
+    return !this.getCompilerPath();
   }
 }
