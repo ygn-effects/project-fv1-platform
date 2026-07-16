@@ -1,6 +1,6 @@
-# SpinASM for FV-1
+# SpinASM for VS Code
 
-Build Spin Semiconductor FV-1 effects without leaving VS Code. SpinASM for FV-1 adds language support for `.spn` programs, compiles them with [`asfv1`](https://pypi.org/project/asfv1/) and programs an on-board EEPROM through the optional YGN FV-1 EEPROM Programmer.
+Build Spin Semiconductor FV-1 effects without leaving VS Code. SpinASM for VS Code adds language support for `.spn` programs, compiles them with [`asfv1`](https://pypi.org/project/asfv1/) and programs an on-board EEPROM through the optional YGN FV-1 EEPROM Programmer.
 
 This extension is part of the [YGN Effects Framework](https://ygn-effects.com/framework/), an open-source platform that gives hobbyists the hardware, firmware and tools needed to build guitar and bass effects pedals. It provides the software side of the Framework's FV-1 platform, from writing DSP code to loading it onto a pedal.
 
@@ -31,7 +31,7 @@ Language support, diagnostics and compilation work without the programmer.
 ## Quick Start
 
 1. Install the assembler by following the [`asfv1` system-specific installation instructions](https://github.com/ndf-zz/asfv1#system-specific-installation).
-2. Install **SpinASM for FV-1** from the VS Code Extensions view.
+2. Install **SpinASM for VS Code** from the VS Code Extensions view.
 3. Locate the installed assembler. Run `whereis asfv1` on Linux or macOS. On Windows, run `gcm asfv1.exe` from a PowerShell prompt.
 4. Open VS Code Settings, search for `SpinASM` and set **Compiler: Path** to the full path reported for the `asfv1` executable.
 5. Open a folder containing an FV-1 project, or run **SpinASM: Create Project** from the Command Palette to create one.
@@ -97,7 +97,7 @@ Once the programmer is connected and the target board is powered, run **SpinASM:
 
 An Arduino Pro Mini 3.3V can run the same programming protocol as the custom board. It provides the ATmega programming side of the design without the built-in FT230X, so it needs a separate USB-to-serial adapter to communicate with VS Code.
 
-Follow the [Arduino Pro Mini FV-1 Programmer Setup guide](https://ygn-effects.com/docs/fv1-programmer-arduino-pro-mini-setup/) to flash the programmer firmware and connect it to the target EEPROM. <!-- confirm: replace this placeholder link when the Arduino Pro Mini guide is published --> Once configured, the extension can detect and use it through the same upload commands as the YGN programmer.
+Follow the [Arduino Pro Mini FV-1 Programmer Setup guide](https://ygn-effects.com/docs/fv1-programmer-arduino-pro-mini-setup/) to flash the programmer firmware and connect it to the target EEPROM. Once configured, the extension can detect and use it through the same upload commands as the YGN programmer.
 
 ### External EEPROM Programmer
 
@@ -112,35 +112,37 @@ All settings live under `spinasm` in VS Code Settings.
 | Setting | Default | Purpose |
 |---|---:|---|
 | `spinasm.compiler.path` | Empty | Full path to the `asfv1` executable |
-| `spinasm.compiler.args` | `[-s]` | Arguments passed to `asfv1`; `-s` enables SpinASM-compatible literal handling |
+| `spinasm.compiler.args` | `["-s"]` | Arguments passed to `asfv1`; `-s` enables SpinASM-compatible literal handling |
 | `spinasm.programmer.serialPort` | Empty | Serial port used by the YGN programmer |
 | `spinasm.programmer.baudRate` | `57600` | Programmer serial baud rate |
 | `spinasm.editor.compileOnSave` | `false` | Compile a bank whenever its `.spn` file is saved |
 | `spinasm.statusBar.enabled` | `true` | Show the eight-bank compilation summary |
 | `spinasm.logging.verbose` | `false` | Log detailed serial traffic for troubleshooting |
 
+The extension writes compiler, project and programmer activity to the **SpinASM** output channel. Open **View → Output**, then select **SpinASM** from the channel list. When a command fails, the extension automatically reveals this channel. Enable `spinasm.logging.verbose` only when troubleshooting serial communication, as it also logs individual programmer messages.
+
 The selected serial port is stored as a global machine setting so a hardware-specific port name is not committed with a workspace.
 
 ## Related FV-1 Platform Source
 
-The extension is one part of the larger [YGN FV-1 platform repository](https://github.com/ygn-effects/project-fv1-platform). After the project branches are assembled on `main`, the related source lives here:
+The extension is one part of the larger [YGN FV-1 platform repository](https://github.com/ygn-effects/project-fv1-platform). The related source lives here:
 
 | Component | Source |
 |---|---|
 | VS Code extension | [`software/vscode-spinasm`](https://github.com/ygn-effects/project-fv1-platform/tree/main/software/vscode-spinasm) |
 | Programmer firmware | [`firmware/vscode-spinasm-firmware`](https://github.com/ygn-effects/project-fv1-platform/tree/main/firmware/vscode-spinasm-firmware) |
-| Programmer PCB and fabrication files | [`pcb`](https://github.com/ygn-effects/project-fv1-platform/tree/main/pcb) |
+| Programmer PCB and fabrication files | [`pcb/vscode-spinasm-programmer`](https://github.com/ygn-effects/project-fv1-platform/tree/main/pcb/vscode-spinasm-programmer) |
 | Example guitar and bass programs | [`programs`](https://github.com/ygn-effects/project-fv1-platform/tree/main/programs) |
 
 ## Project Status
 
-SpinASM for FV-1 is stable and feature-complete for its intended scope. It is used as part of the active YGN FV-1 development workflow for editing, compiling and loading programs onto target hardware.
+SpinASM for VS Code is stable and feature-complete for its intended scope. It is used as part of the active YGN FV-1 development workflow for editing, compiling and loading programs onto target hardware.
 
 Bug reports and contributions are welcome through the [project issue tracker](https://github.com/ygn-effects/project-fv1-platform/issues).
 
 ## Licence
 
-SpinASM for FV-1 is open-source software released under the [Apache License 2.0](LICENSE).
+SpinASM for VS Code is open-source software released under the [Apache License 2.0](LICENSE).
 
 ## Acknowledgements
 
