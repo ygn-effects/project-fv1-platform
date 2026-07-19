@@ -1,3 +1,10 @@
+; EFFECT: Flanger
+; COLLECTION/SLOT: Guitar modulation / 5
+; POT0: Rate | POT1: Depth | POT2: Feedback
+; INPUT: Duplicated mono input summed from ADCL and ADCR
+; OUTPUT: Wet-only DACL; product dry/wet mix is external
+; STATUS: Hardware-tested; test date and matrix not recorded
+
 mem fdel 512
 
 equ dry reg0
@@ -35,7 +42,7 @@ main:
   rdax feedback, 1.0
   ; HPF
   rdfx hpf_state, 0.15
-  wrhx hpf_state, -1
+  wrhx hpf_state, -1.0
   ; Scale
   mulx fdbk_val
   rdax dry, 1.0

@@ -1,3 +1,10 @@
+; EFFECT: Harmonic Tremolo
+; COLLECTION/SLOT: Guitar modulation / 1
+; POT0: Rate | POT1: Depth | POT2: Crossover frequency
+; INPUT: Duplicated mono input summed from ADCL and ADCR
+; OUTPUT: Wet-only DACL; product dry/wet mix is external
+; STATUS: Hardware-tested; test date and matrix not recorded
+
 equ mono_in reg0
 equ lpf_state reg1
 equ hpf_state reg2

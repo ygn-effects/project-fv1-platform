@@ -1,3 +1,10 @@
+; EFFECT: Uni-Vibe
+; COLLECTION/SLOT: Guitar modulation / 3
+; POT0: Rate | POT1: Depth | POT2: Inertia
+; INPUT: Duplicated mono input summed from ADCL and ADCR
+; OUTPUT: Wet-only DACL; product dry/wet mix is external
+; STATUS: Hardware-tested; test date and matrix not recorded
+
 equ dry reg0
 equ lfo_squared reg1
 equ ldr1 reg2

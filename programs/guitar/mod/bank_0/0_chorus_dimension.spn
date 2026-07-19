@@ -1,3 +1,10 @@
+; EFFECT: Dimension Chorus
+; COLLECTION/SLOT: Guitar modulation / 0
+; POT0: Rate | POT1: Depth | POT2: Tone
+; INPUT: Duplicated mono input summed from ADCL and ADCR
+; OUTPUT: Wet-only DACL; product dry/wet mix is external
+; STATUS: Hardware-tested; test date and matrix not recorded
+
 mem chorus_del1 4096
 mem chorus_del2 4096
 

@@ -1,3 +1,10 @@
+; EFFECT: Tremolo
+; COLLECTION/SLOT: Guitar modulation / 2
+; POT0: Rate | POT1: Depth | POT2: Wave shape
+; INPUT: Duplicated mono input summed from ADCL and ADCR
+; OUTPUT: Wet-only DACL; product dry/wet mix is external
+; STATUS: Hardware-tested; test date and matrix not recorded
+
 equ lfo reg0
 equ lfo_raw reg1
 equ lfo_squared reg2
@@ -58,8 +65,8 @@ main:
   wrax mono_in, 0
 
   ; VCA
-  rdax lfo, 1
-  sof -1, 0.999
+  rdax lfo, 1.0
+  sof -1.0, 0.999
   mulx mono_in
 
   ; Output

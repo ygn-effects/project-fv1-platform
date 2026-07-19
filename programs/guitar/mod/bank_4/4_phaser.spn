@@ -1,9 +1,13 @@
 ; "Ain't Talkin' 'Bout Love" Phaser
 ; 4-Stage All-Pass with Triangle LFO
 ; ------------------------------------
+; COLLECTION/SLOT: Guitar modulation / 4
 ; POT0 = Speed
 ; POT1 = Depth (Width)
 ; POT2 = Feedback (Resonance)
+; INPUT: ADCL (ADCR carries the same mono signal)
+; OUTPUT: Wet-only DACL; product dry/wet mix is external
+; STATUS: Hardware-tested; test date and matrix not recorded
 
 equ dry reg0
 equ lfo reg1
@@ -39,7 +43,7 @@ main:
   ; Raw LFO
   cho rdal,rmp0
   ; -0.25 (o 0.25)
-  sof 1,-0.25
+  sof 1.0,-0.25
   ; 0 to 0.25
   absa
 
