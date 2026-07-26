@@ -37,6 +37,10 @@ Language support, diagnostics and compilation work without the programmer.
 5. Open a folder containing an FV-1 project, or run **SpinASM: Create Project** from the Command Palette to create one.
 6. Open a `.spn` file and run **SpinASM: Compile current program**. The editor title also provides compile and compile-upload buttons.
 
+## Documentation
+
+For complete project setup, compilation, EEPROM programming and troubleshooting, see the [SpinASM for VS Code usage guide](https://ygn-effects.com/docs/vscode-spinasm-extension-usage/).
+
 ## Project Layout
 
 Each FV-1 EEPROM contains eight program slots. The extension maps those slots to `bank_0` through `bank_7` inside the open workspace:
