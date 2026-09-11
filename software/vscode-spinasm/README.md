@@ -81,7 +81,10 @@ The main workflows are available from the Command Palette. Commands for the curr
 | **Upload all programs** | Uploads the existing HEX output for every populated bank |
 | **Compile & Upload** commands | Compile first, then upload and verify the selected bank or banks |
 
-Upload-only commands use the last compiled output. Use a **Compile & Upload** command when the source has changed or when you want to guarantee that the EEPROM receives the current editor version.
+Upload-only commands use the last compiled output. All compilation commands use
+the latest saved source; if a relevant source file has unsaved changes, the
+command stops and asks you to save it first. **Compile & Upload** commands compile
+first, then upload and verify the selected bank or banks.
 
 Every upload is read back from the EEPROM and compared with the compiled program. A mismatch is reported as an error.
 

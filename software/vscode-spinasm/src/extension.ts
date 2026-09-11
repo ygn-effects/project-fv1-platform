@@ -15,6 +15,7 @@ import { DocumentParser } from "./documentParser";
 import { ProjectManager } from "./projectManager";
 import { CompilerDiagnostics } from "./compilerDiagnostics";
 import { BANK_COUNT } from "./fv1Constants";
+import { findDirtyProgramPaths } from "./dirtyProgramGuard";
 
 let validator: SpinASMValidator;
 
@@ -405,6 +406,7 @@ async function autoDetectProgrammer(): Promise<void> {
 
 async function compileBank(bank: number): Promise<void> {
   await runOperation(async (project) => {
+    requireSavedPrograms(project, [bank]);
     await project.compileProgramToHex(bank);
 
     Logs.log(LogType.INFO, `Program ${bank} compilation successful`);
@@ -423,6 +425,7 @@ async function uploadBank(bank: number): Promise<void> {
 
 async function compileAndUploadBank(bank: number): Promise<void> {
   await runOperation(async (project, settings) => {
+    requireSavedPrograms(project, [bank]);
     await project.compileProgramToHex(bank);
     await performUpload(project, settings, bank);
 
@@ -439,6 +442,7 @@ async function compileCurrentProgram(uri?: vscode.Uri): Promise<void> {
       throw new Error("Current file is not a valid project program.");
     }
 
+    requireSavedPrograms(project, [currentProgram]);
     await project.compileProgramToHex(currentProgram);
 
     vscode.window.showInformationMessage(`Program ${currentProgram} compiled successfully!`);
@@ -466,6 +470,7 @@ async function compileAndUploadCurrentProgram(uri?: vscode.Uri): Promise<void> {
       throw new Error("Current file is not a valid project program.");
     }
 
+    requireSavedPrograms(project, [currentProgram]);
     await project.compileProgramToHex(currentProgram);
     await performUpload(project, settings, currentProgram);
     vscode.window.showInformationMessage(`Program ${currentProgram} compiled and uploaded successfully!`);
@@ -475,6 +480,7 @@ async function compileAndUploadCurrentProgram(uri?: vscode.Uri): Promise<void> {
 async function compileAllPrograms(): Promise<void> {
   await runOperation(async (project) => {
     const programs = project.getAllPrograms();
+    requireSavedPrograms(project);
 
     for (const programPath of programs) {
       if(!programPath) {
@@ -491,6 +497,7 @@ async function compileAllPrograms(): Promise<void> {
 
 async function compileAllProgramsToBin(): Promise<void> {
   await runOperation(async (project) => {
+    requireSavedPrograms(project);
     await project.compileAllProgramsToCombinedBin();
     vscode.window.showInformationMessage("Combined EEPROM image written to output.bin!");
   }, "Failed to compile combined EEPROM image", "Building combined EEPROM image...");
@@ -559,6 +566,7 @@ async function compileAndUploadAllPrograms(): Promise<void> {
       const project = await requireProject(folder);
 
       const programs = project.getAllPrograms();
+      requireSavedPrograms(project);
       const programsToProcess = programs.filter(p => p !== null);
       const totalPrograms = programsToProcess.length;
 
@@ -749,6 +757,29 @@ function getCurrentBank(project: Project, uri?: vscode.Uri): number {
   // button acts on its own editor, not whichever happens to be focused.
   const fsPath = uri?.fsPath ?? vscode.window.activeTextEditor?.document.uri.fsPath;
   return project.getProgramBankByPath(fsPath);
+}
+
+function requireSavedPrograms(project: Project, banks?: readonly number[]): void {
+  const programs = project.getAllPrograms();
+  const relevantPrograms = banks
+    ? banks.map(bank => programs[bank] ?? null)
+    : programs;
+  const openDocuments = vscode.workspace.textDocuments.map(document => ({
+    fsPath: document.uri.fsPath,
+    isDirty: document.isDirty,
+  }));
+  const dirtyPrograms = findDirtyProgramPaths(relevantPrograms, openDocuments);
+
+  if (dirtyPrograms.length === 0) {
+    return;
+  }
+
+  const names = dirtyPrograms.map(programPath => vscode.workspace.asRelativePath(programPath));
+  if (names.length === 1) {
+    throw new Error(`${names[0]} has unsaved changes. Save it before compiling.`);
+  }
+
+  throw new Error(`These programs have unsaved changes: ${names.join(", ")}. Save them before compiling.`);
 }
 
 interface ProjectSettings {
