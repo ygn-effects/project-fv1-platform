@@ -1,8 +1,9 @@
-import { DelimiterParser, SerialPort } from "serialport";
+import { SerialPort } from "serialport";
 import Logs, { LogType } from "./logs";
 import * as fs from 'fs/promises';
 import { BANK_SIZE_BYTES, EEPROM_BLOCK_SIZE_BYTES, EEPROM_BLANK_BYTE } from "./fv1Constants";
 import { parseIntelHex, IntelHexData } from "./intelHex";
+import SerialFrameParser from "./serialFrameParser";
 
 enum OrderCode {
   RuThere = 0x01,
@@ -22,29 +23,37 @@ enum ResponseCode {
   FramingError = 0x0C,
 }
 
+/** Narrow serial-port surface used by Programmer and its simulated transport tests. */
+export interface SerialTransport {
+  readonly path: string;
+  readonly isOpen: boolean;
+  open(callback: (error: Error | null) => void): void;
+  close(callback: (error: Error | null) => void): void;
+  on(event: "data", listener: (data: Buffer) => void): this;
+  removeListener(event: "data", listener: (data: Buffer) => void): this;
+  write(data: Buffer, callback: (error: Error | null | undefined) => void): boolean;
+}
+
 export default class Programmer {
-  private serialPort: SerialPort;
-  private parser: DelimiterParser;
+  private serialPort: SerialTransport;
   private readonly startMarker = 0x1e;
   private readonly endMarker = 0x1f;
+  private readonly parser = new SerialFrameParser(this.startMarker, this.endMarker);
   private lastCommandTimestamp = 0;
+  private commandInProgress = false;
+  private responseDataHandler: (() => void) | undefined;
   // Set when a command timed out: its reply may still arrive and must be
   // discarded, not consumed as the next command's response.
   private staleResponsePossible = false;
 
-  constructor(port: string, baudRate: number) {
-    this.serialPort = new SerialPort({ path: port, baudRate, autoOpen: false });
-    this.parser = this.createParser();
-  }
+  private readonly collectSerialData = (data: Buffer): void => {
+    this.parser.push(data);
+    this.responseDataHandler?.();
+  };
 
-  private createParser(): DelimiterParser {
-    return this.serialPort.pipe(new DelimiterParser({ delimiter: Buffer.from([this.endMarker]) }));
-  }
-
-  private resetParser(): void {
-    this.serialPort.unpipe(this.parser);
-    this.parser.destroy();
-    this.parser = this.createParser();
+  constructor(port: string, baudRate: number, serialTransport?: SerialTransport) {
+    this.serialPort = serialTransport ?? new SerialPort({ path: port, baudRate, autoOpen: false });
+    this.serialPort.on("data", this.collectSerialData);
   }
 
   public async connect(): Promise<void> {
@@ -66,7 +75,7 @@ export default class Programmer {
 
         setTimeout(() => {
           this.serialPort.removeListener("data", discardData);
-          this.resetParser();
+          this.parser.drain();
           resolve();
         }, discardDuration);
       });
@@ -212,86 +221,107 @@ export default class Programmer {
    *  reply to the timed-out command can't be mistaken for the next reply. */
   private drainStaleResponses(drainMs = 100): Promise<void> {
     return new Promise((resolve) => {
-      const discard = (data: Buffer) => {
-        Logs.log(LogType.DEBUG, `Discarding stale response: ${data.toString("hex")}`);
-      };
-      this.parser.on("data", discard);
       setTimeout(() => {
-        this.parser.removeListener("data", discard);
+        const stale = this.parser.drain();
+        if (stale.length > 0) {
+          Logs.log(LogType.DEBUG, `Discarding stale response: ${stale.toString("hex")}`);
+        }
         resolve();
       }, drainMs);
     });
   }
 
   private async sendMessage(payload: Buffer, expectedResponseSize: number, timeoutMs = 500): Promise<Buffer> {
-    if (this.staleResponsePossible) {
-      await this.drainStaleResponses();
-      this.staleResponsePossible = false;
+    if (this.commandInProgress) {
+      throw new Error("Another programmer command is already in progress.");
     }
 
-    // Hardware needs ≥10 ms between commands or it drops the next message.
-    const now = Date.now();
-    const elapsed = now - this.lastCommandTimestamp;
-    const requiredDelay = 10;
+    this.commandInProgress = true;
 
-    if (elapsed < requiredDelay) {
-      await new Promise((resolve) => setTimeout(resolve, requiredDelay - elapsed));
-    }
+    try {
+      if (this.staleResponsePossible) {
+        await this.drainStaleResponses();
+        this.staleResponsePossible = false;
+      }
 
-    this.lastCommandTimestamp = Date.now();
+      // Hardware needs ≥10 ms between commands or it drops the next message.
+      const now = Date.now();
+      const elapsed = now - this.lastCommandTimestamp;
+      const requiredDelay = 10;
 
-    const message = Buffer.concat([
-      Buffer.from([this.startMarker]),
-      payload,
-      Buffer.from([this.endMarker]),
-    ]);
+      if (elapsed < requiredDelay) {
+        await new Promise((resolve) => setTimeout(resolve, requiredDelay - elapsed));
+      }
 
-    return new Promise((resolve, reject) => {
-      const onData = (data: Buffer) => {
-        clearTimeout(timeout);
+      // The protocol permits only one response per command. If an additional
+      // frame arrived in the same serial chunk, do not let it satisfy the next
+      // command after that command is sent.
+      const unexpected = this.parser.drain();
+      if (unexpected.length > 0) {
+        Logs.log(LogType.DEBUG, `Discarding unexpected buffered response: ${unexpected.toString("hex")}`);
+      }
 
-        if (data.length !== expectedResponseSize + 1 || data[0] !== this.startMarker) {
-          Logs.log(LogType.ERROR,`Invalid response format: ${data.toString("hex")}`);
-          return reject(new Error("Invalid response format from programmer."));
-        }
+      this.lastCommandTimestamp = Date.now();
 
-        if (data.length === 2) {
-          const code = data[1];
-          if (code === ResponseCode.Timeout) {
-            return reject(new Error("Programmer timed out."));
+      const message = Buffer.concat([
+        Buffer.from([this.startMarker]),
+        payload,
+        Buffer.from([this.endMarker]),
+      ]);
+
+      return await new Promise((resolve, reject) => {
+        const onData = () => {
+          const response = this.parser.readFrame(expectedResponseSize);
+
+          if (response === undefined) {
+            return;
           }
 
-          if (code === ResponseCode.FramingError) {
-            return reject(new Error("Programmer framing error."));
-          }
-
-          if (code === ResponseCode.ComError) {
-            return reject(new Error("Programmer communication error."));
-          }
-        }
-
-        resolve(data.subarray(1));
-      };
-
-      const timeout = setTimeout(() => {
-        this.parser.removeListener("data", onData);
-        this.staleResponsePossible = true;
-        Logs.log(LogType.ERROR, "Timeout waiting for programmer response.");
-        reject(new Error("Timeout waiting for programmer response."));
-      }, timeoutMs);
-
-      this.parser.once("data", onData);
-
-      this.serialPort.write(message, (err) => {
-        if (err) {
           clearTimeout(timeout);
-          this.parser.removeListener("data", onData);
-          Logs.log(LogType.ERROR, `Failed to write message: ${err.message}`);
-          reject(err);
-        } else {
-          Logs.log(LogType.DEBUG, `Message sent: ${message.toString("hex")}`);
-        }
+          this.responseDataHandler = undefined;
+
+          if (response.length === 1) {
+            const code = response[0];
+            if (code === ResponseCode.Timeout) {
+              return reject(new Error("Programmer timed out."));
+            }
+
+            if (code === ResponseCode.FramingError) {
+              return reject(new Error("Programmer framing error."));
+            }
+
+            if (code === ResponseCode.ComError) {
+              return reject(new Error("Programmer communication error."));
+            }
+          }
+
+          resolve(response);
+        };
+
+        const timeout = setTimeout(() => {
+          this.responseDataHandler = undefined;
+          this.staleResponsePossible = true;
+          Logs.log(LogType.ERROR, "Timeout waiting for programmer response.");
+          reject(new Error("Timeout waiting for programmer response."));
+        }, timeoutMs);
+
+        this.responseDataHandler = onData;
+
+        this.serialPort.write(message, (err) => {
+          if (err) {
+            clearTimeout(timeout);
+            this.responseDataHandler = undefined;
+            Logs.log(LogType.ERROR, `Failed to write message: ${err.message}`);
+            reject(err);
+          } else {
+            Logs.log(LogType.DEBUG, `Message sent: ${message.toString("hex")}`);
+          }
+        });
       });
-    });
+    }
+    finally {
+      this.responseDataHandler = undefined;
+      this.commandInProgress = false;
+    }
   }
 }
