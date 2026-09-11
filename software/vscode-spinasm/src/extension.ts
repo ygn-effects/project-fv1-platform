@@ -16,6 +16,9 @@ import { ProjectManager } from "./projectManager";
 import { CompilerDiagnostics } from "./compilerDiagnostics";
 import { BANK_COUNT } from "./fv1Constants";
 import { findDirtyProgramPaths } from "./dirtyProgramGuard";
+import { validateIntelHexForBank } from "./intelHex";
+import { readIntelHexData } from "./intelHexFile";
+import { writeAndVerifyBankProgram } from "./programUpload";
 
 let validator: SpinASMValidator;
 
@@ -713,6 +716,16 @@ async function runOperation(
 }
 
 async function performUpload(project: Project, settings: ProjectSettings, bank: number): Promise<void> {
+  const hexOutput = project.getOutput(bank);
+  if (!hexOutput) {
+    throw new Error(`No output file found for bank ${bank}`);
+  }
+
+  // Parse and validate before loading the native serial module or opening the
+  // programmer. Invalid compiler output must never reach the transport.
+  const program = await readIntelHexData(hexOutput);
+  validateIntelHexForBank(program, bank);
+
   const Programmer = getProgrammer();
   let programmer: ProgrammerType | null = null;
 
@@ -728,20 +741,7 @@ async function performUpload(project: Project, settings: ProjectSettings, bank: 
       throw new Error("EEPROM isn't responding.");
     }
 
-    const hexOutput = project.getOutput(bank);
-
-    if (!hexOutput) {
-      throw new Error(`No output file found for bank ${bank}`);
-    }
-
-    const program = await programmer.readIntelHexData(hexOutput);
-
-    await programmer.writeProgram(program.address, program.data);
-    const programRead = await programmer.readProgram(program.address);
-
-    if (Buffer.compare(program.data, programRead) !== 0) {
-      throw new Error("Data verification failed.");
-    }
+    await writeAndVerifyBankProgram(programmer, bank, program);
   }
   finally {
     if (programmer) {

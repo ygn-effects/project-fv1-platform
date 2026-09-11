@@ -1,4 +1,4 @@
-import { BANK_SIZE_BYTES, EEPROM_BLANK_BYTE } from "./fv1Constants";
+import { BANK_COUNT, BANK_SIZE_BYTES, EEPROM_BLANK_BYTE } from "./fv1Constants";
 
 export interface IntelHexData {
   address: number;
@@ -12,7 +12,7 @@ export interface IntelHexData {
  *
  * Pure and dependency-free (no serial transport, no vscode) so the format
  * handling can be unit-tested in isolation. File I/O and logging stay with the
- * caller in Programmer.
+ * caller.
  */
 export function parseIntelHex(content: string): IntelHexData {
   const lines = content.split(/\r\n|\r|\n/);
@@ -21,6 +21,7 @@ export function parseIntelHex(content: string): IntelHexData {
   let minAddress = Infinity;
   let maxAddress = 0;
   let lineNo = 0;
+  let foundEof = false;
 
   for (const line of lines) {
       lineNo++;
@@ -39,31 +40,40 @@ export function parseIntelHex(content: string): IntelHexData {
         throw new Error(`Malformed HEX record at line ${lineNo}: too short (${line.length} chars)`);
       }
 
-      const byteCount = parseInt(line.substring(1, 3), 16);
-      const address = parseInt(line.substring(3, 7), 16);
-      const recordType = parseInt(line.substring(7, 9), 16);
-
-      if (isNaN(byteCount) || isNaN(address) || isNaN(recordType)) {
+      const byteCountText = line.substring(1, 3);
+      const addressText = line.substring(3, 7);
+      const recordTypeText = line.substring(7, 9);
+      if (!isHexField(byteCountText, 2) ||
+          !isHexField(addressText, 4) ||
+          !isHexField(recordTypeText, 2)) {
         throw new Error(`Malformed HEX record at line ${lineNo}: non-hex header`);
       }
 
+      const byteCount = Number.parseInt(byteCountText, 16);
+      const address = Number.parseInt(addressText, 16);
+      const recordType = Number.parseInt(recordTypeText, 16);
+
       const expectedLength = 11 + 2 * byteCount;
-      if (line.length < expectedLength) {
+      if (line.length !== expectedLength) {
         throw new Error(`Malformed HEX record at line ${lineNo}: expected ${expectedLength} chars for byteCount=${byteCount}, got ${line.length}`);
       }
 
-      const checksum = parseInt(line.slice(-2), 16);
-      if (isNaN(checksum)) {
+      const checksumText = line.substring(expectedLength - 2, expectedLength);
+      if (!isHexField(checksumText, 2)) {
         throw new Error(`Malformed HEX record at line ${lineNo}: non-hex checksum`);
       }
+      const checksum = Number.parseInt(checksumText, 16);
 
       let calculatedChecksum = byteCount + (address >> 8) + (address & 0xFF) + recordType;
+      const dataBytes: number[] = [];
 
       for (let i = 0; i < byteCount; i++) {
-        const byte = parseInt(line.substring(9 + i * 2, 11 + i * 2), 16);
-        if (isNaN(byte)) {
+        const byteText = line.substring(9 + i * 2, 11 + i * 2);
+        if (!isHexField(byteText, 2)) {
           throw new Error(`Malformed HEX record at line ${lineNo}: non-hex data byte at offset ${i}`);
         }
+        const byte = Number.parseInt(byteText, 16);
+        dataBytes.push(byte);
         calculatedChecksum += byte;
       }
       // Intel HEX checksum is two's complement of the LSB of the running sum.
@@ -72,8 +82,8 @@ export function parseIntelHex(content: string): IntelHexData {
       }
 
       if (recordType === 0x00) { // data
-        for (let i = 0; i < byteCount; i++) {
-          const byte = parseInt(line.substring(9 + i * 2, 11 + i * 2), 16);
+        for (let i = 0; i < dataBytes.length; i++) {
+          const byte = dataBytes[i];
           const absoluteAddress = address + i;
           memoryMap.set(absoluteAddress, byte);
 
@@ -85,16 +95,29 @@ export function parseIntelHex(content: string): IntelHexData {
             maxAddress = absoluteAddress;
           }
         }
-      } else if (recordType === 0x01) { // EOF
+      }
+      else if (recordType === 0x01) { // EOF
+          if (byteCount !== 0 || address !== 0) {
+            throw new Error(`Malformed HEX EOF record at line ${lineNo}`);
+          }
+          foundEof = true;
           break;
       }
+      else {
+        throw new Error(`Unsupported HEX record type 0x${recordType.toString(16).padStart(2, "0").toUpperCase()} at line ${lineNo}`);
+      }
+  }
+
+  if (!foundEof) {
+    throw new Error("HEX file is missing an EOF record.");
   }
 
   if (minAddress === Infinity) {
     throw new Error("HEX file contained no valid data records.");
   }
 
-  // Bank size is fixed but we tolerate larger inputs in case of off-spec hex.
+  // Keep the parser format-focused: short images are blank-filled to one bank,
+  // while the upload validator below rejects images that extend past that bank.
   const size = maxAddress - minAddress + 1;
   const bufferSize = Math.max(BANK_SIZE_BYTES, size);
   const buffer = Buffer.alloc(bufferSize, EEPROM_BLANK_BYTE);
@@ -107,4 +130,30 @@ export function parseIntelHex(content: string): IntelHexData {
     address: minAddress,
     data: buffer
   };
+}
+
+/** Ensures a parsed program can only target the bank selected by the user. */
+export function validateIntelHexForBank(program: IntelHexData, bank: number): void {
+  if (!Number.isInteger(bank) || bank < 0 || bank >= BANK_COUNT) {
+    throw new Error(`Invalid bank ${bank}. Expected a bank from 0 to ${BANK_COUNT - 1}.`);
+  }
+
+  const expectedAddress = bank * BANK_SIZE_BYTES;
+  if (program.address !== expectedAddress) {
+    throw new Error(
+      `HEX image starts at 0x${program.address.toString(16).toUpperCase()}, ` +
+      `but bank ${bank} must start at 0x${expectedAddress.toString(16).toUpperCase()}.`
+    );
+  }
+
+  if (program.data.length !== BANK_SIZE_BYTES) {
+    throw new Error(
+      `HEX image for bank ${bank} is ${program.data.length} bytes; ` +
+      `expected exactly ${BANK_SIZE_BYTES} bytes.`
+    );
+  }
+}
+
+function isHexField(value: string, length: number): boolean {
+  return value.length === length && /^[0-9A-Fa-f]+$/.test(value);
 }

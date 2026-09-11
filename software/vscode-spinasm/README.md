@@ -87,6 +87,9 @@ command stops and asks you to save it first. **Compile & Upload** commands compi
 first, then upload and verify the selected bank or banks.
 
 Every upload is read back from the EEPROM and compared with the compiled program. A mismatch is reported as an error.
+Before the serial port is opened, the extension also validates the HEX record
+format, checksums, selected-bank address, and bank size. Invalid output is
+rejected without issuing EEPROM writes.
 
 ## Programming the EEPROM
 

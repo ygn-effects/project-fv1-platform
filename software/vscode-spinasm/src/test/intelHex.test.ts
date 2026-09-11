@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { parseIntelHex } from "../intelHex";
+import { parseIntelHex, validateIntelHexForBank } from "../intelHex";
 import { BANK_SIZE_BYTES, EEPROM_BLANK_BYTE } from "../fv1Constants";
 
 /** Builds a valid Intel HEX record with a correct checksum. */
@@ -56,6 +56,42 @@ describe("parseIntelHex", () => {
     assert.throws(() => parseIntelHex(":ZZ0000004C\n"), /non-hex header/);
   });
 
+  it("rejects a partially hexadecimal data byte", () => {
+    const valid = record(0, 0, [0x10]);
+    const malformed = valid.substring(0, 9) + "1G" + valid.substring(11);
+    assert.throws(
+      () => parseIntelHex([malformed, EOF].join("\n")),
+      /non-hex data byte at offset 0/
+    );
+  });
+
+  it("rejects trailing characters after the checksum", () => {
+    const malformed = record(0, 0, [0x10]) + "00";
+    assert.throws(
+      () => parseIntelHex([malformed, EOF].join("\n")),
+      /expected 13 chars.*got 15/
+    );
+  });
+
+  it("rejects unsupported extended-address records", () => {
+    const extendedLinearAddress = record(0, 0x04, [0x00, 0x00]);
+    assert.throws(
+      () => parseIntelHex([extendedLinearAddress, record(0, 0, [0x10]), EOF].join("\n")),
+      /Unsupported HEX record type 0x04/
+    );
+  });
+
+  it("requires a valid EOF record", () => {
+    assert.throws(
+      () => parseIntelHex(record(0, 0, [0x10])),
+      /missing an EOF record/
+    );
+    assert.throws(
+      () => parseIntelHex([record(0, 0, [0x10]), record(1, 0x01, [])].join("\n")),
+      /Malformed HEX EOF record/
+    );
+  });
+
   it("throws when there are no data records", () => {
     assert.throws(() => parseIntelHex(EOF + "\n"), /no valid data records/);
   });
@@ -68,5 +104,40 @@ describe("parseIntelHex", () => {
   it("stops at the EOF record", () => {
     const hex = [record(0, 0, [0x11]), EOF, record(0, 0, [0x22])].join("\n");
     assert.strictEqual(parseIntelHex(hex).data[0], 0x11);
+  });
+});
+
+describe("validateIntelHexForBank", () => {
+  it("accepts an image at the selected bank base address", () => {
+    const bank = 3;
+    const program = parseIntelHex([
+      record(bank * BANK_SIZE_BYTES, 0, [0x42]),
+      EOF
+    ].join("\n"));
+
+    assert.doesNotThrow(() => validateIntelHexForBank(program, bank));
+  });
+
+  it("rejects output for a different bank", () => {
+    const program = parseIntelHex([record(0, 0, [0x42]), EOF].join("\n"));
+
+    assert.throws(
+      () => validateIntelHexForBank(program, 3),
+      /bank 3 must start at 0x600/
+    );
+  });
+
+  it("rejects an image that extends beyond one bank", () => {
+    const program = parseIntelHex([
+      record(0, 0, [0x42]),
+      record(BANK_SIZE_BYTES, 0, [0x43]),
+      EOF
+    ].join("\n"));
+
+    assert.strictEqual(program.data.length, BANK_SIZE_BYTES + 1);
+    assert.throws(
+      () => validateIntelHexForBank(program, 0),
+      /513 bytes.*expected exactly 512 bytes/
+    );
   });
 });
