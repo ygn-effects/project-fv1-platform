@@ -19,8 +19,34 @@ import { findDirtyProgramPaths } from "./dirtyProgramGuard";
 import { validateIntelHexForBank } from "./intelHex";
 import { readIntelHexData } from "./intelHexFile";
 import { writeAndVerifyBankProgram } from "./programUpload";
+import { OperationQueue } from "./operationQueue";
 
 let validator: SpinASMValidator;
+
+// One queue for the whole extension, not one per workspace folder: the
+// programmer's serial port is shared by every folder.
+const operations = new OperationQueue();
+
+/**
+ * Runs `task` once every earlier compile, upload or hardware operation has
+ * finished. With `progress`, the notification says it is waiting meanwhile.
+ */
+async function runExclusive<T>(
+  task: () => Promise<T>,
+  progress?: vscode.Progress<{ message?: string }>
+): Promise<T> {
+  const waiting = progress !== undefined && operations.isBusy;
+  if (waiting) {
+    progress.report({ message: "Waiting for the previous operation to finish..." });
+  }
+
+  return operations.run(async () => {
+    if (waiting) {
+      progress.report({ message: "" });
+    }
+    return task();
+  });
+}
 
 // Lazy-loaded serialport-dependent modules; loading them eagerly costs hundreds of
 // ms because @serialport/bindings-cpp is a native module. Commands that need them
@@ -130,6 +156,12 @@ export function activate(context: vscode.ExtensionContext): void {
             projectManager.refreshBank(rootPath, bankIndex);
           }
         }
+
+        // Driven by the editor save, not the file watcher, so changes made
+        // outside VS Code (git pull, branch switch) don't trigger compiles.
+        if (Config.getCompileOnSave()) {
+          handleCompileOnSave(doc.uri);
+        }
       }
     })
   );
@@ -162,10 +194,6 @@ export function activate(context: vscode.ExtensionContext): void {
     const bankIndex = projectManager.getBankIndexFromPath(uri.fsPath);
     if (bankIndex !== -1) {
       await projectManager.refreshBank(folder, bankIndex);
-    }
-
-    if (Config.getCompileOnSave()) {
-      await handleCompileOnSave(uri);
     }
   });
 
@@ -302,21 +330,22 @@ async function handleCompileOnSave(uri: vscode.Uri): Promise<void> {
   }
 
   try {
-    const project = await ProjectManager.getInstance().getProject(folder);
-    if (!project) {
-      return;
-    }
+    await runExclusive(async () => {
+      const project = await ProjectManager.getInstance().getProject(folder);
+      if (!project) {
+        return;
+      }
 
-    const bank = project.getProgramBankByPath(uri.fsPath);
+      const bank = project.getProgramBankByPath(uri.fsPath);
 
-    if (bank === -1) {
-      return;
-    }
+      if (bank === -1) {
+        return;
+      }
 
-    Logs.log(LogType.INFO, `Compile-on-save: Compiling bank ${bank}...`);
-    await project.compileProgramToHex(bank);
-    Logs.log(LogType.INFO, `Compile-on-save: Bank ${bank} compiled successfully`);
-
+      Logs.log(LogType.INFO, `Compile-on-save: Compiling bank ${bank}...`);
+      await project.compileProgramToHex(bank);
+      Logs.log(LogType.INFO, `Compile-on-save: Bank ${bank} compiled successfully`);
+    });
   } catch (error) {
     Logs.log(LogType.ERROR, `Compile-on-save failed: ${(error as Error).message}`);
   }
@@ -378,11 +407,12 @@ async function autoDetectProgrammer(): Promise<void> {
     location: vscode.ProgressLocation.Notification,
     title: "Detecting FV-1 programmer...",
     cancellable: false
-  }, async () => {
+  }, async (progress) => {
     try {
       const Utils = getUtils();
       const baudRate = Config.getBaudRate();
-      const detectedPort = await Utils.detectProgrammer(baudRate);
+      // Probing opens every serial port, including the one an upload may be using.
+      const detectedPort = await runExclusive(() => Utils.detectProgrammer(baudRate), progress);
 
       if (detectedPort) {
         await Config.setSerialPort(detectedPort);
@@ -518,34 +548,36 @@ async function uploadAllPrograms(): Promise<void> {
     }
 
     try {
-      const settings = loadSettings({ requireProgrammer: true });
-      const project = await requireProject(folder);
+      await runExclusive(async () => {
+        const settings = loadSettings({ requireProgrammer: true });
+        const project = await requireProject(folder);
 
-      const programs = project.getAllPrograms();
-      const programsToUpload = programs.filter(p => p !== null);
-      const totalPrograms = programsToUpload.length;
+        const programs = project.getAllPrograms();
+        const programsToUpload = programs.filter(p => p !== null);
+        const totalPrograms = programsToUpload.length;
 
-      let uploadedCount = 0;
+        let uploadedCount = 0;
 
-      for (const programPath of programs) {
-        if(!programPath) {
-          continue;
+        for (const programPath of programs) {
+          if(!programPath) {
+            continue;
+          }
+
+          const bank = project.getProgramBankByPath(programPath);
+
+          progress.report({
+            increment: (100 / totalPrograms),
+            message: `Uploading bank ${bank}... (${uploadedCount + 1}/${totalPrograms})`
+          });
+
+          await performUpload(project, settings, bank);
+          uploadedCount++;
+
+          Logs.log(LogType.INFO, `Bank ${bank} uploaded successfully (${uploadedCount}/${totalPrograms})`);
         }
 
-        const bank = project.getProgramBankByPath(programPath);
-
-        progress.report({
-          increment: (100 / totalPrograms),
-          message: `Uploading bank ${bank}... (${uploadedCount + 1}/${totalPrograms})`
-        });
-
-        await performUpload(project, settings, bank);
-        uploadedCount++;
-
-        Logs.log(LogType.INFO, `Bank ${bank} uploaded successfully (${uploadedCount}/${totalPrograms})`);
-      }
-
-      vscode.window.showInformationMessage(`All programs uploaded successfully! (${uploadedCount} banks)`);
+        vscode.window.showInformationMessage(`All programs uploaded successfully! (${uploadedCount} banks)`);
+      }, progress);
     }
     catch (error) {
       handleError(error, "Failed to upload all programs");
@@ -565,42 +597,44 @@ async function compileAndUploadAllPrograms(): Promise<void> {
     }
 
     try {
-      const settings = loadSettings({ requireProgrammer: true });
-      const project = await requireProject(folder);
+      await runExclusive(async () => {
+        const settings = loadSettings({ requireProgrammer: true });
+        const project = await requireProject(folder);
 
-      const programs = project.getAllPrograms();
-      requireSavedPrograms(project);
-      const programsToProcess = programs.filter(p => p !== null);
-      const totalPrograms = programsToProcess.length;
+        const programs = project.getAllPrograms();
+        requireSavedPrograms(project);
+        const programsToProcess = programs.filter(p => p !== null);
+        const totalPrograms = programsToProcess.length;
 
-      let processedCount = 0;
+        let processedCount = 0;
 
-      for (const programPath of programs) {
-        if(!programPath) {
-          continue;
+        for (const programPath of programs) {
+          if(!programPath) {
+            continue;
+          }
+
+          const bank = project.getProgramBankByPath(programPath);
+
+          progress.report({
+            increment: (100 / (totalPrograms * 2)),
+            message: `Compiling bank ${bank}... (${processedCount + 1}/${totalPrograms})`
+          });
+
+          await project.compileProgramToHex(bank);
+
+          progress.report({
+            increment: (100 / (totalPrograms * 2)),
+            message: `Uploading bank ${bank}... (${processedCount + 1}/${totalPrograms})`
+          });
+
+          await performUpload(project, settings, bank);
+          processedCount++;
+
+          Logs.log(LogType.INFO, `Bank ${bank} compiled and uploaded (${processedCount}/${totalPrograms})`);
         }
 
-        const bank = project.getProgramBankByPath(programPath);
-
-        progress.report({
-          increment: (100 / (totalPrograms * 2)),
-          message: `Compiling bank ${bank}... (${processedCount + 1}/${totalPrograms})`
-        });
-
-        await project.compileProgramToHex(bank);
-
-        progress.report({
-          increment: (100 / (totalPrograms * 2)),
-          message: `Uploading bank ${bank}... (${processedCount + 1}/${totalPrograms})`
-        });
-
-        await performUpload(project, settings, bank);
-        processedCount++;
-
-        Logs.log(LogType.INFO, `Bank ${bank} compiled and uploaded (${processedCount}/${totalPrograms})`);
-      }
-
-      vscode.window.showInformationMessage(`All programs compiled and uploaded successfully! (${processedCount} banks)`);
+        vscode.window.showInformationMessage(`All programs compiled and uploaded successfully! (${processedCount} banks)`);
+      }, progress);
     }
     catch (error) {
       handleError(error, "Failed to compile and upload all programs");
@@ -640,35 +674,38 @@ async function checkHardwareConnection(): Promise<void> {
   }
 
   const Programmer = getProgrammer();
-  let programmer: ProgrammerType | null = null;
 
-  try {
-    const settings = loadSettings({ requireProgrammer: true });
+  await runExclusive(async () => {
+    let programmer: ProgrammerType | null = null;
 
-    const project = await requireProject(folder);
-    await project.checkCompiler();
+    try {
+      const settings = loadSettings({ requireProgrammer: true });
 
-    programmer = new Programmer(settings.serialPort, settings.baudRate);
+      const project = await requireProject(folder);
+      await project.checkCompiler();
 
-    await programmer.connect();
+      programmer = new Programmer(settings.serialPort, settings.baudRate);
 
-    if (! (await programmer.isProgrammerConnected())) {
-      throw new Error("Programmer did not respond.");
+      await programmer.connect();
+
+      if (! (await programmer.isProgrammerConnected())) {
+        throw new Error("Programmer did not respond.");
+      }
+      if (! (await programmer.isEepromReady())) {
+        throw new Error("EEPROM is not ready.");
+      }
+
+      vscode.window.showInformationMessage("Compiler and Programmer are connected and ready!");
     }
-    if (! (await programmer.isEepromReady())) {
-      throw new Error("EEPROM is not ready.");
+    catch (error) {
+      handleError(error, "Hardware check failed");
     }
-
-    vscode.window.showInformationMessage("Compiler and Programmer are connected and ready!");
-  }
-  catch (error) {
-    handleError(error, "Hardware check failed");
-  }
-  finally {
-    if (programmer) {
-      await programmer.disconnect();
+    finally {
+      if (programmer) {
+        await programmer.disconnect();
+      }
     }
-  }
+  });
 }
 
 async function showConfig(): Promise<void> {
@@ -703,11 +740,13 @@ async function runOperation(
     location: vscode.ProgressLocation.Notification,
     title: progressTitle,
     cancellable: false
-  }, async () => {
+  }, async (progress) => {
     try {
+      await runExclusive(async () => {
         const settings = loadSettings(options);
         const project = await requireProject(folder);
         await operation(project, settings);
+      }, progress);
     }
     catch (error) {
         handleError(error, errorMessage);

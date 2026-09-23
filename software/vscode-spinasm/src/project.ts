@@ -242,16 +242,19 @@ export default class Project {
   }
 
   public async scanPrograms(): Promise<void> {
-    this.programs = [];
-    this.outputs = [];
-    this.programExtras = [];
+    // Build the new state locally and swap it in once the scan is complete.
+    // Commands can run while a rescan is in flight (file watcher, config
+    // change), and must see the previous banks, not a half-filled list.
+    const programs: (string | null)[] = [];
+    const outputs: string[] = [];
+    const programExtras: string[][] = [];
 
     for (let i = 0; i < BANK_COUNT; i++) {
       const currentFolder = path.join(this.rootFolder, `bank_${i}`);
 
-      this.programs[i] = null;
-      this.outputs[i] = "";
-      this.programExtras[i] = [];
+      programs[i] = null;
+      outputs[i] = "";
+      programExtras[i] = [];
 
       try {
         await fsPromises.access(currentFolder);
@@ -269,9 +272,9 @@ export default class Project {
         }
 
         const [chosen, ...extras] = candidates;
-        this.programs[i] = path.join(currentFolder, chosen);
-        this.outputs[i] = path.join(this.outputFolder, `bank_${i}.hex`);
-        this.programExtras[i] = extras.map(file => path.join(currentFolder, file));
+        programs[i] = path.join(currentFolder, chosen);
+        outputs[i] = path.join(this.outputFolder, `bank_${i}.hex`);
+        programExtras[i] = extras.map(file => path.join(currentFolder, file));
 
         if (extras.length > 0) {
           Logs.log(
@@ -285,6 +288,10 @@ export default class Project {
         // folder doesn't exist or can't be read; treat as empty bank
       }
     }
+
+    this.programs = programs;
+    this.outputs = outputs;
+    this.programExtras = programExtras;
   }
 
   public getExtraPrograms(bank: number): string[] {
