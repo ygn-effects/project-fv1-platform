@@ -472,7 +472,7 @@ async function compileCurrentProgram(uri?: vscode.Uri): Promise<void> {
     await project.compileProgramToHex(currentProgram);
 
     vscode.window.showInformationMessage(`Program ${currentProgram} compiled successfully!`);
-  }, "Failed to compile current program", "Compiling current program...");
+  }, "Failed to compile current program", "Compiling current program...", { target: getCurrentProgramUri(uri) });
 }
 
 async function uploadCurrentProgram(uri?: vscode.Uri): Promise<void> {
@@ -489,7 +489,10 @@ async function uploadCurrentProgram(uri?: vscode.Uri): Promise<void> {
 
     await performUpload(project, settings, currentProgram);
     vscode.window.showInformationMessage(`Program ${currentProgram} uploaded successfully!`);
-  }, "Failed to upload current program", "Uploading Current Program...", { requireProgrammer: true });
+  }, "Failed to upload current program", "Uploading Current Program...", {
+    requireProgrammer: true,
+    target: getCurrentProgramUri(uri),
+  });
 }
 
 async function compileAndUploadCurrentProgram(uri?: vscode.Uri): Promise<void> {
@@ -504,7 +507,10 @@ async function compileAndUploadCurrentProgram(uri?: vscode.Uri): Promise<void> {
     await project.compileProgramToHex(currentProgram);
     await performUpload(project, settings, currentProgram);
     vscode.window.showInformationMessage(`Program ${currentProgram} compiled and uploaded successfully!`);
-  }, "Failed to compile and upload current program", "Compiling & Uploading Current Program...", { requireProgrammer: true });
+  }, "Failed to compile and upload current program", "Compiling & Uploading Current Program...", {
+    requireProgrammer: true,
+    target: getCurrentProgramUri(uri),
+  });
 }
 
 async function compileAllPrograms(): Promise<void> {
@@ -743,9 +749,9 @@ async function runOperation(
   operation: (project: Project, settings: ProjectSettings) => Promise<void>,
   errorMessage: string,
   progressTitle: string,
-  options: { requireProgrammer?: boolean } = {}
+  options: { requireProgrammer?: boolean; target?: vscode.Uri } = {}
 ): Promise<void> {
-  const folder = await getWorkspaceFolder();
+  const folder = await getWorkspaceFolder(options.target);
   if (!folder) {
     return;
   }
@@ -855,12 +861,15 @@ async function performUpload(project: Project, settings: ProjectSettings, bank: 
 }
 
 function getCurrentBank(project: Project, uri?: vscode.Uri): number {
+  return project.getProgramBankByPath(getCurrentProgramUri(uri)?.fsPath);
+}
+
+function getCurrentProgramUri(uri?: vscode.Uri): vscode.Uri | undefined {
   // Menu invocations (editor title/context, explorer tree) pass the target
   // file's URI; palette and keybinding invocations pass nothing and fall back
   // to the active editor. Passing the URI also makes split views correct — the
   // button acts on its own editor, not whichever happens to be focused.
-  const fsPath = uri?.fsPath ?? vscode.window.activeTextEditor?.document.uri.fsPath;
-  return project.getProgramBankByPath(fsPath);
+  return uri ?? vscode.window.activeTextEditor?.document.uri;
 }
 
 function requireSavedPrograms(project: Project, banks?: readonly number[]): void {
@@ -921,12 +930,21 @@ function handleError(error: unknown, message: string, options: { showLog?: boole
   }
 }
 
-async function getWorkspaceFolder(): Promise<string | null> {
+async function getWorkspaceFolder(target?: vscode.Uri): Promise<string | null> {
   const folders = vscode.workspace.workspaceFolders;
 
   if (!folders || folders.length === 0) {
     vscode.window.showErrorMessage("No workspace folder open.");
     return null;
+  }
+
+  // A command that acts on a file belongs to that file's folder, so a
+  // multi-root workspace doesn't need the picker for it.
+  if (target) {
+    const targetFolder = vscode.workspace.getWorkspaceFolder(target);
+    if (targetFolder) {
+      return targetFolder.uri.fsPath;
+    }
   }
 
   if (folders.length === 1) {
