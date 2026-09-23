@@ -81,7 +81,9 @@ The main workflows are available from the Command Palette. Commands for the curr
 | **Upload all programs** | Uploads the existing HEX output for every populated bank |
 | **Compile & Upload** commands | Compile first, then upload and verify the selected bank or banks |
 
-Upload-only commands use the last compiled output. All compilation commands use
+Upload-only commands use the last compiled output. If a bank's output is missing
+or older than its source, the upload first asks whether to compile it, or, for
+outdated output, to upload the previous program as is. All compilation commands use
 the latest saved source; if a relevant source file has unsaved changes, the
 command stops and asks you to save it first. **Compile & Upload** commands compile
 first, then upload and verify the selected bank or banks.

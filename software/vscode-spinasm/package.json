@@ -2,7 +2,7 @@
   "name": "vscode-spinasm",
   "displayName": "SpinASM for VS Code",
   "description": "Edit, compile and flash SpinASM (.spn) programs for the Spin FV-1 DSP with syntax highlighting, live diagnostics, asfv1 compilation and EEPROM programming.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "ygn-effects",
   "license": "Apache-2.0",
   "icon": "images/icon.png",
