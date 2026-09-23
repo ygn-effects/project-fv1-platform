@@ -60,14 +60,6 @@ function getProgrammer(): typeof ProgrammerType {
   return require("./programmer.js").default;
 }
 
-async function requireProject(folder: string): Promise<Project> {
-  const project = await ProjectManager.getInstance().getProject(folder);
-  if (!project) {
-    throw new Error("Compiler path is not set in Settings.");
-  }
-  return project;
-}
-
 export function activate(context: vscode.ExtensionContext): void {
   Logs.createChannel();
   Logs.log(LogType.INFO, "Extension activating...");
@@ -332,10 +324,6 @@ async function handleCompileOnSave(uri: vscode.Uri): Promise<void> {
   try {
     await runExclusive(async () => {
       const project = await ProjectManager.getInstance().getProject(folder);
-      if (!project) {
-        return;
-      }
-
       const bank = project.getProgramBankByPath(uri.fsPath);
 
       if (bank === -1) {
@@ -550,7 +538,7 @@ async function uploadAllPrograms(): Promise<void> {
     try {
       await runExclusive(async () => {
         const settings = loadSettings({ requireProgrammer: true });
-        const project = await requireProject(folder);
+        const project = await ProjectManager.getInstance().getProject(folder);
 
         const programs = project.getAllPrograms();
         const programsToUpload = programs.filter(p => p !== null);
@@ -599,7 +587,7 @@ async function compileAndUploadAllPrograms(): Promise<void> {
     try {
       await runExclusive(async () => {
         const settings = loadSettings({ requireProgrammer: true });
-        const project = await requireProject(folder);
+        const project = await ProjectManager.getInstance().getProject(folder);
 
         const programs = project.getAllPrograms();
         requireSavedPrograms(project);
@@ -650,13 +638,10 @@ async function createProject(): Promise<void> {
   }
 
   try {
-    // First-time setup: compiler may not be configured yet, so we bypass the
-    // manager and use a throwaway Project just for file creation. The manager
-    // picks up the new files via the create watcher.
-    const ProjectCtor = require("./project.js").default as typeof import("./project").default;
-    const project = new ProjectCtor(folder);
+    // Works before the compiler is configured; the manager rescans on the
+    // structure-change event.
+    const project = await ProjectManager.getInstance().getProject(folder);
     await project.createProjectStructure();
-    project.dispose();
 
     Logs.log(LogType.INFO, "Project structure created successfully");
     vscode.window.showInformationMessage("Project created successfully!");
@@ -681,7 +666,7 @@ async function checkHardwareConnection(): Promise<void> {
     try {
       const settings = loadSettings({ requireProgrammer: true });
 
-      const project = await requireProject(folder);
+      const project = await ProjectManager.getInstance().getProject(folder);
       await project.checkCompiler();
 
       programmer = new Programmer(settings.serialPort, settings.baudRate);
@@ -744,7 +729,7 @@ async function runOperation(
     try {
       await runExclusive(async () => {
         const settings = loadSettings(options);
-        const project = await requireProject(folder);
+        const project = await ProjectManager.getInstance().getProject(folder);
         await operation(project, settings);
       }, progress);
     }
@@ -822,8 +807,6 @@ function requireSavedPrograms(project: Project, banks?: readonly number[]): void
 }
 
 interface ProjectSettings {
-  compilerPath: string;
-  compilerArgs: string[];
   serialPort: string;
   baudRate: number;
 }
@@ -831,21 +814,15 @@ interface ProjectSettings {
 function loadSettings(options: { requireProgrammer?: boolean } = {}): ProjectSettings {
   const { requireProgrammer = false } = options;
 
-  const compilerPath = Config.getCompilerPath();
-  if (!compilerPath) {
-    throw new Error("Compiler path is not set in Settings.");
-  }
-
-  // Only upload/hardware operations talk to the programmer; compile-only
-  // commands must work with no serial port configured.
+  // The compiler is checked by Project when it compiles, so upload-only
+  // commands work without one. Only upload/hardware operations talk to the
+  // programmer; compile-only commands must work with no serial port configured.
   const serialPort = Config.getSerialPort();
   if (requireProgrammer && !serialPort) {
     throw new Error("Serial port is not set in Settings.");
   }
 
   return {
-    compilerPath,
-    compilerArgs: Config.getCompilerArgs(),
     serialPort,
     baudRate: Config.getBaudRate(),
   };

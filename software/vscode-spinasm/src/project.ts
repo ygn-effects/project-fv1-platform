@@ -1,4 +1,3 @@
-import * as fs from "fs";
 import * as fsPromises from "fs/promises";
 import * as path from "path";
 import * as cp from "child_process";
@@ -7,6 +6,7 @@ import Logs, { LogType } from "./logs";
 import { BANK_COUNT, EEPROM_SIZE_BYTES } from "./fv1Constants";
 import { pathsEqual } from "./pathUtils";
 import { mergeBankImages } from "./eepromImage";
+import { findExecutable } from "./executableLookup";
 
 /**
  * Owns workspace state and runs the compiler. Emits events for the manager
@@ -64,14 +64,29 @@ export default class Project {
   }
 
   public async checkCompiler(): Promise<void> {
-    try {
-      await fsPromises.access(this.compiler, fs.constants.X_OK);
-    }
-    catch {
-      throw new Error(`Compiler path invalid or not executable: ${this.compiler}`);
+    const compiler = await this.resolveCompiler();
+    Logs.log(LogType.INFO, `Compiler found at ${compiler}`);
+  }
+
+  /**
+   * Returns the executable to run for the configured compiler, which may be a
+   * full path or a bare name found on PATH. Throws a user-facing error when
+   * it isn't set or can't be found.
+   */
+  private async resolveCompiler(): Promise<string> {
+    if (!this.compiler) {
+      throw new Error("Compiler path is not set in Settings.");
     }
 
-    Logs.log(LogType.INFO, `Compiler found at ${this.compiler}`);
+    const resolved = await findExecutable(this.compiler);
+    if (!resolved) {
+      throw new Error(
+        `Compiler "${this.compiler}" not found or not executable. ` +
+        `Set spinasm.compiler.path to the full path of asfv1, or add it to PATH.`
+      );
+    }
+
+    return resolved;
   }
 
   public async createProjectStructure(): Promise<void> {
@@ -120,6 +135,10 @@ export default class Project {
   }
 
   public async compileProgramToHex(program: number): Promise<void> {
+    // Before removing the old output, so a missing compiler doesn't cost the
+    // last good .hex.
+    const compiler = await this.resolveCompiler();
+
     await this.removeHexProgram(this.outputs[program]);
 
     if (!this.programs[program]) {
@@ -130,7 +149,7 @@ export default class Project {
     await fsPromises.mkdir(this.outputFolder, { recursive: true });
 
     const args = [...this.compilerArguments, "-p", program.toString(), this.programs[program]!, this.outputs[program]];
-    const { code, stderr } = await this.runCompiler(args);
+    const { code, stderr } = await this.runCompiler(compiler, args);
 
     this.onCompilerOutputEmitter.fire({ sourcePath: this.programs[program]!, stderr });
 
@@ -153,6 +172,7 @@ export default class Project {
    * own padding convention.
    */
   public async compileAllProgramsToCombinedBin(): Promise<void> {
+    const compiler = await this.resolveCompiler();
     const tempFiles: string[] = [];
     const bankOutputs: (Buffer | null)[] = [];
 
@@ -171,7 +191,7 @@ export default class Project {
         tempFiles.push(tempBin);
 
         const args = [...this.compilerArguments, "-p", bank.toString(), programPath, tempBin];
-        const { code, stderr } = await this.runCompiler(args);
+        const { code, stderr } = await this.runCompiler(compiler, args);
 
         this.onCompilerOutputEmitter.fire({ sourcePath: programPath, stderr });
 
@@ -196,11 +216,11 @@ export default class Project {
     }
   }
 
-  private runCompiler(args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
-    Logs.log(LogType.INFO, `Running: ${this.compiler} ${args.join(" ")}`);
+  private runCompiler(compiler: string, args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
+    Logs.log(LogType.INFO, `Running: ${compiler} ${args.join(" ")}`);
 
     return new Promise((resolve, reject) => {
-      const child = cp.spawn(this.compiler, args);
+      const child = cp.spawn(compiler, args);
 
       let stderr = "";
       let stdout = "";

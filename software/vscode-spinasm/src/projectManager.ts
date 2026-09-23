@@ -35,7 +35,7 @@ export class ProjectManager {
   private projectSubscriptions = new Map<string, vscode.Disposable[]>();
 
   // In-flight promises so concurrent callers share work instead of duplicating it.
-  private projectPromises = new Map<string, Promise<Project | null>>();
+  private projectPromises = new Map<string, Promise<Project>>();
   private refreshPromises = new Map<string, Promise<void>>();
 
   private onDidChangeProjectEmitter = new vscode.EventEmitter<void>();
@@ -79,7 +79,7 @@ export class ProjectManager {
   }
 
   /** Returns the cached Project for a workspace, creating it on first access. */
-  public getProject(rootPath: string): Promise<Project | null> {
+  public getProject(rootPath: string): Promise<Project> {
     const existing = this.projects.get(rootPath);
     if (existing) {
       return Promise.resolve(existing);
@@ -94,14 +94,11 @@ export class ProjectManager {
     return promise;
   }
 
-  private async createProject(rootPath: string): Promise<Project | null> {
-    const compilerPath = Config.getCompilerPath();
-    if (!compilerPath) {
-      return null;
-    }
-
+  private async createProject(rootPath: string): Promise<Project> {
+    // Created even without a compiler: scanning banks and bank status don't
+    // need one. Compile methods report a missing compiler themselves.
     const project = new Project(rootPath);
-    await project.buildSetup(compilerPath, Config.getCompilerArgs());
+    await project.buildSetup(Config.getCompilerPath(), Config.getCompilerArgs());
 
     const subs: vscode.Disposable[] = [
       project.onDidCompile((bank) => {
@@ -179,9 +176,6 @@ export class ProjectManager {
 
     try {
       const project = await this.getProject(rootPath);
-      if (!project) {
-        return;
-      }
 
       const spnFile = project.getAllPrograms()[bankIndex];
       const updatedInfo = await this.buildBankInfo(
@@ -232,9 +226,6 @@ export class ProjectManager {
       const alreadyHadProject = this.projects.has(rootPath);
 
       const project = await this.getProject(rootPath);
-      if (!project) {
-        return;
-      }
 
       if (alreadyHadProject) {
         await project.scanPrograms();

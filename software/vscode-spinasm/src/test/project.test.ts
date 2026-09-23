@@ -41,3 +41,37 @@ describe("Project.scanPrograms", () => {
     assert.strictEqual(project.getAllPrograms()[1], path.join(root, "bank_1", "delay.spn"));
   });
 });
+
+describe("Project compiler resolution", () => {
+  let root: string;
+  let project: Project;
+  let hexFile: string;
+
+  beforeEach(async () => {
+    root = await fs.mkdtemp(path.join(os.tmpdir(), "spinasm-compiler-"));
+    await fs.mkdir(path.join(root, "bank_0"));
+    await fs.mkdir(path.join(root, "output"));
+    await fs.writeFile(path.join(root, "bank_0", "chorus.spn"), "clr\n");
+    hexFile = path.join(root, "output", "bank_0.hex");
+    await fs.writeFile(hexFile, "last good output");
+    project = new Project(root);
+  });
+
+  afterEach(async () => {
+    project.dispose();
+    await fs.rm(root, { recursive: true, force: true });
+  });
+
+  it("reports an unset compiler and keeps the previous .hex", async () => {
+    await project.buildSetup("", []);
+    await assert.rejects(project.compileProgramToHex(0), /Compiler path is not set/);
+    assert.strictEqual(await fs.readFile(hexFile, "utf8"), "last good output");
+  });
+
+  it("reports a compiler that isn't on PATH and keeps the previous .hex", async () => {
+    await project.buildSetup("spinasm-no-such-compiler", []);
+    await assert.rejects(project.compileProgramToHex(0), /"spinasm-no-such-compiler" not found/);
+    await assert.rejects(project.checkCompiler(), /not found/);
+    assert.strictEqual(await fs.readFile(hexFile, "utf8"), "last good output");
+  });
+});
