@@ -75,3 +75,48 @@ describe("Project compiler resolution", () => {
     assert.strictEqual(await fs.readFile(hexFile, "utf8"), "last good output");
   });
 });
+
+describe("Project.getOutputState", () => {
+  let root: string;
+  let project: Project;
+  let source: string;
+  let hex: string;
+
+  beforeEach(async () => {
+    root = await fs.mkdtemp(path.join(os.tmpdir(), "spinasm-output-"));
+    await fs.mkdir(path.join(root, "bank_0"));
+    await fs.mkdir(path.join(root, "output"));
+    source = path.join(root, "bank_0", "chorus.spn");
+    hex = path.join(root, "output", "bank_0.hex");
+    await fs.writeFile(source, "clr\n");
+    project = new Project(root);
+    await project.scanPrograms();
+  });
+
+  afterEach(async () => {
+    project.dispose();
+    await fs.rm(root, { recursive: true, force: true });
+  });
+
+  it("is missing when the bank has no .hex", async () => {
+    assert.strictEqual(await project.getOutputState(0), "missing");
+  });
+
+  it("is missing for an empty bank", async () => {
+    assert.strictEqual(await project.getOutputState(1), "missing");
+  });
+
+  it("is current when the .hex is newer than the source", async () => {
+    await fs.writeFile(hex, "");
+    await fs.utimes(source, new Date(1000_000), new Date(1000_000));
+    await fs.utimes(hex, new Date(2000_000), new Date(2000_000));
+    assert.strictEqual(await project.getOutputState(0), "current");
+  });
+
+  it("is outdated when the source was modified after the .hex", async () => {
+    await fs.writeFile(hex, "");
+    await fs.utimes(hex, new Date(1000_000), new Date(1000_000));
+    await fs.utimes(source, new Date(2000_000), new Date(2000_000));
+    assert.strictEqual(await project.getOutputState(0), "outdated");
+  });
+});

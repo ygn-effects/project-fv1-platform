@@ -7,6 +7,7 @@ import { BANK_COUNT, EEPROM_SIZE_BYTES } from "./fv1Constants";
 import { pathsEqual } from "./pathUtils";
 import { mergeBankImages } from "./eepromImage";
 import { findExecutable } from "./executableLookup";
+import type { OutputState } from "./staleOutputGuard";
 
 /**
  * Owns workspace state and runs the compiler. Emits events for the manager
@@ -312,6 +313,29 @@ export default class Project {
     this.programs = programs;
     this.outputs = outputs;
     this.programExtras = programExtras;
+  }
+
+  /**
+   * Compares a bank's .hex with its .spn on disk, using the same rule as the
+   * bank status bar: current when the .hex is at least as new as the source.
+   */
+  public async getOutputState(bank: number): Promise<OutputState> {
+    const source = this.programs[bank];
+    const output = this.outputs[bank];
+    if (!source || !output) {
+      return "missing";
+    }
+
+    try {
+      const [sourceStats, outputStats] = await Promise.all([
+        fsPromises.stat(source),
+        fsPromises.stat(output)
+      ]);
+      return outputStats.mtime >= sourceStats.mtime ? "current" : "outdated";
+    }
+    catch {
+      return "missing";
+    }
   }
 
   public getExtraPrograms(bank: number): string[] {

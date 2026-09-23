@@ -20,6 +20,7 @@ import { validateIntelHexForBank } from "./intelHex";
 import { readIntelHexData } from "./intelHexFile";
 import { writeAndVerifyBankProgram } from "./programUpload";
 import { OperationQueue } from "./operationQueue";
+import { describeStaleOutputs, OutputState } from "./staleOutputGuard";
 
 let validator: SpinASMValidator;
 
@@ -437,6 +438,10 @@ async function compileBank(bank: number): Promise<void> {
 
 async function uploadBank(bank: number): Promise<void> {
   await runOperation(async (project, settings) => {
+    if (!(await prepareUpload(project, [bank]))) {
+      return;
+    }
+
     await performUpload(project, settings, bank);
 
     Logs.log(LogType.INFO, `Program ${bank} upload successful`);
@@ -478,6 +483,10 @@ async function uploadCurrentProgram(uri?: vscode.Uri): Promise<void> {
       throw new Error("Current file is not a valid project program.");
     }
 
+    if (!(await prepareUpload(project, [currentProgram]))) {
+      return;
+    }
+
     await performUpload(project, settings, currentProgram);
     vscode.window.showInformationMessage(`Program ${currentProgram} uploaded successfully!`);
   }, "Failed to upload current program", "Uploading Current Program...", { requireProgrammer: true });
@@ -501,6 +510,11 @@ async function compileAndUploadCurrentProgram(uri?: vscode.Uri): Promise<void> {
 async function compileAllPrograms(): Promise<void> {
   await runOperation(async (project) => {
     const programs = project.getAllPrograms();
+    if (programs.every(programPath => !programPath)) {
+      showNoProgramsWarning();
+      return;
+    }
+
     requireSavedPrograms(project);
 
     for (const programPath of programs) {
@@ -543,6 +557,16 @@ async function uploadAllPrograms(): Promise<void> {
         const programs = project.getAllPrograms();
         const programsToUpload = programs.filter(p => p !== null);
         const totalPrograms = programsToUpload.length;
+
+        if (totalPrograms === 0) {
+          showNoProgramsWarning();
+          return;
+        }
+
+        const banks = programs.flatMap((programPath, bank) => programPath ? [bank] : []);
+        if (!(await prepareUpload(project, banks))) {
+          return;
+        }
 
         let uploadedCount = 0;
 
@@ -593,6 +617,11 @@ async function compileAndUploadAllPrograms(): Promise<void> {
         requireSavedPrograms(project);
         const programsToProcess = programs.filter(p => p !== null);
         const totalPrograms = programsToProcess.length;
+
+        if (totalPrograms === 0) {
+          showNoProgramsWarning();
+          return;
+        }
 
         let processedCount = 0;
 
@@ -737,6 +766,57 @@ async function runOperation(
         handleError(error, errorMessage);
     }
   });
+}
+
+const COMPILE_AND_UPLOAD = "Compile & Upload";
+const UPLOAD_ANYWAY = "Upload Anyway";
+
+/**
+ * Upload-only commands send the last compiled output. Checks that each bank's
+ * output exists and isn't older than its source; if not, asks whether to
+ * compile those banks first or upload the old output as is. Returns false when
+ * the user cancels. Runs inside the operation queue, so a compile that was
+ * already queued has finished before the outputs are compared.
+ */
+async function prepareUpload(project: Project, banks: readonly number[]): Promise<boolean> {
+  const states = new Map<number, OutputState>();
+
+  for (const bank of banks) {
+    if (!project.getAllPrograms()[bank]) {
+      throw new Error(`Bank ${bank} has no program.`);
+    }
+    states.set(bank, await project.getOutputState(bank));
+  }
+
+  const prompt = describeStaleOutputs(states);
+  if (!prompt) {
+    return true;
+  }
+
+  const actions = prompt.allowUploadAnyway ? [COMPILE_AND_UPLOAD, UPLOAD_ANYWAY] : [COMPILE_AND_UPLOAD];
+  const choice = await vscode.window.showWarningMessage(
+    prompt.message,
+    { modal: true, detail: prompt.detail },
+    ...actions
+  );
+
+  if (choice === COMPILE_AND_UPLOAD) {
+    const staleBanks = banks.filter(bank => states.get(bank) !== "current");
+    requireSavedPrograms(project, staleBanks);
+
+    for (const bank of staleBanks) {
+      await project.compileProgramToHex(bank);
+    }
+    return true;
+  }
+
+  return choice === UPLOAD_ANYWAY;
+}
+
+function showNoProgramsWarning(): void {
+  vscode.window.showWarningMessage(
+    `No programs found. Add a .spn file to one of the bank_0 to bank_${BANK_COUNT - 1} folders.`
+  );
 }
 
 async function performUpload(project: Project, settings: ProjectSettings, bank: number): Promise<void> {
