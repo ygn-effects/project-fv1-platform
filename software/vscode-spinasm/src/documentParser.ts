@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { isInstruction, BUILT_IN_SYMBOLS } from "./spinasmLanguage";
-import { INSTRUCTION_LIMIT, REGISTER_COUNT, MEMORY_SAMPLES } from "./fv1Constants";
+import { INSTRUCTION_LIMIT, REGISTER_COUNT, MEMORY_SAMPLES, MEMORY_MAX_INDEX } from "./fv1Constants";
 
 export interface DocumentSymbol {
   name: string;
@@ -89,19 +89,22 @@ export class DocumentParser {
         continue;
       }
 
+      // codeOnly is trimmed, so capture offsets need the leading indent added
+      // back to become columns in lineText.
+      const codeStart = lineText.length - lineText.trimStart().length;
+
       // equ <name> <value> — asfv1 accepts both the directive-first
       // `EQU NAME VALUE` and the conventional SpinASM `NAME EQU VALUE`.
       // Both regexes capture name in group 1 and value in group 2.
       const equMatch =
-        /^\s*equ\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+)$/i.exec(codeOnly) ||
-        /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+equ\s+(.+)$/i.exec(codeOnly);
+        /^\s*equ\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+)$/id.exec(codeOnly) ||
+        /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+equ\s+(.+)$/id.exec(codeOnly);
       if (equMatch) {
         const symbolName = equMatch[1];
         const symbolValue = equMatch[2].trim();
         const symbolUpper = symbolName.toUpperCase();
 
-        const charIndex = lineText.indexOf(symbolName);
-        const actualChar = charIndex !== -1 ? charIndex : 0;
+        const actualChar = groupColumn(equMatch, 1, codeStart);
 
         if (reserved.has(symbolUpper)) {
           diagnostics.push({
@@ -154,10 +157,10 @@ export class DocumentParser {
       // to contain `mem` from being misread as a definition.
       // Size may be an integer or an expression (e.g. int(32767*3/5)); we
       // register either way but only range-check / count plain integers.
-      const memDirectiveFirst = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+)$/i.exec(codeOnly);
+      const memDirectiveFirst = /^\s*mem\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+(.+)$/id.exec(codeOnly);
       const memNameFirst =
         !memDirectiveFirst && !isInstruction(codeOnly)
-          ? /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+mem\s+(.+)$/i.exec(codeOnly)
+          ? /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+mem\s+(.+)$/id.exec(codeOnly)
           : null;
       const memMatch = memDirectiveFirst ?? memNameFirst;
       if (memMatch) {
@@ -166,8 +169,7 @@ export class DocumentParser {
         const size = /^\d+$/.test(sizeStr) ? parseInt(sizeStr, 10) : NaN;
         const symbolUpper = symbolName.toUpperCase();
 
-        const charIndex = lineText.indexOf(symbolName);
-        const actualChar = charIndex !== -1 ? charIndex : 0;
+        const actualChar = groupColumn(memMatch, 1, codeStart);
 
         if (reserved.has(symbolUpper)) {
           diagnostics.push({
@@ -190,14 +192,13 @@ export class DocumentParser {
           continue;
         }
 
-        // MEM size is a sample count; the manual allows 1..32768 (the full
-        // delay RAM), so the upper bound is MEMORY_SAMPLES, not the max index.
-        if (!isNaN(size) && (size <= 0 || size > MEMORY_SAMPLES)) {
-          const sizeCharIndex = lineText.indexOf(sizeStr);
-          const sizePos = sizeCharIndex !== -1 ? sizeCharIndex : actualChar + symbolName.length + 1;
+        // MEM size follows asfv1, not the datasheet: asfv1 accepts 0..32767
+        // (MEMORY_MAX_INDEX) because each block also takes one extra sample.
+        if (!isNaN(size) && size > MEMORY_MAX_INDEX) {
+          const sizePos = groupColumn(memMatch, 2, codeStart);
           diagnostics.push({
             range: new vscode.Range(i, sizePos, i, sizePos + sizeStr.length),
-            message: `Memory size ${size} out of range (must be 1-${MEMORY_SAMPLES})`,
+            message: `Memory size ${size} out of range (must be 0-${MEMORY_MAX_INDEX})`,
             severity: vscode.DiagnosticSeverity.Error,
             code: 'invalid-memory-size'
           });
@@ -229,13 +230,12 @@ export class DocumentParser {
 
       // Jump labels `<label>:`. No `continue` here: the rest of the line may
       // also be an instruction (e.g., `start: SOF 0,0`).
-      const labelMatch = /^\s*([a-zA-Z_][a-zA-Z0-9_]*):/i.exec(codeOnly);
+      const labelMatch = /^\s*([a-zA-Z_][a-zA-Z0-9_]*):/id.exec(codeOnly);
       if (labelMatch) {
         const symbolName = labelMatch[1];
         const symbolUpper = symbolName.toUpperCase();
 
-        const charIndex = lineText.indexOf(symbolName);
-        const actualChar = charIndex !== -1 ? charIndex : 0;
+        const actualChar = groupColumn(labelMatch, 1, codeStart);
 
         if (reserved.has(symbolUpper)) {
           diagnostics.push({
@@ -278,7 +278,9 @@ export class DocumentParser {
 
     const registerPercentage = (usedRegisters.size / REGISTER_COUNT) * 100;
     const instructionPercentage = (instructionCount / INSTRUCTION_LIMIT) * 100;
-    const totalMemory = Array.from(memoryAllocations.values()).reduce((a, b) => a + b, 0);
+    // asfv1 reserves size + 1 samples per block, so N blocks cost N samples
+    // more than their declared sizes add up to.
+    const totalMemory = Array.from(memoryAllocations.values()).reduce((a, b) => a + b + 1, 0);
     const memoryPercentage = (totalMemory / MEMORY_SAMPLES) * 100;
 
     return {
@@ -305,4 +307,14 @@ export class DocumentParser {
       }
     };
   }
+}
+
+/**
+ * Column in the source line where capture `group` starts. `match` must come
+ * from a `d`-flagged regex run against a slice of the line that begins at
+ * `baseColumn`. Unlike `lineText.indexOf(name)`, this can't land on an earlier
+ * occurrence such as the `e` in `equ e 0.5`.
+ */
+export function groupColumn(match: RegExpExecArray, group: number, baseColumn: number): number {
+  return baseColumn + match.indices![group][0];
 }

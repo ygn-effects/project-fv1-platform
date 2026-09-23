@@ -19,10 +19,15 @@ describe("DocumentParser", () => {
     assert.ok(parsed.symbols.has("TEMPO"), "conventional SpinASM name-first equ should be recognized");
   });
 
-  it("counts an integer mem allocation toward memory usage", async () => {
+  it("counts an integer mem allocation plus asfv1's extra sample toward memory usage", async () => {
     const parsed = await parse("mem delay 4096\n");
     assert.ok(parsed.symbols.has("DELAY"));
-    assert.strictEqual(parsed.resourceUsage.memory.used, 4096);
+    assert.strictEqual(parsed.resourceUsage.memory.used, 4097);
+  });
+
+  it("counts one extra sample per mem block", async () => {
+    const parsed = await parse("mem a 16384\nmem b 16384\n");
+    assert.strictEqual(parsed.resourceUsage.memory.used, 32770);
   });
 
   it("registers an expression-sized mem but leaves it out of the total", async () => {
@@ -31,15 +36,22 @@ describe("DocumentParser", () => {
     assert.strictEqual(parsed.resourceUsage.memory.used, 0);
   });
 
-  it("accepts a mem allocation of the full 32768 samples (manual range is 1..32768)", async () => {
-    const parsed = await parse("mem big 32768\n");
+  it("accepts a mem allocation of 32767, the largest asfv1 allows", async () => {
+    const parsed = await parse("mem big 32767\n");
     assert.ok(!parsed.diagnostics.some(d => d.code === "invalid-memory-size"));
     assert.strictEqual(parsed.resourceUsage.memory.used, 32768);
   });
 
-  it("rejects a mem allocation larger than 32768", async () => {
-    const parsed = await parse("mem toobig 32769\n");
-    assert.ok(parsed.diagnostics.some(d => d.code === "invalid-memory-size"));
+  it("accepts a zero-size mem allocation (asfv1 range is 0..32767)", async () => {
+    const parsed = await parse("mem tap 0\n");
+    assert.ok(!parsed.diagnostics.some(d => d.code === "invalid-memory-size"));
+  });
+
+  it("rejects a mem allocation of 32768, which asfv1 refuses", async () => {
+    const parsed = await parse("mem toobig 32768\n");
+    const diag = parsed.diagnostics.find(d => d.code === "invalid-memory-size");
+    assert.ok(diag);
+    assert.strictEqual(diag.range.start.character, 11, "range should cover the size operand");
   });
 
   it("warns on SpinASM name-first MEM order but still resolves the symbol", async () => {
@@ -47,7 +59,7 @@ describe("DocumentParser", () => {
     assert.ok(parsed.diagnostics.some(d => d.code === "mem-operand-order"),
       "name-first 'Delay MEM 1024' should warn (asfv1 needs directive-first)");
     assert.ok(parsed.symbols.has("DELAY"), "symbol should still be registered");
-    assert.strictEqual(parsed.resourceUsage.memory.used, 1024);
+    assert.strictEqual(parsed.resourceUsage.memory.used, 1025);
   });
 
   it("does not warn on directive-first MEM order", async () => {
@@ -100,5 +112,18 @@ describe("DocumentParser", () => {
     assert.ok(parsed.symbols.has("START"));
     assert.strictEqual(parsed.symbols.get("START")!.type, "label");
     assert.strictEqual(parsed.resourceUsage.instructions.count, 1);
+  });
+
+  it("locates a short symbol name after the directive, not inside it", async () => {
+    const parsed = await parse("equ e 0.5\nmem m 100\nq equ 1\n");
+    assert.strictEqual(parsed.symbols.get("E")!.character, 4);
+    assert.strictEqual(parsed.symbols.get("M")!.character, 4);
+    assert.strictEqual(parsed.symbols.get("Q")!.character, 0);
+  });
+
+  it("locates symbols on indented lines", async () => {
+    const parsed = await parse("  equ e 0.5\n\tloop: sof 0, 0\n");
+    assert.strictEqual(parsed.symbols.get("E")!.character, 6);
+    assert.strictEqual(parsed.symbols.get("LOOP")!.character, 1);
   });
 });

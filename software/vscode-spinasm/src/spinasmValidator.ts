@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { DocumentParser, DocumentSymbol } from "./documentParser";
+import { DocumentParser, DocumentSymbol, groupColumn } from "./documentParser";
 import { ResourceUsage } from "./resourceAnalyzer";
 import { isInstruction, isBuiltInSymbol } from "./spinasmLanguage";
 
@@ -61,11 +61,11 @@ export class SpinASMValidator {
 
       // equ/mem and bare labels are validated in the parser pass. equ accepts
       // both `EQU NAME VALUE` and the SpinASM `NAME EQU VALUE` order.
-      if (/^\s*(equ|mem)\s+/i.test(codeOnly)) {
+      if (/^\s*(equ|mem)\b/i.test(codeOnly)) {
         continue;
       }
 
-      if (/^\s*[a-zA-Z_][a-zA-Z0-9_]*\s+equ\s+/i.test(codeOnly)) {
+      if (/^\s*[a-zA-Z_][a-zA-Z0-9_]*\s+equ\b/i.test(codeOnly)) {
         continue;
       }
 
@@ -75,12 +75,57 @@ export class SpinASMValidator {
 
       if (isInstruction(codeOnly)) {
         this.validateInstruction(line, symbols, diagnostics);
+        continue;
       }
+
+      // Name-first MEM is checked after instructions so `rdax mem, 1.0` is
+      // still validated as an instruction; the parser warns about the order.
+      if (/^\s*[a-zA-Z_][a-zA-Z0-9_]*\s+mem\b/i.test(codeOnly)) {
+        continue;
+      }
+
+      this.validateUnknownMnemonic(line, symbols, diagnostics);
     }
 
     this.validateResourceLimits(parsedDoc.resourceUsage, diagnostics);
 
     return diagnostics;
+  }
+
+  /**
+   * Flags a code line that is neither a directive, a label nor a known
+   * instruction, e.g. the typo `sfo 0,0`. asfv1 rejects these at compile time.
+   */
+  private validateUnknownMnemonic(
+    line: vscode.TextLine,
+    symbols: Map<string, DocumentSymbol>,
+    diagnostics: vscode.Diagnostic[]
+  ): void {
+    const lineText = line.text.split(';')[0];
+
+    // Only an identifier can be a mistyped mnemonic; lines starting with a
+    // number or operator are left for asfv1 to report.
+    const match = /^\s*(?:[a-zA-Z_][a-zA-Z0-9_]*:\s*)?([a-zA-Z_][a-zA-Z0-9_]*)/d.exec(lineText);
+    if (!match) {
+      return;
+    }
+
+    // asfv1 reads a token stream, so operands may continue on the next line
+    // (`rdax` / `adcl, 1.0`). A line starting with a known symbol is such a
+    // continuation, not a mistyped mnemonic.
+    const token = match[1].toUpperCase();
+    if (isBuiltInSymbol(token) || symbols.has(token)) {
+      return;
+    }
+
+    const startChar = groupColumn(match, 1, 0);
+    const diagnostic = new vscode.Diagnostic(
+      new vscode.Range(line.lineNumber, startChar, line.lineNumber, startChar + match[1].length),
+      `Unknown instruction '${match[1]}'`,
+      vscode.DiagnosticSeverity.Error
+    );
+    diagnostic.code = 'unknown-instruction';
+    diagnostics.push(diagnostic);
   }
 
   private validateInstruction(
@@ -91,7 +136,7 @@ export class SpinASMValidator {
     const lineText = line.text.split(';')[0];
 
     // Accepts an optional `label:` prefix so `start: SOF 0,0` parses too.
-    const match = /^\s*(?:[a-zA-Z_][a-zA-Z0-9_]*:\s*)?(\w+)\s+(.*)$/.exec(lineText);
+    const match = /^\s*(?:[a-zA-Z_][a-zA-Z0-9_]*:\s*)?(\w+)\s+(.*)$/d.exec(lineText);
     if (!match) {
       return;
     }
@@ -100,13 +145,23 @@ export class SpinASMValidator {
     const operands = match[2];
 
     const symbolRefs = operands.matchAll(/\b([a-zA-Z_][a-zA-Z0-9_]*)\b/g);
-    const operandStart = lineText.indexOf(operands);
+    const operandStart = groupColumn(match, 2, 0);
 
     for (const symbolMatch of symbolRefs) {
       const symbolName = symbolMatch[1];
       const symbolUpper = symbolName.toUpperCase();
 
       if (isBuiltInSymbol(symbolUpper)) {
+        continue;
+      }
+
+      // INT is asfv1's only named expression operator, e.g. `sof int(0.5*2),0`.
+      if (symbolUpper === 'INT') {
+        continue;
+      }
+
+      // The digits of a `$` hex literal can start with a letter (`$FFFF00`).
+      if (operands[symbolMatch.index! - 1] === '$') {
         continue;
       }
 
@@ -126,13 +181,14 @@ export class SpinASMValidator {
       }
     }
 
-    this.validateInstructionSyntax(line, instruction, operands, diagnostics);
+    this.validateInstructionSyntax(line, instruction, operands, operandStart, diagnostics);
   }
 
   private validateInstructionSyntax(
     line: vscode.TextLine,
     instruction: string,
     operands: string,
+    operandStart: number,
     diagnostics: vscode.Diagnostic[]
   ): void {
     const lineText = line.text.split(';')[0];
@@ -166,13 +222,13 @@ export class SpinASMValidator {
     ]);
 
     if (coefficientInstructions.has(instruction)) {
-      const coeffMatch = /,\s*([-+]?\d+\.?\d*)/.exec(operands);
+      const coeffMatch = /,\s*([-+]?\d+\.?\d*)/d.exec(operands);
       if (coeffMatch) {
         const coeff = parseFloat(coeffMatch[1]);
 
         // S1_14 fixed-point operand range is approximately -2.0 to 2.0.
         if (Math.abs(coeff) > 2.0) {
-          const startChar = lineText.indexOf(coeffMatch[1]);
+          const startChar = groupColumn(coeffMatch, 1, operandStart);
           const diagnostic = new vscode.Diagnostic(
             new vscode.Range(line.lineNumber, startChar, line.lineNumber, startChar + coeffMatch[1].length),
             `Coefficient ${coeff} likely out of range (typical range: -2.0 to 2.0)`,
