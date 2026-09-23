@@ -7,6 +7,7 @@ import { BANK_COUNT, EEPROM_SIZE_BYTES } from "./fv1Constants";
 import { pathsEqual } from "./pathUtils";
 import { mergeBankImages } from "./eepromImage";
 import { findExecutable } from "./executableLookup";
+import { bankFolderName, bankOutputName, COMBINED_IMAGE_NAME, OUTPUT_FOLDER_NAME } from "./bankLayout";
 import type { OutputState } from "./staleOutputGuard";
 
 /**
@@ -38,8 +39,8 @@ export default class Project {
 
   constructor(folder: string) {
     this.rootFolder = folder;
-    this.outputFolder = path.join(this.rootFolder, "output");
-    this.outputBinFile = path.join(this.outputFolder, "output.bin");
+    this.outputFolder = path.join(this.rootFolder, OUTPUT_FOLDER_NAME);
+    this.outputBinFile = path.join(this.outputFolder, COMBINED_IMAGE_NAME);
     this.compiler = "";
     this.compilerArguments = [];
     this.programs = [];
@@ -92,7 +93,7 @@ export default class Project {
 
   public async createProjectStructure(): Promise<void> {
     for (let i = 0; i < BANK_COUNT; i++) {
-      const folder = path.join(this.rootFolder, `bank_${i}`);
+      const folder = path.join(this.rootFolder, bankFolderName(i));
       const file = path.join(folder, "program.spn");
 
       // One .spn per bank_<N>/ folder; the filename is free-form because the
@@ -271,7 +272,7 @@ export default class Project {
     const programExtras: string[][] = [];
 
     for (let i = 0; i < BANK_COUNT; i++) {
-      const currentFolder = path.join(this.rootFolder, `bank_${i}`);
+      const currentFolder = path.join(this.rootFolder, bankFolderName(i));
 
       programs[i] = null;
       outputs[i] = "";
@@ -294,13 +295,13 @@ export default class Project {
 
         const [chosen, ...extras] = candidates;
         programs[i] = path.join(currentFolder, chosen);
-        outputs[i] = path.join(this.outputFolder, `bank_${i}.hex`);
+        outputs[i] = path.join(this.outputFolder, bankOutputName(i));
         programExtras[i] = extras.map(file => path.join(currentFolder, file));
 
         if (extras.length > 0) {
           Logs.log(
             LogType.WARNING,
-            `Bank ${i}: ${candidates.length} .spn files in bank_${i}/ — using ` +
+            `Bank ${i}: ${candidates.length} .spn files in ${bankFolderName(i)}/ — using ` +
             `"${chosen}", ignoring ${extras.map(e => `"${e}"`).join(", ")}.`
           );
         }

@@ -41,12 +41,6 @@ export function initializeResourceStatusBar(context: vscode.ExtensionContext): v
   });
 }
 
-export function disposeResourceStatusBar(): void {
-  if (resourceStatusBar) {
-    resourceStatusBar.dispose();
-  }
-}
-
 let updateTimer: NodeJS.Timeout | null = null;
 
 function debounceUpdate(document: vscode.TextDocument): void {

@@ -301,13 +301,4 @@ export class ProjectManager {
       };
     }
   }
-
-  /** Returns the bank index from a path like `.../bank_3/...`, or -1 if unmatched. */
-  public getBankIndexFromPath(filePath: string): number {
-    const match = /[\\/]bank_([0-7])[\\/]/i.exec(filePath);
-    if (match) {
-      return parseInt(match[1], 10);
-    }
-    return -1;
-  }
 }

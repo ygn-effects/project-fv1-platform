@@ -38,11 +38,37 @@ export interface ResourceUsage {
   };
 }
 
+/** A code line that is an instruction, with an optional `label:` prefix. */
+export interface InstructionLine {
+  line: number;
+  /** UPPERCASE mnemonic. */
+  mnemonic: string;
+  /**
+   * Text after the mnemonic, or undefined when nothing follows it (`clr`, or
+   * `rdax` whose operands continue on the next line).
+   */
+  operands?: string;
+  /** Column where `operands` starts. */
+  operandsColumn: number;
+  /** Length of the line without its comment. */
+  codeLength: number;
+}
+
+/** A code line that is not a directive, a label or a known instruction. */
+export interface UnrecognizedLine {
+  line: number;
+  /** The identifier where a mnemonic was expected. */
+  word: string;
+  column: number;
+}
+
 export interface ParsedDocument {
   /** Keyed by UPPERCASE symbol name. */
   symbols: Map<string, DocumentSymbol>;
   diagnostics: ParserDiagnostic[];
   resourceUsage: ResourceUsage;
+  instructions: InstructionLine[];
+  unrecognized: UnrecognizedLine[];
 }
 
 /**
@@ -75,6 +101,8 @@ export class DocumentParser {
     const usedRegisters = new Set<number>();
     const registerAliases = new Map<string, number>();
     const memoryAllocations = new Map<string, number>();
+    const instructions: InstructionLine[] = [];
+    const unrecognized: UnrecognizedLine[] = [];
     let instructionCount = 0;
 
     const reserved = BUILT_IN_SYMBOLS;
@@ -83,7 +111,8 @@ export class DocumentParser {
       const line = document.lineAt(i);
       const lineText = line.text;
       const commentIndex = lineText.indexOf(';');
-      const codeOnly = (commentIndex !== -1 ? lineText.substring(0, commentIndex) : lineText).trim();
+      const codePart = commentIndex !== -1 ? lineText.substring(0, commentIndex) : lineText;
+      const codeOnly = codePart.trim();
 
       if (!codeOnly) {
         continue;
@@ -273,6 +302,38 @@ export class DocumentParser {
             usedRegisters.add(registerNum);
           }
         }
+
+        // Accepts an optional `label:` prefix so `start: SOF 0,0` parses too.
+        const instructionMatch =
+          /^\s*(?:[a-zA-Z_][a-zA-Z0-9_]*:\s*)?(\w+)(?:\s+(.*))?$/d.exec(codePart);
+        if (instructionMatch) {
+          instructions.push({
+            line: i,
+            mnemonic: instructionMatch[1].toUpperCase(),
+            operands: instructionMatch[2],
+            operandsColumn: instructionMatch[2] !== undefined ? groupColumn(instructionMatch, 2, 0) : codePart.length,
+            codeLength: codePart.length,
+          });
+        }
+        continue;
+      }
+
+      // A label on its own line (`start:`).
+      if (/^\s*\w+:\s*$/.test(codeOnly)) {
+        continue;
+      }
+
+      // Incomplete directives (`equ`, `x equ`, `mem x`) are left for asfv1 to
+      // report; complete ones were handled above.
+      if (/^\s*(equ|mem)\b/i.test(codeOnly) || /^\s*[a-zA-Z_][a-zA-Z0-9_]*\s+(equ|mem)\b/i.test(codeOnly)) {
+        continue;
+      }
+
+      // Only an identifier can be a mistyped mnemonic; lines starting with a
+      // number or operator are left for asfv1 to report.
+      const wordMatch = /^\s*(?:[a-zA-Z_][a-zA-Z0-9_]*:\s*)?([a-zA-Z_][a-zA-Z0-9_]*)/d.exec(codePart);
+      if (wordMatch) {
+        unrecognized.push({ line: i, word: wordMatch[1], column: groupColumn(wordMatch, 1, 0) });
       }
     }
 
@@ -286,6 +347,8 @@ export class DocumentParser {
     return {
       symbols,
       diagnostics,
+      instructions,
+      unrecognized,
       resourceUsage: {
         registers: {
           used: usedRegisters,

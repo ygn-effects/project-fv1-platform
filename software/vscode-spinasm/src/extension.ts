@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import * as path from "path";
 import type Project from "./project";
 import type UtilsType from "./utils";
 import type { SerialPortInfo } from "./utils";
@@ -8,8 +7,8 @@ import Config from "./config";
 import Logs, { LogType } from "./logs";
 import { SpinASMSemanticTokensProvider, SpinASMHoverProvider } from "./spinasmSemanticTokens";
 import { SpinASMDefinitionProvider, SpinASMCompletionProvider } from "./spinasmLanguageProviders";
-import { initializeBankStatusBar, disposeBankStatusBar, showBankStatus } from "./statusBar";
-import { initializeResourceStatusBar, disposeResourceStatusBar, showResourceUsage } from "./resourceStatusBar";
+import { initializeBankStatusBar, showBankStatus } from "./statusBar";
+import { initializeResourceStatusBar, showResourceUsage } from "./resourceStatusBar";
 import { SpinASMValidator } from "./spinasmValidator";
 import { DocumentParser } from "./documentParser";
 import { ProjectManager } from "./projectManager";
@@ -20,6 +19,7 @@ import { validateIntelHexForBank } from "./intelHex";
 import { readIntelHexData } from "./intelHexFile";
 import { writeAndVerifyBankProgram } from "./programUpload";
 import { OperationQueue } from "./operationQueue";
+import { bankFolderName, bankOfOutputFile, bankOfSourceFile } from "./bankLayout";
 import { describeStaleOutputs, OutputState } from "./staleOutputGuard";
 
 let validator: SpinASMValidator;
@@ -144,7 +144,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
         const rootPath = vscode.workspace.getWorkspaceFolder(doc.uri)?.uri.fsPath;
         if (rootPath) {
-          const bankIndex = projectManager.getBankIndexFromPath(doc.uri.fsPath);
+          const bankIndex = bankOfSourceFile(rootPath, doc.uri.fsPath);
           if (bankIndex !== -1) {
             projectManager.refreshBank(rootPath, bankIndex);
           }
@@ -184,7 +184,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
     if (!folder) { return; }
 
-    const bankIndex = projectManager.getBankIndexFromPath(uri.fsPath);
+    const bankIndex = bankOfSourceFile(folder, uri.fsPath);
     if (bankIndex !== -1) {
       await projectManager.refreshBank(folder, bankIndex);
     }
@@ -213,12 +213,8 @@ export function activate(context: vscode.ExtensionContext): void {
     const folder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath;
     if (!folder) { return; }
 
-    // Outputs are named bank_<N>.hex, so the bank index is in the filename.
-    const match = /^bank_(\d+)$/i.exec(path.basename(uri.fsPath, ".hex"));
-    if (!match) { return; }
-
-    const bankIndex = parseInt(match[1], 10);
-    if (bankIndex >= 0 && bankIndex < BANK_COUNT) {
+    const bankIndex = bankOfOutputFile(folder, uri.fsPath);
+    if (bankIndex !== -1) {
       await projectManager.refreshBank(folder, bankIndex);
     }
   };
@@ -268,38 +264,22 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("spinasm.selectSerialPort", selectSerialPort),
     vscode.commands.registerCommand("spinasm.autoDetectProgrammer", autoDetectProgrammer),
 
-    vscode.commands.registerCommand("spinasm.compileCurrentProgram", compileCurrentProgram),
-    vscode.commands.registerCommand("spinasm.uploadCurrentProgram", uploadCurrentProgram),
-    vscode.commands.registerCommand("spinasm.compileAndUploadCurrentProgram", compileAndUploadCurrentProgram),
+    vscode.commands.registerCommand("spinasm.compileCurrentProgram",
+      (uri?: vscode.Uri) => runBankCommand({ kind: "current", uri }, "compile")),
+    vscode.commands.registerCommand("spinasm.uploadCurrentProgram",
+      (uri?: vscode.Uri) => runBankCommand({ kind: "current", uri }, "upload")),
+    vscode.commands.registerCommand("spinasm.compileAndUploadCurrentProgram",
+      (uri?: vscode.Uri) => runBankCommand({ kind: "current", uri }, "compileAndUpload")),
 
-    vscode.commands.registerCommand("spinasm.compileAllPrograms", compileAllPrograms),
+    vscode.commands.registerCommand("spinasm.compileAllPrograms", () => runBankCommand({ kind: "all" }, "compile")),
     vscode.commands.registerCommand("spinasm.compileAllProgramsToBin", compileAllProgramsToBin),
-    vscode.commands.registerCommand("spinasm.uploadAllPrograms", uploadAllPrograms),
-    vscode.commands.registerCommand("spinasm.compileAndUploadAllPrograms", compileAndUploadAllPrograms),
+    vscode.commands.registerCommand("spinasm.uploadAllPrograms", () => runBankCommand({ kind: "all" }, "upload")),
+    vscode.commands.registerCommand("spinasm.compileAndUploadAllPrograms",
+      () => runBankCommand({ kind: "all" }, "compileAndUpload")),
 
-    vscode.commands.registerCommand("spinasm.compileBank", async () => {
-      const bank = await pickBank();
-
-      if (bank !== undefined) {
-        await compileBank(bank);
-      }
-    }),
-
-    vscode.commands.registerCommand("spinasm.uploadBank", async () => {
-      const bank = await pickBank();
-
-      if (bank !== undefined) {
-        await uploadBank(bank);
-      }
-    }),
-
-    vscode.commands.registerCommand("spinasm.compileAndUploadBank", async () => {
-      const bank = await pickBank();
-
-      if (bank !== undefined) {
-        await compileAndUploadBank(bank);
-      }
-    })
+    vscode.commands.registerCommand("spinasm.compileBank", runOnPickedBank("compile")),
+    vscode.commands.registerCommand("spinasm.uploadBank", runOnPickedBank("upload")),
+    vscode.commands.registerCommand("spinasm.compileAndUploadBank", runOnPickedBank("compileAndUpload"))
   );
 
   if (Config.isCompilerMissing()) {
@@ -309,10 +289,9 @@ export function activate(context: vscode.ExtensionContext): void {
   Logs.log(LogType.INFO, "Commands registered successfully");
 }
 
+// The status bar items are disposed through context.subscriptions.
 export function deactivate(): void {
   Logs.disposeChannel();
-  disposeBankStatusBar();
-  disposeResourceStatusBar();
 }
 
 async function handleCompileOnSave(uri: vscode.Uri): Promise<void> {
@@ -426,114 +405,113 @@ async function autoDetectProgrammer(): Promise<void> {
   });
 }
 
-async function compileBank(bank: number): Promise<void> {
-  await runOperation(async (project) => {
-    requireSavedPrograms(project, [bank]);
-    await project.compileProgramToHex(bank);
+/** Which banks a compile / upload command acts on. */
+type BankTarget =
+  | { kind: "current"; uri?: vscode.Uri }
+  | { kind: "bank"; bank: number }
+  | { kind: "all" };
 
-    Logs.log(LogType.INFO, `Program ${bank} compilation successful`);
-    vscode.window.showInformationMessage(`Program ${bank} compiled successfully!`);
-  }, "Compilation Failed", `Compiling Bank ${bank}...`);
-}
+type BankAction = "compile" | "upload" | "compileAndUpload";
 
-async function uploadBank(bank: number): Promise<void> {
-  await runOperation(async (project, settings) => {
-    if (!(await prepareUpload(project, [bank]))) {
-      return;
-    }
+const ACTION_WORDING: Record<BankAction, { progress: string; failure: string; success: string }> = {
+  compile: { progress: "Compiling", failure: "compile", success: "compiled" },
+  upload: { progress: "Uploading", failure: "upload", success: "uploaded" },
+  compileAndUpload: { progress: "Compiling & uploading", failure: "compile and upload", success: "compiled and uploaded" },
+};
 
-    await performUpload(project, settings, bank);
+/**
+ * Runs a compile, upload or compile & upload command on the current program,
+ * one bank or every populated bank. Each bank is compiled (when asked), then
+ * uploaded (when asked), before moving to the next.
+ */
+async function runBankCommand(target: BankTarget, action: BankAction): Promise<void> {
+  const compile = action !== "upload";
+  const upload = action !== "compile";
+  const wording = ACTION_WORDING[action];
+  const subject = describeBankTarget(target);
 
-    Logs.log(LogType.INFO, `Program ${bank} upload successful`);
-    vscode.window.showInformationMessage(`Program ${bank} uploaded successfully!`);
-  }, `Failed to upload program ${bank}`, `Uploading Bank ${bank}...`, { requireProgrammer: true });
-}
-
-async function compileAndUploadBank(bank: number): Promise<void> {
-  await runOperation(async (project, settings) => {
-    requireSavedPrograms(project, [bank]);
-    await project.compileProgramToHex(bank);
-    await performUpload(project, settings, bank);
-
-    Logs.log(LogType.INFO, `Program ${bank} compiled and uploaded successfully`);
-    vscode.window.showInformationMessage(`Program ${bank} compiled and uploaded successfully!`);
-  }, `Failed to compile and upload program ${bank}`, `Compiling & Uploading Bank ${bank}...`, { requireProgrammer: true });
-}
-
-async function compileCurrentProgram(uri?: vscode.Uri): Promise<void> {
-  await runOperation(async (project) => {
-    const currentProgram = getCurrentBank(project, uri);
-
-    if (currentProgram === -1) {
-      throw new Error("Current file is not a valid project program.");
-    }
-
-    requireSavedPrograms(project, [currentProgram]);
-    await project.compileProgramToHex(currentProgram);
-
-    vscode.window.showInformationMessage(`Program ${currentProgram} compiled successfully!`);
-  }, "Failed to compile current program", "Compiling current program...", { target: getCurrentProgramUri(uri) });
-}
-
-async function uploadCurrentProgram(uri?: vscode.Uri): Promise<void> {
-  await runOperation(async (project, settings) => {
-    const currentProgram = getCurrentBank(project, uri);
-
-    if (currentProgram === -1) {
-      throw new Error("Current file is not a valid project program.");
-    }
-
-    if (!(await prepareUpload(project, [currentProgram]))) {
-      return;
-    }
-
-    await performUpload(project, settings, currentProgram);
-    vscode.window.showInformationMessage(`Program ${currentProgram} uploaded successfully!`);
-  }, "Failed to upload current program", "Uploading Current Program...", {
-    requireProgrammer: true,
-    target: getCurrentProgramUri(uri),
-  });
-}
-
-async function compileAndUploadCurrentProgram(uri?: vscode.Uri): Promise<void> {
-  await runOperation(async (project, settings) => {
-    const currentProgram = getCurrentBank(project, uri);
-
-    if (currentProgram === -1) {
-      throw new Error("Current file is not a valid project program.");
-    }
-
-    requireSavedPrograms(project, [currentProgram]);
-    await project.compileProgramToHex(currentProgram);
-    await performUpload(project, settings, currentProgram);
-    vscode.window.showInformationMessage(`Program ${currentProgram} compiled and uploaded successfully!`);
-  }, "Failed to compile and upload current program", "Compiling & Uploading Current Program...", {
-    requireProgrammer: true,
-    target: getCurrentProgramUri(uri),
-  });
-}
-
-async function compileAllPrograms(): Promise<void> {
-  await runOperation(async (project) => {
-    const programs = project.getAllPrograms();
-    if (programs.every(programPath => !programPath)) {
+  await runOperation(async (project, settings, progress) => {
+    const banks = resolveBanks(project, target);
+    if (banks.length === 0) {
       showNoProgramsWarning();
       return;
     }
 
-    requireSavedPrograms(project);
-
-    for (const programPath of programs) {
-      if(!programPath) {
-        continue;
-      }
-
-      const bank = project.getProgramBankByPath(programPath);
-      await project.compileProgramToHex(bank);
+    if (compile) {
+      requireSavedPrograms(project, banks);
+    }
+    else if (!(await prepareUpload(project, banks))) {
+      return;
     }
 
-    vscode.window.showInformationMessage("All programs compiled successfully!");
-  }, "Failed to compile all programs", "Compiling all programs...");
+    const stepsPerBank = (compile ? 1 : 0) + (upload ? 1 : 0);
+    const increment = 100 / (banks.length * stepsPerBank);
+
+    for (const [index, bank] of banks.entries()) {
+      const position = banks.length > 1 ? ` (${index + 1}/${banks.length})` : "";
+
+      if (compile) {
+        progress.report({ increment, message: `Compiling bank ${bank}...${position}` });
+        await project.compileProgramToHex(bank);
+      }
+      if (upload) {
+        progress.report({ increment, message: `Uploading bank ${bank}...${position}` });
+        await performUpload(project, settings, bank);
+      }
+
+      Logs.log(LogType.INFO, `Bank ${bank} ${wording.success}${position}`);
+    }
+
+    vscode.window.showInformationMessage(
+      target.kind === "all"
+        ? `All programs ${wording.success} successfully! (${banks.length} banks)`
+        : `Program ${banks[0]} ${wording.success} successfully!`
+    );
+  }, `Failed to ${wording.failure} ${subject}`, `${wording.progress} ${subject}...`, {
+    requireProgrammer: upload,
+    target: target.kind === "current" ? getCurrentProgramUri(target.uri) : undefined,
+  });
+}
+
+function describeBankTarget(target: BankTarget): string {
+  switch (target.kind) {
+    case "current":
+      return "current program";
+    case "bank":
+      return `bank ${target.bank}`;
+    case "all":
+      return "all programs";
+  }
+}
+
+/** Bank indexes a target covers; empty only for "all" in a project with no programs. */
+function resolveBanks(project: Project, target: BankTarget): number[] {
+  switch (target.kind) {
+    case "current": {
+      const bank = getCurrentBank(project, target.uri);
+      if (bank === -1) {
+        throw new Error("Current file is not a valid project program.");
+      }
+      return [bank];
+    }
+    case "bank":
+      if (!project.getAllPrograms()[target.bank]) {
+        throw new Error(`Bank ${target.bank} has no program.`);
+      }
+      return [target.bank];
+    case "all":
+      return project.getAllPrograms().flatMap((programPath, bank) => programPath ? [bank] : []);
+  }
+}
+
+/** Command handler that asks for a bank, then runs `action` on it. */
+function runOnPickedBank(action: BankAction): () => Promise<void> {
+  return async () => {
+    const bank = await pickBank();
+    if (bank !== undefined) {
+      await runBankCommand({ kind: "bank", bank }, action);
+    }
+  };
 }
 
 async function compileAllProgramsToBin(): Promise<void> {
@@ -542,127 +520,6 @@ async function compileAllProgramsToBin(): Promise<void> {
     await project.compileAllProgramsToCombinedBin();
     vscode.window.showInformationMessage("Combined EEPROM image written to output.bin!");
   }, "Failed to compile combined EEPROM image", "Building combined EEPROM image...");
-}
-
-async function uploadAllPrograms(): Promise<void> {
-  await vscode.window.withProgress({
-    location: vscode.ProgressLocation.Notification,
-    title: "Uploading all programs...",
-    cancellable: false
-  }, async (progress) => {
-    const folder = await getWorkspaceFolder();
-    if (!folder) {
-      return;
-    }
-
-    try {
-      await runExclusive(async () => {
-        const settings = loadSettings({ requireProgrammer: true });
-        const project = await ProjectManager.getInstance().getProject(folder);
-
-        const programs = project.getAllPrograms();
-        const programsToUpload = programs.filter(p => p !== null);
-        const totalPrograms = programsToUpload.length;
-
-        if (totalPrograms === 0) {
-          showNoProgramsWarning();
-          return;
-        }
-
-        const banks = programs.flatMap((programPath, bank) => programPath ? [bank] : []);
-        if (!(await prepareUpload(project, banks))) {
-          return;
-        }
-
-        let uploadedCount = 0;
-
-        for (const programPath of programs) {
-          if(!programPath) {
-            continue;
-          }
-
-          const bank = project.getProgramBankByPath(programPath);
-
-          progress.report({
-            increment: (100 / totalPrograms),
-            message: `Uploading bank ${bank}... (${uploadedCount + 1}/${totalPrograms})`
-          });
-
-          await performUpload(project, settings, bank);
-          uploadedCount++;
-
-          Logs.log(LogType.INFO, `Bank ${bank} uploaded successfully (${uploadedCount}/${totalPrograms})`);
-        }
-
-        vscode.window.showInformationMessage(`All programs uploaded successfully! (${uploadedCount} banks)`);
-      }, progress);
-    }
-    catch (error) {
-      handleError(error, "Failed to upload all programs");
-    }
-  });
-}
-
-async function compileAndUploadAllPrograms(): Promise<void> {
-  await vscode.window.withProgress({
-    location: vscode.ProgressLocation.Notification,
-    title: "Compiling and uploading all programs...",
-    cancellable: false
-  }, async (progress) => {
-    const folder = await getWorkspaceFolder();
-    if (!folder) {
-      return;
-    }
-
-    try {
-      await runExclusive(async () => {
-        const settings = loadSettings({ requireProgrammer: true });
-        const project = await ProjectManager.getInstance().getProject(folder);
-
-        const programs = project.getAllPrograms();
-        requireSavedPrograms(project);
-        const programsToProcess = programs.filter(p => p !== null);
-        const totalPrograms = programsToProcess.length;
-
-        if (totalPrograms === 0) {
-          showNoProgramsWarning();
-          return;
-        }
-
-        let processedCount = 0;
-
-        for (const programPath of programs) {
-          if(!programPath) {
-            continue;
-          }
-
-          const bank = project.getProgramBankByPath(programPath);
-
-          progress.report({
-            increment: (100 / (totalPrograms * 2)),
-            message: `Compiling bank ${bank}... (${processedCount + 1}/${totalPrograms})`
-          });
-
-          await project.compileProgramToHex(bank);
-
-          progress.report({
-            increment: (100 / (totalPrograms * 2)),
-            message: `Uploading bank ${bank}... (${processedCount + 1}/${totalPrograms})`
-          });
-
-          await performUpload(project, settings, bank);
-          processedCount++;
-
-          Logs.log(LogType.INFO, `Bank ${bank} compiled and uploaded (${processedCount}/${totalPrograms})`);
-        }
-
-        vscode.window.showInformationMessage(`All programs compiled and uploaded successfully! (${processedCount} banks)`);
-      }, progress);
-    }
-    catch (error) {
-      handleError(error, "Failed to compile and upload all programs");
-    }
-  });
 }
 
 async function createProject(): Promise<void> {
@@ -745,8 +602,10 @@ async function showConfig(): Promise<void> {
   }
 }
 
+type OperationProgress = vscode.Progress<{ message?: string; increment?: number }>;
+
 async function runOperation(
-  operation: (project: Project, settings: ProjectSettings) => Promise<void>,
+  operation: (project: Project, settings: ProjectSettings, progress: OperationProgress) => Promise<void>,
   errorMessage: string,
   progressTitle: string,
   options: { requireProgrammer?: boolean; target?: vscode.Uri } = {}
@@ -765,7 +624,7 @@ async function runOperation(
       await runExclusive(async () => {
         const settings = loadSettings(options);
         const project = await ProjectManager.getInstance().getProject(folder);
-        await operation(project, settings);
+        await operation(project, settings, progress);
       }, progress);
     }
     catch (error) {
@@ -788,9 +647,6 @@ async function prepareUpload(project: Project, banks: readonly number[]): Promis
   const states = new Map<number, OutputState>();
 
   for (const bank of banks) {
-    if (!project.getAllPrograms()[bank]) {
-      throw new Error(`Bank ${bank} has no program.`);
-    }
     states.set(bank, await project.getOutputState(bank));
   }
 
@@ -821,7 +677,7 @@ async function prepareUpload(project: Project, banks: readonly number[]): Promis
 
 function showNoProgramsWarning(): void {
   vscode.window.showWarningMessage(
-    `No programs found. Add a .spn file to one of the bank_0 to bank_${BANK_COUNT - 1} folders.`
+    `No programs found. Add a .spn file to one of the ${bankFolderName(0)} to ${bankFolderName(BANK_COUNT - 1)} folders.`
   );
 }
 
@@ -917,17 +773,12 @@ function loadSettings(options: { requireProgrammer?: boolean } = {}): ProjectSet
   };
 }
 
-/** Background callers should pass `{ showLog: false }` to avoid stealing focus. */
-function handleError(error: unknown, message: string, options: { showLog?: boolean } = {}): void {
-  const { showLog = true } = options;
+function handleError(error: unknown, message: string): void {
   const errorMessage = (error as Error).message;
 
   Logs.log(LogType.ERROR, `${message}: ${errorMessage}`);
   vscode.window.showErrorMessage(`${message}: ${errorMessage}`);
-
-  if (showLog) {
-    Logs.show();
-  }
+  Logs.show();
 }
 
 async function getWorkspaceFolder(target?: vscode.Uri): Promise<string | null> {

@@ -40,12 +40,6 @@ export function initializeBankStatusBar(context: vscode.ExtensionContext): void 
   updateBankStatusBarImmediate();
 }
 
-export function disposeBankStatusBar(): void {
-  if (bankStatusBar) {
-    bankStatusBar.dispose();
-  }
-}
-
 /**
  * The folder whose banks the status bar shows: the active editor's workspace
  * folder when there is one, else the first folder. Keeps the bar consistent

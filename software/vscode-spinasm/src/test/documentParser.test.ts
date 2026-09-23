@@ -126,4 +126,20 @@ describe("DocumentParser", () => {
     assert.strictEqual(parsed.symbols.get("E")!.character, 6);
     assert.strictEqual(parsed.symbols.get("LOOP")!.character, 1);
   });
+
+  it("records instruction lines with their mnemonic and operand position", async () => {
+    const parsed = await parse("  start: rdax adcl, 1.0 ; in\nclr\n");
+    assert.strictEqual(parsed.instructions.length, 2);
+    const [rdax, clr] = parsed.instructions;
+    assert.strictEqual(rdax.mnemonic, "RDAX");
+    assert.strictEqual(rdax.operands, "adcl, 1.0 ");
+    assert.strictEqual(rdax.operandsColumn, 14);
+    assert.strictEqual(clr.mnemonic, "CLR");
+    assert.strictEqual(clr.operands, undefined);
+  });
+
+  it("records only lines that are not directives, labels or instructions as unrecognized", async () => {
+    const parsed = await parse("equ\nx equ\nloop:\n  sfo 0, 0\n1.0\n");
+    assert.deepStrictEqual(parsed.unrecognized, [{ line: 3, word: "sfo", column: 2 }]);
+  });
 });

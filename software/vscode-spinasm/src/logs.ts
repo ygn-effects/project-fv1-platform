@@ -52,10 +52,11 @@ export default class Logs {
         channel.appendLine(`${timestamp} | WARN  | ${message}`);
         break;
 
-      case LogType.ERROR:
+      case LogType.ERROR: {
         const sanitizedMessage = message.replace(/^Error:\s*/, "");
         channel.appendLine(`${timestamp} | ERROR | ${sanitizedMessage}`);
         break;
+      }
 
       default:
         channel.appendLine(`${timestamp} | UNKNOWN | ${message}`);
